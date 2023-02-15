@@ -1,0 +1,49 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net7.0;net6.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>ros2cs</AssemblyName>
+    <PackAsTool>true</PackAsTool>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ToolCommandName>ros2cs</ToolCommandName>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <PackageId>ros2cs</PackageId>
+    <Product>Rcl.NET</Product>
+    <Description>
+      <![CDATA[Generates C# source codes from ROS2 interface definitions for use with Rcl.NET.]]>
+    </Description>
+
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/noelex/rclnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/noelex/rclnet.git</RepositoryUrl>
+    <Authors>noelex@outlook.jp</Authors>
+    <Company />
+    <Copyright>Copyright (c) 2023, noelex@outlook.jp</Copyright>
+    <PackageTags>ros2, rcl, rosidl</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(ProjectDir)..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+      <Visible>false</Visible>
+    </None>
+    <None Include="$(ProjectDir)..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Rosidl.Generator.CSharp\Rosidl.Generator.CSharp.csproj" PriavateAssets="All" />
+  </ItemGroup>
+</Project>

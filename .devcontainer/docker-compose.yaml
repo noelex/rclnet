@@ -1,0 +1,27 @@
+services:
+  dev:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - WORKSPACE=/workspaces/rclnet
+    volumes:
+      - ../:/workspaces/rclnet
+      - /mnt/wslg:/mnt/wslg
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /usr/lib/wsl:/usr/lib/wsl
+    devices:
+      - /dev/dxg:/dev/dxg
+    environment:
+      - DISPLAY=:0
+      - PULSE_SERVER=/mnt/wslg/PulseServer
+      - WAYLAND_DISPLAY=wayland-0
+      - XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir
+      - LD_LIBRARY_PATH=/usr/lib/wsl/lib
+    network_mode: host
+    cap_add: 
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+      - apparmor:unconfined
+    user: ros

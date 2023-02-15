@@ -1,0 +1,28 @@
+// See https://aka.ms/vscode-remote/devcontainer.json for format details.
+{
+	"dockerComposeFile": "docker-compose.yaml",
+	"service": "dev",
+	"workspaceFolder": "/workspaces/rclnet",
+	"settings": {
+		"terminal.integrated.profiles.linux": {
+			"bash": {
+				"path": "bash"
+			}
+		},
+		"terminal.integrated.defaultProfile.linux": "bash"
+	},
+	"extensions": [
+		"ms-python.python",
+		"dotjoshjohnson.xml",
+		"zachflower.uncrustify",
+		"ms-azuretools.vscode-docker",
+		"ms-vscode.cpptools",
+		"redhat.vscode-yaml",
+		"smilerobotics.urdf",
+		"streetsidesoftware.code-spell-checker",
+		"twxs.cmake",
+		"yzhang.markdown-all-in-one",
+		"ms-dotnettools.csharp",
+		"ms-iot.vscode-ros"
+	]
+}
