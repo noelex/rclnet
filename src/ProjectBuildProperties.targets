@@ -1,0 +1,26 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<Product>rclnet</Product>
+	<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<PackageLicenseFile>LICENSE</PackageLicenseFile>
+	<RepositoryType>git</RepositoryType>
+	<PackageProjectUrl>https://github.com/noelex/rclnet</PackageProjectUrl>
+	<RepositoryUrl>https://github.com/noelex/rclnet.git</RepositoryUrl>
+	<Authors>noelex@outlook.jp</Authors>
+	<Company />
+	<Copyright>Copyright (c) 2023, noelex@outlook.jp</Copyright>
+	<PackageTags>ros, ros2, rcl, rosidl</PackageTags>
+
+	<ItemGroup >
+		<None Include="$(ProjectDir)..\..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+			<Visible>false</Visible>
+		</None>
+		<None Include="$(ProjectDir)..\..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+			<Visible>false</Visible>
+		</None>
+	</ItemGroup>
+</Project>

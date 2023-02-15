@@ -1,7 +1,12 @@
 # rclnet
-rclnet is fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.
+rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.
 
 Currently supports .NET 7 and ROS2 Foxy Fitzroy.
+## Installing
+You can install preview packages with the following command:
+```
+dotnet add package Rcl.NET --prerelease
+```
 ## Showcase
 ### Subscribing
 ```csharp
@@ -83,7 +88,7 @@ await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
 
 ## How to Generate Messages
 1. Create a new .NET library project targeting .NET 7.
-2. Add add the following lines to the `.csproj` file:
+2. Add the following lines to the `.csproj` file:
    ```xml
    <PropertyGroup>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -91,7 +96,9 @@ await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
    </PropertyGroup>
 
    <ItemGroup>
-      <PackageReference Include="Rosidl.Runtime" Version="1.0.0" />
+      <!--Uncommon the following line if generated code depends on common messages included in Rosidl.CommonMessages-->
+      <!--<PackageReference Include="Rosidl.CommonMessages" Version="1.0.0-preview.1" />-->
+      <PackageReference Include="Rosidl.Runtime" Version="1.0.0-preview.1" />
    </ItemGroup>
    ```
 3. Add a `ros2cs.spec` file to the root of the project.
