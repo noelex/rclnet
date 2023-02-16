@@ -24,6 +24,9 @@ public interface IRclClient<TRequest, TResponse> : IRclObject
     /// </summary>
     bool IsValid { get; }
 
+    /// <summary>
+    /// Determine whether there's any server available to process client requests.
+    /// </summary>
     bool IsServerAvailable { get; }
 
     /// <summary>

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.InteropServices;
 
 namespace Rosidl.Messages.UniqueIdentifier;
 
@@ -17,11 +11,11 @@ public partial class UUID
             CopyFrom(guid);
         }
 
-        public void  CopyFrom(Guid guid)
+        public void CopyFrom(Guid guid)
         {
             Uuid.CopyFrom(MemoryMarshal.AsBytes(new Span<Guid>(ref guid)));
         }
 
-        public Guid ToGuid() => new (Uuid.AsSpan());
+        public Guid ToGuid() => new(Uuid.AsSpan());
     }
 }

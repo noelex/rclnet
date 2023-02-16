@@ -9,8 +9,8 @@ public interface IRclGuardCondition : IRclWaitObject
     /// Trigger the <see cref="IRclGuardCondition"/> once, allowing all current asynchronous waits to complete.
     /// </summary>
     /// <remarks>
-    /// All subsequent <see cref="IRclWaitObject.WaitOneAsync(CancellationToken)"/> calls will asynchronously
-    /// wait until next call to <see cref="Trigger"/> to compelete.
+    /// All subsequent <see cref="IRclWaitObject.WaitOneAsync(CancellationToken)"/> calls will have to
+    /// wait asynchronously until next call to <see cref="Trigger"/>.
     /// </remarks>
     void Trigger();
 }

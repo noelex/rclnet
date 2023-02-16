@@ -8,33 +8,63 @@ using System.Threading.Channels;
 
 namespace Rcl;
 
+/// <summary>
+/// Represents an ROS node.
+/// </summary>
 public interface IRclNode : IRclObject
 {
-    RclContext Context { get; }
+    /// <summary>
+    /// Gets the <see cref="IRclContext"/> object which the node belongs.
+    /// </summary>
+    IRclContext Context { get; }
 
+    /// <summary>
+    /// Gets the domain ID of the node.
+    /// </summary>
     nuint DomaindId { get; }
 
+    /// <summary>
+    /// Gets the fully-qualified name of the node.
+    /// </summary>
     string? FullyQualifiedName { get; }
 
+    /// <summary>
+    /// Gets a <see cref="RosGraph"/> for querying and monitoring ROS graph.
+    /// </summary>
     RosGraph Graph { get; }
 
+    /// <summary>
+    /// Gets the instance ID of the node.
+    /// </summary>
     ulong InstanceId { get; }
 
+    /// <summary>
+    /// Checks whether current <see cref="IRclNode"/> is valid.
+    /// </summary>
     bool IsValid { get; }
 
+    /// <summary>
+    /// Gets the logger of the node.
+    /// </summary>
     string? LoggerName { get; }
 
+    /// <summary>
+    /// Gets the name of the node.
+    /// </summary>
     string? Name { get; }
 
+    /// <summary>
+    /// Gets the namespace of the node.
+    /// </summary>
     string? Namespace { get; }
 
     /// <summary>
-    /// Create an ROS subscription and receive messages using unamanaged message buffers.
+    /// Create an ROS subscription and receive messages using native message buffers.
     /// </summary>
     /// <typeparam name="T">Type of the message to receive.</typeparam>
     /// <param name="topicName">Name of the topic to subscribe.</param>
-    /// <param name="profile"><see cref="QosProfile"/> to be used for the subscription. Defaults to <see cref="QosProfile.Default"/>.</param>
-    /// <param name="queueSize">Size of the message delivery queue. This parameter is used setup the delivery queue on .NET side, and is irrelevant to <see cref="QosProfile.Depth"/>. </param>
+    /// <param name="qos"><see cref="QosProfile"/> to be used for the subscription. Defaults to <see cref="QosProfile.Default"/>.</param>
+    /// <param name="queueSize">Size of the message delivery queue. This parameter is used for seting up the delivery queue on .NET side, and is irrelevant to <see cref="QosProfile.Depth"/>. </param>
     /// <param name="fullMode">Behavior to use when the delivery queue is full.</param>
     /// <returns>A <see cref="IRclNativeSubscription"/> to be used for receiving topic messages.</returns>
     IRclNativeSubscription CreateNativeSubscription<T>(
@@ -44,10 +74,12 @@ public interface IRclNode : IRclObject
         BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest) where T : IMessage;
 
     /// <summary>
-    /// Create an ROS subscription and receive messages using unamanaged message buffers.
+    /// Create an ROS subscription and receive messages using native message buffers.
     /// </summary>
     /// <param name="topicName">Name of the topic to subscribe.</param>
-    /// <param name="queueSize">Size of the message delivery queue. This parameter is used setup the delivery queue on .NET side, and is irrelevant to <see cref="QosProfile.Depth"/>. </param>
+    /// <param name="typeSupport">Type support handle of the message.</param>
+    /// <param name="qos"><see cref="QosProfile"/> to be used for the subscription. Defaults to <see cref="QosProfile.Default"/>.</param>
+    /// <param name="queueSize">Size of the message delivery queue. This parameter is used for setting up the delivery queue on .NET side, and is irrelevant to <see cref="QosProfile.Depth"/>. </param>
     /// <param name="fullMode">Behavior to use when the delivery queue is full.</param>
     /// <returns>A <see cref="IRclNativeSubscription"/> to be used for receiving topic messages.</returns>
     IRclNativeSubscription CreateNativeSubscription(

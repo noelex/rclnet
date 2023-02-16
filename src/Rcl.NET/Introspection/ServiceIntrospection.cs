@@ -1,10 +1,5 @@
 ﻿using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Rcl.Introspection;
 
@@ -12,8 +7,8 @@ internal unsafe class ServiceIntrospection
 {
     private readonly ServiceMembers* _typesupport;
 
-    public  ServiceIntrospection(TypeSupportHandle typeSupport)
-        :this(typeSupport.GetServiceTypeSupport())
+    public ServiceIntrospection(TypeSupportHandle typeSupport)
+        : this(typeSupport.GetServiceTypeSupport())
     {
     }
 

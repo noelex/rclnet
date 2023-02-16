@@ -3,6 +3,19 @@ using Rcl.SafeHandles;
 
 namespace Rcl;
 
+/// <summary>
+/// A context that, runs an event loop to provide asynchronous programming support for the rclnet library.
+/// </summary>
+/// <remarks>
+/// <see cref="RclContext"/> servers as a host for other rcl concepts such as <see cref="IRclNode"/>s,
+/// <see cref="IRclTimer"/>s and <see cref="IRclGuardCondition"/>s.
+/// Applications can initiate as many <see cref="RclContext"/> as they want, but having a single context will
+/// usually suffice.
+/// <para>
+/// Internally, <see cref="RclContext"/> runs an event loop to handle waitsets and callbacks, and provides
+/// an asynchronous API for users to interact with these concepts easily.
+/// </para>
+/// </remarks>
 public sealed class RclContext : IDisposable, IRclContext
 {
     private static readonly ObjectPool<ManualResetValueTaskSource<bool>> TcsPool = ObjectPool<ManualResetValueTaskSource<bool>>.Shared;
@@ -20,6 +33,10 @@ public sealed class RclContext : IDisposable, IRclContext
     private int _disposed;
     private long _waitHandleToken;
 
+    /// <summary>
+    /// Initialize an <see cref="RclContext"/> and start the underlying event loop immediately.
+    /// </summary>
+    /// <param name="args">Command line arguments to be passed to the context.</param>
     public RclContext(string[] args)
     {
         _rclSyncContext = new RclSynchronizationContext(this);
@@ -35,24 +52,28 @@ public sealed class RclContext : IDisposable, IRclContext
 
     internal SafeContextHandle Handle => _context;
 
+    /// <inheritdoc/>
     public SynchronizationContext SynchronizationContext => _rclSyncContext;
 
+    /// <inheritdoc/>
     public bool IsCurrent => Thread.CurrentThread == _mainLoopRunner;
 
+    /// <inheritdoc/>
     public IRclGuardCondition CreateGuardCondition() => new RclGuardConditionImpl(this);
 
-    /// <remarks>
-    /// Create an <see cref="RclClock"/> with specified clock.
-    /// </remarks>
+    /// <inheritdoc/>
     public IRclTimer CreateTimer(RclClock clock, TimeSpan period) => new RclTimer(this, clock.Impl, period);
 
-    /// <remarks>
-    /// Create an <see cref="RclClock"/> with ROS clock.
-    /// </remarks>
+    /// <inheritdoc/>
     public IRclTimer CreateTimer(TimeSpan period) => CreateTimer(RclClock.Ros, period);
 
+    /// <inheritdoc/>
     public IRclNode CreateNode(string name, string @namespace = "/", NodeOptions? options = null)
         => new RclNodeImpl(this, name, @namespace, options);
+
+    /// <inheritdoc/>
+    public YieldAwaiter Yield()
+        => new(_rclSyncContext);
 
     private unsafe void Interrupt() => rcl_trigger_guard_condition(_interruptSignal.Object);
 
@@ -125,9 +146,6 @@ public sealed class RclContext : IDisposable, IRclContext
         Interrupt();
     }
 
-    public YieldAwaiter Yield()
-        => new(_rclSyncContext);
-
     private WaitHandleRegistration RegisterCore<T>(RclObject<T> waitObject, Action<object?> callback, object? state = null)
         where T : RclObjectHandle
     {
@@ -142,7 +160,6 @@ public sealed class RclContext : IDisposable, IRclContext
 
     private unsafe void Run()
     {
-        Console.WriteLine("RclContext is running on " + Environment.CurrentManagedThreadId + ".");
         var ws = rcl_get_zero_initialized_wait_set();
         rcl_wait_set_init(&ws, 0, 0, 0, 0, 0, 0, _context.Object, RclAllocator.Default.Object);
 
