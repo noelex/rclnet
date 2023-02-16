@@ -16,7 +16,7 @@ public interface IRclNode : IRclObject
     /// <summary>
     /// Gets the <see cref="IRclContext"/> object which the node belongs.
     /// </summary>
-    IRclContext Context { get; }
+    RclContext Context { get; }
 
     /// <summary>
     /// Gets the domain ID of the node.

@@ -1,4 +1,5 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<PropertyGroup>
 	<Product>rclnet</Product>
 	<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -10,7 +11,7 @@
 	<Company />
 	<Copyright>Copyright (c) 2023, noelex@outlook.jp</Copyright>
 	<PackageTags>ros, ros2, rcl, rosidl</PackageTags>
-
+</PropertyGroup>
 	<ItemGroup >
 		<None Include="$(ProjectDir)..\..\README.md">
 			<Pack>True</Pack>
