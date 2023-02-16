@@ -90,10 +90,9 @@ internal unsafe class RclSubscription<T> :
 
     public override void Dispose()
     {
-        if (!IsDisposed)
+        if (_messageChannel.Writer.TryComplete())
         {
             _messageBuffer.Dispose();
-            _messageChannel.Writer.TryComplete();
             foreach (var (_, obs) in _observers)
             {
                 obs.OnCompleted();

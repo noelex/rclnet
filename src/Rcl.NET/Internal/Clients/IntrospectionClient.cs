@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace Rcl.Internal.Clients;
 
-internal class IntrospectionRclClient : RclClientBase
+internal class IntrospectionClient : RclClientBase
 {
     private readonly ServiceIntrospection _typesupport;
 
-    public IntrospectionRclClient(RclNodeImpl node, string serviceName, TypeSupportHandle typeSupport, QosProfile qos) : base(node, serviceName, typeSupport, qos)
+    public IntrospectionClient(RclNodeImpl node, string serviceName, TypeSupportHandle typeSupport, QosProfile qos) : base(node, serviceName, typeSupport, qos)
     {
         _typesupport = new ServiceIntrospection(typeSupport);
     }
@@ -27,6 +27,4 @@ internal class IntrospectionRclClient : RclClientBase
     {
         return _typesupport.Request.CreateBuffer();
     }
-
-   
 }

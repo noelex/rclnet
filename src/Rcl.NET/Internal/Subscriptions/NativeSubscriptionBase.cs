@@ -86,7 +86,13 @@ internal unsafe abstract class NativeSubscriptionBase :
 
     public override void Dispose()
     {
-        _messageChannel.Writer.TryComplete();
+        if(_messageChannel.Writer.TryComplete())
+        {
+            while (_messageChannel.Reader.TryRead(out var buffer))
+            {
+                buffer.Dispose();
+            }
+        }
 
         base.Dispose();
     }

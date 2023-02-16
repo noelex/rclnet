@@ -17,11 +17,8 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         where TResult : IActionResult
         where TFeedback : IActionFeedback
 {
-    private readonly string _statusTopicName, _feedbackTopicName,
-        _sendGoalServiceName, _cancelGoalServiceName, _getResultServiceName;
-
     private readonly IRclNativeSubscription _feedbackSubscription, _statusSubscription;
-    private readonly IntrospectionRclClient _sendGoalClient, _getResultClient;
+    private readonly IntrospectionClient _sendGoalClient, _getResultClient;
     private readonly RclClient<CancelGoalService, CancelGoalServiceRequest, CancelGoalServiceResponse> _cancelGoalClient;
 
     private readonly RclNodeImpl _node;
@@ -35,35 +32,37 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
     public ActionClient(RclNodeImpl node, string actionName, Encoding textEncoding)
     {
-        Name = actionName;
-        
         _node = node;
         _textEncoding = textEncoding;
 
-        _statusTopicName = actionName + "/_action/status";
-        _feedbackTopicName = actionName + "/_action/feedback";
-        _sendGoalServiceName = actionName + "/_action/send_goal";
-        _cancelGoalServiceName = actionName + "/_action/cancel_goal";
-        _getResultServiceName = actionName + "/_action/get_result";
+        var statusTopicName = actionName + Constants.StatusTopic;
+        var feedbackTopicName = actionName + Constants.FeedbackTopic;
+        var sendGoalServiceName = actionName + Constants.SendGoalService;
+        var cancelGoalServiceName = actionName + Constants.CancelGoalService;
+        var getResultServiceName = actionName + Constants.GetResultService;
 
         _typesupport = new ActionIntrospection(TAction.GetTypeSupportHandle());
 
         var done = false;
         try
         {
-            _cancelGoalClient = new(node, _cancelGoalServiceName, QosProfile.ServicesDefault, textEncoding);
-            _sendGoalClient = new(node, _sendGoalServiceName,
+            _cancelGoalClient = new(node, cancelGoalServiceName, QosProfile.ServicesDefault, textEncoding);
+            _sendGoalClient = new(node, sendGoalServiceName,
                 _typesupport.GoalServiceTypeSupport, QosProfile.ServicesDefault);
-            _getResultClient = new(node, _getResultServiceName,
+            _getResultClient = new(node, getResultServiceName,
                 _typesupport.ResultServiceTypeSupport, QosProfile.ServicesDefault);
 
             _statusSubscription = _node.CreateNativeSubscription<GoalStatusArray>(
-                _statusTopicName,
+                statusTopicName,
                 new(Depth: 1, Durability: DurabilityPolicy.TransientLocal, Reliability: ReliabilityPolicy.Reliable));
             _feedbackSubscription = _node.CreateNativeSubscription(
-                _feedbackTopicName,
+                feedbackTopicName,
                 _typesupport.FeedbackMessageTypeSupport,
                 QosProfile.SensorData);
+
+            // In case the given action name gets normalized.
+            var sep = _feedbackSubscription.Name!.LastIndexOf("/_action/feedback");
+            Name = _feedbackSubscription.Name.Substring(0, sep);
 
             _ = ReadFeedbacksAsync(_cts.Token);
             _ = ReadStatusAsync(_cts.Token);
@@ -263,7 +262,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
     IRclClient<CancelGoalServiceRequest, CancelGoalServiceResponse> IActionClientImpl.CancelClient => _cancelGoalClient;
 
-    IntrospectionRclClient IActionClientImpl.GetResultClient => _getResultClient;
+    IntrospectionClient IActionClientImpl.GetResultClient => _getResultClient;
 
     DynamicFunctionTable IActionClientImpl.Functions => _functions;
 

@@ -96,7 +96,7 @@ await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
    </PropertyGroup>
 
    <ItemGroup>
-      <!--Uncommon the following line if generated code depends on common messages included in Rosidl.CommonMessages-->
+      <!--Uncomment the following line if generated code depends on common messages included in Rosidl.CommonMessages-->
       <!--<PackageReference Include="Rosidl.CommonMessages" Version="1.0.0-preview.1" />-->
       <PackageReference Include="Rosidl.Runtime" Version="1.0.0-preview.1" />
    </ItemGroup>

@@ -15,7 +15,7 @@ public partial class RosGraph
     /// <summary>
     /// Read all graph change events asynchronously.
     /// </summary>
-    public  IAsyncEnumerable<RosGraphEvent> ReadEventsAsync(CancellationToken cancellationToken)
+    public  IAsyncEnumerable<RosGraphEvent> ReadEventsAsync(CancellationToken cancellationToken = default)
         => _channel.Reader.ReadAllAsync(cancellationToken);
 
     /// <summary>
@@ -36,6 +36,15 @@ public partial class RosGraph
     private void Unsubscribe(long id)
     {
         _observers.Remove(id, out _);
+    }
+
+    internal void Complete()
+    {
+        _channel.Writer.TryComplete();
+        foreach(var obs in _observers.Values)
+        {
+            obs.OnCompleted();
+        }
     }
 
     private class RosGraphEventSubscription : IDisposable

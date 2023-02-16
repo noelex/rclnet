@@ -9,6 +9,7 @@ using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
+using System.Numerics;
 using System.Text;
 using System.Threading.Channels;
 
@@ -296,6 +297,7 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
             }
             finally
             {
+                _graph.Complete();
                 base.Dispose();
             }
         }

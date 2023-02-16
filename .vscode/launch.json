@@ -5,87 +5,20 @@
       // Use IntelliSense to find out which attributes exist for C# debugging
       // Use hover for the description of the existing attributes
       // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
-      "name": ".NET Core Launch (console)",
+      "name": ".NET Core Launch (examples)",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
       // If you have changed target frameworks, make sure to update the program path.
-      "program": "${workspaceFolder}/src/Rcl.Test/bin/Debug/net7.0/Rcl.Test.dll",
+      "program": "${workspaceFolder}/examples/bin/Debug/net7.0/RclExamples.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/src/InteropGenerator",
+      "cwd": "${workspaceFolder}/examples/bin/Debug/net7.0/",
       // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
-      "console": "internalConsole",
+      "console": "integratedTerminal",
       "stopAtEntry": false,
-      "justMyCode": false,
       "env": {
         //"LD_LIBRARY_PATH": "${workspaceFolder}/src/Rcl.Test/bin/Debug/net7.0/"
       }
-    },
-    {
-      // Use IntelliSense to find out which attributes exist for C# debugging
-      // Use hover for the description of the existing attributes
-      // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
-      "name": ".NET Core Launch (ros2cs)",
-      "type": "coreclr",
-      "request": "launch",
-      // "preLaunchTask": "build",
-      // If you have changed target frameworks, make sure to update the program path.
-      "program": "${workspaceFolder}/src/Rosidl.Generator/bin/Debug/net7.0/ros2cs.dll",
-      "args": [
-        "../../src/Rosidl.Messages/ros2cs.spec"
-      ],
-      "cwd": "${workspaceFolder}/src/Rosidl.Generator",
-      // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
-      "console": "internalConsole",
-      "stopAtEntry": false
-    },
-    {
-      "name": ".NET Core Attach",
-      "type": "coreclr",
-      "request": "attach"
-    },
-    // Example launch of a python file
-    {
-      "name": "Python: Current File",
-      "type": "python",
-      "request": "launch",
-      "program": "${file}",
-      "console": "integratedTerminal",
-      "justMyCode": false
-    },
-    // Example gdb launch of a ros executable
-    {
-      "name": "(gdb) Launch",
-      "type": "cppdbg",
-      "request": "launch",
-      "program": "${workspaceFolder}/install/lib/${input:package}/${input:program}",
-      "args": [],
-      "preLaunchTask": "build",
-      "stopAtEntry": true,
-      "cwd": "${workspaceFolder}",
-      "externalConsole": false,
-      "MIMode": "gdb",
-      "setupCommands": [
-        {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
-        }
-      ]
-    }
-  ],
-  "inputs": [
-    {
-      "id": "package",
-      "type": "promptString",
-      "description": "Package name",
-      "default": "examples_rclcpp_minimal_publisher"
-    },
-    {
-      "id": "program",
-      "type": "promptString",
-      "description": "Program name",
-      "default": "publisher_member_function"
     }
   ]
 }

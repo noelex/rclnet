@@ -24,12 +24,12 @@ public interface IRclSubscription : IRclObject
 public interface IRclSubscription<T> : IRclSubscription, IObservable<T>
     where T : IMessage
 {
-    IAsyncEnumerable<T> ReadAllAsync(CancellationToken cancellationToken);
+    IAsyncEnumerable<T> ReadAllAsync(CancellationToken cancellationToken = default);
 }
 
 public interface IRclNativeSubscription : IRclSubscription
 {
-    IAsyncEnumerable<RosMessageBuffer> ReadAllAsync(CancellationToken cancellationToken);
+    IAsyncEnumerable<RosMessageBuffer> ReadAllAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
