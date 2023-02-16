@@ -2,26 +2,6 @@
 
 namespace Rcl.Graph;
 
-public enum ActionEndPointType
-{
-    Server,
-    Client
-}
-
-public record RosActionEndPoint
-    (
-        RosNode Node,
-        ActionEndPointType EndPointType,
-        RosAction Action,
-        string Type
-    )
-{
-    public override string ToString()
-    {
-        return $"{Enum.GetName(EndPointType)}(Action = {Action}, Type = {Type})";
-    }
-}
-
 /// <summary>
 /// Represents an action in the ROS graph.
 /// </summary>
@@ -56,13 +36,13 @@ public class RosAction
     /// </summary>
     public IReadOnlyCollection<RosActionEndPoint> Clients { get; }
 
-    internal void ResetServers(IEnumerable<RosActionEndPoint> servers)
+    internal void ResetServers(ReadOnlySpan<RosActionEndPoint> servers)
     {
         _servers.Clear();
         foreach (var ep in servers) _servers.Add(ep);
     }
 
-    internal void ResetClients(IEnumerable<RosActionEndPoint> clients)
+    internal void ResetClients(ReadOnlySpan<RosActionEndPoint> clients)
     {
         _clients.Clear();
         foreach (var ep in clients) _clients.Add(ep);

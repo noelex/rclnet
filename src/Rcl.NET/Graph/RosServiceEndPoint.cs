@@ -27,6 +27,6 @@ public record RosServiceEndPoint(RosNode Node, ServiceEndPointType EndPointType,
 {
     public override string ToString()
     {
-        return $"{Enum.GetName(EndPointType)}(Service = {Service}, Type = {Type})";
+        return $"Service{Enum.GetName(EndPointType)}(Service = {Service}, Type = {Type})";
     }
 }

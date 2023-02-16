@@ -28,7 +28,7 @@ namespace Rcl.Graph;
 /// <p>
 /// For retrieving consistent results, you can access the <see cref="RosGraph"/> object from
 /// the <see cref="RclContext"/> which the <see cref="RosGraph"/> object belongs (e.g. by yielding
-/// to the <see cref="RclContext"/> using <c><see langword="await"/>graph.Owner.Context.Yield()</c>).
+/// to the <see cref="RclContext"/> using <c><see langword="await"/> graph.Owner.Context.Yield()</c>).
 /// </p>
 /// </remarks>
 public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
@@ -88,6 +88,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         Nodes = ReadOnlyCollection.Wrap(_nodes.Values);
         Topics = ReadOnlyCollection.Wrap(_topics.Values);
         Services = ReadOnlyCollection.Wrap(_services.Values);
+        Actions = ReadOnlyCollection.Wrap(_actions.Values);
     }
 
     public IRclNode Owner => _node;
@@ -106,6 +107,11 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     /// Returns services currently available in the ROS graph.
     /// </summary>
     public IReadOnlyCollection<RosService> Services { get; }
+
+    /// <summary>
+    /// Returns actions currently available in the ROS graph.
+    /// </summary>
+    public IReadOnlyCollection<RosAction> Actions { get; }
 
     internal unsafe void Build()
     {

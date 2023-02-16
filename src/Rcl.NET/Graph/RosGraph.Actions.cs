@@ -34,10 +34,30 @@ public partial class RosGraph : IGraphBuilder
 			node.UpdateActionClients(this, sp.Span.Slice(0, count));
 		}
 
+        var offset = 0;
+        using var temp = SpanOwner<RosActionEndPoint>.Allocate(
+			Math.Max(_totalActionClients.Count, _totalActionServers.Count));
+		
 		foreach(var action in _actions.Values)
 		{
-			action.ResetClients(_totalActionClients.Where(x => x.Action == action));
-			action.ResetServers(_totalActionServers.Where(x => x.Action == action));
+			foreach (var client in _totalActionClients)
+			{
+				if (client.Action == action)
+				{
+					temp.Span[offset++] = client;
+				}
+			}
+			action.ResetClients(temp.Span.Slice(0,offset));
+
+			offset = 0;
+            foreach (var server in _totalActionServers)
+            {
+                if (server.Action == action)
+                {
+                    temp.Span[offset++] = server;
+                }
+            }
+            action.ResetServers(temp.Span.Slice(0, offset));
 		}
 
 		foreach (var (k, v) in _actions)
