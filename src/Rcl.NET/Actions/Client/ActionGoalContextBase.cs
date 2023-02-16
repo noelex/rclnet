@@ -39,6 +39,11 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
 
     public void OnStatusChanged(ActionGoalStatus state)
     {
+        if (Status == state)
+        {
+            return;
+        }
+
         Status = state;
         OnGoalStateChanged(state);
 

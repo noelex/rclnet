@@ -1,6 +1,7 @@
 ﻿using CppAst.CodeGen.Common;
 using CppAst.CodeGen.CSharp;
 using Rosidl.Generator.CSharp.Helpers;
+using System.Numerics;
 using System.Text;
 
 namespace Rosidl.Generator.CSharp.Builders;
@@ -201,6 +202,46 @@ public class MessageClassBuilder
                     previousLineIsBlank = false;
                     break;
                 case ArrayTypeMetadata array:
+                    if(array.TryGetArraySize(out var arraySize))
+                    {
+                        switch (array.ElementType)
+                        {
+                            case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String:
+                                if (!previousLineIsBlank) writer.AppendLine();
+                                writer.AppendLine($"    this.{fieldName} = new string[{arraySize}];");
+                                writer.AppendLine($"    for (int i = 0; i < this.{fieldName}.Length; i++)");
+                                writer.AppendLine("    {");
+                                writer.AppendLine($"        this.{fieldName}[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}[i].AsSpan(), textEncoding);");
+                                writer.AppendLine("    }");
+                                if (!isLast)
+                                {
+                                    writer.AppendLine();
+                                    previousLineIsBlank = true;
+                                }
+                                break;
+                            case PrimitiveTypeMetadata prim:
+                                var type = _context.GetPrimitiveTypeName(prim);
+                                writer.AppendLine($"    fixed ({type}* __p = priv.{fieldName}) this.{fieldName} = new global::System.Span<{type}>(__p, {arraySize}).ToArray();");
+                                previousLineIsBlank = false;
+                                break;
+                            case ComplexTypeMetadata complex:
+                                if (!previousLineIsBlank) writer.AppendLine();
+                                writer.AppendLine($"    this.{fieldName} = new {_context.GetMessageClassReferenceName(complex)}[{arraySize}];");
+                                writer.AppendLine($"    for (int i = 0; i < this.{fieldName}.Length; i++)");
+                                writer.AppendLine("    {");
+                                writer.AppendLine($"        this.{fieldName}[i] = new {_context.GetMessageClassReferenceName(complex)}(in priv.{fieldName}[i], textEncoding);");
+                                writer.AppendLine("    }");
+                                if (!isLast)
+                                {
+                                    writer.AppendLine();
+                                    previousLineIsBlank = true;
+                                }
+                                break;
+                            default:
+                                throw new NotSupportedException();
+                        }
+                    }
+                    else
                     switch (array.ElementType)
                     {
                         case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String:
@@ -497,6 +538,48 @@ public class MessageClassBuilder
                     previousLineIsBlank = false;
                     break;
                 case ArrayTypeMetadata array:
+                    if(array.TryGetArraySize(out var arraySize))
+                    {
+                        switch (array.ElementType)
+                        {
+                            case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String:
+                                if (!previousLineIsBlank) writer.WriteLine();
+                                writer.WriteLine($"priv.{fieldName} = new Rosidl.Runtime.Interop.CStringSequence(this.{fieldName}.Length);");
+                                writer.WriteLine($"for (int i = 0; i < this.{fieldName}.Length; i++)");
+                                writer.WriteLine("{");
+                                writer.WriteLine($"    priv.{fieldName}[i].CopyFrom(this.{fieldName}[i], textEncoding);");
+                                writer.WriteLine("}");
+                                if (!isLast)
+                                {
+                                    writer.WriteLine();
+                                    previousLineIsBlank = true;
+                                }
+                                break;
+                            case PrimitiveTypeMetadata prim:
+                                var type = _context.GetPrimitiveTypeName(prim);
+                                writer.WriteLine($"fixed ({type}* __p = priv.{fieldName}) " +
+                                    $"this.{fieldName}.CopyTo(new global::System.Span<" +
+                                    $"{type}>(__p, {arraySize}));");
+                                previousLineIsBlank = false;
+                                break;
+                            case ComplexTypeMetadata complex:
+                                if (!previousLineIsBlank) writer.WriteLine();
+                                writer.WriteLine($"priv.{fieldName} = new {_context.GetMessagePrivStructSequenceReferenceName(complex)}(this.{fieldName}.Length);");
+                                writer.WriteLine($"for (int i = 0; i < this.{fieldName}.Length; i++)");
+                                writer.WriteLine("{");
+                                writer.WriteLine($"    this.{fieldName}[i].WriteTo(priv.{fieldName}[i], textEncoding);");
+                                writer.WriteLine("}");
+                                if (!isLast)
+                                {
+                                    writer.WriteLine();
+                                    previousLineIsBlank = true;
+                                }
+                                break;
+                            default:
+                                throw new NotSupportedException();
+                        }
+                    }
+                    else
                     switch (array.ElementType)
                     {
                         case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String:

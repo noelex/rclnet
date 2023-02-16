@@ -21,13 +21,12 @@ public class PrivStructBuilder
         foreach (var variable in fields)
         {
             structure.Members.Add(
-                new CSharpField(variable.Name)
+                new CSharpField(variable.Name + (variable.FixedSize != null ? $"[{variable.FixedSize}]" : ""))
                 {
                     Visibility = CSharpVisibility.Public,
-                    FieldType = new CSharpFreeType(variable.Type),
+                    FieldType = new CSharpFreeType((variable.FixedSize != null ? "fixed " : "") + variable.Type),
                 }.AddComments(variable.Metadata));
         }
-
 
         EmitMethods(structure, methodContext);
 
@@ -79,7 +78,7 @@ public class PrivStructBuilder
             {
                 var name = context.GetNormalizedFieldName(x);
                 var type = GetFieldType(x.Type);
-                return new VariableField(name, type, x);
+                return new VariableField(name, type, x, (x.Type as ArrayTypeMetadata)?.Length);
             })
             .ToArray();
 
@@ -105,6 +104,15 @@ public class PrivStructBuilder
 
         string GetArrayTypeName(ArrayTypeMetadata arrayType)
         {
+            if (arrayType.Length != null)
+            {
+                return arrayType.ElementType switch
+                {
+                    PrimitiveTypeMetadata primitiveType => GetPrimitiveTypeName(primitiveType),
+                    ComplexTypeMetadata complexType => context.GetMessagePrivStructReferenceName(complexType),
+                    _ => throw new NotSupportedException(),
+                };
+            }
             return arrayType.ElementType switch
             {
                 PrimitiveTypeMetadata primitiveType => GetPrimitiveSequenceTypeName(primitiveType),
@@ -134,7 +142,7 @@ public class PrivStructBuilder
         }
     }
 
-    private record VariableField(string Name, string Type, VariableFieldMetadata Metadata);
+    private record VariableField(string Name, string Type, VariableFieldMetadata Metadata, int? FixedSize);
 
     private static CSharpMethod EmitTryInitialize(MethodBuildContext context, Func<string, string> symbolResolver)
     {

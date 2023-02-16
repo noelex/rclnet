@@ -83,10 +83,12 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
 
     protected override void OnDispose()
     {
-        _feedbackChannel.Writer.Complete();
-        foreach (var (_, obs) in _observers)
+        if (_feedbackChannel.Writer.TryComplete())
         {
-            obs.OnCompleted();
+            foreach (var (_, obs) in _observers)
+            {
+                obs.OnCompleted();
+            }
         }
     }
 

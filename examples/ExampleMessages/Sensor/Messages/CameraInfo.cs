@@ -162,9 +162,9 @@ namespace Rosidl.Messages.Sensor
             this.Width = priv.Width;
             this.DistortionModel = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.DistortionModel.AsSpan(), textEncoding);
             this.D = priv.D.AsSpan().ToArray();
-            this.K = priv.K.AsSpan().ToArray();
-            this.R = priv.R.AsSpan().ToArray();
-            this.P = priv.P.AsSpan().ToArray();
+            fixed (double* __p = priv.K) this.K = new global::System.Span<double>(__p, 9).ToArray();
+            fixed (double* __p = priv.R) this.R = new global::System.Span<double>(__p, 9).ToArray();
+            fixed (double* __p = priv.P) this.P = new global::System.Span<double>(__p, 12).ToArray();
             this.BinningX = priv.BinningX;
             this.BinningY = priv.BinningY;
             this.Roi = new global::Rosidl.Messages.Sensor.RegionOfInterest(in priv.Roi, textEncoding);
@@ -344,9 +344,9 @@ namespace Rosidl.Messages.Sensor
             priv.Width = this.Width;
             priv.DistortionModel.CopyFrom(this.DistortionModel, textEncoding);
             priv.D.CopyFrom(this.D);
-            priv.K.CopyFrom(this.K);
-            priv.R.CopyFrom(this.R);
-            priv.P.CopyFrom(this.P);
+            fixed (double* __p = priv.K) this.K.CopyTo(new global::System.Span<double>(__p, 9));
+            fixed (double* __p = priv.R) this.R.CopyTo(new global::System.Span<double>(__p, 9));
+            fixed (double* __p = priv.P) this.P.CopyTo(new global::System.Span<double>(__p, 12));
             priv.BinningX = this.BinningX;
             priv.BinningY = this.BinningY;
             this.Roi.WriteTo(ref priv.Roi, textEncoding);
@@ -451,7 +451,7 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] k]]></c>
             /// </remarks>
-            public global::Rosidl.Runtime.Interop.DoubleSequence K;
+            public fixed double K[9];
             
             /// <summary>
             /// 3x3 row-major matrix
@@ -459,7 +459,7 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] r]]></c>
             /// </remarks>
-            public global::Rosidl.Runtime.Interop.DoubleSequence R;
+            public fixed double R[9];
             
             /// <summary>
             /// 3x4 row-major matrix
@@ -467,7 +467,7 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[12] p]]></c>
             /// </remarks>
-            public global::Rosidl.Runtime.Interop.DoubleSequence P;
+            public fixed double P[12];
             
             /// <summary>
             /// Binning refers here to any camera setting which combines rectangular
@@ -592,12 +592,22 @@ namespace Rosidl.Messages.Sensor
                 __hashCode.Add(this.Width);
                 __hashCode.Add(this.DistortionModel);
                 __hashCode.Add(this.D);
-                __hashCode.Add(this.K);
-                __hashCode.Add(this.R);
-                __hashCode.Add(this.P);
+                for (int i = 0; i < 9; i++)
+                {
+                    __hashCode.Add(this.K[i]);
+                }
+                for (int i = 0; i < 9; i++)
+                {
+                    __hashCode.Add(this.R[i]);
+                }
+                for (int i = 0; i < 12; i++)
+                {
+                    __hashCode.Add(this.P[i]);
+                }
                 __hashCode.Add(this.BinningX);
                 __hashCode.Add(this.BinningY);
                 __hashCode.Add(this.Roi);
+            
                 return __hashCode.ToHashCode();
             }
             

@@ -109,11 +109,11 @@ namespace Rosidl.Messages.Sensor
         {
             this.Header = new global::Rosidl.Messages.Std.Header(in priv.Header, textEncoding);
             this.Orientation = new global::Rosidl.Messages.Geometry.Quaternion(in priv.Orientation, textEncoding);
-            this.OrientationCovariance = priv.OrientationCovariance.AsSpan().ToArray();
+            fixed (double* __p = priv.OrientationCovariance) this.OrientationCovariance = new global::System.Span<double>(__p, 9).ToArray();
             this.AngularVelocity = new global::Rosidl.Messages.Geometry.Vector3(in priv.AngularVelocity, textEncoding);
-            this.AngularVelocityCovariance = priv.AngularVelocityCovariance.AsSpan().ToArray();
+            fixed (double* __p = priv.AngularVelocityCovariance) this.AngularVelocityCovariance = new global::System.Span<double>(__p, 9).ToArray();
             this.LinearAcceleration = new global::Rosidl.Messages.Geometry.Vector3(in priv.LinearAcceleration, textEncoding);
-            this.LinearAccelerationCovariance = priv.LinearAccelerationCovariance.AsSpan().ToArray();
+            fixed (double* __p = priv.LinearAccelerationCovariance) this.LinearAccelerationCovariance = new global::System.Span<double>(__p, 9).ToArray();
         }
         
         
@@ -227,11 +227,11 @@ namespace Rosidl.Messages.Sensor
         {
             this.Header.WriteTo(ref priv.Header, textEncoding);
             this.Orientation.WriteTo(ref priv.Orientation, textEncoding);
-            priv.OrientationCovariance.CopyFrom(this.OrientationCovariance);
+            fixed (double* __p = priv.OrientationCovariance) this.OrientationCovariance.CopyTo(new global::System.Span<double>(__p, 9));
             this.AngularVelocity.WriteTo(ref priv.AngularVelocity, textEncoding);
-            priv.AngularVelocityCovariance.CopyFrom(this.AngularVelocityCovariance);
+            fixed (double* __p = priv.AngularVelocityCovariance) this.AngularVelocityCovariance.CopyTo(new global::System.Span<double>(__p, 9));
             this.LinearAcceleration.WriteTo(ref priv.LinearAcceleration, textEncoding);
-            priv.LinearAccelerationCovariance.CopyFrom(this.LinearAccelerationCovariance);
+            fixed (double* __p = priv.LinearAccelerationCovariance) this.LinearAccelerationCovariance.CopyTo(new global::System.Span<double>(__p, 9));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -292,7 +292,7 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] orientation_covariance]]></c>
             /// </remarks>
-            public global::Rosidl.Runtime.Interop.DoubleSequence OrientationCovariance;
+            public fixed double OrientationCovariance[9];
             
             /// <summary>
             /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3 angular_velocity]]></c>
@@ -305,7 +305,7 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] angular_velocity_covariance]]></c>
             /// </remarks>
-            public global::Rosidl.Runtime.Interop.DoubleSequence AngularVelocityCovariance;
+            public fixed double AngularVelocityCovariance[9];
             
             /// <summary>
             /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3 linear_acceleration]]></c>
@@ -318,7 +318,7 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] linear_acceleration_covariance]]></c>
             /// </remarks>
-            public global::Rosidl.Runtime.Interop.DoubleSequence LinearAccelerationCovariance;
+            public fixed double LinearAccelerationCovariance[9];
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -409,11 +409,21 @@ namespace Rosidl.Messages.Sensor
                 var __hashCode = new global::System.HashCode();
                 __hashCode.Add(this.Header);
                 __hashCode.Add(this.Orientation);
-                __hashCode.Add(this.OrientationCovariance);
+                for (int i = 0; i < 9; i++)
+                {
+                    __hashCode.Add(this.OrientationCovariance[i]);
+                }
                 __hashCode.Add(this.AngularVelocity);
-                __hashCode.Add(this.AngularVelocityCovariance);
+                for (int i = 0; i < 9; i++)
+                {
+                    __hashCode.Add(this.AngularVelocityCovariance[i]);
+                }
                 __hashCode.Add(this.LinearAcceleration);
-                __hashCode.Add(this.LinearAccelerationCovariance);
+                for (int i = 0; i < 9; i++)
+                {
+                    __hashCode.Add(this.LinearAccelerationCovariance[i]);
+                }
+            
                 return __hashCode.ToHashCode();
             }
             

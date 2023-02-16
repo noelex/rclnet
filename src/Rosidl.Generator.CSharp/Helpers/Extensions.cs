@@ -8,6 +8,19 @@ using System.Threading.Tasks;
 namespace Rosidl.Generator.CSharp.Helpers;
 internal static class Extensions
 {
+    public static bool IsFixedSizedArray(this TypeMetadata fieldType)
+        => fieldType is ArrayTypeMetadata a && a.Length != null;
+    public static bool TryGetArraySize(this TypeMetadata fieldType, out int size)
+    {
+        size = 0;
+        if (fieldType is ArrayTypeMetadata a && a.Length != null)
+        {
+            size = a.Length.Value;
+            return true;
+        }
+
+        return false;
+    }
     public static void AddTypeSupportAttribute(this CSharpClass cls, string name)
     {
         cls.Attributes.Add(new CSharpFreeAttribute($"global::Rosidl.Runtime.TypeSupportAttribute(\"{name}\")"));

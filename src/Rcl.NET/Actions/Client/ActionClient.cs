@@ -105,7 +105,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         Debug.Assert(introspection.GetMemberName(1) == "feedback");
 
         ref var uuid = ref introspection.AsRef<UUID.Priv>(buffer.Data, 0);
-        var goalId = new Guid(uuid.Uuid.AsSpan());
+        var goalId = uuid.ToGuid();
 
         if (!_goals.TryGetValue(goalId, out var ctx) || !ctx.HasFeedbackListeners)
         {
@@ -130,7 +130,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         ref var array = ref buffer.AsRef<GoalStatusArray.Priv>();
         foreach (var status in array.StatusList.AsSpan())
         {
-            var id = new Guid(status.GoalInfo.GoalId.Uuid.AsSpan());
+            var id = status.GoalInfo.GoalId.ToGuid();
             if (_goals.TryGetValue(id, out var ctx))
             {
                 ctx.OnStatusChanged((ActionGoalStatus)status.Status);

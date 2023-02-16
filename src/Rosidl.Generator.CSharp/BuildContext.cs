@@ -172,14 +172,19 @@ public class MessageBuildContext
 
     public string GetMessagePrivStructSequenceReferenceName(ComplexTypeMetadata metadata) => GetMessageReferenceName(metadata, NameType.PrivStructSequence);
 
-    public string GetNormalizedFieldName(FieldMetadata metadata)
+    public string GetNormalizedFieldName(string name)
     {
-        var name = Options.ResolveFieldName(this, metadata);
         if (name == ClassName || name == PrivStructName || name == PrivStructSequenceName)
         {
             return name + "_";
         }
         return name;
+    }
+
+    public string GetNormalizedFieldName(FieldMetadata metadata)
+    {
+        var name = Options.ResolveFieldName(this, metadata);
+        return GetNormalizedFieldName(name);
     }
 
     public string GetPrimitiveTypeName(PrimitiveTypeMetadata metadata)

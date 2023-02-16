@@ -4,7 +4,7 @@ namespace Rosidl.Messages.UniqueIdentifier;
 
 public partial class UUID
 {
-    public partial struct Priv
+    public unsafe partial struct Priv
     {
         public Priv(Guid guid)
         {
@@ -13,9 +13,14 @@ public partial class UUID
 
         public void CopyFrom(Guid guid)
         {
-            Uuid.CopyFrom(MemoryMarshal.AsBytes(new Span<Guid>(ref guid)));
+            fixed (byte* p = Uuid)
+                System.Runtime.CompilerServices.Unsafe.Copy(p, ref guid);
         }
 
-        public Guid ToGuid() => new(Uuid.AsSpan());
+        public Guid ToGuid()
+        {
+            fixed (Priv* p = &this)
+                return System.Runtime.CompilerServices.Unsafe.AsRef<Guid>(p);
+        }
     }
 }

@@ -117,7 +117,7 @@ namespace Rosidl.Messages.Sensor
             this.Latitude = priv.Latitude;
             this.Longitude = priv.Longitude;
             this.Altitude = priv.Altitude;
-            this.PositionCovariance = priv.PositionCovariance.AsSpan().ToArray();
+            fixed (double* __p = priv.PositionCovariance) this.PositionCovariance = new global::System.Span<double>(__p, 9).ToArray();
             this.PositionCovarianceType = priv.PositionCovarianceType;
         }
         
@@ -250,7 +250,7 @@ namespace Rosidl.Messages.Sensor
             priv.Latitude = this.Latitude;
             priv.Longitude = this.Longitude;
             priv.Altitude = this.Altitude;
-            priv.PositionCovariance.CopyFrom(this.PositionCovariance);
+            fixed (double* __p = priv.PositionCovariance) this.PositionCovariance.CopyTo(new global::System.Span<double>(__p, 9));
             priv.PositionCovarianceType = this.PositionCovarianceType;
         }
         
@@ -344,7 +344,7 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] position_covariance]]></c>
             /// </remarks>
-            public global::Rosidl.Runtime.Interop.DoubleSequence PositionCovariance;
+            public fixed double PositionCovariance[9];
             
             /// <summary>
             /// Originally defined as: <c><![CDATA[uint8 position_covariance_type]]></c>
@@ -443,8 +443,12 @@ namespace Rosidl.Messages.Sensor
                 __hashCode.Add(this.Latitude);
                 __hashCode.Add(this.Longitude);
                 __hashCode.Add(this.Altitude);
-                __hashCode.Add(this.PositionCovariance);
+                for (int i = 0; i < 9; i++)
+                {
+                    __hashCode.Add(this.PositionCovariance[i]);
+                }
                 __hashCode.Add(this.PositionCovarianceType);
+            
                 return __hashCode.ToHashCode();
             }
             

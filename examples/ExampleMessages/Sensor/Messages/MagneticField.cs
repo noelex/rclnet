@@ -84,7 +84,7 @@ namespace Rosidl.Messages.Sensor
         {
             this.Header = new global::Rosidl.Messages.Std.Header(in priv.Header, textEncoding);
             this.MagneticField_ = new global::Rosidl.Messages.Geometry.Vector3(in priv.MagneticField_, textEncoding);
-            this.MagneticFieldCovariance = priv.MagneticFieldCovariance.AsSpan().ToArray();
+            fixed (double* __p = priv.MagneticFieldCovariance) this.MagneticFieldCovariance = new global::System.Span<double>(__p, 9).ToArray();
         }
         
         
@@ -144,7 +144,7 @@ namespace Rosidl.Messages.Sensor
         {
             this.Header.WriteTo(ref priv.Header, textEncoding);
             this.MagneticField_.WriteTo(ref priv.MagneticField_, textEncoding);
-            priv.MagneticFieldCovariance.CopyFrom(this.MagneticFieldCovariance);
+            fixed (double* __p = priv.MagneticFieldCovariance) this.MagneticFieldCovariance.CopyTo(new global::System.Span<double>(__p, 9));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -206,7 +206,7 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] magnetic_field_covariance]]></c>
             /// </remarks>
-            public global::Rosidl.Runtime.Interop.DoubleSequence MagneticFieldCovariance;
+            public fixed double MagneticFieldCovariance[9];
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -297,7 +297,11 @@ namespace Rosidl.Messages.Sensor
                 var __hashCode = new global::System.HashCode();
                 __hashCode.Add(this.Header);
                 __hashCode.Add(this.MagneticField_);
-                __hashCode.Add(this.MagneticFieldCovariance);
+                for (int i = 0; i < 9; i++)
+                {
+                    __hashCode.Add(this.MagneticFieldCovariance[i]);
+                }
+            
                 return __hashCode.ToHashCode();
             }
             

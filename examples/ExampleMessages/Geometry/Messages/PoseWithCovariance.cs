@@ -72,7 +72,7 @@ namespace Rosidl.Messages.Geometry
         public PoseWithCovariance(in Priv priv, global::System.Text.Encoding textEncoding)
         {
             this.Pose = new global::Rosidl.Messages.Geometry.Pose(in priv.Pose, textEncoding);
-            this.Covariance = priv.Covariance.AsSpan().ToArray();
+            fixed (double* __p = priv.Covariance) this.Covariance = new global::System.Span<double>(__p, 36).ToArray();
         }
         
         
@@ -121,7 +121,7 @@ namespace Rosidl.Messages.Geometry
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
             this.Pose.WriteTo(ref priv.Pose, textEncoding);
-            priv.Covariance.CopyFrom(this.Covariance);
+            fixed (double* __p = priv.Covariance) this.Covariance.CopyTo(new global::System.Span<double>(__p, 36));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -168,7 +168,7 @@ namespace Rosidl.Messages.Geometry
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[36] covariance]]></c>
             /// </remarks>
-            public global::Rosidl.Runtime.Interop.DoubleSequence Covariance;
+            public fixed double Covariance[36];
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -258,7 +258,11 @@ namespace Rosidl.Messages.Geometry
             {
                 var __hashCode = new global::System.HashCode();
                 __hashCode.Add(this.Pose);
-                __hashCode.Add(this.Covariance);
+                for (int i = 0; i < 36; i++)
+                {
+                    __hashCode.Add(this.Covariance[i]);
+                }
+            
                 return __hashCode.ToHashCode();
             }
             

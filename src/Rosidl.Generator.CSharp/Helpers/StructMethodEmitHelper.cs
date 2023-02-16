@@ -126,15 +126,25 @@ internal static class StructMethodEmitHelper
     {
         var fields = context.MessageContext.Metadata.Fields
             .OfType<VariableFieldMetadata>().ToArray();
-
+        
         StringBuilder body = new();
         var idx = 0;
         foreach (var f in fields)
         {
-            body.Append($"    __hashCode.Add(this.{context.MessageContext.GetNormalizedFieldName(f)});");
-            if (idx++ < fields.Length - 1)
+            if (f.Type.TryGetArraySize(out var sz))
             {
-                body.AppendLine();
+                body.AppendLine($"    for (int i = 0; i < {sz}; i++)");
+                body.AppendLine("    {");
+                body.AppendLine($"        __hashCode.Add(this.{context.MessageContext.GetNormalizedFieldName(f)}[i]);");
+                body.AppendLine("    }");
+            }
+            else
+            {
+                body.Append($"    __hashCode.Add(this.{context.MessageContext.GetNormalizedFieldName(f)});");
+                if (idx++ < fields.Length - 1)
+                {
+                    body.AppendLine();
+                }
             }
         }
 

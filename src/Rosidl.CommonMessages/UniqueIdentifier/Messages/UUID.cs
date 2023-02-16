@@ -65,7 +65,7 @@ namespace Rosidl.Messages.UniqueIdentifier
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public UUID(in Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.Uuid = priv.Uuid.AsSpan().ToArray();
+            fixed (byte* __p = priv.Uuid) this.Uuid = new global::System.Span<byte>(__p, 16).ToArray();
         }
         
         
@@ -100,7 +100,7 @@ namespace Rosidl.Messages.UniqueIdentifier
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
-            priv.Uuid.CopyFrom(this.Uuid);
+            fixed (byte* __p = priv.Uuid) this.Uuid.CopyTo(new global::System.Span<byte>(__p, 16));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -139,7 +139,7 @@ namespace Rosidl.Messages.UniqueIdentifier
             /// <summary>
             /// Originally defined as: <c><![CDATA[uint8[16] uuid]]></c>
             /// </summary>
-            public global::Rosidl.Runtime.Interop.UInt8Sequence Uuid;
+            public fixed byte Uuid[16];
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -228,7 +228,11 @@ namespace Rosidl.Messages.UniqueIdentifier
             public override int GetHashCode()
             {
                 var __hashCode = new global::System.HashCode();
-                __hashCode.Add(this.Uuid);
+                for (int i = 0; i < 16; i++)
+                {
+                    __hashCode.Add(this.Uuid[i]);
+                }
+            
                 return __hashCode.ToHashCode();
             }
             
