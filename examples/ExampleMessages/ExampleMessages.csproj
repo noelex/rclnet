@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Rosidl.CommonMessages\Rosidl.CommonMessages.csproj" />
+    <ProjectReference Include="..\..\src\Rosidl.Runtime\Rosidl.Runtime.csproj" />
+  </ItemGroup>
+
+</Project>

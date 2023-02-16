@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Rcl.Actions;
 
-public interface IActionGoalContext
+public interface IActionGoalContext : IRclObject
 {
     event Action<ActionGoalStatus>? StatusChanged;
 
@@ -17,16 +17,16 @@ public interface IActionGoalContext
 
     ActionGoalStatus Status { get; }
 
-    Task CancelAsync(TimeSpan timeout, CancellationToken cancellationToken);
+    Task CancelAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
 }
 
 public interface INativeActionGoalContext : IActionGoalContext
 {
-    Task<RosMessageBuffer> GetResultAsync(CancellationToken cancellationToken);
+    Task<RosMessageBuffer> GetResultAsync(CancellationToken cancellationToken = default);
 
-    Task<RosMessageBuffer> GetResultAsync(int timeoutMilliseconds, CancellationToken cancellationToken);
+    Task<RosMessageBuffer> GetResultAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default);
 
-    Task<RosMessageBuffer> GetResultAsync(TimeSpan timeout, CancellationToken cancellationToken);
+    Task<RosMessageBuffer> GetResultAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Asynchronously read all feedback messages.
@@ -42,18 +42,18 @@ public interface INativeActionGoalContext : IActionGoalContext
     /// </para>
     /// </remarks>
     /// <returns></returns>
-    IAsyncEnumerable<RosMessageBuffer> ReadFeedbacksAsync(CancellationToken cancellationToken);
+    IAsyncEnumerable<RosMessageBuffer> ReadFeedbacksAsync(CancellationToken cancellationToken = default);
 }
 
 public interface IActionGoalContext<TResult, TFeedback> : IActionGoalContext, IObservable<TFeedback>
     where TFeedback: IActionFeedback
     where TResult: IActionResult
 {
-    Task<TResult> GetResultAsync(CancellationToken cancellationToken);
+    Task<TResult> GetResultAsync(CancellationToken cancellationToken = default);
 
-    Task<TResult> GetResultAsync(int timeoutMilliseconds, CancellationToken cancellationToken);
+    Task<TResult> GetResultAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default);
 
-    Task<TResult> GetResultAsync(TimeSpan timeout, CancellationToken cancellationToken);
+    Task<TResult> GetResultAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Asynchronously read all feedback messages.
@@ -66,5 +66,5 @@ public interface IActionGoalContext<TResult, TFeedback> : IActionGoalContext, IO
     /// </remarks>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    IAsyncEnumerable<TFeedback> ReadFeedbacksAsync(CancellationToken cancellationToken);
+    IAsyncEnumerable<TFeedback> ReadFeedbacksAsync(CancellationToken cancellationToken = default);
 }

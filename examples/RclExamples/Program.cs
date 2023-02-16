@@ -21,8 +21,8 @@ Task t1, t2, t3, t4;
                 EmptyServiceRequest,
                 EmptyServiceResponse>("/test_service");
 
-    using var pub = node.CreatePublisher<Vector3>("/turtle1/cmd_vel");
-    using var sub = node.CreateSubscription<Vector3>("/turtle1/cmd_vel");
+    using var pub = node.CreatePublisher<Vector3>("/test_topic");
+    using var sub = node.CreateSubscription<Vector3>("/test_topic");
 
     using var cts = new CancellationTokenSource();
 

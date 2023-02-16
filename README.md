@@ -114,6 +114,10 @@ await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
     See [here](https://github.com/noelex/rclnet/blob/main/src/ros2cs/ros2cs.spec) for detailed explanations on how to write a `ros2cs.spec` file.
 
     You may want to exclude packages that are already included in [Rosidl.CommonMessages](https://github.com/noelex/rclnet/tree/main/src/Rosidl.CommonMessages/ros2cs.spec).
+4. Add a `_AssemblyAttributes.cs` to the root of the project with the following contents:
+    ```
+    [assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]
+    ```
 4. Install `ros2cs` with the following command:
    ```
    dotnet tool install -g ros2cs
