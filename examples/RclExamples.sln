@@ -13,11 +13,19 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rosidl.Runtime", "..\src\Ro
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rosidl.Runtime.SourceGeneration", "..\src\Rosidl.Runtime.SourceGeneration\Rosidl.Runtime.SourceGeneration.csproj", "{EC2DC0A9-2577-4B50-8405-978D81669119}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExampleMessages", "ExampleMessages\ExampleMessages.csproj", "{E1D3176D-B663-4488-83B9-2645F025DD4C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExampleMessages", "ExampleMessages\ExampleMessages.csproj", "{E1D3176D-B663-4488-83B9-2645F025DD4C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deps", "deps", "{00F4797E-E3B5-4EEE-ACEE-50E06A702F18}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TurtleRotate", "TurtleRotate\TurtleRotate.csproj", "{768EA656-3825-42C9-8545-1852987F4F29}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TurtleRotate", "TurtleRotate\TurtleRotate.csproj", "{768EA656-3825-42C9-8545-1852987F4F29}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TurtleCircling", "TurtleCircling\TurtleCircling.csproj", "{1DF70F9C-AAD2-43B7-BD14-6B0D881B8958}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TurtlePose", "TurtlePose\TurtlePose.csproj", "{EC592942-6360-416E-ADD6-AE81EDC0C914}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TurtleClear", "TurtleClear\TurtleClear.csproj", "{A379ACB6-6B90-45A1-B49E-FCFEBA4A56AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphMonitor", "GraphMonitor\GraphMonitor.csproj", "{B39CCBAA-9595-4777-B911-DC8048A128C3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,6 +61,22 @@ Global
 		{768EA656-3825-42C9-8545-1852987F4F29}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{768EA656-3825-42C9-8545-1852987F4F29}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{768EA656-3825-42C9-8545-1852987F4F29}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DF70F9C-AAD2-43B7-BD14-6B0D881B8958}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DF70F9C-AAD2-43B7-BD14-6B0D881B8958}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DF70F9C-AAD2-43B7-BD14-6B0D881B8958}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DF70F9C-AAD2-43B7-BD14-6B0D881B8958}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC592942-6360-416E-ADD6-AE81EDC0C914}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC592942-6360-416E-ADD6-AE81EDC0C914}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC592942-6360-416E-ADD6-AE81EDC0C914}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC592942-6360-416E-ADD6-AE81EDC0C914}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A379ACB6-6B90-45A1-B49E-FCFEBA4A56AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A379ACB6-6B90-45A1-B49E-FCFEBA4A56AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A379ACB6-6B90-45A1-B49E-FCFEBA4A56AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A379ACB6-6B90-45A1-B49E-FCFEBA4A56AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B39CCBAA-9595-4777-B911-DC8048A128C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B39CCBAA-9595-4777-B911-DC8048A128C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B39CCBAA-9595-4777-B911-DC8048A128C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B39CCBAA-9595-4777-B911-DC8048A128C3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

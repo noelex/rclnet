@@ -9,8 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ExampleMessages\ExampleMessages.csproj" />
     <ProjectReference Include="..\..\src\Rcl.NET\Rcl.NET.csproj" />
+    <ProjectReference Include="..\ExampleMessages\ExampleMessages.csproj" />
   </ItemGroup>
 
 </Project>

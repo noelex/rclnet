@@ -170,7 +170,7 @@ public class CSharpCodeGenerator
                 var file = (CSharpGeneratedFile)code;
 
                 var pth = Path.Combine(dir, file.FilePath.ToString());
-                Console.WriteLine($"Converting {metadata} to {pth}...");
+                Console.WriteLine($"Converting {metadata} to {pth} ...");
 
                 var fs = new MemoryFileSystem();
                 var cw = new CodeWriter(new CodeWriterOptions(fs));
