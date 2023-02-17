@@ -6,6 +6,7 @@ using Rosidl.Messages.UniqueIdentifier;
 using Rosidl.Runtime;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Rcl.Actions.Client;
@@ -105,9 +106,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         Debug.Assert(introspection.GetMemberName(1) == "feedback");
 
         ref var uuid = ref introspection.AsRef<UUID.Priv>(buffer.Data, 0);
-        var goalId = uuid.ToGuid();
-
-        if (!_goals.TryGetValue(goalId, out var ctx) || !ctx.HasFeedbackListeners)
+        if (!_goals.TryGetValue(uuid, out var ctx) || !ctx.HasFeedbackListeners)
         {
             return;
         }
@@ -148,9 +147,9 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         // bool accepted;
         // Time.Priv stamp;
         Debug.Assert(_typesupport.GoalService.Response.MemberCount == 2);
-        Debug.Assert(_typesupport.GoalService.Response.GetMemberName(0) == "accepted");
-        Debug.Assert(_typesupport.GoalService.Response.GetMemberName(1) == "stamp");
-        return _typesupport.GoalService.Response.AsRef<bool>(responseBuffer.Data, 0);
+        Debug.Assert(_typesupport.GoalService.Response.SizeOf == Unsafe.SizeOf<SendGoalResponse>());
+        return _typesupport.GoalService.Response
+            .AsRef<SendGoalResponse>(responseBuffer.Data, 0).Accepted;
     }
 
     public async Task<INativeActionGoalContext> SendGoalAsync(RosMessageBuffer goalBuffer, TimeSpan timeout, CancellationToken cancellationToken = default)

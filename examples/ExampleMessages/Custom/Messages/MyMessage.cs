@@ -11,20 +11,17 @@ using System;
 
 #nullable enable
 
-namespace Rosidl.Messages.Geometry
+namespace Rosidl.Messages.Custom
 {
     /// <summary>
-    /// This expresses velocity in free space with uncertainty.
+    /// Message interface definition for <c>custom_msgs/msg/MyMessage</c>.
     /// </summary>
-    /// <remarks>
-    /// Message interface definition for <c>geometry_msgs/msg/TwistWithCovariance</c>.
-    /// </remarks>
-    [global::Rosidl.Runtime.TypeSupportAttribute("geometry_msgs/msg/TwistWithCovariance")]
-    public unsafe partial class TwistWithCovariance : global::Rosidl.Runtime.IMessage
+    [global::Rosidl.Runtime.TypeSupportAttribute("custom_msgs/msg/MyMessage")]
+    public unsafe partial class MyMessage : global::Rosidl.Runtime.IMessage
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public static string TypeSupportName => "geometry_msgs/msg/TwistWithCovariance";
+        public static string TypeSupportName => "custom_msgs/msg/MyMessage";
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -33,89 +30,215 @@ namespace Rosidl.Messages.Geometry
             return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
             
             [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-            [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__geometry_msgs__msg__TwistWithCovariance")]
+            [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__custom_msgs__msg__MyMessage")]
             static extern nint _PInvoke();
         }
         
         /// <summary>
-        /// Create a new instance of <see cref="TwistWithCovariance"/> with fields initialized to specified values.
+        /// Create a new instance of <see cref="MyMessage"/> with fields initialized to specified values.
         /// </summary>
-        /// <param name='twist'>
-        /// Originally defined as: <c><![CDATA[geometry_msgs/Twist twist]]></c>
+        /// <param name='a'>
+        /// Originally defined as: <c><![CDATA[uint8 a]]></c>
         /// </param>
-        /// <param name='covariance'>
-        /// Row-major representation of the 6x6 covariance matrix
-        /// The orientation parameters use a fixed-axis representation.
-        /// In order, the parameters are:
-        /// (x, y, z, rotation about X axis, rotation about Y axis, rotation about Z axis)
-        /// <para>(originally defined as: <c><![CDATA[float64[36] covariance]]></c>)</para>
+        /// <param name='strings'>
+        /// Originally defined as: <c><![CDATA[string[3] strings]]></c>
+        /// </param>
+        /// <param name='b'>
+        /// Originally defined as: <c><![CDATA[uint8 b]]></c>
+        /// </param>
+        /// <param name='vectors'>
+        /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[3] vectors]]></c>
+        /// </param>
+        /// <param name='numbers'>
+        /// Originally defined as: <c><![CDATA[int64[3] numbers]]></c>
+        /// </param>
+        /// <param name='c'>
+        /// Originally defined as: <c><![CDATA[string[] c]]></c>
+        /// </param>
+        /// <param name='d'>
+        /// Originally defined as: <c><![CDATA[bool d]]></c>
         /// </param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public TwistWithCovariance(
-            global::Rosidl.Messages.Geometry.Twist? @twist = null,
-            double[]? @covariance = null
+        public MyMessage(
+            byte @a = 0,
+            string[]? @strings = null,
+            byte @b = 0,
+            global::Rosidl.Messages.Geometry.Vector3[]? @vectors = null,
+            long[]? @numbers = null,
+            string[]? @c = null,
+            bool @d = false
         )
         {
-            Twist = @twist ?? new global::Rosidl.Messages.Geometry.Twist();
+            A = @a;
         
-            if (@covariance != null)
+            if (@strings != null)
             {
-                Covariance = @covariance;
+                Strings = @strings;
             }
             else
             {
-                Covariance = new double[36];
+                Strings = new string[3];
+                for (int i = 0; i < 3; i++)
+                {
+                    Strings[i] = "";
+                }
             }
+        
+            B = @b;
+        
+            if (@vectors != null)
+            {
+                Vectors = @vectors;
+            }
+            else
+            {
+                Vectors = new global::Rosidl.Messages.Geometry.Vector3[3];
+                for (int i = 0; i < 3; i++)
+                {
+                   Vectors[i] = new global::Rosidl.Messages.Geometry.Vector3();
+                }
+            }
+        
+            if (@numbers != null)
+            {
+                Numbers = @numbers;
+            }
+            else
+            {
+                Numbers = new long[3];
+            }
+        
+            C = @c ?? global::System.Array.Empty<string>();
+            D = @d;
         }
         
         
         /// <summary>
-        /// Create a new instance of <see cref="TwistWithCovariance"/>, and copy its data from the specified <see cref="Priv"/> structure.
+        /// Create a new instance of <see cref="MyMessage"/>, and copy its data from the specified <see cref="Priv"/> structure.
         /// </summary>
         /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
         /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public TwistWithCovariance(in Priv priv, global::System.Text.Encoding textEncoding)
+        public MyMessage(in Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.Twist = new global::Rosidl.Messages.Geometry.Twist(in priv.Twist, textEncoding);
-            this.Covariance = priv.Covariance.ToArray();
+            this.A = priv.A;
+        
+            this.Strings = new string[3];
+            for (int i = 0; i < this.Strings.Length; i++)
+            {
+                this.Strings[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Strings[i].AsSpan(), textEncoding);
+            }
+        
+            this.B = priv.B;
+        
+            this.Vectors = new global::Rosidl.Messages.Geometry.Vector3[3];
+            for (int i = 0; i < this.Vectors.Length; i++)
+            {
+                this.Vectors[i] = new global::Rosidl.Messages.Geometry.Vector3(in priv.Vectors[i], textEncoding);
+            }
+        
+            this.Numbers = priv.Numbers.ToArray();
+        
+            this.C = new string[priv.C.Size];
+            var C_span = priv.C.AsSpan();
+            for (int i = 0; i < this.C.Length; i++)
+            {
+                this.C[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(C_span[i].AsSpan(), textEncoding);
+            }
+        
+            this.D = priv.D;
         }
         
         
         /// <summary>
-        /// Originally defined as: <c><![CDATA[geometry_msgs/Twist twist]]></c>
+        /// Originally defined as: <c><![CDATA[uint8 a]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public global::Rosidl.Messages.Geometry.Twist Twist { get; set; }
+        public byte A { get; set; }
         
-        private double[] __backingField__Covariance;
+        private string[] __backingField__Strings;
         
         /// <summary>
-        /// Row-major representation of the 6x6 covariance matrix
-        /// The orientation parameters use a fixed-axis representation.
-        /// In order, the parameters are:
-        /// (x, y, z, rotation about X axis, rotation about Y axis, rotation about Z axis)
+        /// Originally defined as: <c><![CDATA[string[3] strings]]></c>
         /// </summary>
-        /// <remarks>
-        /// Originally defined as: <c><![CDATA[float64[36] covariance]]></c>
-        /// </remarks>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public double[] Covariance
+        public string[] Strings
         {
             get
             {
-                return __backingField__Covariance;
+                return __backingField__Strings;
             }
-            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__Covariance))]
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__Strings))]
             set
             {
-                __backingField__Covariance = value.Length == 36 ? value : throw new global::System.ArgumentException("Size of the array 'Covariance' must be 36.");
+                __backingField__Strings = value.Length == 3 ? value : throw new global::System.ArgumentException("Size of the array 'Strings' must be 3.");
             }
         }
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[uint8 b]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public byte B { get; set; }
+        
+        private global::Rosidl.Messages.Geometry.Vector3[] __backingField__Vectors;
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[3] vectors]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public global::Rosidl.Messages.Geometry.Vector3[] Vectors
+        {
+            get
+            {
+                return __backingField__Vectors;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__Vectors))]
+            set
+            {
+                __backingField__Vectors = value.Length == 3 ? value : throw new global::System.ArgumentException("Size of the array 'Vectors' must be 3.");
+            }
+        }
+        
+        private long[] __backingField__Numbers;
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[int64[3] numbers]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public long[] Numbers
+        {
+            get
+            {
+                return __backingField__Numbers;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__Numbers))]
+            set
+            {
+                __backingField__Numbers = value.Length == 3 ? value : throw new global::System.ArgumentException("Size of the array 'Numbers' must be 3.");
+            }
+        }
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[string[] c]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string[] C { get; set; }
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[bool d]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public bool D { get; set; }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -128,22 +251,50 @@ namespace Rosidl.Messages.Geometry
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.Twist.WriteTo(ref priv.Twist, textEncoding);
-            fixed (double* __p = priv.Covariance) this.Covariance.CopyTo(new global::System.Span<double>(__p, 36));
+            priv.A = this.A;
+            
+            fixed (global::Rosidl.Runtime.Interop.CString* __p = priv.Strings)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    __p[i].CopyFrom(this.Strings[i], textEncoding);
+                }
+            }
+            
+            priv.B = this.B;
+            
+            fixed (global::Rosidl.Messages.Geometry.Vector3.Priv* __p = priv.Vectors)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    this.Vectors[i].WriteTo(ref __p[i], textEncoding);
+                }
+            }
+            
+            fixed (long* __p = priv.Numbers) this.Numbers.CopyTo(new global::System.Span<long>(__p, 3));
+            
+            priv.C = new global::Rosidl.Runtime.Interop.CStringSequence(this.C.Length);
+            var C_span = priv.C.AsSpan();
+            for (int i = 0; i < this.C.Length; i++)
+            {
+                C_span[i].CopyFrom(this.C[i], textEncoding);
+            }
+            
+            priv.D = this.D;
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
         {
-            return new TwistWithCovariance(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+            return new MyMessage(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public static nint UnsafeCreate()
         {
-            return new(global::Rosidl.Messages.Geometry.TwistWithCovariance.Priv.Create());
+            return new(global::Rosidl.Messages.Custom.MyMessage.Priv.Create());
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -154,39 +305,75 @@ namespace Rosidl.Messages.Geometry
         }
         
         /// <summary>
-        /// This expresses velocity in free space with uncertainty.
+        /// Blittable native structure for <c>custom_msgs/msg/MyMessage</c>.
         /// </summary>
-        /// <remarks>
-        /// Blittable native structure for <c>geometry_msgs/msg/TwistWithCovariance</c>.
-        /// </remarks>
         [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
         public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
         {
             /// <summary>
-            /// Originally defined as: <c><![CDATA[geometry_msgs/Twist twist]]></c>
+            /// Originally defined as: <c><![CDATA[uint8 a]]></c>
             /// </summary>
-            public global::Rosidl.Messages.Geometry.Twist.Priv Twist;
+            public byte A;
             
-            private fixed double __Covariance[36];
+            private global::Rosidl.Runtime.Interop.CString __Strings_0, __Strings_1, __Strings_2;
             
             /// <summary>
-            /// Row-major representation of the 6x6 covariance matrix
-            /// The orientation parameters use a fixed-axis representation.
-            /// In order, the parameters are:
-            /// (x, y, z, rotation about X axis, rotation about Y axis, rotation about Z axis)
+            /// Originally defined as: <c><![CDATA[string[3] strings]]></c>
             /// </summary>
-            /// <remarks>
-            /// Originally defined as: <c><![CDATA[float64[36] covariance]]></c>
-            /// </remarks>
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-            public global::System.Span<double> Covariance
+            public global::System.Span<global::Rosidl.Runtime.Interop.CString> Strings
             {
                 get
                 {
-                    fixed (global::Rosidl.Messages.Geometry.TwistWithCovariance.Priv* __p = &this) return new (__p->__Covariance, 36);
+                    fixed (global::Rosidl.Runtime.Interop.CString* __p = &__Strings_0) return new (__p, 3);
                 }
             }
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[uint8 b]]></c>
+            /// </summary>
+            public byte B;
+            
+            private global::Rosidl.Messages.Geometry.Vector3.Priv __Vectors_0, __Vectors_1, __Vectors_2;
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[3] vectors]]></c>
+            /// </summary>
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<global::Rosidl.Messages.Geometry.Vector3.Priv> Vectors
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.Geometry.Vector3.Priv* __p = &__Vectors_0) return new (__p, 3);
+                }
+            }
+            
+            private fixed long __Numbers[3];
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[int64[3] numbers]]></c>
+            /// </summary>
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<long> Numbers
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.Custom.MyMessage.Priv* __p = &this) return new (__p->__Numbers, 3);
+                }
+            }
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[string[] c]]></c>
+            /// </summary>
+            public global::Rosidl.Runtime.Interop.CStringSequence C;
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[bool d]]></c>
+            /// </summary>
+            public bool D;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -275,11 +462,22 @@ namespace Rosidl.Messages.Geometry
             public override int GetHashCode()
             {
                 var __hashCode = new global::System.HashCode();
-                __hashCode.Add(this.Twist);
-                for (int i = 0; i < 36; i++)
+                __hashCode.Add(this.A);
+                for (int i = 0; i < 3; i++)
                 {
-                    __hashCode.Add(this.Covariance[i]);
+                    __hashCode.Add(this.Strings[i]);
                 }
+                __hashCode.Add(this.B);
+                for (int i = 0; i < 3; i++)
+                {
+                    __hashCode.Add(this.Vectors[i]);
+                }
+                for (int i = 0; i < 3; i++)
+                {
+                    __hashCode.Add(this.Numbers[i]);
+                }
+                __hashCode.Add(this.C);
+                __hashCode.Add(this.D);
             
                 return __hashCode.ToHashCode();
             }
@@ -305,7 +503,7 @@ namespace Rosidl.Messages.Geometry
                 return _PInvoke();
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_generator_c", EntryPoint = "geometry_msgs__msg__TwistWithCovariance__create")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_generator_c", EntryPoint = "custom_msgs__msg__MyMessage__create")]
                 static extern Priv* _PInvoke();
             }
             
@@ -316,7 +514,7 @@ namespace Rosidl.Messages.Geometry
                 _PInvoke(msg);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_generator_c", EntryPoint = "geometry_msgs__msg__TwistWithCovariance__destroy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_generator_c", EntryPoint = "custom_msgs__msg__MyMessage__destroy")]
                 static extern void _PInvoke(Priv* msg);
             }
             
@@ -330,7 +528,7 @@ namespace Rosidl.Messages.Geometry
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_generator_c", EntryPoint = "geometry_msgs__msg__TwistWithCovariance__init")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_generator_c", EntryPoint = "custom_msgs__msg__MyMessage__init")]
                 static extern bool _PInvoke(Priv* msg);
             }
             
@@ -344,7 +542,7 @@ namespace Rosidl.Messages.Geometry
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_generator_c", EntryPoint = "geometry_msgs__msg__TwistWithCovariance__fini")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_generator_c", EntryPoint = "custom_msgs__msg__MyMessage__fini")]
                 static extern void _PInvoke(Priv* msg);
             }
             
@@ -358,7 +556,7 @@ namespace Rosidl.Messages.Geometry
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_generator_c", EntryPoint = "geometry_msgs__msg__TwistWithCovariance__are_qual")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_generator_c", EntryPoint = "custom_msgs__msg__MyMessage__are_qual")]
                 static extern bool _PInvoke(Priv* lhs, Priv* rhs);
             }
             
@@ -369,7 +567,7 @@ namespace Rosidl.Messages.Geometry
                 return _PInvoke(input, output);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_generator_c", EntryPoint = "geometry_msgs__msg__TwistWithCovariance__copy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_generator_c", EntryPoint = "custom_msgs__msg__MyMessage__copy")]
                 static extern bool _PInvoke(Priv* input, Priv* output);
             }
             
@@ -380,17 +578,14 @@ namespace Rosidl.Messages.Geometry
             {
                 if (!ret)
                 {
-                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Geometry.TwistWithCovariance.Priv.{caller}'.");
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Custom.MyMessage.Priv.{caller}'.");
                 }
             }
         }
         
         /// <summary>
-        /// This expresses velocity in free space with uncertainty.
+        /// Blittable native sequence structure for <c>custom_msgs/msg/MyMessage</c>.
         /// </summary>
-        /// <remarks>
-        /// Blittable native sequence structure for <c>geometry_msgs/msg/TwistWithCovariance</c>.
-        /// </remarks>
         [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
         public partial struct PrivSequence : global::System.IEquatable<PrivSequence>, global::System.IDisposable
         {
@@ -545,7 +740,7 @@ namespace Rosidl.Messages.Geometry
                 return _PInvoke();
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_generator_c", EntryPoint = "geometry_msgs__msg__TwistWithCovariance__Sequence__create")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_generator_c", EntryPoint = "custom_msgs__msg__MyMessage__Sequence__create")]
                 static extern PrivSequence* _PInvoke();
             }
             
@@ -556,7 +751,7 @@ namespace Rosidl.Messages.Geometry
                 _PInvoke(msg);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_generator_c", EntryPoint = "geometry_msgs__msg__TwistWithCovariance__Sequence__destroy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_generator_c", EntryPoint = "custom_msgs__msg__MyMessage__Sequence__destroy")]
                 static extern void _PInvoke(PrivSequence* msg);
             }
             
@@ -570,7 +765,7 @@ namespace Rosidl.Messages.Geometry
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_generator_c", EntryPoint = "geometry_msgs__msg__TwistWithCovariance__Sequence__init")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_generator_c", EntryPoint = "custom_msgs__msg__MyMessage__Sequence__init")]
                 static extern bool _PInvoke(PrivSequence* msg, nuint size);
             }
             
@@ -584,7 +779,7 @@ namespace Rosidl.Messages.Geometry
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_generator_c", EntryPoint = "geometry_msgs__msg__TwistWithCovariance__Sequence__fini")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_generator_c", EntryPoint = "custom_msgs__msg__MyMessage__Sequence__fini")]
                 static extern void _PInvoke(PrivSequence* msg);
             }
             
@@ -598,7 +793,7 @@ namespace Rosidl.Messages.Geometry
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_generator_c", EntryPoint = "geometry_msgs__msg__TwistWithCovariance__Sequence__are_qual")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_generator_c", EntryPoint = "custom_msgs__msg__MyMessage__Sequence__are_qual")]
                 static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
             }
             
@@ -609,7 +804,7 @@ namespace Rosidl.Messages.Geometry
                 return _PInvoke(input, output);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("geometry_msgs__rosidl_generator_c", EntryPoint = "geometry_msgs__msg__TwistWithCovariance__Sequence__copy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("custom_msgs__rosidl_generator_c", EntryPoint = "custom_msgs__msg__MyMessage__Sequence__copy")]
                 static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
             }
             
@@ -620,7 +815,7 @@ namespace Rosidl.Messages.Geometry
             {
                 if (!ret)
                 {
-                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Geometry.TwistWithCovariance.PrivSequence.{caller}'.");
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Custom.MyMessage.PrivSequence.{caller}'.");
                 }
             }
         }

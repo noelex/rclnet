@@ -98,7 +98,16 @@ namespace Rosidl.Messages.Sensor
             Latitude = @latitude;
             Longitude = @longitude;
             Altitude = @altitude;
-            PositionCovariance = @positionCovariance ?? new double[9] { 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d };
+        
+            if (@positionCovariance != null)
+            {
+                PositionCovariance = @positionCovariance;
+            }
+            else
+            {
+                PositionCovariance = new double[9];
+            }
+        
             PositionCovarianceType = @positionCovarianceType;
         }
         
@@ -117,7 +126,7 @@ namespace Rosidl.Messages.Sensor
             this.Latitude = priv.Latitude;
             this.Longitude = priv.Longitude;
             this.Altitude = priv.Altitude;
-            fixed (double* __p = priv.PositionCovariance) this.PositionCovariance = new global::System.Span<double>(__p, 9).ToArray();
+            this.PositionCovariance = priv.PositionCovariance.ToArray();
             this.PositionCovarianceType = priv.PositionCovarianceType;
         }
         
@@ -334,6 +343,8 @@ namespace Rosidl.Messages.Sensor
             /// </remarks>
             public double Altitude;
             
+            private fixed double __PositionCovariance[9];
+            
             /// <summary>
             /// Position covariance [m^2] defined relative to a tangential plane
             /// through the reported position. The components are East, North, and
@@ -344,7 +355,15 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] position_covariance]]></c>
             /// </remarks>
-            public fixed double PositionCovariance[9];
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<double> PositionCovariance
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.Sensor.NavSatFix.Priv* __p = &this) return new (__p->__PositionCovariance, 9);
+                }
+            }
             
             /// <summary>
             /// Originally defined as: <c><![CDATA[uint8 position_covariance_type]]></c>

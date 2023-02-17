@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace Rosidl.Messages.UniqueIdentifier;
 
@@ -13,14 +13,22 @@ public partial class UUID
 
         public void CopyFrom(Guid guid)
         {
-            fixed (byte* p = Uuid)
-                System.Runtime.CompilerServices.Unsafe.Copy(p, ref guid);
+            fixed (byte* p = Uuid) Unsafe.Copy(p, ref guid);
         }
 
         public Guid ToGuid()
         {
-            fixed (Priv* p = &this)
-                return System.Runtime.CompilerServices.Unsafe.AsRef<Guid>(p);
+            fixed (Priv* p = &this) return Unsafe.AsRef<Guid>(p);
+        }
+
+        public static implicit operator Guid(Priv uuid)
+        {
+            return uuid.ToGuid();
+        }
+
+        public static implicit operator Priv(Guid guid)
+        {
+            return new Priv(guid);
         }
     }
 }

@@ -69,7 +69,15 @@ namespace Rosidl.Messages.Sensor
         {
             Header = @header ?? new global::Rosidl.Messages.Std.Header();
             MagneticField_ = @magneticField ?? new global::Rosidl.Messages.Geometry.Vector3();
-            MagneticFieldCovariance = @magneticFieldCovariance ?? new double[9] { 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d };
+        
+            if (@magneticFieldCovariance != null)
+            {
+                MagneticFieldCovariance = @magneticFieldCovariance;
+            }
+            else
+            {
+                MagneticFieldCovariance = new double[9];
+            }
         }
         
         
@@ -84,7 +92,7 @@ namespace Rosidl.Messages.Sensor
         {
             this.Header = new global::Rosidl.Messages.Std.Header(in priv.Header, textEncoding);
             this.MagneticField_ = new global::Rosidl.Messages.Geometry.Vector3(in priv.MagneticField_, textEncoding);
-            fixed (double* __p = priv.MagneticFieldCovariance) this.MagneticFieldCovariance = new global::System.Span<double>(__p, 9).ToArray();
+            this.MagneticFieldCovariance = priv.MagneticFieldCovariance.ToArray();
         }
         
         
@@ -200,13 +208,23 @@ namespace Rosidl.Messages.Sensor
             /// </remarks>
             public global::Rosidl.Messages.Geometry.Vector3.Priv MagneticField_;
             
+            private fixed double __MagneticFieldCovariance[9];
+            
             /// <summary>
             /// Row major about x, y, z axes
             /// </summary>
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] magnetic_field_covariance]]></c>
             /// </remarks>
-            public fixed double MagneticFieldCovariance[9];
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<double> MagneticFieldCovariance
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.Sensor.MagneticField.Priv* __p = &this) return new (__p->__MagneticFieldCovariance, 9);
+                }
+            }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]

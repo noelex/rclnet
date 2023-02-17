@@ -90,11 +90,37 @@ namespace Rosidl.Messages.Sensor
         {
             Header = @header ?? new global::Rosidl.Messages.Std.Header();
             Orientation = @orientation ?? new global::Rosidl.Messages.Geometry.Quaternion();
-            OrientationCovariance = @orientationCovariance ?? new double[9] { 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d };
+        
+            if (@orientationCovariance != null)
+            {
+                OrientationCovariance = @orientationCovariance;
+            }
+            else
+            {
+                OrientationCovariance = new double[9];
+            }
+        
             AngularVelocity = @angularVelocity ?? new global::Rosidl.Messages.Geometry.Vector3();
-            AngularVelocityCovariance = @angularVelocityCovariance ?? new double[9] { 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d };
+        
+            if (@angularVelocityCovariance != null)
+            {
+                AngularVelocityCovariance = @angularVelocityCovariance;
+            }
+            else
+            {
+                AngularVelocityCovariance = new double[9];
+            }
+        
             LinearAcceleration = @linearAcceleration ?? new global::Rosidl.Messages.Geometry.Vector3();
-            LinearAccelerationCovariance = @linearAccelerationCovariance ?? new double[9] { 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d };
+        
+            if (@linearAccelerationCovariance != null)
+            {
+                LinearAccelerationCovariance = @linearAccelerationCovariance;
+            }
+            else
+            {
+                LinearAccelerationCovariance = new double[9];
+            }
         }
         
         
@@ -109,11 +135,11 @@ namespace Rosidl.Messages.Sensor
         {
             this.Header = new global::Rosidl.Messages.Std.Header(in priv.Header, textEncoding);
             this.Orientation = new global::Rosidl.Messages.Geometry.Quaternion(in priv.Orientation, textEncoding);
-            fixed (double* __p = priv.OrientationCovariance) this.OrientationCovariance = new global::System.Span<double>(__p, 9).ToArray();
+            this.OrientationCovariance = priv.OrientationCovariance.ToArray();
             this.AngularVelocity = new global::Rosidl.Messages.Geometry.Vector3(in priv.AngularVelocity, textEncoding);
-            fixed (double* __p = priv.AngularVelocityCovariance) this.AngularVelocityCovariance = new global::System.Span<double>(__p, 9).ToArray();
+            this.AngularVelocityCovariance = priv.AngularVelocityCovariance.ToArray();
             this.LinearAcceleration = new global::Rosidl.Messages.Geometry.Vector3(in priv.LinearAcceleration, textEncoding);
-            fixed (double* __p = priv.LinearAccelerationCovariance) this.LinearAccelerationCovariance = new global::System.Span<double>(__p, 9).ToArray();
+            this.LinearAccelerationCovariance = priv.LinearAccelerationCovariance.ToArray();
         }
         
         
@@ -286,18 +312,30 @@ namespace Rosidl.Messages.Sensor
             /// </summary>
             public global::Rosidl.Messages.Geometry.Quaternion.Priv Orientation;
             
+            private fixed double __OrientationCovariance[9];
+            
             /// <summary>
             /// Row major about x, y, z axes
             /// </summary>
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] orientation_covariance]]></c>
             /// </remarks>
-            public fixed double OrientationCovariance[9];
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<double> OrientationCovariance
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.Sensor.Imu.Priv* __p = &this) return new (__p->__OrientationCovariance, 9);
+                }
+            }
             
             /// <summary>
             /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3 angular_velocity]]></c>
             /// </summary>
             public global::Rosidl.Messages.Geometry.Vector3.Priv AngularVelocity;
+            
+            private fixed double __AngularVelocityCovariance[9];
             
             /// <summary>
             /// Row major about x, y, z axes
@@ -305,12 +343,22 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] angular_velocity_covariance]]></c>
             /// </remarks>
-            public fixed double AngularVelocityCovariance[9];
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<double> AngularVelocityCovariance
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.Sensor.Imu.Priv* __p = &this) return new (__p->__AngularVelocityCovariance, 9);
+                }
+            }
             
             /// <summary>
             /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3 linear_acceleration]]></c>
             /// </summary>
             public global::Rosidl.Messages.Geometry.Vector3.Priv LinearAcceleration;
+            
+            private fixed double __LinearAccelerationCovariance[9];
             
             /// <summary>
             /// Row major x, y z
@@ -318,7 +366,15 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] linear_acceleration_covariance]]></c>
             /// </remarks>
-            public fixed double LinearAccelerationCovariance[9];
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<double> LinearAccelerationCovariance
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.Sensor.Imu.Priv* __p = &this) return new (__p->__LinearAccelerationCovariance, 9);
+                }
+            }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]

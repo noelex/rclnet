@@ -20,12 +20,66 @@ public class PrivStructBuilder
 
         foreach (var variable in fields)
         {
-            structure.Members.Add(
-                new CSharpField(variable.Name + (variable.FixedSize != null ? $"[{variable.FixedSize}]" : ""))
+            if (variable.FixedSize != null)
+            {
+                var arrayType = (ArrayTypeMetadata)variable.Metadata.Type;
+                if (arrayType.ElementType is PrimitiveTypeMetadata prim && prim.ValueType != PrimitiveTypes.String)
                 {
-                    Visibility = CSharpVisibility.Public,
-                    FieldType = new CSharpFreeType((variable.FixedSize != null ? "fixed " : "") + variable.Type),
-                }.AddComments(variable.Metadata));
+                    string typeName = context.GetPrimitiveTypeName(prim);
+                    structure.Members.Add(
+                        new CSharpField("__" + variable.Name + $"[{variable.FixedSize}]")
+                        {
+                            Visibility = CSharpVisibility.Private,
+                            FieldType = new CSharpFreeType((variable.FixedSize != null ? "fixed " : "") + typeName),
+                        });
+                    var spanProp = new CSharpProperty(variable.Name)
+                    {
+                        Visibility = CSharpVisibility.Public,
+                        ReturnType = new CSharpFreeType($"global::System.Span<{context.GetPrimitiveTypeName(prim)}>")
+                    }.AddComments(variable.Metadata);
+                    spanProp.GetBody = (writer, element) =>
+                    {
+                        writer.WriteLine($"fixed ({context.GetMessagePrivStructReferenceName(context.Metadata)}* __p = &this) return new (__p->__{variable.Name}, {variable.FixedSize});");
+                    };
+                    spanProp.Attributes.Add(Attributes.DebuggerNonUserCode);
+                    spanProp.Attributes.Add(Attributes.GeneratedCode);
+                    structure.Members.Add(spanProp);
+                }
+                else
+                {
+                    string typeName = (arrayType.ElementType is PrimitiveTypeMetadata p && p.ValueType is PrimitiveTypes.String)
+                        ? "global::Rosidl.Runtime.Interop.CString"
+                        : context.GetMessagePrivStructReferenceName((ComplexTypeMetadata)arrayType.ElementType);
+                    var names = string.Join(", ", Enumerable.Range(0, variable.FixedSize.Value).Select(x => $"__{variable.Name}_{x}"));
+                    structure.Members.Add(
+                        new CSharpField(names)
+                        {
+                            Visibility = CSharpVisibility.Private,
+                            FieldType = new CSharpFreeType(typeName),
+                        });
+                    var spanProp = new CSharpProperty(variable.Name)
+                    {
+                        Visibility = CSharpVisibility.Public,
+                        ReturnType = new CSharpFreeType($"global::System.Span<{typeName}>")
+                    }.AddComments(variable.Metadata);
+                    spanProp.GetBody = (writer, element) =>
+                    {
+                        writer.WriteLine($"fixed ({typeName}* __p = &__{variable.Name}_0) return new (__p, {variable.FixedSize});");
+                    };
+                    spanProp.Attributes.Add(Attributes.DebuggerNonUserCode);
+                    spanProp.Attributes.Add(Attributes.GeneratedCode);
+                    structure.Members.Add(spanProp);
+                }
+            }
+            else
+            {
+                structure.Members.Add(
+                    new CSharpField(variable.Name)
+                    {
+                        Visibility = CSharpVisibility.Public,
+                        FieldType = new CSharpFreeType(variable.Type),
+                    }.AddComments(variable.Metadata));
+            }
         }
 
         EmitMethods(structure, methodContext);

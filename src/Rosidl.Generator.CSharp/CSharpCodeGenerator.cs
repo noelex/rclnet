@@ -106,6 +106,7 @@ public class CSharpCodeGenerator
             {
                 foreach (var p in path.Split(':').Reverse())
                 {
+                    Console.WriteLine("Searching in directory: " + p);
                     foreach (var pkg in LoadPackages(Path.Combine(p, "share"))) packages[pkg.Name] = pkg;
                 }
             }
@@ -118,6 +119,7 @@ public class CSharpCodeGenerator
             {
                 path = Path.GetFullPath(Path.Combine(baseDir, path));
             }
+            Console.WriteLine("Searching in directory: " + path);
             foreach (var pkg in LoadPackages(path)) packages[pkg.Name] = pkg;
         }
 

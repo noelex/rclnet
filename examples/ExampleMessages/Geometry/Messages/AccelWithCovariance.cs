@@ -58,7 +58,15 @@ namespace Rosidl.Messages.Geometry
         )
         {
             Accel = @accel ?? new global::Rosidl.Messages.Geometry.Accel();
-            Covariance = @covariance ?? new double[36] { 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d };
+        
+            if (@covariance != null)
+            {
+                Covariance = @covariance;
+            }
+            else
+            {
+                Covariance = new double[36];
+            }
         }
         
         
@@ -72,7 +80,7 @@ namespace Rosidl.Messages.Geometry
         public AccelWithCovariance(in Priv priv, global::System.Text.Encoding textEncoding)
         {
             this.Accel = new global::Rosidl.Messages.Geometry.Accel(in priv.Accel, textEncoding);
-            fixed (double* __p = priv.Covariance) this.Covariance = new global::System.Span<double>(__p, 36).ToArray();
+            this.Covariance = priv.Covariance.ToArray();
         }
         
         
@@ -159,6 +167,8 @@ namespace Rosidl.Messages.Geometry
             /// </summary>
             public global::Rosidl.Messages.Geometry.Accel.Priv Accel;
             
+            private fixed double __Covariance[36];
+            
             /// <summary>
             /// Row-major representation of the 6x6 covariance matrix
             /// The orientation parameters use a fixed-axis representation.
@@ -168,7 +178,15 @@ namespace Rosidl.Messages.Geometry
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[36] covariance]]></c>
             /// </remarks>
-            public fixed double Covariance[36];
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<double> Covariance
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.Geometry.AccelWithCovariance.Priv* __p = &this) return new (__p->__Covariance, 36);
+                }
+            }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]

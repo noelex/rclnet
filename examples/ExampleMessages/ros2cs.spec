@@ -2,6 +2,7 @@
 namespace Rosidl.Messages
 
 from-ament-index
+from-directory ./interfaces
 
 include std_msgs
 include std_srvs
@@ -10,3 +11,4 @@ include geometry_msgs
 include tf2_msgs
 include sensor_msgs
 include turtlesim
+include custom_msgs

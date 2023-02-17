@@ -52,7 +52,14 @@ namespace Rosidl.Messages.UniqueIdentifier
             byte[]? @uuid = null
         )
         {
-            Uuid = @uuid ?? new byte[16] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+            if (@uuid != null)
+            {
+                Uuid = @uuid;
+            }
+            else
+            {
+                Uuid = new byte[16];
+            }
         }
         
         
@@ -65,7 +72,7 @@ namespace Rosidl.Messages.UniqueIdentifier
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public UUID(in Priv priv, global::System.Text.Encoding textEncoding)
         {
-            fixed (byte* __p = priv.Uuid) this.Uuid = new global::System.Span<byte>(__p, 16).ToArray();
+            this.Uuid = priv.Uuid.ToArray();
         }
         
         
@@ -136,10 +143,20 @@ namespace Rosidl.Messages.UniqueIdentifier
         [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
         public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
         {
+            private fixed byte __Uuid[16];
+            
             /// <summary>
             /// Originally defined as: <c><![CDATA[uint8[16] uuid]]></c>
             /// </summary>
-            public fixed byte Uuid[16];
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<byte> Uuid
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.UniqueIdentifier.UUID.Priv* __p = &this) return new (__p->__Uuid, 16);
+                }
+            }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]

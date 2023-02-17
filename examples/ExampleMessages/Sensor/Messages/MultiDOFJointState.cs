@@ -180,7 +180,7 @@ namespace Rosidl.Messages.Sensor
         {
             this.Header.WriteTo(ref priv.Header, textEncoding);
             
-            priv.JointNames = new Rosidl.Runtime.Interop.CStringSequence(this.JointNames.Length);
+            priv.JointNames = new global::Rosidl.Runtime.Interop.CStringSequence(this.JointNames.Length);
             var JointNames_span = priv.JointNames.AsSpan();
             for (int i = 0; i < this.JointNames.Length; i++)
             {

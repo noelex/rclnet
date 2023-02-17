@@ -139,9 +139,34 @@ namespace Rosidl.Messages.Sensor
             Width = @width;
             DistortionModel = @distortionModel;
             D = @d ?? global::System.Array.Empty<double>();
-            K = @k ?? new double[9] { 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d };
-            R = @r ?? new double[9] { 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d };
-            P = @p ?? new double[12] { 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d };
+        
+            if (@k != null)
+            {
+                K = @k;
+            }
+            else
+            {
+                K = new double[9];
+            }
+        
+            if (@r != null)
+            {
+                R = @r;
+            }
+            else
+            {
+                R = new double[9];
+            }
+        
+            if (@p != null)
+            {
+                P = @p;
+            }
+            else
+            {
+                P = new double[12];
+            }
+        
             BinningX = @binningX;
             BinningY = @binningY;
             Roi = @roi ?? new global::Rosidl.Messages.Sensor.RegionOfInterest();
@@ -162,9 +187,9 @@ namespace Rosidl.Messages.Sensor
             this.Width = priv.Width;
             this.DistortionModel = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.DistortionModel.AsSpan(), textEncoding);
             this.D = priv.D.AsSpan().ToArray();
-            fixed (double* __p = priv.K) this.K = new global::System.Span<double>(__p, 9).ToArray();
-            fixed (double* __p = priv.R) this.R = new global::System.Span<double>(__p, 9).ToArray();
-            fixed (double* __p = priv.P) this.P = new global::System.Span<double>(__p, 12).ToArray();
+            this.K = priv.K.ToArray();
+            this.R = priv.R.ToArray();
+            this.P = priv.P.ToArray();
             this.BinningX = priv.BinningX;
             this.BinningY = priv.BinningY;
             this.Roi = new global::Rosidl.Messages.Sensor.RegionOfInterest(in priv.Roi, textEncoding);
@@ -445,13 +470,25 @@ namespace Rosidl.Messages.Sensor
             /// </remarks>
             public global::Rosidl.Runtime.Interop.DoubleSequence D;
             
+            private fixed double __K[9];
+            
             /// <summary>
             /// 3x3 row-major matrix
             /// </summary>
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] k]]></c>
             /// </remarks>
-            public fixed double K[9];
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<double> K
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.Sensor.CameraInfo.Priv* __p = &this) return new (__p->__K, 9);
+                }
+            }
+            
+            private fixed double __R[9];
             
             /// <summary>
             /// 3x3 row-major matrix
@@ -459,7 +496,17 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[9] r]]></c>
             /// </remarks>
-            public fixed double R[9];
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<double> R
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.Sensor.CameraInfo.Priv* __p = &this) return new (__p->__R, 9);
+                }
+            }
+            
+            private fixed double __P[12];
             
             /// <summary>
             /// 3x4 row-major matrix
@@ -467,7 +514,15 @@ namespace Rosidl.Messages.Sensor
             /// <remarks>
             /// Originally defined as: <c><![CDATA[float64[12] p]]></c>
             /// </remarks>
-            public fixed double P[12];
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<double> P
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.Sensor.CameraInfo.Priv* __p = &this) return new (__p->__P, 12);
+                }
+            }
             
             /// <summary>
             /// Binning refers here to any camera setting which combines rectangular

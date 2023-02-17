@@ -162,7 +162,7 @@ namespace Rosidl.Messages.Sensor
         {
             this.Header.WriteTo(ref priv.Header, textEncoding);
             
-            priv.Name = new Rosidl.Runtime.Interop.CStringSequence(this.Name.Length);
+            priv.Name = new global::Rosidl.Runtime.Interop.CStringSequence(this.Name.Length);
             var Name_span = priv.Name.AsSpan();
             for (int i = 0; i < this.Name.Length; i++)
             {
