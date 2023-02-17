@@ -1,10 +1,10 @@
 ﻿using Rcl;
 using Rosidl.Messages.Geometry;
 
-var angle = 2f;
+var r = 2f;
 if(args.Length > 0 && float.TryParse(args[0], out var input))
 {
-    angle = input;
+    r = input;
 }
 
 using var ctx = new RclContext(args);
@@ -15,7 +15,7 @@ using var cts=new CancellationTokenSource();
 _ = Task.Run(async () =>
 {
     var twist = new Twist(
-        linear: new(x: 2f),
+        linear: new(x: r),
         angular: new(z: 1.8f)
     );
 
