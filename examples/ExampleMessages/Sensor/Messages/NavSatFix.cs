@@ -259,7 +259,7 @@ namespace Rosidl.Messages.Sensor
             priv.Latitude = this.Latitude;
             priv.Longitude = this.Longitude;
             priv.Altitude = this.Altitude;
-            fixed (double* __p = priv.PositionCovariance) this.PositionCovariance.CopyTo(new global::System.Span<double>(__p, 9));
+            this.PositionCovariance.CopyTo(priv.PositionCovariance);
             priv.PositionCovarianceType = this.PositionCovarianceType;
         }
         

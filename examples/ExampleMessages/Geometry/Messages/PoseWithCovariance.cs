@@ -129,7 +129,7 @@ namespace Rosidl.Messages.Geometry
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
             this.Pose.WriteTo(ref priv.Pose, textEncoding);
-            fixed (double* __p = priv.Covariance) this.Covariance.CopyTo(new global::System.Span<double>(__p, 36));
+            this.Covariance.CopyTo(priv.Covariance);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

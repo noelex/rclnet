@@ -587,13 +587,9 @@ public class MessageClassBuilder
                         {
                             case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String:
                                 if (!previousLineIsBlank) writer.WriteLine();
-                                var st = "global::Rosidl.Runtime.Interop.CString";
-                                writer.WriteLine($"fixed ({st}* __p = priv.{fieldName})");
+                                writer.WriteLine($"for (int i = 0; i < {arraySize}; i++)");
                                 writer.WriteLine("{");
-                                writer.WriteLine($"    for (int i = 0; i < {arraySize}; i++)");
-                                writer.WriteLine("    {");
-                                writer.WriteLine($"        __p[i].CopyFrom(this.{fieldName}[i], textEncoding);");
-                                writer.WriteLine("    }");
+                                writer.WriteLine($"    priv.{fieldName}[i].CopyFrom(this.{fieldName}[i], textEncoding);");
                                 writer.WriteLine("}");
                                 if (!isLast)
                                 {
@@ -603,21 +599,16 @@ public class MessageClassBuilder
                                 break;
                             case PrimitiveTypeMetadata prim:
                                 var type = _context.GetPrimitiveTypeName(prim);
-                                writer.WriteLine($"fixed ({type}* __p = priv.{fieldName}) " +
-                                    $"this.{fieldName}.CopyTo(new global::System.Span<" +
-                                    $"{type}>(__p, {arraySize}));");
+                                writer.WriteLine($"this.{fieldName}.CopyTo(priv.{fieldName});");
                                 previousLineIsBlank = false;
                                 break;
                             case ComplexTypeMetadata complex:
                                 if (!previousLineIsBlank) writer.WriteLine();
 
                                 var ct = _context.GetMessagePrivStructReferenceName(complex);
-                                writer.WriteLine($"fixed ({ct}* __p = priv.{fieldName})");
+                                writer.WriteLine($"for (int i = 0; i < {arraySize}; i++)");
                                 writer.WriteLine("{");
-                                writer.WriteLine($"    for (int i = 0; i < {arraySize}; i++)");
-                                writer.WriteLine("    {");
-                                writer.WriteLine($"        this.{fieldName}[i].WriteTo(ref __p[i], textEncoding);");
-                                writer.WriteLine("    }");
+                                writer.WriteLine($"    this.{fieldName}[i].WriteTo(ref priv.{fieldName}[i], textEncoding);");
                                 writer.WriteLine("}");
                                 if (!isLast)
                                 {

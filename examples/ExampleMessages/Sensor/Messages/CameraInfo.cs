@@ -369,9 +369,9 @@ namespace Rosidl.Messages.Sensor
             priv.Width = this.Width;
             priv.DistortionModel.CopyFrom(this.DistortionModel, textEncoding);
             priv.D.CopyFrom(this.D);
-            fixed (double* __p = priv.K) this.K.CopyTo(new global::System.Span<double>(__p, 9));
-            fixed (double* __p = priv.R) this.R.CopyTo(new global::System.Span<double>(__p, 9));
-            fixed (double* __p = priv.P) this.P.CopyTo(new global::System.Span<double>(__p, 12));
+            this.K.CopyTo(priv.K);
+            this.R.CopyTo(priv.R);
+            this.P.CopyTo(priv.P);
             priv.BinningX = this.BinningX;
             priv.BinningY = this.BinningY;
             this.Roi.WriteTo(ref priv.Roi, textEncoding);

@@ -253,11 +253,11 @@ namespace Rosidl.Messages.Sensor
         {
             this.Header.WriteTo(ref priv.Header, textEncoding);
             this.Orientation.WriteTo(ref priv.Orientation, textEncoding);
-            fixed (double* __p = priv.OrientationCovariance) this.OrientationCovariance.CopyTo(new global::System.Span<double>(__p, 9));
+            this.OrientationCovariance.CopyTo(priv.OrientationCovariance);
             this.AngularVelocity.WriteTo(ref priv.AngularVelocity, textEncoding);
-            fixed (double* __p = priv.AngularVelocityCovariance) this.AngularVelocityCovariance.CopyTo(new global::System.Span<double>(__p, 9));
+            this.AngularVelocityCovariance.CopyTo(priv.AngularVelocityCovariance);
             this.LinearAcceleration.WriteTo(ref priv.LinearAcceleration, textEncoding);
-            fixed (double* __p = priv.LinearAccelerationCovariance) this.LinearAccelerationCovariance.CopyTo(new global::System.Span<double>(__p, 9));
+            this.LinearAccelerationCovariance.CopyTo(priv.LinearAccelerationCovariance);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

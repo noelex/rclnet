@@ -152,7 +152,7 @@ namespace Rosidl.Messages.Sensor
         {
             this.Header.WriteTo(ref priv.Header, textEncoding);
             this.MagneticField_.WriteTo(ref priv.MagneticField_, textEncoding);
-            fixed (double* __p = priv.MagneticFieldCovariance) this.MagneticFieldCovariance.CopyTo(new global::System.Span<double>(__p, 9));
+            this.MagneticFieldCovariance.CopyTo(priv.MagneticFieldCovariance);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

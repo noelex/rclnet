@@ -253,25 +253,19 @@ namespace Rosidl.Messages.Custom
         {
             priv.A = this.A;
             
-            fixed (global::Rosidl.Runtime.Interop.CString* __p = priv.Strings)
+            for (int i = 0; i < 3; i++)
             {
-                for (int i = 0; i < 3; i++)
-                {
-                    __p[i].CopyFrom(this.Strings[i], textEncoding);
-                }
+                priv.Strings[i].CopyFrom(this.Strings[i], textEncoding);
             }
             
             priv.B = this.B;
             
-            fixed (global::Rosidl.Messages.Geometry.Vector3.Priv* __p = priv.Vectors)
+            for (int i = 0; i < 3; i++)
             {
-                for (int i = 0; i < 3; i++)
-                {
-                    this.Vectors[i].WriteTo(ref __p[i], textEncoding);
-                }
+                this.Vectors[i].WriteTo(ref priv.Vectors[i], textEncoding);
             }
             
-            fixed (long* __p = priv.Numbers) this.Numbers.CopyTo(new global::System.Span<long>(__p, 3));
+            this.Numbers.CopyTo(priv.Numbers);
             
             priv.C = new global::Rosidl.Runtime.Interop.CStringSequence(this.C.Length);
             var C_span = priv.C.AsSpan();

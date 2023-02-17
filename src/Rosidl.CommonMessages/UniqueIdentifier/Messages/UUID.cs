@@ -107,7 +107,7 @@ namespace Rosidl.Messages.UniqueIdentifier
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
-            fixed (byte* __p = priv.Uuid) this.Uuid.CopyTo(new global::System.Span<byte>(__p, 16));
+            this.Uuid.CopyTo(priv.Uuid);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
