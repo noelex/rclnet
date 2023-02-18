@@ -77,6 +77,7 @@ public sealed class RclContext : IDisposable, IRclContext
 
     private unsafe void Interrupt() => rcl_trigger_guard_condition(_interruptSignal.Object);
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)

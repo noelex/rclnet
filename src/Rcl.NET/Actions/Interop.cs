@@ -6,12 +6,15 @@ unsafe class DynamicFunctionTable
 {
     public DynamicFunctionTable(string actionTypesupportName)
     {
-        CopyGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Goal", "copy");
         CopyFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Feedback", "copy");
-        CopyResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Result", "copy");
-
+        
         CreateResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Result", "create");
         DestroyResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Result", "destroy");
+        CopyResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Result", "copy");
+
+        CreateGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Goal", "create");
+        DestroyGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Goal", "destroy");
+        CopyGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Goal", "copy");
     }
 
     private static (string pkg, string subfolder, string name) BreakName(string pkg)
@@ -32,8 +35,8 @@ unsafe class DynamicFunctionTable
 
     public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool> CopyGoal, CopyFeedback, CopyResult;
 
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint> CreateResult;
+    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint> CreateResult, CreateGoal;
 
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void> DestroyResult;
+    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void> DestroyResult, DestroyGoal;
 
 }

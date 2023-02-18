@@ -11,7 +11,7 @@ namespace Rcl.Graph;
 public record struct NodeName(string Name, string Namespace = "/")
 {
     /// <summary>
-    /// Gets the fully-qualified name of the node.
+    /// Gets the fully qualified name of the node.
     /// </summary>
     public string FullyQualifiedName
     {
@@ -26,5 +26,9 @@ public record struct NodeName(string Name, string Namespace = "/")
         }
     }
 
+    /// <summary>
+    /// Returns the fully qualified name of the node.
+    /// </summary>
+    /// <returns>The fully qualified name of the node.</returns>
     public override string ToString() => FullyQualifiedName;
 }

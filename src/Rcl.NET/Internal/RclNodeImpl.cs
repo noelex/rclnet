@@ -180,70 +180,62 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
             textEncoding ?? Encoding.UTF8);
     }
 
-    public IRclService CreateNativeService<TService, TRequest, TResponse>(
+    public IRclService CreateNativeService<TService>(
         string serviceName,
         INativeServiceHandler handler,
         QosProfile? qos = null)
-        where TService : IService<TRequest, TResponse>
-        where TRequest : IServiceRequest
-        where TResponse : IServiceResponse
+        where TService : IService
     {
-        return new NativeService<TService, TRequest, TResponse>(
+        return new IntrospectionService(
             this,
             serviceName,
+            TService.GetTypeSupportHandle(),
             handler,
             qos ?? QosProfile.ServicesDefault);
     }
 
-    public IRclService CreateNativeService<TService, TRequest, TResponse>(
+    public IRclService CreateNativeService<TService>(
         string serviceName,
         Action<RosMessageBuffer, RosMessageBuffer, object?> handler,
         QosProfile? qos = null,
         object? state = null)
-        where TService : IService<TRequest, TResponse>
-        where TRequest : IServiceRequest
-        where TResponse : IServiceResponse
+        where TService : IService
     {
-        return new NativeService<TService, TRequest, TResponse>(
+        return new IntrospectionService(
             this,
             serviceName,
+            TService.GetTypeSupportHandle(),
             new DelegateNativeServiceCallHandler(handler, state),
             qos ?? QosProfile.ServicesDefault);
     }
 
-    public IRclService CreateConcurrentNativeService<TService, TRequest, TResponse>(
+    public IRclService CreateConcurrentNativeService<TService>(
         string serviceName,
         IConcurrentNativeServiceHandler handler,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null)
-        where TService : IService<TRequest, TResponse>
-        where TRequest : IServiceRequest
-        where TResponse : IServiceResponse
+        QosProfile? qos = null)
+        where TService : IService
     {
-        return new ConcurrentNativeService<TService, TRequest, TResponse>(
+        return new ConcurrentIntrospectionService(
             this,
             serviceName,
             handler,
-            qos ?? QosProfile.ServicesDefault,
-            textEncoding ?? Encoding.UTF8);
+            TService.GetTypeSupportHandle(),
+            qos ?? QosProfile.ServicesDefault);
     }
 
-    public IRclService CreateConcurrentNativeService<TService, TRequest, TResponse>(
+    public IRclService CreateConcurrentNativeService<TService>(
         string serviceName,
         Func<RosMessageBuffer, RosMessageBuffer, object?, CancellationToken, Task> handler,
         QosProfile? qos = null,
-        object? state = null,
-        Encoding? textEncoding = null)
-        where TService : IService<TRequest, TResponse>
-        where TRequest : IServiceRequest
-        where TResponse : IServiceResponse
+        object? state = null)
+        where TService : IService
     {
-        return new ConcurrentNativeService<TService, TRequest, TResponse>(
+        return new ConcurrentIntrospectionService(
             this,
             serviceName,
             new DelegateConcurrentNativeServiceCallHandler(handler, state),
-            qos ?? QosProfile.ServicesDefault,
-            textEncoding ?? Encoding.UTF8);
+            TService.GetTypeSupportHandle(),
+            qos ?? QosProfile.ServicesDefault);
     }
 
     public IRclClient<TRequest, TResponse> CreateClient<TService, TRequest, TResponse>(

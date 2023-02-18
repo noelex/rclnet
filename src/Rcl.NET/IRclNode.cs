@@ -102,13 +102,13 @@ public interface IRclNode : IRclObject
         Encoding? textEncoding = null) where T : IMessage;
 
     IRclService CreateService<TService, TRequest, TResponse>(
-            string serviceName,
-            IServiceHandler<TRequest, TResponse> handler,
-            QosProfile? qos = null,
-            Encoding? textEncoding = null)
-            where TService : IService<TRequest, TResponse>
-            where TRequest : IServiceRequest
-            where TResponse : IServiceResponse;
+        string serviceName,
+        IServiceHandler<TRequest, TResponse> handler,
+        QosProfile? qos = null,
+        Encoding? textEncoding = null)
+        where TService : IService<TRequest, TResponse>
+        where TRequest : IServiceRequest
+        where TResponse : IServiceResponse;
 
     IRclService CreateService<TService, TRequest, TResponse>(
         string serviceName,
@@ -139,41 +139,31 @@ public interface IRclNode : IRclObject
         where TRequest : IServiceRequest
         where TResponse : IServiceResponse;
 
-    IRclService CreateNativeService<TService, TRequest, TResponse>(
+    IRclService CreateNativeService<TService>(
         string serviceName,
         INativeServiceHandler handler,
         QosProfile? qos = null)
-        where TService : IService<TRequest, TResponse>
-        where TRequest : IServiceRequest
-        where TResponse : IServiceResponse;
+        where TService : IService;
 
-    IRclService CreateNativeService<TService, TRequest, TResponse>(
+    IRclService CreateNativeService<TService>(
         string serviceName,
         Action<RosMessageBuffer, RosMessageBuffer, object?> handler,
         QosProfile? qos = null,
         object? state = null)
-        where TService : IService<TRequest, TResponse>
-        where TRequest : IServiceRequest
-        where TResponse : IServiceResponse;
+        where TService : IService;
 
-    IRclService CreateConcurrentNativeService<TService, TRequest, TResponse>(
+    IRclService CreateConcurrentNativeService<TService>(
         string serviceName,
         IConcurrentNativeServiceHandler handler,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null)
-        where TService : IService<TRequest, TResponse>
-        where TRequest : IServiceRequest
-        where TResponse : IServiceResponse;
+        QosProfile? qos = null)
+        where TService : IService;
 
-    IRclService CreateConcurrentNativeService<TService, TRequest, TResponse>(
+    IRclService CreateConcurrentNativeService<TService>(
         string serviceName,
         Func<RosMessageBuffer, RosMessageBuffer, object?, CancellationToken, Task> handler,
         QosProfile? qos = null,
-        object? state = null,
-        Encoding? textEncoding = null)
-        where TService : IService<TRequest, TResponse>
-        where TRequest : IServiceRequest
-        where TResponse : IServiceResponse;
+        object? state = null)
+        where TService : IService;
 
     IRclClient<TRequest, TResponse> CreateClient<TService, TRequest, TResponse>(
         string serviceName,

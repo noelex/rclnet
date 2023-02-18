@@ -1,13 +1,6 @@
 ﻿using Rosidl.Messages.Action;
 using Rosidl.Messages.UniqueIdentifier;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Channels;
-using System.Threading.Tasks;
 
 namespace Rcl.Actions.Client;
 
@@ -61,11 +54,12 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
         => GetResultAsync(TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
 
     public Task<RosMessageBuffer> GetResultAsync(CancellationToken cancellationToken)
-        => GetResultAsync(_client.GetResultClient.DefaultRequestTimeout, cancellationToken);
+        => GetResultAsync(cancellationToken);
 
     public async Task<RosMessageBuffer> GetResultAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
-        ThrowIfNonSuccess(await Completion);
+        ThrowIfNonSuccess(
+            await Completion.WaitAsync(timeout, cancellationToken));
 
         using var requestBuffer = _client.GetResultClient.CreateRequestBuffer();
         BuildRequest(requestBuffer.Data);
@@ -136,7 +130,7 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
         => CancelAsync(TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
 
     public Task CancelAsync(CancellationToken cancellationToken)
-        => CancelAsync(_client.CancelClient.DefaultRequestTimeout, cancellationToken);
+        => CancelAsync(cancellationToken);
 
     private static void ThrowIfNonSuccess(ActionGoalStatus state)
     {

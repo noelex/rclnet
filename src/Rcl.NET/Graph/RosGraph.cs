@@ -91,6 +91,9 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         Actions = ReadOnlyCollection.Wrap(_actions.Values);
     }
 
+    /// <summary>
+    /// Owner node of current <see cref="RosGraph"/> instance.
+    /// </summary>
     public IRclNode Owner => _node;
 
     /// <summary>

@@ -1,15 +1,6 @@
-﻿using Rcl.Interop;
-using Rcl.Qos;
-using Rcl.SafeHandles;
-using Rosidl.Runtime.Interop;
+﻿using Rcl.Qos;
 using Rosidl.Runtime;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Rcl.Internal.Clients;
 
@@ -27,7 +18,7 @@ internal class RclClient<TService, TRequest, TResponse> : RclClientBase, IRclCli
         Encoding textEncoding)
         : base(node, serviceName, TService.GetTypeSupportHandle(), qos)
     {
-        _textEncoding= textEncoding;
+        _textEncoding = textEncoding;
     }
 
     protected override RosMessageBuffer CreateResponseBuffer()
@@ -48,6 +39,6 @@ internal class RclClient<TService, TRequest, TResponse> : RclClientBase, IRclCli
         => InvokeAsync(request, TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
 
     public Task<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default)
-        => InvokeAsync(request, DefaultRequestTimeout, cancellationToken);
+        => InvokeAsync(request, cancellationToken);
 
 }

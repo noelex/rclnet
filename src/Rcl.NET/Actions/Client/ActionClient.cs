@@ -137,12 +137,12 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         }
     }
 
-    private async Task<bool> InvokeSendGoalAsync(RosMessageBuffer goalBuffer, Guid goalId, TimeSpan timeout, CancellationToken cancellationToken = default)
+    private async Task<bool> InvokeSendGoalAsync(RosMessageBuffer goalBuffer, Guid goalId, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {
         using var requestBuffer = _sendGoalClient.CreateRequestBuffer();
         BuildSendGoalRequest(goalId, goalBuffer.Data, requestBuffer.Data);
 
-        using var responseBuffer = await _sendGoalClient.InvokeAsync(requestBuffer, timeout, cancellationToken);
+        using var responseBuffer = await _sendGoalClient.InvokeAsync(requestBuffer, timeoutMilliseconds, cancellationToken);
 
         // bool accepted;
         // Time.Priv stamp;
@@ -152,7 +152,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
             .AsRef<SendGoalResponse>(responseBuffer.Data, 0).Accepted;
     }
 
-    public async Task<INativeActionGoalContext> SendGoalAsync(RosMessageBuffer goalBuffer, TimeSpan timeout, CancellationToken cancellationToken = default)
+    public async Task<INativeActionGoalContext> SendGoalAsync(RosMessageBuffer goalBuffer, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {
         var accepted = false;
         var uid = Guid.NewGuid();
@@ -162,7 +162,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
         try
         {
-            accepted = await InvokeSendGoalAsync(goalBuffer, uid, timeout, cancellationToken);
+            accepted = await InvokeSendGoalAsync(goalBuffer, uid, timeoutMilliseconds, cancellationToken);
 
             if (!accepted)
             {
@@ -177,13 +177,13 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         }
     }
 
-    public Task<INativeActionGoalContext> SendGoalAsync(RosMessageBuffer goalBuffer, int timeoutMilliseconds, CancellationToken cancellationToken = default)
-        => SendGoalAsync(goalBuffer, TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
+    public Task<INativeActionGoalContext> SendGoalAsync(RosMessageBuffer goalBuffer, TimeSpan timeout, CancellationToken cancellationToken = default)
+        => SendGoalAsync(goalBuffer, (int)timeout.TotalMilliseconds, cancellationToken);
 
     public Task<INativeActionGoalContext> SendGoalAsync(RosMessageBuffer goalBuffer, CancellationToken cancellationToken = default)
-        => SendGoalAsync(goalBuffer, _sendGoalClient.DefaultRequestTimeout, cancellationToken);
+        => SendGoalAsync(goalBuffer, cancellationToken);
 
-    public async Task<IActionGoalContext<TResult, TFeedback>> SendGoalAsync(TGoal goal, TimeSpan timeout, CancellationToken cancellationToken = default)
+    public async Task<IActionGoalContext<TResult, TFeedback>> SendGoalAsync(TGoal goal, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {
         var accepted = false;
         var uid = Guid.NewGuid();
@@ -196,7 +196,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
             using var goalBuffer = RosMessageBuffer.Create<TGoal>();
             goal.WriteTo(goalBuffer.Data, _textEncoding);
 
-            accepted = await InvokeSendGoalAsync(goalBuffer, uid, timeout, cancellationToken);
+            accepted = await InvokeSendGoalAsync(goalBuffer, uid, timeoutMilliseconds, cancellationToken);
 
             if (!accepted)
             {
@@ -211,11 +211,11 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         }
     }
 
-    public Task<IActionGoalContext<TResult, TFeedback>> SendGoalAsync(TGoal goal, int timeoutMilliseconds, CancellationToken cancellationToken = default)
-        => SendGoalAsync(goal, TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
+    public Task<IActionGoalContext<TResult, TFeedback>> SendGoalAsync(TGoal goal, TimeSpan timeout, CancellationToken cancellationToken = default)
+        => SendGoalAsync(goal, (int)timeout.TotalMilliseconds, cancellationToken);
 
     public Task<IActionGoalContext<TResult, TFeedback>> SendGoalAsync(TGoal goal, CancellationToken cancellationToken = default)
-        => SendGoalAsync(goal, _sendGoalClient.DefaultRequestTimeout, cancellationToken);
+        => SendGoalAsync(goal, -1, cancellationToken);
 
     private void BuildSendGoalRequest(Guid goalId, nint goalBuffer, nint requestBuffer)
     {

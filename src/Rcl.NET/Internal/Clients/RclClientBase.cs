@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 namespace Rcl.Internal.Clients;
 internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 {
+
     private readonly RclNodeImpl _node;
     private readonly Dictionary<long, ManualResetValueTaskSource<RosMessageBuffer>> _pendingRequests = new();
     private readonly CancellationTokenSource _shutdownSignal = new();
@@ -25,8 +26,6 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     {
         _node = node;
     }
-
-    public TimeSpan DefaultRequestTimeout { get; set; } = TimeSpan.FromMinutes(1);
 
     public unsafe bool IsServerAvailable
     {
@@ -97,12 +96,17 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
     protected abstract RosMessageBuffer CreateResponseBuffer();
 
-    public async Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken = default)
+    public async Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {
+        if (!IsServerAvailable)
+        {
+            throw new RclException($"Service '{Name}' is not currently available.");
+        }
+
         // TODO: Maybe use private ObjectPools?
         var completion = ObjectPool.Rent<ManualResetValueTaskSource<RosMessageBuffer>>();
         var timeoutCts = ObjectPool.Rent<CancellationTokenSource>();
-        timeoutCts.CancelAfter(timeout);
+        timeoutCts.CancelAfter(timeoutMilliseconds);
 
         // Yielding back to the event loop is required to avoid the situation that response 
         // has already been received at the point we add the ValueTaskSource into _pendingRequests,
@@ -121,7 +125,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         }
 
         var cancelArgs = ObjectPool.Rent<CancellationArgs>()
-            .Reset(sequence, this, timeout, cancellationToken);
+        .Reset(sequence, this, TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
 
         var outerReg = cancellationToken.Register(static s => ((CancellationArgs)s!).CancelWithOuterToken(), cancelArgs);
         var disposeReg = _shutdownSignal.Token.Register(static s => ((CancellationArgs)s!).CancelAsDisposed(), cancelArgs);
@@ -149,11 +153,11 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         return await new ValueTask<RosMessageBuffer>(completion, completion.Version);
     }
 
-    public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, int timeoutMilliseconds, CancellationToken cancellationToken = default)
-        => InvokeAsync(request, TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
+    public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken = default)
+        => InvokeAsync(request, (int)timeout.TotalMilliseconds, cancellationToken);
 
     public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, CancellationToken cancellationToken = default)
-        => InvokeAsync(request, DefaultRequestTimeout, cancellationToken);
+        => InvokeAsync(request, Timeout.Infinite, cancellationToken);
 
     public override void Dispose()
     {

@@ -12,14 +12,6 @@ public interface IRclClient<TRequest, TResponse> : IRclObject
     where TResponse : IServiceResponse
 {
     /// <summary>
-    /// Sets the default timeout of <see cref="InvokeAsync(RosMessageBuffer, CancellationToken)"/> and <see cref="InvokeAsync(TRequest, CancellationToken)"/>.
-    /// <para>
-    /// Defaults to 60 seconds.
-    /// </para>
-    /// </summary>
-    TimeSpan DefaultRequestTimeout { get; set; }
-
-    /// <summary>
     /// Determine whether current <see cref="IRclClient{TRequest, TResponse}"/> is valid.
     /// </summary>
     bool IsValid { get; }
@@ -73,7 +65,7 @@ public interface IRclClient<TRequest, TResponse> : IRclObject
     /// Initiate a service request by sending a pre-allocated <see cref="RosMessageBuffer"/> and wait for the response asynchronously.
     /// </summary>
     /// <param name="request">A <see cref="RosMessageBuffer"/> containing the request message to be sent.</param>
-    /// <param name="timeoutMilliseconds">Timeout of the request.</param>
+    /// <param name="timeout">Timeout of the request.</param>
     /// <param name="cancellationToken">A <paramref name="cancellationToken"/> to cancel the request.</param>
     /// <returns>A <see cref="RosMessageBuffer"/> containing the response message.</returns>
     /// <remarks>
