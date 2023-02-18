@@ -37,7 +37,7 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
     {
         rmw_service_info_t header;
 
-        var requestBuffer = _typesupport.Request.CreateBuffer();
+        var requestBuffer = CreateRequestBuffer();
 
         if (rcl_ret.RCL_RET_OK ==
             (rcl_ret)rcl_take_request_with_info(
