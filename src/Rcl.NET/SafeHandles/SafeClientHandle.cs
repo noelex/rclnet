@@ -32,7 +32,7 @@ internal unsafe class SafeClientHandle : RclObjectHandle<rcl_client_t>
                 rcl_client_init(
                     Object,
                     node.Object,
-                    (rosidl_service_type_support_t*)typeSupportHandle.GetServiceTypeSupport(),
+                    typeSupportHandle.GetServiceTypeSupport(),
                     pname,
                     &opts));
         }

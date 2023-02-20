@@ -8,20 +8,20 @@ public enum DurabilityPolicy
     /// <summary>
     /// Implementation specific default
     /// </summary>
-    Default = RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT,
+    Default = rmw_qos_durability_policy_t.RMW_QOS_POLICY_DURABILITY_SYSTEM_DEFAULT,
 
     /// <summary>
     /// The rmw publisher is responsible for persisting samples for “late-joining” subscribers
     /// </summary>
-    TransientLocal = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+    TransientLocal = rmw_qos_durability_policy_t.RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
 
     /// <summary>
     /// Samples are not persistent
     /// </summary>
-    Volatile = RMW_QOS_POLICY_DURABILITY_VOLATILE,
+    Volatile = rmw_qos_durability_policy_t.RMW_QOS_POLICY_DURABILITY_VOLATILE,
 
     /// <summary>
     /// Durability policy has not yet been set
     /// </summary>
-    Unknown = RMW_QOS_POLICY_DURABILITY_UNKNOWN,
+    Unknown = rmw_qos_durability_policy_t.RMW_QOS_POLICY_DURABILITY_UNKNOWN,
 }

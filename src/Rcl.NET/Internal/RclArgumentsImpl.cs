@@ -90,7 +90,7 @@ unsafe class RclArgumentsImpl : IDisposable
         rcl_params_t* p;
         rcl_arguments_get_param_overrides(_handle.Object, &p);
 
-        var count = p->Value.num_nodes;
+        var count = p->num_nodes;
 
         var nodeNames = new string[count];
         var nodeParams = new Dictionary<string, object>[count];
@@ -98,15 +98,15 @@ unsafe class RclArgumentsImpl : IDisposable
         for (var i = 0; i < nodeNames.Length; i++)
         {
             var pDict = new Dictionary<string, object>();
-            nodeNames[i] = new(p->Value.node_names[i]);
+            nodeNames[i] = new(p->node_names[i]);
             nodeParams[i] = pDict;
 
-            var pNodeParam = &p->Value.@params[i];
-            var sz = pNodeParam->Value.num_params.Value.ToUInt32();
+            var pNodeParam = &p->@params[i];
+            var sz = pNodeParam->num_params.Value.ToUInt32();
             for (var j = 0; j < sz; j++)
             {
-                var k = new string(pNodeParam->Value.parameter_names[j]);
-                var v = VariantToObject(&pNodeParam->Value.parameter_values[j]);
+                var k = new string(pNodeParam->parameter_names[j]);
+                var v = VariantToObject(&pNodeParam->parameter_values[j]);
                 pDict[k] = v;
             }
         }
@@ -116,58 +116,58 @@ unsafe class RclArgumentsImpl : IDisposable
 
     private object VariantToObject(rcl_variant_t* v)
     {
-        if (v->Value.bool_array_value != null)
+        if (v->bool_array_value != null)
         {
             return new Span<bool>(
-                v->Value.bool_array_value->Value.values,
-                (int)v->Value.bool_array_value->Value.size.Value).ToArray();
+                v->bool_array_value->values,
+                (int)v->bool_array_value->size.Value).ToArray();
         }
-        else if (v->Value.bool_value != null)
+        else if (v->bool_value != null)
         {
-            return *v->Value.bool_value;
+            return *v->bool_value;
         }
-        else if (v->Value.byte_array_value != null)
+        else if (v->byte_array_value != null)
         {
             return new Span<byte>(
-                v->Value.byte_array_value->Value.values,
-                (int)v->Value.byte_array_value->Value.size.Value).ToArray();
+                v->byte_array_value->values,
+                (int)v->byte_array_value->size.Value).ToArray();
         }
-        else if (v->Value.double_array_value != null)
+        else if (v->double_array_value != null)
         {
             return new Span<double>(
-                v->Value.double_array_value->Value.values,
-                (int)v->Value.double_array_value->Value.size.Value).ToArray();
+                v->double_array_value->values,
+                (int)v->double_array_value->size.Value).ToArray();
         }
-        else if (v->Value.double_value != null)
+        else if (v->double_value != null)
         {
-            return *v->Value.double_value;
+            return *v->double_value;
         }
-        else if (v->Value.integer_array_value != null)
+        else if (v->integer_array_value != null)
         {
             return new Span<long>(
-                v->Value.integer_array_value->Value.values,
-                (int)v->Value.integer_array_value->Value.size.Value).ToArray();
+                v->integer_array_value->values,
+                (int)v->integer_array_value->size.Value).ToArray();
         }
-        else if (v->Value.integer_value != null)
+        else if (v->integer_value != null)
         {
-            return *v->Value.integer_value;
+            return *v->integer_value;
         }
-        else if (v->Value.string_array_value != null)
+        else if (v->string_array_value != null)
         {
-            var sz = v->Value.string_array_value->size;
+            var sz = v->string_array_value->size;
             if (sz == 0) return Array.Empty<string>();
 
             var results = new string[sz];
             for (var i = 0; i < results.Length; i++)
             {
-                results[i] = new(v->Value.string_array_value->data[i]);
+                results[i] = new(v->string_array_value->data[i]);
             }
 
             return results;
         }
         else
         {
-            return new string(v->Value.string_value);
+            return new string(v->string_value);
         }
     }
 

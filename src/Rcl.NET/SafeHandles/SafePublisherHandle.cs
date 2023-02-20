@@ -32,7 +32,7 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
                 rcl_publisher_init(
                     Object,
                     node.Object,
-                    (rosidl_message_type_support_t*)typeSupportHandle.GetMessageTypeSupport(),
+                    typeSupportHandle.GetMessageTypeSupport(),
                     pname,
                     &opts));
         }

@@ -31,8 +31,8 @@ internal unsafe class IntrospectionNativeSubscription
         rmw_message_info_t header;
         var buffer = _introspection.CreateBuffer();
 
-        if (rcl_ret.RCL_RET_OK ==
-            (rcl_ret)rcl_take(Handle.Object, buffer.Data.ToPointer(), &header, null).Value.Value)
+        if (rcl_ret_t.RCL_RET_OK ==
+            rcl_take(Handle.Object, buffer.Data.ToPointer(), &header, null))
         {
             return buffer;
         }

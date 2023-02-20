@@ -30,8 +30,8 @@ internal unsafe class NativeSubscription<T> :
         void* rosMessage;
 
         rosMessage = T.UnsafeCreate().ToPointer();
-        if (rcl_ret.RCL_RET_OK ==
-            (rcl_ret)rcl_take(Handle.Object, rosMessage, &header, null).Value.Value)
+        if (rcl_ret_t.RCL_RET_OK ==
+            rcl_take(Handle.Object, rosMessage, &header, null))
         {
             return new RosMessageBuffer(
                 new(rosMessage), static (p, _) => T.UnsafeDestroy(p));

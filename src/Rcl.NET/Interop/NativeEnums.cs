@@ -12,7 +12,7 @@ internal enum rmw_ret
     RMW_RET_NODE_NAME_NON_EXISTENT = 13
 }
 
-internal enum rcl_ret
+internal enum rcl_ret_t
 {
     RCL_RET_OK = rmw_ret.RMW_RET_OK,
     RCL_RET_ERROR = rmw_ret.RMW_RET_ERROR,

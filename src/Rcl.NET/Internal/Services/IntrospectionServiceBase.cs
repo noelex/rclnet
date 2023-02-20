@@ -39,9 +39,8 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
 
         var requestBuffer = CreateRequestBuffer();
 
-        if (rcl_ret.RCL_RET_OK ==
-            (rcl_ret)rcl_take_request_with_info(
-                Handle.Object, &header, requestBuffer.Data.ToPointer()).Value.Value)
+        if (rcl_ret_t.RCL_RET_OK == rcl_take_request_with_info(
+                Handle.Object, &header, requestBuffer.Data.ToPointer()))
         {
             var responseBuffer = CreateRequestBuffer();
             DispatchRequest(requestBuffer, responseBuffer, header.request_id);

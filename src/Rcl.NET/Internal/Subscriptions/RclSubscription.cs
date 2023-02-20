@@ -71,8 +71,7 @@ internal unsafe class RclSubscription<T> :
     {
         rmw_message_info_t header;
 
-        if (rcl_ret.RCL_RET_OK ==
-            (rcl_ret)rcl_take(Handle.Object, _messageBuffer.Data.ToPointer(), &header, null).Value.Value)
+        if (rcl_ret_t.RCL_RET_OK == rcl_take(Handle.Object, _messageBuffer.Data.ToPointer(), &header, null))
         {
             var msg = (T)T.CreateFrom(_messageBuffer.Data, _textEncoding);
             _messageChannel.Writer.TryWrite(msg);

@@ -1,6 +1,8 @@
 using Rcl.Interop;
 using Rosidl.Runtime.Interop;
 
+namespace Rcl;
+
 public class RclException : Exception
 {
     public RclException(int errorCode)
@@ -28,8 +30,8 @@ public class RclException : Exception
 
     internal static void ThrowIfNonSuccess(rcl_ret_t errorCode)
     {
-        if (errorCode.Value != 0)
-            throw new RclException(errorCode.Value);
+        if (errorCode != 0)
+            throw new RclException((int)errorCode);
     }
 
     public int ErrorCode => (int)Data[nameof(ErrorCode)]!;

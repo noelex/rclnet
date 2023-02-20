@@ -18,9 +18,9 @@ static class InteropHelpers
         return TimeSpan.FromSeconds(t.sec + ((double)t.nsec / 1000 / 1000 / 1000));
     }
 
-    public static TimeSpan ToTimeSpan(this rmw_time_point_value_t t)
+    public static TimeSpan ToTimeSpan(this rcl_time_point_value_t t)
     {
-        return TimeSpan.FromMicroseconds((double)t.Value.Value / 1000);
+        return TimeSpan.FromMicroseconds((double)t.Value / 1000);
     }
 
     public static int GetUtf8BufferSize(string str, bool zeroTerminated = true)

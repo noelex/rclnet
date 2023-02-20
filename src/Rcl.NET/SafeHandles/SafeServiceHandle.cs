@@ -27,7 +27,7 @@ internal unsafe class SafeServiceHandle : RclObjectHandle<rcl_service_t>
                 rcl_service_init(
                     Object,
                     node.Object,
-                    (rosidl_service_type_support_t*)typeSupportHandle.GetServiceTypeSupport(),
+                    typeSupportHandle.GetServiceTypeSupport(),
                     pname,
                     &opts));
         }

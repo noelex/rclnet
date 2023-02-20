@@ -34,7 +34,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
                 rcl_subscription_init(
                     Object,
                     node.Object,
-                    (rosidl_message_type_support_t*)typeSupportHandle.GetMessageTypeSupport(),
+                    typeSupportHandle.GetMessageTypeSupport(),
                     pname,
                     &opts));
         }

@@ -255,7 +255,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                 disableTopicNameDemangling,
                 &nts));
 
-        using var items = SpanOwner<NameWithType>.Allocate((int)nts.Value.names.size.Value);
+        using var items = SpanOwner<NameWithType>.Allocate((int)nts.names.size.Value);
         CopyNameAndTypes(&nts, items.Span);
 
         foreach (var item in items.Span)
@@ -316,10 +316,10 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         // We can continue as normal since nts will be empty and UpdateServers will see this
         // as all server endpoints getting removed from the node.
         // This also applies to the following rcl_get_client_names_and_types_by_node call.
-        if (ret.Value == (int)rcl_ret.RCL_RET_NODE_NAME_NON_EXISTENT ||
-            ret.Value == (int)rcl_ret.RCL_RET_OK)
+        if (ret == rcl_ret_t.RCL_RET_NODE_NAME_NON_EXISTENT ||
+            ret == rcl_ret_t.RCL_RET_OK)
         {
-            using var items = SpanOwner<NameWithType>.Allocate((int)nts.Value.names.size.Value);
+            using var items = SpanOwner<NameWithType>.Allocate((int)nts.names.size.Value);
             CopyNameAndTypes(&nts, items.Span);
             node.UpdateServers(this, items.Span);
         }
@@ -334,10 +334,10 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                   name,
                   ns,
                   &nts);
-        if (ret.Value == (int)rcl_ret.RCL_RET_NODE_NAME_NON_EXISTENT ||
-            ret.Value == (int)rcl_ret.RCL_RET_OK)
+        if (ret == rcl_ret_t.RCL_RET_NODE_NAME_NON_EXISTENT ||
+            ret == rcl_ret_t.RCL_RET_OK)
         {
-            using var items = SpanOwner<NameWithType>.Allocate((int)nts.Value.names.size.Value);
+            using var items = SpanOwner<NameWithType>.Allocate((int)nts.names.size.Value);
             CopyNameAndTypes(&nts, items.Span);
             node.UpdateClients(this, items.Span);
         }
@@ -355,7 +355,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         var namePtr = nameBuffer.IsEmpty ? null : (byte*)Unsafe.AsPointer(ref nameBuffer[0]);
 
         var allocator = RclAllocator.Default.Object;
-        rcl_topic_endpoint_info_array_t endpoints;
+        rmw_topic_endpoint_info_array_t endpoints;
 
         RclException.ThrowIfNonSuccess(
             rcl_get_publishers_info_by_topic(
@@ -365,7 +365,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                 disableTopicNameDemangling,
                 &endpoints));
 
-        using (var items = SpanOwner<TopicEndPointData>.Allocate((int)endpoints.Value.size.Value))
+        using (var items = SpanOwner<TopicEndPointData>.Allocate((int)endpoints.size.Value))
         {
             CopyTopicEndpoints(&endpoints, items.Span, &allocator.Value);
             topic.UpdatePublishers(this, items.Span, _nodes);
@@ -379,7 +379,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                 disableTopicNameDemangling,
                 &endpoints));
 
-        using (var items = SpanOwner<TopicEndPointData>.Allocate((int)endpoints.Value.size.Value))
+        using (var items = SpanOwner<TopicEndPointData>.Allocate((int)endpoints.size.Value))
         {
             CopyTopicEndpoints(&endpoints, items.Span, &allocator.Value);
             topic.UpdateSubscribers(this, items.Span, _nodes);
@@ -387,15 +387,15 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     }
 
     private unsafe void CopyTopicEndpoints(
-        rcl_topic_endpoint_info_array_t* src, Span<TopicEndPointData> dest, rcutils_allocator_t* allocator)
+        rmw_topic_endpoint_info_array_t* src, Span<TopicEndPointData> dest, rcutils_allocator_t* allocator)
     {
         try
         {
-            for (var i = 0; i < (int)src->Value.size.Value; i++)
+            for (var i = 0; i < (int)src->size.Value; i++)
             {
-                ref var item = ref src->Value.info_array[i];
+                ref var item = ref src->info_array[i];
                 dest[i] = new(
-                    new(src->Value.info_array[i].endpoint_gid),
+                    new(src->info_array[i].endpoint_gid),
                     StringMarshal.CreatePooledString(item.topic_type)!,
                     new(
                         StringMarshal.CreatePooledString(item.node_name)!,
@@ -407,7 +407,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         }
         finally
         {
-            rmw_topic_endpoint_info_array_fini(&src->Value, allocator);
+            rmw_topic_endpoint_info_array_fini(src, allocator);
         }
     }
 
@@ -415,13 +415,13 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     {
         try
         {
-            for (var i = 0; i < (int)src->Value.names.size.Value; i++)
+            for (var i = 0; i < (int)src->names.size.Value; i++)
             {
-                var name = StringMarshal.CreatePooledString((byte*)src->Value.names.data[i])!;
-                for (var j = 0; j < (int)src->Value.types[i].size.Value; j++)
+                var name = StringMarshal.CreatePooledString((byte*)src->names.data[i])!;
+                for (var j = 0; j < (int)src->types[i].size.Value; j++)
                 {
                     var type = StringMarshal
-                        .CreatePooledString((byte*)src->Value.types[i].data[j])!;
+                        .CreatePooledString((byte*)src->types[i].data[j])!;
                     dest[i] = new(name, type);
                 }
             }

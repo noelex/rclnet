@@ -52,9 +52,9 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         try
         {
-            if (rcl_ret.RCL_RET_OK ==
-                (rcl_ret)rcl_take_response_with_info(
-                    Handle.Object, &header, responseBuffer.Data.ToPointer()).Value.Value
+            if (rcl_ret_t.RCL_RET_OK ==
+                rcl_take_response_with_info(
+                    Handle.Object, &header, responseBuffer.Data.ToPointer())
             )
             {
                 if (_pendingRequests.Remove(header.request_id.sequence_number, out var future))
