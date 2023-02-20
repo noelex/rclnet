@@ -38,11 +38,11 @@ static class MessageIntrospection
 {
     public unsafe static IMessageIntrospection Create(MessageTypeSupport* typesupport)
     {
-        if(RosDistribution.IsFoxy)
+        if(RosEnvironment.IsFoxy)
         {
             return new FoxyMessageIntrospection(typesupport);
         }
-        else if(RosDistribution.IsHumble)
+        else if(RosEnvironment.IsHumble)
         {
             return new HumbleMessageIntrospection(typesupport);
         }
@@ -57,11 +57,11 @@ static class MessageIntrospection
 
     public unsafe static IMessageIntrospection Create(MessageMembers* messageMembers)
     {
-        if (RosDistribution.IsFoxy)
+        if (RosEnvironment.IsFoxy)
         {
             return new FoxyMessageIntrospection( messageMembers);
         }
-        else if (RosDistribution.IsHumble)
+        else if (RosEnvironment.IsHumble)
         {
             return new HumbleMessageIntrospection(messageMembers);
         }

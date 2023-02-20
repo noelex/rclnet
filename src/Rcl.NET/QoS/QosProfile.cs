@@ -114,7 +114,7 @@ public record QosProfile(
             false
         );
 
-    public static QosProfile ActionStatusDefault { get; } = RosDistribution.IsFoxy ?
+    public static QosProfile ActionStatusDefault { get; } = RosEnvironment.IsFoxy ?
         new(Depth: 1, Durability: DurabilityPolicy.TransientLocal, Reliability: ReliabilityPolicy.Reliable) :
         new(
             HistoryPolicy.KeepLast,

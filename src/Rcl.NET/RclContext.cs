@@ -40,9 +40,9 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     /// <param name="args">Command line arguments to be passed to the context.</param>
     public RclContext(string[] args)
     {
-        if (!RosDistribution.IsFoxy && !RosDistribution.IsHumble)
+        if (!RosEnvironment.IsFoxy && !RosEnvironment.IsHumble)
         {
-            throw new NotSupportedException($"ROS distribution '{RosDistro}' is not supported.");
+            throw new NotSupportedException($"ROS distribution '{RosEnvironment.Distribution}' is not supported.");
         }
 
         _rclSyncContext = new RclSynchronizationContext(this);
@@ -55,21 +55,6 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
         };
         _mainLoopRunner.Start();
     }
-
-    /// <summary>
-    /// Get the name of the rmw implementation being used.
-    /// </summary>
-    public static string RmwImplementationIdentifier => StringMarshal.CreatePooledString(rmw_get_implementation_identifier())!;
-
-    /// <summary>
-    /// Get the unique serialization format for current middleware.
-    /// </summary>
-    public static string RmwSerializationFormat => StringMarshal.CreatePooledString(rmw_get_serialization_format())!;
-
-    /// <summary>
-    /// Get the name of the ROS distribution currently in use.
-    /// </summary>
-    public static string RosDistro { get; } = Environment.GetEnvironmentVariable("ROS_DISTRO") ?? "";
 
     internal SafeContextHandle Handle => _context;
 
@@ -361,7 +346,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                         {
                             wh.Callback(wh.State);
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
                             Console.WriteLine($"Unhandled exception thrown by wait handle callback: {ex.Message}");
                             Console.WriteLine(ex.StackTrace);

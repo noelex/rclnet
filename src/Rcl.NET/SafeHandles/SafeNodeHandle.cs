@@ -18,10 +18,10 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
         fixed (byte* namePtr = nameBuffer)
         fixed (byte* nsPtr = nsBuffer)
         {
-            switch (RclContext.RosDistro)
+            switch (RosEnvironment.Distribution)
             {
-                case RosDistribution.Foxy: InitFoxy(namePtr, nsPtr, context, options); break;
-                case RosDistribution.Humble: InitHumble(namePtr, nsPtr, context, options); break;
+                case RosEnvironment.Foxy: InitFoxy(namePtr, nsPtr, context, options); break;
+                case RosEnvironment.Humble: InitHumble(namePtr, nsPtr, context, options); break;
                 default: throw new NotImplementedException();
             }
         }

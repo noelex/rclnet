@@ -57,7 +57,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
                 statusTopicName,
                 QosProfile.ActionStatusDefault);
 
-            var feedbackQos = RosDistribution.IsFoxy
+            var feedbackQos = RosEnvironment.IsFoxy
                 ? QosProfile.SensorData : QosProfile.Default;
 
             _feedbackSubscription = _node.CreateNativeSubscription(
