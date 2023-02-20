@@ -106,8 +106,8 @@ await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
 
    <ItemGroup>
       <!--Uncomment the following line if generated code depends on common messages included in Rosidl.CommonMessages-->
-      <!--<PackageReference Include="Rosidl.CommonMessages" Version="1.0.0-preview.1" />-->
-      <PackageReference Include="Rosidl.Runtime" Version="1.0.0-preview.4" />
+      <!--<PackageReference Include="Rosidl.CommonMessages" Version="1.0.0-preview.5" />-->
+      <PackageReference Include="Rosidl.Runtime" Version="1.0.0-preview.5" />
    </ItemGroup>
    ```
 3. Add a `ros2cs.spec` file to the root of the project.
