@@ -26,7 +26,11 @@ internal unsafe class NativeSubscription<T> :
 
     protected override RosMessageBuffer TakeMessage()
     {
-        rmw_message_info_t header;
+        // TODO: Parse this as RclFoxy.rmw_message_info_t
+        // if need to access header fields on foxy.
+        // Defined as RclHumble.rmw_message_info_t only because it has bigger size
+        // to be compatible with both foxy and humble.
+        RclHumble.rmw_message_info_t header;
         void* rosMessage;
 
         rosMessage = T.UnsafeCreate().ToPointer();

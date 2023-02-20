@@ -1,7 +1,7 @@
 # rclnet
 rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.
 
-Currently supports .NET 7 and ROS 2 Foxy Fitzroy.
+Currently supports .NET 7 and ROS 2 Foxy Fitzroy and Humble Hawsbill (experimental).
 
 ## Features
 - Completely asynchronous and `async`/`await` friendly.

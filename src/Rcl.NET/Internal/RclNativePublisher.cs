@@ -16,7 +16,7 @@ namespace Rcl.Internal;
 internal unsafe class RclNativePublisher : RclObject<SafePublisherHandle>, IRclPublisher
 {
     private readonly QosProfile _actualQos;
-    private readonly MessageIntrospection _introspection;
+    private readonly IMessageIntrospection _introspection;
 
     public RclNativePublisher(
         RclNodeImpl node,
@@ -29,7 +29,7 @@ internal unsafe class RclNativePublisher : RclObject<SafePublisherHandle>, IRclP
             rcl_publisher_get_actual_qos(Handle.Object));
         _actualQos = QosProfile.Create(in actualQos);
 
-        _introspection = new(typesupport);
+        _introspection = MessageIntrospection.Create(typesupport);
     }
 
     public QosProfile ActualQos => _actualQos;

@@ -33,7 +33,7 @@ public record QosProfile(
     TimeSpan LifeSpan = default,
     LivelinessPolicy Liveliness = LivelinessPolicy.Default,
     TimeSpan LivelinessLeaseDuration = default,
-    bool AvoidRosNamespaceConversions =false
+    bool AvoidRosNamespaceConversions = false
 )
 {
     public static QosProfile SensorData { get; } =
@@ -112,6 +112,19 @@ public record QosProfile(
             LivelinessPolicy.Default,
             TimeSpan.Zero,
             false
+        );
+
+    public static QosProfile ActionStatusDefault { get; } = RosDistribution.IsFoxy ?
+        new(Depth: 1, Durability: DurabilityPolicy.TransientLocal, Reliability: ReliabilityPolicy.Reliable) :
+        new(
+            HistoryPolicy.KeepLast,
+            10,
+            ReliabilityPolicy.Reliable,
+            DurabilityPolicy.TransientLocal,
+            TimeSpan.Zero,
+            TimeSpan.Zero,
+            LivelinessPolicy.Default,
+            TimeSpan.Zero
         );
 
     public static QosProfile Unknown { get; } =

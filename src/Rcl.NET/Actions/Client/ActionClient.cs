@@ -55,11 +55,15 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
             _statusSubscription = _node.CreateNativeSubscription<GoalStatusArray>(
                 statusTopicName,
-                new(Depth: 1, Durability: DurabilityPolicy.TransientLocal, Reliability: ReliabilityPolicy.Reliable));
+                QosProfile.ActionStatusDefault);
+
+            var feedbackQos = RosDistribution.IsFoxy
+                ? QosProfile.SensorData : QosProfile.Default;
+
             _feedbackSubscription = _node.CreateNativeSubscription(
                 feedbackTopicName,
                 _typesupport.FeedbackMessageTypeSupport,
-                QosProfile.SensorData);
+                feedbackQos);
 
             // In case the given action name gets normalized.
             var sep = _feedbackSubscription.Name!.LastIndexOf("/_action/feedback");
@@ -97,7 +101,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         }
     }
 
-    private unsafe void ProcessFeedbackMessage(MessageIntrospection introspection, RosMessageBuffer buffer)
+    private unsafe void ProcessFeedbackMessage(IMessageIntrospection introspection, RosMessageBuffer buffer)
     {
         // UUID goal_id;
         // TFeedback.Priv feedback;

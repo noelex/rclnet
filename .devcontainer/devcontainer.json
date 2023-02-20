@@ -1,7 +1,7 @@
 // See https://aka.ms/vscode-remote/devcontainer.json for format details.
 {
 	"dockerComposeFile": "docker-compose.yaml",
-	"service": "dev",
+	"service": "foxy",
 	"workspaceFolder": "/workspaces/rclnet",
 	"settings": {
 		"terminal.integrated.profiles.linux": {
@@ -9,7 +9,7 @@
 				"path": "bash"
 			}
 		},
-		"terminal.integrated.defaultProfile.linux": "bash"
+		"terminal.integrated.defaultProfilero.linux": "bash"
 	},
 	"extensions": [
 		"ms-python.python",

@@ -18,8 +18,8 @@ internal unsafe class ServiceIntrospection
         {
             ts = ts->Handler(ts, (sbyte*)id);
             var serviceMembers = (ServiceMembers*)ts->Data;
-            Request = new(serviceMembers->RequestMembers);
-            Response = new(serviceMembers->ResponseMembers);
+            Request = MessageIntrospection.Create(serviceMembers->RequestMembers);
+            Response = MessageIntrospection.Create(serviceMembers->ResponseMembers);
             _typesupport = serviceMembers;
         }
     }
@@ -28,7 +28,7 @@ internal unsafe class ServiceIntrospection
 
     public string Namespace => StringMarshal.CreatePooledString(_typesupport->ServiceNamespace)!;
 
-    public MessageIntrospection Request { get; }
+    public IMessageIntrospection Request { get; }
 
-    public MessageIntrospection Response { get; }
+    public IMessageIntrospection Response { get; }
 }

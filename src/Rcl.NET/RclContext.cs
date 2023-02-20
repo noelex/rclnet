@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks.Sources;
 using Rcl.SafeHandles;
+using Rosidl.Runtime.Interop;
 
 namespace Rcl;
 
@@ -16,7 +17,7 @@ namespace Rcl;
 /// an asynchronous API for users to interact with these concepts easily.
 /// </para>
 /// </remarks>
-public sealed class RclContext : IDisposable, IRclContext
+public sealed unsafe class RclContext : IDisposable, IRclContext
 {
     private static readonly ObjectPool<ManualResetValueTaskSource<bool>> TcsPool = ObjectPool<ManualResetValueTaskSource<bool>>.Shared;
 
@@ -39,6 +40,11 @@ public sealed class RclContext : IDisposable, IRclContext
     /// <param name="args">Command line arguments to be passed to the context.</param>
     public RclContext(string[] args)
     {
+        if (!RosDistribution.IsFoxy && !RosDistribution.IsHumble)
+        {
+            throw new NotSupportedException($"ROS distribution '{RosDistro}' is not supported.");
+        }
+
         _rclSyncContext = new RclSynchronizationContext(this);
         _context = new SafeContextHandle(args);
         _interruptSignal = new SafeGuardConditionHandle(_context);
@@ -49,6 +55,21 @@ public sealed class RclContext : IDisposable, IRclContext
         };
         _mainLoopRunner.Start();
     }
+
+    /// <summary>
+    /// Get the name of the rmw implementation being used.
+    /// </summary>
+    public static string RmwImplementationIdentifier => StringMarshal.CreatePooledString(rmw_get_implementation_identifier())!;
+
+    /// <summary>
+    /// Get the unique serialization format for current middleware.
+    /// </summary>
+    public static string RmwSerializationFormat => StringMarshal.CreatePooledString(rmw_get_serialization_format())!;
+
+    /// <summary>
+    /// Get the name of the ROS distribution currently in use.
+    /// </summary>
+    public static string RosDistro { get; } = Environment.GetEnvironmentVariable("ROS_DISTRO") ?? "";
 
     internal SafeContextHandle Handle => _context;
 

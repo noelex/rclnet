@@ -21,7 +21,10 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
         _node = node;
         * Object = rcl_get_zero_initialized_subscription();
 
-        var opts = rcl_subscription_get_default_options();
+        // This is backward compatible as long as we don't access
+        // rmw_subscription_options.require_unique_network_flow_endpoints and
+        // rmw_subscription_options.content_filter_options
+        var opts = RclHumble.rcl_subscription_get_default_options();
         opts.qos = qos.ToRmwQosProfile();
 
         var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);

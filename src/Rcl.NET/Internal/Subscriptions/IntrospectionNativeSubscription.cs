@@ -12,7 +12,7 @@ namespace Rcl.Internal.Subscriptions;
 internal unsafe class IntrospectionNativeSubscription
     : NativeSubscriptionBase, IRclNativeSubscription
 {
-    private readonly MessageIntrospection _introspection;
+    private readonly IMessageIntrospection _introspection;
 
     public IntrospectionNativeSubscription(
         RclNodeImpl node,
@@ -23,12 +23,17 @@ internal unsafe class IntrospectionNativeSubscription
         BoundedChannelFullMode fullMode)
         : base(node, topicName, typeSupport, qos, queueSize, fullMode)
     {
-        _introspection = new MessageIntrospection(typeSupport);
+        _introspection = MessageIntrospection.Create(typeSupport);
     }
 
     protected override unsafe RosMessageBuffer TakeMessage()
     {
-        rmw_message_info_t header;
+        // TODO: Parse this as RclFoxy.rmw_message_info_t
+        // if need to access header fields on foxy.
+        // Defined as RclHumble.rmw_message_info_t only because it has bigger size
+        // to be compatible with both foxy and humble.
+        RclHumble.rmw_message_info_t header;
+
         var buffer = _introspection.CreateBuffer();
 
         if (rcl_ret_t.RCL_RET_OK ==

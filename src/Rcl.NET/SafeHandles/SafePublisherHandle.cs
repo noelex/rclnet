@@ -19,7 +19,9 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
         _node = node;
         *Object = rcl_get_zero_initialized_publisher();
 
-        var opts = rcl_publisher_get_default_options();
+        // This is backward compatible as long as we don't access
+        // rmw_publisher_options.require_unique_network_flow_endpoints
+        var opts = RclHumble.rcl_publisher_get_default_options();
         opts.qos = qos.ToRmwQosProfile();
 
         var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);

@@ -1,4 +1,4 @@
-using static Rcl.Interop.RclFoxy;
+using static Rcl.Interop.RclCommon;
 
 namespace Rcl.SafeHandles;
 

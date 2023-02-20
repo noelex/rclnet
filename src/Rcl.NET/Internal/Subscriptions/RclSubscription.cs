@@ -69,7 +69,11 @@ internal unsafe class RclSubscription<T> :
 
     protected override void OnWaitCompleted()
     {
-        rmw_message_info_t header;
+        // TODO: Parse this as RclFoxy.rmw_message_info_t
+        // if need to access header fields on foxy.
+        // Defined as RclHumble.rmw_message_info_t only because it has bigger size
+        // to be compatible with both foxy and humble.
+        RclHumble.rmw_message_info_t header;
 
         if (rcl_ret_t.RCL_RET_OK == rcl_take(Handle.Object, _messageBuffer.Data.ToPointer(), &header, null))
         {

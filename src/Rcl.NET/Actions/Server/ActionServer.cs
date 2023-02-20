@@ -20,7 +20,7 @@ internal class ActionServer : IRclObject
     private readonly INativeActionGoalHandler _handler;
     private readonly DynamicFunctionTable _functions;
 
-    private readonly MessageIntrospection _goalIntrospection, _feedbackIntrospection, _resultIntrospection;
+    private readonly IMessageIntrospection _goalIntrospection, _feedbackIntrospection, _resultIntrospection;
 
     public ActionServer(RclNodeImpl node, string actionName,
         string typesupportName, TypeSupportHandle actionTypesupport, INativeActionGoalHandler handler, Encoding textEncoding)

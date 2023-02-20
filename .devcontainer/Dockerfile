@@ -1,22 +1,28 @@
-FROM althack/ros2:foxy-dev
+ARG DISTRO
+
+FROM althack/ros2:${DISTRO}-dev
+
+ARG MS_PACKAGE_FEED
+ARG DISTRO
 
 # Install .NET SDK
 ENV DEBIAN_FRONTEND=noninteractive
-COPY "files/ros2.list" "/etc/apt/sources.list.d/"
-COPY "files/sources.list" "/etc/apt/"
+COPY "sources/${DISTRO}/ros2.list" "/etc/apt/sources.list.d/"
+COPY "sources/${DISTRO}/sources.list" "/etc/apt/"
+
 RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+RUN wget "${MS_PACKAGE_FEED}" -O packages-microsoft-prod.deb \
     && dpkg -i packages-microsoft-prod.deb \
     && rm packages-microsoft-prod.deb \
     && apt-get update \
     && apt-get -y install --no-install-recommends \
-    ros-foxy-rmw-cyclonedds-cpp \
+    ros-${DISTRO}-rmw-cyclonedds-cpp \
+    ros-${DISTRO}-turtlesim \
     dotnet-sdk-7.0 \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
-RUN pip install rosdepc \
-    && rosdepc init
+RUN pip install rosdepc
 ENV DEBIAN_FRONTEND=dialog
 
 ARG WORKSPACE

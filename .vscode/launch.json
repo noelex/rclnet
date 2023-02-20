@@ -19,6 +19,44 @@
       "env": {
         //"LD_LIBRARY_PATH": "${workspaceFolder}/src/Rcl.Test/bin/Debug/net7.0/"
       }
+    },
+    {
+      // Use IntelliSense to find out which attributes exist for C# debugging
+      // Use hover for the description of the existing attributes
+      // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
+      "name": ".NET Core Launch (TurtlePose)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-TurtlePose",
+      // If you have changed target frameworks, make sure to update the program path.
+      "program": "${workspaceFolder}/examples/TurtlePose/bin/Debug/net7.0/TurtlePose.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/examples/TurtlePose/bin/Debug/net7.0/",
+      // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "env": {
+        //"LD_LIBRARY_PATH": "${workspaceFolder}/src/Rcl.Test/bin/Debug/net7.0/"
+      }
+    },
+    {
+      // Use IntelliSense to find out which attributes exist for C# debugging
+      // Use hover for the description of the existing attributes
+      // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
+      "name": ".NET Core Launch (TurtleRotate)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-TurtleRotate",
+      // If you have changed target frameworks, make sure to update the program path.
+      "program": "${workspaceFolder}/examples/TurtleRotate/bin/Debug/net7.0/TurtleRotate.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/examples/TurtleRotate/bin/Debug/net7.0/",
+      // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "env": {
+        //"LD_LIBRARY_PATH": "${workspaceFolder}/src/Rcl.Test/bin/Debug/net7.0/"
+      }
     }
   ]
 }

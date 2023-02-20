@@ -23,8 +23,8 @@ internal class ActionIntrospection
         CancelService = new (CancelServiceTypeSupport);
         GoalService = new(GoalServiceTypeSupport);
         ResultService = new(ResultServiceTypeSupport);
-        FeedbackMessage = new (FeedbackMessageTypeSupport);
-        StatusMessage = new(StatusMessageTypeSupport);
+        FeedbackMessage = MessageIntrospection.Create(FeedbackMessageTypeSupport);
+        StatusMessage = MessageIntrospection.Create(StatusMessageTypeSupport);
     }
 
     public TypeSupportHandle CancelServiceTypeSupport { get; }
@@ -44,7 +44,7 @@ internal class ActionIntrospection
 
     public ServiceIntrospection ResultService { get; }
 
-    public MessageIntrospection FeedbackMessage { get; }
+    public IMessageIntrospection FeedbackMessage { get; }
 
-    public MessageIntrospection StatusMessage { get; }
+    public IMessageIntrospection StatusMessage { get; }
 }

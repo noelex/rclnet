@@ -1,4 +1,4 @@
-﻿global using static Rcl.Interop.RclFoxy;
+﻿global using static Rcl.Interop.RclCommon;
 global using Rcl.Internal;
 global using Rcl.Utils;
 

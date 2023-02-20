@@ -15,27 +15,56 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
         InteropHelpers.FillUtf8Buffer(name, nameBuffer);
         InteropHelpers.FillUtf8Buffer(@namespace, nsBuffer);
 
-
         fixed (byte* namePtr = nameBuffer)
         fixed (byte* nsPtr = nsBuffer)
         {
-            var opts = rcl_node_get_default_options();
-            if (options.DomaindId != null)
+            switch (RclContext.RosDistro)
             {
-                opts.domain_id = (size_t)options.DomaindId;
+                case RosDistribution.Foxy: InitFoxy(namePtr, nsPtr, context, options); break;
+                case RosDistribution.Humble: InitHumble(namePtr, nsPtr, context, options); break;
+                default: throw new NotImplementedException();
             }
-
-            if (options.Arguments != null)
-            {
-                ParseArguments(options.Arguments, &opts.arguments);
-            }
-
-            opts.use_global_arguments = options.UseGlobalArguments;
-            opts.enable_rosout = options.EnableRosOut;
-
-            RclException.ThrowIfNonSuccess(
-                rcl_node_init(Object, namePtr, nsPtr, context.Object, &opts));
         }
+    }
+
+    private void InitFoxy(byte* namePtr, byte* nsPtr, SafeContextHandle context, NodeOptions options)
+    {
+        var opts = RclFoxy.rcl_node_get_default_options();
+        if (options.DomaindId != null)
+        {
+            opts.domain_id = (size_t)options.DomaindId;
+        }
+
+        if (options.Arguments != null)
+        {
+            ParseArguments(options.Arguments, &opts.arguments);
+        }
+
+        opts.use_global_arguments = options.UseGlobalArguments;
+        opts.enable_rosout = options.EnableRosOut;
+
+        RclException.ThrowIfNonSuccess(
+            rcl_node_init(Object, namePtr, nsPtr, context.Object, &opts));
+    }
+
+    private void InitHumble(byte* namePtr, byte* nsPtr, SafeContextHandle context, NodeOptions options)
+    {
+        var opts = RclHumble.rcl_node_get_default_options();
+        if (options.DomaindId != null)
+        {
+            throw new NotSupportedException("DomainId is not supported in humble.");
+        }
+
+        if (options.Arguments != null)
+        {
+            ParseArguments(options.Arguments, &opts.arguments);
+        }
+
+        opts.use_global_arguments = options.UseGlobalArguments;
+        opts.enable_rosout = options.EnableRosOut;
+
+        RclException.ThrowIfNonSuccess(
+            rcl_node_init(Object, namePtr, nsPtr, context.Object, &opts));
     }
 
     private void ParseArguments(string[] args, rcl_arguments_t* result)
