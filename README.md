@@ -1,7 +1,7 @@
 # rclnet
 rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.
 
-Currently supports .NET 7 and ROS 2 Foxy Fitzroy and Humble Hawsbill (experimental).
+Currently supports .NET 7 and ROS 2 Foxy Fitzroy and Humble Hawksbill (experimental).
 
 ## Features
 - Completely asynchronous and `async`/`await` friendly.
@@ -115,7 +115,7 @@ await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
 
     You may want to exclude packages that are already included in [Rosidl.CommonMessages](https://github.com/noelex/rclnet/tree/main/src/Rosidl.CommonMessages/ros2cs.spec).
 4. Add a `_AssemblyAttributes.cs` to the root of the project with the following contents:
-    ```
+    ```csharp
     [assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]
     ```
 4. Install `ros2cs` with the following command:
