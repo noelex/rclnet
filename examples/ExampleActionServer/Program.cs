@@ -11,6 +11,7 @@ using var node = ctx.CreateNode("example_action_server");
 //    RotateAbsoluteActionGoal,
 //    RotateAbsoluteActionResult,
 //    RotateAbsoluteActionFeedback>("/turtle1/rotate_absolute", new MyActionServer());
+
 using var server = node.CreateActionServer<RotateAbsoluteAction>(
     "/turtle1/rotate_absolute", new MyNativeActionServer());
 
@@ -29,9 +30,9 @@ class MyActionServer : ActionGoalHandler<RotateAbsoluteActionGoal, RotateAbsolut
         var feedback = new RotateAbsoluteActionFeedback();
         while (current >= 0)
         {
-            current = current - 0.1f;
+            current -= 0.1f;
 
-            feedback.Remaining = (float)Math.Abs(current);
+            feedback.Remaining = Math.Abs(current);
             controller.Report(feedback);
 
             await Task.Delay(10, cancellationToken);
@@ -55,7 +56,7 @@ class MyNativeActionServer : ActionGoalHandler
         var current = theta;
         while (current >= 0)
         {
-            current = current - 0.1f;
+            current -= 0.1f;
 
             feedback.AsRef<RotateAbsoluteActionFeedback.Priv>().Remaining = Math.Abs(current);
             controller.Report(feedback);

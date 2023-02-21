@@ -98,11 +98,6 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
     public async Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {
-        if (!IsServerAvailable)
-        {
-            throw new RclException($"Service '{Name}' is not currently available.");
-        }
-
         // TODO: Maybe use private ObjectPools?
         var completion = ObjectPool.Rent<ManualResetValueTaskSource<RosMessageBuffer>>();
         var timeoutCts = ObjectPool.Rent<CancellationTokenSource>();
