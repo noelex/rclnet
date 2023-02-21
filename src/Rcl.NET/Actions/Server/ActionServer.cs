@@ -23,7 +23,7 @@ internal class ActionServer : IActionServer
     private readonly CancellationTokenSource _shutdownSignal = new();
 
     private readonly RclClock _clock;
-    private readonly TimeSpan _resultTimeout = TimeSpan.FromMinutes(15);
+    private readonly TimeSpan _resultTimeout = TimeSpan.FromMinutes(1);
 
     public ActionServer(RclNodeImpl node, string actionName,
         string typesupportName, TypeSupportHandle actionTypesupport,
@@ -116,6 +116,9 @@ internal class ActionServer : IActionServer
 
     private unsafe void HandleSendGoal(RosMessageBuffer request, RosMessageBuffer response)
     {
+        // request & response buffers are owned by service server,
+        // no need to dispose here.
+
         Guid goalId = _typesupport.GoalService.Request.AsRef<UUID.Priv>(request.Data, 0);
         var goal = _typesupport.GoalService.Request.GetMemberPointer(request.Data, 1);
 
@@ -129,6 +132,7 @@ internal class ActionServer : IActionServer
 
             if (!_functions.CopyGoal(goal, copiedGoal.Data))
             {
+                copiedGoal.Dispose();
                 throw new RclException("Unable to copy goal buffer.");
             }
 

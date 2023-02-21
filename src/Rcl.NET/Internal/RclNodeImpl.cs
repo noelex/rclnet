@@ -291,7 +291,6 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
             finally
             {
                 _graph.Complete();
-                base.Dispose();
             }
         }
     }
@@ -300,6 +299,7 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
     {
         _cts.Cancel();
         _cts.Dispose();
+        base.Dispose();
     }
 
     public IRclNativeSubscription CreateNativeSubscription(

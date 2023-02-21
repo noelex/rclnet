@@ -19,19 +19,12 @@ using var client = node.CreateActionClient<
     ("/turtle1/rotate_absolute");
 
 using var goal = await client.SendGoalAsync(new RotateAbsoluteActionGoal(theta: angle));
-goal.StatusChanged += (s) => Console.WriteLine(s);
+goal.StatusChanged += (s) => Console.WriteLine("Goal Status: " + s);
 await foreach (var feedback in goal.ReadFeedbacksAsync())
 {
     Console.WriteLine("Remaining: " + feedback.Remaining);
 }
 
-if(ActionGoalStatus.Succeeded == await goal.Completion)
-{
-    var result = await goal.GetResultAsync();
-    Console.WriteLine("Done: delta = " + result.Delta);
-}
-else
-{
-    Console.WriteLine("Failed.");
-    await goal.GetResultAsync();
-}
+
+var result = await goal.GetResultAsync();
+Console.WriteLine("Done: delta = " + result.Delta);
