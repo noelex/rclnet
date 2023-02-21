@@ -1,5 +1,6 @@
 using Rcl.Actions;
 using Rcl.Actions.Client;
+using Rcl.Actions.Server;
 using Rcl.Graph;
 using Rcl.Internal.Clients;
 using Rcl.Internal.Services;
@@ -284,7 +285,7 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
                         Console.WriteLine(e.StackTrace);
                     }
 
-                    await graphSignal.WaitOneAsync(cancellationToken);
+                    await graphSignal.WaitOneAsync(cancellationToken).ConfigureAwait(false);
                 }
             }
             finally
@@ -299,7 +300,6 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
     {
         _cts.Cancel();
         _cts.Dispose();
-        
     }
 
     public IRclNativeSubscription CreateNativeSubscription(
@@ -317,4 +317,29 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
             queueSize,
             fullMode);
     }
+
+    public IActionServer CreateActionServer<TAction>(
+        string actionName, INativeActionGoalHandler handler,
+        RclClock? clock = null, Encoding? textEncoding = null) where TAction : IAction
+        => new ActionServer(this,
+            actionName,
+            TAction.TypeSupportName,
+            TAction.GetTypeSupportHandle(), handler,
+            textEncoding ?? Encoding.UTF8,
+            clock ?? RclClock.Ros);
+
+    public IActionServer CreateActionServer<TAction, TGoal, TResult, TFeedback>(
+        string actionName,
+        IActionGoalHandler<TGoal, TResult, TFeedback> handler,
+        RclClock? clock = null,
+        Encoding? textEncoding = null)
+        where TAction : IAction<TGoal, TResult, TFeedback>
+        where TGoal : IActionGoal
+        where TResult : IActionResult
+        where TFeedback : IActionFeedback
+        => CreateActionServer<TAction>(
+            actionName,
+            new ActionGoalHandlerWrapper<TGoal, TResult, TFeedback>(handler, textEncoding ?? Encoding.UTF8),
+            clock,
+            textEncoding);
 }

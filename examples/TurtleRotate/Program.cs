@@ -1,9 +1,10 @@
 ﻿using Rcl;
 using Rosidl.Messages.Turtlesim;
 using Rosidl.Messages.Action;
+using Rcl.Actions;
 
 var angle = 1.57f;
-if(args.Length > 0 && float.TryParse(args[0], out var input))
+if (args.Length > 0 && float.TryParse(args[0], out var input))
 {
     angle = input;
 }
@@ -23,4 +24,14 @@ await foreach (var feedback in goal.ReadFeedbacksAsync())
 {
     Console.WriteLine("Remaining: " + feedback.Remaining);
 }
-await goal.Completion;
+
+if(ActionGoalStatus.Succeeded == await goal.Completion)
+{
+    var result = await goal.GetResultAsync();
+    Console.WriteLine("Done: delta = " + result.Delta);
+}
+else
+{
+    Console.WriteLine("Failed.");
+    await goal.GetResultAsync();
+}

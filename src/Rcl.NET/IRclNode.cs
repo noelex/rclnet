@@ -180,4 +180,21 @@ public interface IRclNode : IRclObject
         where TGoal : IActionGoal
         where TFeedback : IActionFeedback
         where TResult : IActionResult;
+
+    IActionServer CreateActionServer<TAction>(
+        string actionName,
+        INativeActionGoalHandler handler,
+        RclClock? clock = null,
+        Encoding? textEncoding = null)
+        where TAction : IAction;
+
+    IActionServer CreateActionServer<TAction, TGoal, TResult, TFeedback>(
+        string actionName,
+        IActionGoalHandler<TGoal,TResult, TFeedback> handler,
+        RclClock? clock = null,
+        Encoding? textEncoding = null)
+        where TAction : IAction<TGoal, TResult, TFeedback>
+        where TGoal : IActionGoal
+        where TFeedback : IActionFeedback
+        where TResult : IActionResult;
 }

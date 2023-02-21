@@ -5,10 +5,9 @@ using Rosidl.Messages.Action;
 using Rosidl.Messages.UniqueIdentifier;
 using Rosidl.Runtime;
 using System.Text;
-
 namespace Rcl.Actions.Server;
 
-internal class ActionServer : IRclObject
+internal class ActionServer : IActionServer
 {
     private readonly RclNodeImpl _node;
     private readonly Encoding _textEncoding;
@@ -20,12 +19,18 @@ internal class ActionServer : IRclObject
     private readonly INativeActionGoalHandler _handler;
     private readonly DynamicFunctionTable _functions;
 
-    private readonly IMessageIntrospection _goalIntrospection, _feedbackIntrospection, _resultIntrospection;
+    private readonly Dictionary<Guid, GoalContext> _goals = new();
+    private readonly CancellationTokenSource _shutdownSignal = new();
+
+    private readonly RclClock _clock;
+    private readonly TimeSpan _resultTimeout = TimeSpan.FromMinutes(15);
 
     public ActionServer(RclNodeImpl node, string actionName,
-        string typesupportName, TypeSupportHandle actionTypesupport, INativeActionGoalHandler handler, Encoding textEncoding)
+        string typesupportName, TypeSupportHandle actionTypesupport,
+        INativeActionGoalHandler handler, Encoding textEncoding, RclClock clock)
     {
         _node = node;
+        _clock = clock;
         _handler = handler;
         _textEncoding = textEncoding;
 
@@ -43,12 +48,19 @@ internal class ActionServer : IRclObject
         {
             _sendGoalService = new IntrospectionService(node,
                 sendGoalServiceName, _typesupport.GoalServiceTypeSupport,
-                new DelegateNativeServiceCallHandler(SendGoalHandler, this), QosProfile.ServicesDefault);
-            _getResultService = new IntrospectionService(node,
-                getResultServiceName, _typesupport.ResultServiceTypeSupport,
-                new DelegateNativeServiceCallHandler(GetResultHandler, this), QosProfile.ServicesDefault);
+                new DelegateNativeServiceCallHandler(static (request, response, state) =>
+                ((ActionServer)state!).HandleSendGoal(request, response), this), QosProfile.ServicesDefault);
+
+            _getResultService = new ConcurrentIntrospectionService(node,
+                getResultServiceName,
+                new DelegateConcurrentNativeServiceCallHandler((request, response, state, ct) =>
+                   ((ActionServer)state!).HandleGetResult(request, response, ct), this),
+                _typesupport.ResultServiceTypeSupport,
+                QosProfile.ServicesDefault);
+
             _cancelGoalService = _node.CreateNativeService<CancelGoalService>(
-                cancelGoalServiceName, CancelGoalHandler, QosProfile.ServicesDefault, this);
+                cancelGoalServiceName, static (request, response, state) =>
+                ((ActionServer)state!).HandleCancelGoal(request, response), QosProfile.ServicesDefault, this);
 
             _statusPublisher = _node.CreatePublisher<GoalStatusArray>(statusTopicName, Constants.StatusQoS, textEncoding);
             _feedbackPublisher = new RclNativePublisher(node, feedbackTopicName, _typesupport.FeedbackMessageTypeSupport, QosProfile.SensorData);
@@ -57,6 +69,8 @@ internal class ActionServer : IRclObject
             var sep = _feedbackPublisher.Name!.LastIndexOf(Constants.FeedbackTopic);
             Name = _feedbackPublisher.Name.Substring(0, sep);
             done = true;
+
+            _ = ExpireResultsAsync(_shutdownSignal.Token);
         }
         finally
         {
@@ -71,38 +85,344 @@ internal class ActionServer : IRclObject
         }
     }
 
-    public string Name { get; }
-
-    private static unsafe void SendGoalHandler(RosMessageBuffer request, RosMessageBuffer response, object? state)
+    private async Task ExpireResultsAsync(CancellationToken cancellationToken)
     {
-        var self = (ActionServer)state!;
+        var candidates = new List<GoalContext>();
+        using var timer = _node.Context.CreateTimer(_clock, TimeSpan.FromSeconds(1));
 
-        var goalId = self._typesupport.GoalService.Request.AsRef<UUID.Priv>(request.Data, 0);
-        var goal = self._typesupport.GoalService.Request.GetMemberPointer(request.Data, 1);
-
-        if (self._handler.CanAccept(goalId, new RosMessageBuffer(goal, static (a, b) => { })))
+        while (!cancellationToken.IsCancellationRequested)
         {
-            var copiedGoal = new RosMessageBuffer(
-                self._functions.CreateGoal(),
-                (p, tab) => ((DynamicFunctionTable)tab!).DestroyGoal(p),
-                self._functions);
+            // Ensure we wake up on the event loop.
+            await timer.WaitOneAsync(cancellationToken).ConfigureAwait(false);
 
-    
+            foreach (var goal in _goals.Values)
+            {
+                if (goal.Completion.IsCompleted && (_clock.Elapsed - goal.CompletionTime) >= _resultTimeout)
+                {
+                    candidates.Add(goal);
+                }
+            }
+
+            foreach (var goal in candidates)
+            {
+                _goals.Remove(goal.GoalId);
+                goal.Dispose();
+            }
+            candidates.Clear();
         }
     }
 
-    private static void GetResultHandler(RosMessageBuffer request, RosMessageBuffer response, object? state)
-    {
+    public string Name { get; }
 
+    private unsafe void HandleSendGoal(RosMessageBuffer request, RosMessageBuffer response)
+    {
+        Guid goalId = _typesupport.GoalService.Request.AsRef<UUID.Priv>(request.Data, 0);
+        var goal = _typesupport.GoalService.Request.GetMemberPointer(request.Data, 1);
+
+        if (!_goals.ContainsKey(goalId) && _handler.CanAccept(goalId, new RosMessageBuffer(goal, static (a, b) => { })))
+        {
+            // Make a copy of the goal because we don't own the request buffer.
+            var copiedGoal = new RosMessageBuffer(
+                _functions.CreateGoal(),
+                (p, tab) => ((DynamicFunctionTable)tab!).DestroyGoal(p),
+                _functions);
+
+            if (!_functions.CopyGoal(goal, copiedGoal.Data))
+            {
+                throw new RclException("Unable to copy goal buffer.");
+            }
+
+            var ctx = new GoalContext(goalId, this, _clock.Elapsed);
+            _goals[goalId] = ctx;
+
+            // Send response first, then notify status change.
+            ctx.Status = ActionGoalStatus.Accepted;
+            _node.Context.SynchronizationContext.Post(static (state) =>
+                ((ActionServer)state!).NotifyStatusChange(), this);
+
+            ref var resp = ref response.AsRef<SendGoalResponse>();
+            resp.Accepted = true;
+            resp.Stamp.CopyFrom(ctx.CreationTime);
+
+            _handler.OnAccepted(ctx);
+
+            // Spawn a coroutine to execute the goal
+            _ = ExecuteGoalAsync(ctx, copiedGoal);
+        }
     }
 
-    private static void CancelGoalHandler(RosMessageBuffer request, RosMessageBuffer response, object? state)
+    private async Task ExecuteGoalAsync(GoalContext context, RosMessageBuffer goalBuffer)
     {
+        // Make sure the following happens asynchronously.
+        await _node.Context.Yield();
 
+        using (goalBuffer)
+        {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_shutdownSignal.Token, context.CancelSignal, context.AbortSignal);
+
+            ActionGoalStatus status;
+
+            try
+            {
+                context.Status = ActionGoalStatus.Executing;
+                NotifyStatusChange();
+
+                await _handler.ExecuteAsync(context, goalBuffer, context.ResultBuffer, cts.Token);
+                status = ActionGoalStatus.Succeeded;
+            }
+            catch (OperationCanceledException)
+            {
+                if (context.CancelSignal.IsCancellationRequested)
+                {
+                    Console.WriteLine($"Goal '{context.GoalId}' canceled due to client cancel request.");
+                    status = ActionGoalStatus.Canceled;
+                }
+                else
+                {
+                    Console.WriteLine($"Goal '{context.GoalId}' aborted due to server shutdown.");
+                    status = ActionGoalStatus.Aborted;
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Goal '{context.GoalId}' aborted due to exception: {e.Message}");
+                status = ActionGoalStatus.Aborted;
+            }
+
+            context.Status = status;
+            context.CompletionTime = _clock.Elapsed;
+
+            if (!_node.Context.IsCurrent)
+            {
+                await _node.Context.Yield();
+            }
+
+            NotifyStatusChange();
+            context.Complete();
+
+            _handler.OnCompleted(context);
+        }
+    }
+
+    private async Task HandleGetResult(RosMessageBuffer request, RosMessageBuffer response, CancellationToken cancellationToken)
+    {
+        if (_goals.TryGetValue(request.AsRef<GetResultRequest>().GoalId, out var ctx))
+        {
+            await ctx.Completion.WaitAsync(cancellationToken);
+
+            _typesupport.ResultService.Response.AsRef<ActionGoalStatus>(response.Data, 0) = ctx.Status;
+            if (ctx.Status == ActionGoalStatus.Succeeded)
+            {
+                unsafe
+                {
+                    _functions.CopyResult(ctx.ResultBuffer.Data,
+                        _typesupport.ResultService.Response.GetMemberPointer(response.Data, 1));
+                }
+            }
+        }
+        else
+        {
+            _typesupport.ResultService.Response.AsRef<ActionGoalStatus>(response.Data, 0) = ActionGoalStatus.Unknown;
+        }
+    }
+
+    private void HandleCancelGoal(RosMessageBuffer request, RosMessageBuffer response)
+    {
+        ref var req = ref request.AsRef<CancelGoalServiceRequest.Priv>();
+        ref var res = ref response.AsRef<CancelGoalServiceResponse.Priv>();
+
+        Guid goalId = req.GoalInfo.GoalId;
+        if (goalId == Guid.Empty && req.GoalInfo.Stamp.Sec == 0 && req.GoalInfo.Stamp.Nanosec == 0)
+        {
+            var cancellableGoals = _goals.Values.Where(x => !x.Completion.IsCompleted).ToArray();
+            CancelGoals(cancellableGoals, ref res);
+        }
+        else if (goalId == Guid.Empty)
+        {
+            TimeSpan stamp = req.GoalInfo.Stamp;
+            var cancellableGoals = _goals.Values.Where(x => !x.Completion.IsCompleted && x.CreationTime <= stamp).ToArray();
+            CancelGoals(cancellableGoals, ref res);
+        }
+        else if (goalId != Guid.Empty)
+        {
+            if (!_goals.TryGetValue(goalId, out var ctx))
+            {
+                res.ReturnCode = CancelGoalServiceResponse.ERROR_UNKNOWN_GOAL_ID;
+                return;
+            }
+
+            if (ctx.Completion.IsCompleted)
+            {
+                res.ReturnCode = CancelGoalServiceResponse.ERROR_GOAL_TERMINATED;
+                return;
+            }
+
+            CancelGoals(new[] { ctx }, ref res);
+        }
+        else
+        {
+            TimeSpan stamp = req.GoalInfo.Stamp;
+            var cancellableGoals = _goals.Values
+                .Where(x => !x.Completion.IsCompleted && (goalId == x.GoalId || x.CreationTime <= stamp))
+                .ToArray();
+
+            CancelGoals(cancellableGoals, ref res);
+        }
+    }
+
+    private void CancelGoals(GoalContext[] cancellableGoals, ref CancelGoalServiceResponse.Priv res)
+    {
+        if (cancellableGoals.Length == 0)
+        {
+            res.ReturnCode = CancelGoalServiceResponse.ERROR_REJECTED;
+            return;
+        }
+
+        Span<GoalInfo.Priv> span = stackalloc GoalInfo.Priv[cancellableGoals.Length];
+
+        var i = 0;
+        foreach (var goal in _goals.Values)
+        {
+            goal.Status = ActionGoalStatus.Canceling;
+
+            span[i].GoalId = goal.GoalId;
+            span[i].Stamp.CopyFrom(goal.CreationTime);
+            i++;
+        }
+
+        NotifyStatusChange();
+
+        res.ReturnCode = CancelGoalServiceResponse.ERROR_NONE;
+        res.GoalsCanceling.CopyFrom(span);
+
+        _node.Context.SynchronizationContext.Post((state) =>
+        {
+            foreach (var goal in (GoalContext[])state!)
+            {
+                goal.Cancel();
+            }
+        }, cancellableGoals);
+    }
+
+    private void NotifyStatusChange()
+    {
+        using var statusBuffer = RosMessageBuffer.Create<GoalStatusArray>();
+        ref var statusArray = ref statusBuffer.AsRef<GoalStatusArray.Priv>();
+
+        Span<GoalStatus.Priv> goals = stackalloc GoalStatus.Priv[_goals.Count];
+
+        var i = 0;
+        foreach (var goal in _goals.Values)
+        {
+            goals[i].GoalInfo.GoalId.CopyFrom(goal.GoalId);
+            goals[i].GoalInfo.Stamp.CopyFrom(goal.CreationTime);
+            goals[i].Status = (sbyte)goal.Status;
+
+            i++;
+        }
+        statusArray.StatusList.CopyFrom(goals);
+
+        _statusPublisher.Publish(statusBuffer);
     }
 
     public void Dispose()
     {
-        throw new NotImplementedException();
+        if (!_shutdownSignal.IsCancellationRequested)
+        {
+            _shutdownSignal.Cancel();
+            _shutdownSignal.Dispose();
+
+            _node.Context.SynchronizationContext.Send(static (state) =>
+            {
+                var self = (ActionServer)state!;
+                foreach (var ctx in self._goals.Values)
+                {
+                    ctx.Dispose();
+                }
+
+                self._goals.Clear();
+
+                self._feedbackPublisher?.Dispose();
+                self._statusPublisher?.Dispose();
+                self._cancelGoalService?.Dispose();
+                self._getResultService?.Dispose();
+                self._sendGoalService?.Dispose();
+            }, this);
+        }
+    }
+
+    private class GoalContext : INativeActionGoalController, IDisposable
+    {
+        private readonly Guid _goalId;
+        private readonly ActionServer _server;
+        private readonly RosMessageBuffer _feedbackMessageBuffer, _resultBuffer;
+
+        private readonly CancellationTokenSource _abort = new(), _cancel = new();
+        private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public GoalContext(Guid id, ActionServer server, TimeSpan accepted)
+        {
+            _goalId = id;
+            _server = server;
+            CreationTime = accepted;
+
+            _feedbackMessageBuffer = _server._typesupport.FeedbackMessage.CreateBuffer();
+            _server._typesupport.FeedbackMessage.AsRef<UUID.Priv>(_feedbackMessageBuffer.Data, 0).CopyFrom(id);
+
+            _resultBuffer = _server._typesupport.ResultService.Response.CreateBuffer();
+        }
+
+        public Guid GoalId => _goalId;
+
+        public TimeSpan CreationTime { get; }
+
+        public TimeSpan CompletionTime { get; set; }
+
+        public ActionGoalStatus Status { get; set; }
+
+        public CancellationToken CancelSignal => _cancel.Token;
+
+        public CancellationToken AbortSignal => _abort.Token;
+
+        public RosMessageBuffer ResultBuffer => _resultBuffer;
+
+        public Task Completion => _completion.Task;
+
+        public void Abort()
+        {
+            if (!_abort.IsCancellationRequested)
+            {
+                _abort.Cancel();
+            }
+        }
+
+        public void Cancel()
+        {
+            if (!_cancel.IsCancellationRequested)
+            {
+                _cancel.Cancel();
+            }
+        }
+
+        public void Complete()
+        {
+            _completion.TrySetResult();
+        }
+
+        public void Dispose()
+        {
+            _feedbackMessageBuffer.Dispose();
+            _resultBuffer.Dispose();
+
+            _abort.Dispose();
+            _cancel.Dispose();
+        }
+
+        public unsafe void Report(RosMessageBuffer value)
+        {
+            _server._functions.CopyFeedback(value.Data,
+                _server._typesupport.FeedbackMessage.GetMemberPointer(_feedbackMessageBuffer.Data, 1));
+            _server._feedbackPublisher.Publish(_feedbackMessageBuffer);
+        }
     }
 }

@@ -89,10 +89,6 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
         if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
         {
             Interrupt();
-
-            // Don't join if we are already on event loop thread to avoid dead lock.
-            if (Thread.CurrentThread != _mainLoopRunner)
-                _mainLoopRunner.Join();
         }
     }
 

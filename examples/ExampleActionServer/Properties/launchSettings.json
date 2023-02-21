@@ -1,0 +1,31 @@
+{
+  "profiles": {
+    "Windows": {
+      "commandName": "Project"
+    },
+    "WSL : Foxy": {
+      "commandName": "WSL",
+      "distributionName": "Ubuntu-20.04",
+      "environmentVariables": {
+        "ROS_DISTRO": "foxy",
+        "ROS_LOCALHOST_ONLY": "0",
+        "ROS_PYTHON_VERSION": "3",
+        "ROS_VERSION": "2",
+        "LD_LIBRARY_PATH": "/opt/ros/foxy/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/lib/x86_64-linux-gnu:/opt/ros/foxy/lib",
+        "AMENT_PREFIX_PATH": "/opt/ros/foxy"
+      }
+    },
+    "WSL : Humble": {
+      "commandName": "WSL",
+      "distributionName": "Ubuntu-22.04",
+      "environmentVariables": {
+        "ROS_DISTRO": "humble",
+        "ROS_LOCALHOST_ONLY": "0",
+        "ROS_PYTHON_VERSION": "3",
+        "ROS_VERSION": "2",
+        "LD_LIBRARY_PATH": "/opt/ros/humble/opt/yaml_cpp_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib",
+        "AMENT_PREFIX_PATH": "/opt/ros/humble"
+      }
+    }
+  }
+}

@@ -39,7 +39,6 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
 
         Status = state;
         OnGoalStateChanged(state);
-
         StatusChanged?.Invoke(state);
 
         if (state is ActionGoalStatus.Aborted or ActionGoalStatus.Canceled or ActionGoalStatus.Succeeded)
@@ -54,7 +53,7 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
         => GetResultAsync(TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
 
     public Task<RosMessageBuffer> GetResultAsync(CancellationToken cancellationToken)
-        => GetResultAsync(cancellationToken);
+        => GetResultAsync(Timeout.Infinite, cancellationToken);
 
     public async Task<RosMessageBuffer> GetResultAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
@@ -97,7 +96,7 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
             resultBuffer = new(_client.Functions.CreateResult(),
                 (p, func) => ((DynamicFunctionTable)func!).DestroyResult(p), _client.Functions);
 
-            _client.Functions.CopyResult(introspection.GetMemberPointer(resultBuffer.Data, 1), resultBuffer.Data);
+            _client.Functions.CopyResult(introspection.GetMemberPointer(responseBuffer, 1), resultBuffer.Data);
             return state;
         }
     }
