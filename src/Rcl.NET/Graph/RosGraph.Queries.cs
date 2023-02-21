@@ -68,71 +68,141 @@ public partial class RosGraph
         }
     }
 
-    public Task<bool> TryWaitForServiceServerAsync(string serviceName, int timeoutMilliseconds, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Try wait for a service server with specific name become available, or until timeout.
+    /// </summary>
+    /// <param name="serviceName">Name of the service.</param>
+    /// <param name="timeoutMilliseconds">Timeout in milliseconds. Specify <see cref="Timeout.Infinite"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns><see langword="true"/> if the server is available, <see langword="false"/> if timed out.</returns>
+    public async Task<bool> TryWaitForServiceServerAsync(string serviceName, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {
+        // Yield back to event loop to make sure we have
+        // consistent view on the graph during query.
+        if (!_node.Context.IsCurrent) await _node.Context.Yield();
+
         if (IsServiceServerAvailable(serviceName))
         {
-            return Task.FromResult(true);
+            return true;
         }
 
-        return TryWaitForConditionAsync(
+        return await TryWaitForConditionAsync(
              static (e, s) => e is ServerEstablishedEvent se && se.Server.Service.Name == (string)s!,
              serviceName, timeoutMilliseconds, cancellationToken);
     }
 
+    /// <summary>
+    /// Try wait for a service server with specific name become available, or until timeout.
+    /// </summary>
+    /// <param name="serviceName">Name of the service.</param>
+    /// <param name="timeout">Timeout of this operation. Specify <see cref="Timeout.InfiniteTimeSpan"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns><see langword="true"/> if the server is available, <see langword="false"/> if timed out.</returns>
     public Task<bool> TryWaitForServiceServerAsync(string serviceName, TimeSpan timeout, CancellationToken cancellationToken = default)
         => TryWaitForServiceServerAsync(serviceName, (int)timeout.TotalMilliseconds, cancellationToken);
 
-    public Task<bool> TryWaitForServiceServerAsync(string serviceName, CancellationToken cancellationToken = default)
-        => TryWaitForServiceServerAsync(serviceName, -1, cancellationToken);
-
-    public async Task<bool> WaitForServiceServerAsync(string serviceName, int timeoutMilliseconds, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Wait until a service server with specific name become available.
+    /// </summary>
+    /// <param name="serviceName">Name of the service.</param>
+    /// <param name="timeoutMilliseconds">Timeout in milliseconds. Specify <see cref="Timeout.Infinite"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    /// <exception cref="TimeoutException">The server didn't become available during the wait.</exception>
+    public async Task WaitForServiceServerAsync(string serviceName, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {
         if (!await TryWaitForServiceServerAsync(serviceName, timeoutMilliseconds, cancellationToken))
         {
             throw new TimeoutException();
         }
-
-        return true;
     }
 
+    /// <summary>
+    /// Wait until a service server with specific name become available.
+    /// </summary>
+    /// <param name="serviceName">Name of the service.</param>
+    /// <param name="timeout">Timeout of the operation. Specify <see cref="Timeout.InfiniteTimeSpan"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    /// <exception cref="TimeoutException">The server didn't become available during the wait.</exception>
     public Task WaitForServiceServerAsync(string serviceName, TimeSpan timeout, CancellationToken cancellationToken = default)
         => WaitForServiceServerAsync(serviceName, (int)timeout.TotalMilliseconds, cancellationToken);
 
+    /// <summary>
+    /// Wait until a service server with specific name become available.
+    /// </summary>
+    /// <param name="serviceName">Name of the service.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
     public Task WaitForServiceServerAsync(string serviceName, CancellationToken cancellationToken = default)
         => WaitForServiceServerAsync(serviceName, -1, cancellationToken);
 
-    public Task<bool> TryWaitForActionServerAsync(string actionName, int timeoutMilliseconds, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Try wait for a action server with specific name become available, or until timeout.
+    /// </summary>
+    /// <param name="actionName">Name of the action.</param>
+    /// <param name="timeoutMilliseconds">Timeout in milliseconds. Specify <see cref="Timeout.Infinite"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns><see langword="true"/> if the server is available, <see langword="false"/> if timed out.</returns>
+    public async Task<bool> TryWaitForActionServerAsync(string actionName, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {
+        // Yield back to event loop to make sure we have
+        // consistent view on the graph during query.
+        if (!_node.Context.IsCurrent) await _node.Context.Yield();
+
         if (IsActionServerAvailable(actionName))
         {
-            return Task.FromResult(true);
+            return true;
         }
 
-        return TryWaitForConditionAsync(
+        return await TryWaitForConditionAsync(
              static (e, s) => e is ActionServerEstablishedEvent se && se.ActionServer.Action.Name == (string)s!,
              actionName, timeoutMilliseconds, cancellationToken);
     }
 
+    /// <summary>
+    /// Try wait for a action server with specific name become available, or until timeout.
+    /// </summary>
+    /// <param name="actionName">Name of the action.</param>
+    /// <param name="timeout">Timeout of the operation. Specify <see cref="Timeout.InfiniteTimeSpan"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns><see langword="true"/> if the server is available, <see langword="false"/> if timed out.</returns>
     public Task<bool> TryWaitForActionServerAsync(string actionName, TimeSpan timeout, CancellationToken cancellationToken = default)
         => TryWaitForActionServerAsync(actionName, (int)timeout.TotalMilliseconds, cancellationToken);
 
-    public Task<bool> TryWaitForActionServerAsync(string actionName, CancellationToken cancellationToken = default)
-        => TryWaitForActionServerAsync(actionName, -1, cancellationToken);
-
-    public async Task<bool> WaitForActionServerAsync(string actionName, int timeoutMilliseconds, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Wait until a action server with specific name become available.
+    /// </summary>
+    /// <param name="actionName">Name of the action.</param>
+    /// <param name="timeoutMilliseconds">Timeout in milliseconds. Specify <see cref="Timeout.Infinite"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    /// <exception cref="TimeoutException">The server didn't become available during the wait.</exception>
+    public async Task WaitForActionServerAsync(string actionName, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {
-        if (!await WaitForActionServerAsync(actionName, timeoutMilliseconds, cancellationToken))
+        if (!await TryWaitForActionServerAsync(actionName, timeoutMilliseconds, cancellationToken))
         {
             throw new TimeoutException();
         }
-
-        return true;
     }
 
+    /// <summary>
+    /// Wait until a action server with specific name become available.
+    /// </summary>
+    /// <param name="actionName">Name of the action.</param>
+    /// <param name="timeout">Timeout of the operation. Specify <see cref="Timeout.InfiniteTimeSpan"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    /// <exception cref="TimeoutException">The server didn't become available during the wait.</exception>
     public Task WaitForActionServerAsync(string actionName, TimeSpan timeout, CancellationToken cancellationToken = default)
         => WaitForServiceServerAsync(actionName, (int)timeout.TotalMilliseconds, cancellationToken);
 
+    /// <summary>
+    /// Wait until a action server with specific name become available.
+    /// </summary>
+    /// <param name="actionName">Name of the action.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
     public Task WaitForActionServerAsync(string actionName, CancellationToken cancellationToken = default)
         => WaitForServiceServerAsync(actionName, -1, cancellationToken);
 
