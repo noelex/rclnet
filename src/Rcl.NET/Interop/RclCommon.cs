@@ -1639,7 +1639,7 @@ namespace Rcl.Interop
         /// </summary>
         [DllImport("rcutils", CallingConvention = CallingConvention.Cdecl)]
         public static extern void rcutils_reset_error();
-      
+
         /// <summary>
         /// Finalize a string array, reclaiming all resources.
         /// </summary>
@@ -4730,7 +4730,7 @@ namespace Rcl.Interop
         public static extern rcl_ret_t rcl_service_server_is_available(RclCommon.rcl_node_t* node, RclCommon.rcl_client_t* client, bool* is_available);
 
         [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
-        public static extern rcl_ret_t　rcl_logging_configure(rcl_arguments_t* global_args, rcl_allocator_t* allocator);
+        public static extern rcl_ret_t rcl_logging_configure(rcl_arguments_t* global_args, rcl_allocator_t* allocator);
 
         [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
         public static extern rcl_ret_t rcl_logging_fini();
@@ -4738,5 +4738,7 @@ namespace Rcl.Interop
         [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
         public static extern void rcutils_log(rcutils_log_location_t* location, int severity, byte* name, byte* format, nint args);
 
+        [DllImport("rcl_yaml_param_parser", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void rcl_yaml_node_struct_fini(rcl_params_t* params_st);
     }
 }

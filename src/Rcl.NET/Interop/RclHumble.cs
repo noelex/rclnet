@@ -50,6 +50,9 @@ internal unsafe static class RclHumble
         /// Flag to enable rosout for this node
         /// </summary>
         public bool enable_rosout;
+
+        /// Middleware quality of service settings for /rosout.
+        public rmw_qos_profile_t rosout_qos;
     }
 
     /// <summary>

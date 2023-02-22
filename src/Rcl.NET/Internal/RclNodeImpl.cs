@@ -5,13 +5,11 @@ using Rcl.Graph;
 using Rcl.Internal.Clients;
 using Rcl.Internal.Services;
 using Rcl.Internal.Subscriptions;
-using Rcl.Interop;
 using Rcl.Logging;
 using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
-using System.Numerics;
 using System.Text;
 using System.Threading.Channels;
 
@@ -31,7 +29,7 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
         : base(new(context.Handle, name, @namespace, options ?? NodeOptions.Default))
     {
         Context = context;
-
+        Options = options ?? NodeOptions.Default;
 
         _graph = new(this);
 
@@ -45,6 +43,8 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
 
         Logger = context.LoggerFactory.CreateLogger(StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object))!);
     }
+
+    public NodeOptions Options { get; }
 
     public RclContext Context { get; }
 

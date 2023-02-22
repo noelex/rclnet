@@ -370,13 +370,13 @@ internal class ActionServer : IActionServer
                 }
 
                 self._goals.Clear();
-
-                self._feedbackPublisher?.Dispose();
-                self._statusPublisher?.Dispose();
-                self._cancelGoalService?.Dispose();
-                self._getResultService?.Dispose();
-                self._sendGoalService?.Dispose();
             }, this);
+
+            _feedbackPublisher?.Dispose();
+            _statusPublisher?.Dispose();
+            _cancelGoalService?.Dispose();
+            _getResultService?.Dispose();
+            _sendGoalService?.Dispose();
         }
     }
 

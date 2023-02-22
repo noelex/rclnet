@@ -35,10 +35,7 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
             opts.domain_id = (size_t)options.DomaindId;
         }
 
-        if (options.Arguments != null)
-        {
-            ParseArguments(options.Arguments, &opts.arguments);
-        }
+        ParseArguments(options.Arguments ?? Array.Empty<string>(), &opts.arguments);
 
         opts.use_global_arguments = options.UseGlobalArguments;
         opts.enable_rosout = options.EnableRosOut;
@@ -55,13 +52,13 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
             throw new NotSupportedException("DomainId is not supported in humble.");
         }
 
-        if (options.Arguments != null)
-        {
-            ParseArguments(options.Arguments, &opts.arguments);
-        }
+        ParseArguments(options.Arguments ?? Array.Empty<string>(), &opts.arguments);
 
         opts.use_global_arguments = options.UseGlobalArguments;
         opts.enable_rosout = options.EnableRosOut;
+
+        // TODO: Allow caller to configure QoS for rosout
+        // opts.rosout_qos = ...
 
         RclException.ThrowIfNonSuccess(
             rcl_node_init(Object, namePtr, nsPtr, context.Object, &opts));

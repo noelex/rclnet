@@ -41,4 +41,9 @@ public unsafe static class RosEnvironment
     /// Get the name of the ROS distribution currently in use.
     /// </summary>
     public static string Distribution { get; } = Environment.GetEnvironmentVariable("ROS_DISTRO") ?? "";
+
+    internal static void ThrowUnsupportedDistribution()
+    {
+        throw new NotSupportedException($"ROS distribution '{Distribution}' is not supported.");
+    }
 }
