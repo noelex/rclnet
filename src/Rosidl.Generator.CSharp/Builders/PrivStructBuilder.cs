@@ -132,7 +132,7 @@ public class PrivStructBuilder
             {
                 var name = context.GetNormalizedFieldName(x);
                 var type = GetFieldType(x.Type);
-                return new VariableField(name, type, x, (x.Type as ArrayTypeMetadata)?.Length);
+                return new VariableField(name, type, x, x.Type is ArrayTypeMetadata at && !at.IsUpperBounded ? at.Length : null);
             })
             .ToArray();
 
@@ -158,7 +158,7 @@ public class PrivStructBuilder
 
         string GetArrayTypeName(ArrayTypeMetadata arrayType)
         {
-            if (arrayType.Length != null)
+            if (arrayType.Length != null && !arrayType.IsUpperBounded)
             {
                 return arrayType.ElementType switch
                 {

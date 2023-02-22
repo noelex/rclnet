@@ -8,12 +8,10 @@ using System.Threading.Tasks;
 namespace Rosidl.Generator.CSharp.Helpers;
 internal static class Extensions
 {
-    public static bool IsFixedSizedArray(this TypeMetadata fieldType)
-        => fieldType is ArrayTypeMetadata a && a.Length != null;
     public static bool TryGetArraySize(this TypeMetadata fieldType, out int size)
     {
         size = 0;
-        if (fieldType is ArrayTypeMetadata a && a.Length != null)
+        if (fieldType is ArrayTypeMetadata a && a.Length != null && !a.IsUpperBounded)
         {
             size = a.Length.Value;
             return true;

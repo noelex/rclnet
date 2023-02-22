@@ -28,7 +28,7 @@ Supported ROS 2 Distributions:
 |  Guard Conditions        | ✅      | N/A                           | 
 |  Events                  | ❌      | N/A                           | 
 |  Lifecycles              | ❌      | N/A                           | 
-|  Parameter Services      | ❌      | N/A                           | 
+|  Parameter Services      | ⏳      | N/A                           | 
 |  ROS Graph               | ✅      | Managed implementation.       | 
 |  Logging                 | ✅      | Configurable via `--ros-args`.| 
 |  Network Flow Endpoints  | ❌      | Available since galactic.     |
@@ -37,6 +37,7 @@ Supported ROS 2 Distributions:
 ✅ Fully supported
 ⚠️Partial support
 ❌ Not supported
+⏳ In development
 
 ## Installing
 rclnet is being actively developed currently, thus no stable package available for now.
