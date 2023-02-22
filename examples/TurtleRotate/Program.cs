@@ -1,4 +1,5 @@
 ﻿using Rcl;
+using Rcl.Logging;
 using Rosidl.Messages.Turtlesim;
 
 var angle = 1.57f;
@@ -17,20 +18,20 @@ using var client = node.CreateActionClient<
     RotateAbsoluteActionFeedback>
     ("/turtle1/rotate_absolute");
 
-Console.WriteLine($"Waiting for action server {client.Name} ...");
+node.Logger.LogInformation($"Waiting for action server {client.Name} ...");
 if (!await client.TryWaitForServerAsync(5000))
 {
-    Console.WriteLine("Action server is offline.");
+    node.Logger.LogInformation("Action server is offline.");
     return;
 }
 
 using var goal = await client.SendGoalAsync(new RotateAbsoluteActionGoal(theta: angle));
-goal.StatusChanged += (s) => Console.WriteLine("Goal Status: " + s);
+goal.StatusChanged += (s) => node.Logger.LogInformation("Goal Status: " + s);
 await foreach (var feedback in goal.ReadFeedbacksAsync())
 {
-    Console.WriteLine("Remaining: " + feedback.Remaining);
+    node.Logger.LogInformation("Remaining: " + feedback.Remaining);
 }
 
 
 var result = await goal.GetResultAsync();
-Console.WriteLine("Done: delta = " + result.Delta);
+node.Logger.LogInformation("Done: delta = " + result.Delta);

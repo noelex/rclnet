@@ -1,4 +1,5 @@
 ﻿using Rcl;
+using Rcl.Logging;
 using Rosidl.Messages.Turtlesim;
 
 using var ctx = new RclContext(args);
@@ -10,13 +11,13 @@ _ = Task.Run(async () =>
 {
     await foreach(var buffer in sub.ReadAllAsync(cts.Token))
     {
-        using(buffer) ProcessMessage(buffer);
+        using(buffer) ProcessMessage(node, buffer);
     }
 
-    static void ProcessMessage(RosMessageBuffer buffer)
+    static void ProcessMessage(IRclNode node, RosMessageBuffer buffer)
     {
         ref var msg = ref buffer.AsRef<Pose.Priv>();
-        Console.WriteLine($"X: {msg.X}, Y: {msg.Y}, Theta: {msg.Theta}");
+        node.Logger.LogInformation($"X: {msg.X}, Y: {msg.Y}, Theta: {msg.Theta}");
     }
 });
 

@@ -158,9 +158,6 @@ public interface IActionGoalContext<TResult, TFeedback> : IActionGoalContext, IO
     /// Though calling this method after completion is allowed.
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
-    /// <para>
-    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
-    /// </para>
     /// </remarks>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
@@ -175,9 +172,6 @@ public interface IActionGoalContext<TResult, TFeedback> : IActionGoalContext, IO
     /// <para>
     /// Though calling this method after completion is allowed.
     /// Action servers may or may not return result according to their configured result caching policy.
-    /// </para>
-    /// <para>
-    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
     /// </para>
     /// </remarks>
     /// <param name="cancellationToken"></param>
@@ -213,9 +207,6 @@ public interface IActionGoalContext<TResult, TFeedback> : IActionGoalContext, IO
     /// transitioned to terminal state (<see cref="ActionGoalStatus.Aborted"/>, 
     /// <see cref="ActionGoalStatus.Canceled"/> or <see cref="ActionGoalStatus.Succeeded"/>),
     /// or when current <see cref="INativeActionGoalContext"/> instance is disposed.
-    /// <para>
-    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
-    /// </para>
     /// </remarks>
     /// <returns>
     /// An <see cref="IAsyncEnumerable{TFeedback}"/> for receiving feedbacks asynchronously.

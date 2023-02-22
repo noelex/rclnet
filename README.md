@@ -1,18 +1,47 @@
 # rclnet
 rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.
+## Supported Platforms
+Supported .NET Versions:
+- .NET 7
 
-Currently supports .NET 7 and ROS 2 Foxy Fitzroy and Humble Hawksbill (experimental).
+Supported ROS 2 Distributions:
+- Humble Hawksbill
+- Foxy Fitzroy
 
 ## Features
 - Completely asynchronous and `async`/`await` friendly.
 - Flexible asynchronous scheduling control to fit rclnet into existing applications.
 - Unified message generation for POCOs and blittable structures.
+- Intuitive ROS graph querying and monitoring APIs.
 - Easy-to-use POCO-based APIs.
-- Fast and low allocation native buffer based APIs.
-- Currently supports pub/sub, service server/client, action client and more coming.
+- Fast and zero managed heap allocation APIs operating directly on native message buffers.
+- Single package with runtime support for different ROS 2 distros.
+
+### Supported ROS Features
+|  Feature                 |  Status |  Additional Information       |
+|------------------------- |-------- |------------------------------ | 
+|  Topics                  | ✅      | N/A                           |
+|  Services                | ✅      | N/A                           | 
+|  Actions                 | ✅      | Managed implementation.       | 
+|  Clocks                  | ⚠️      | ROS time abstraction override and time jump observation are not supported.   |
+|  Timers                  | ⚠️      | Changing period of timers is not supported.    | 
+|  Guard Conditions        | ✅      | N/A                           | 
+|  Events                  | ❌      | N/A                           | 
+|  Lifecycles              | ❌      | N/A                           | 
+|  Parameter Services      | ❌      | N/A                           | 
+|  ROS Graph               | ✅      | Managed implementation.       | 
+|  Logging                 | ✅      | Configurable via `--ros-args`.| 
+|  Network Flow Endpoints  | ❌      | Available since galactic.     |
+|  Content Filtered Topics | ❌      | Available since humble.       |
+
+✅ Fully supported
+⚠️Partial support
+❌ Not supported
 
 ## Installing
-You can install preview packages with the following command:
+rclnet is being actively developed currently, thus no stable package available for now.
+
+You can try out by installing preview packages with the following command:
 ```
 dotnet add package Rcl.NET --prerelease
 ```
@@ -60,7 +89,8 @@ node.Graph
     {
         Console.WriteLine($"Node {x.Node.Name} is online.");
     });
-await Task.Delay(-1);
+
+await node.Graph.WaitForServiceServerAsync("/my/service");
 ```
 ### Calling Action Servers
 ```csharp
