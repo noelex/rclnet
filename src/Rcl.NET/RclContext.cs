@@ -1,6 +1,6 @@
-﻿using System.Threading.Tasks.Sources;
+﻿using Rcl.Logging;
+using Rcl.Logging.Impl;
 using Rcl.SafeHandles;
-using Rosidl.Runtime.Interop;
 
 namespace Rcl;
 
@@ -38,7 +38,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     /// Initialize an <see cref="RclContext"/> and start the underlying event loop immediately.
     /// </summary>
     /// <param name="args">Command line arguments to be passed to the context.</param>
-    public RclContext(string[] args)
+    public RclContext(string[] args, IRclLoggerFactory? loggerFactory = null)
     {
         if (!RosEnvironment.IsFoxy && !RosEnvironment.IsHumble)
         {
@@ -47,6 +47,13 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
 
         _rclSyncContext = new RclSynchronizationContext(this);
         _context = new SafeContextHandle(args);
+
+        var allocator = RclAllocator.Default.Object;
+        RclException.ThrowIfNonSuccess(
+            rcl_logging_configure(&_context.Object->global_arguments, &allocator));
+
+        LoggerFactory = loggerFactory ?? new RcutilsLoggerFactory(_rclSyncContext);
+
         _interruptSignal = new SafeGuardConditionHandle(_context);
 
         _mainLoopRunner = new(Run)
@@ -57,6 +64,8 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     }
 
     internal SafeContextHandle Handle => _context;
+
+    internal IRclLoggerFactory LoggerFactory { get; }
 
     /// <inheritdoc/>
     public SynchronizationContext SynchronizationContext => _rclSyncContext;
@@ -377,6 +386,8 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
         rcl_wait_set_fini(&ws);
         _interruptSignal.Dispose();
         _context.Dispose();
+
+        rcl_logging_fini();
     }
 
     private void ExecuteCallbacks(List<CallbackWorkItem> storage)

@@ -6,6 +6,7 @@ using Rcl.Internal.Clients;
 using Rcl.Internal.Services;
 using Rcl.Internal.Subscriptions;
 using Rcl.Interop;
+using Rcl.Logging;
 using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
@@ -40,15 +41,16 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
 
         Name = StringMarshal.CreatePooledString(rcl_node_get_name(Handle.Object))!;
         Namespace = StringMarshal.CreatePooledString(rcl_node_get_namespace(Handle.Object))!;
-        LoggerName = StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object))!;
         FullyQualifiedName = StringMarshal.CreatePooledString(rcl_node_get_fully_qualified_name(Handle.Object))!;
+
+        Logger = context.LoggerFactory.CreateLogger(StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object))!);
     }
 
     public RclContext Context { get; }
 
     public RosGraph Graph => _graph;
 
-    public string LoggerName { get; }
+    public IRclLogger Logger { get; }
 
     public string Name { get; }
 

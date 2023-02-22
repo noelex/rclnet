@@ -8,6 +8,7 @@ if (args.Length > 0 && float.TryParse(args[0], out var input))
 }
 
 using var ctx = new RclContext(args);
+
 using var node = ctx.CreateNode("turtle_rotate");
 using var client = node.CreateActionClient<
     RotateAbsoluteAction,

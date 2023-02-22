@@ -25,7 +25,7 @@ static class InteropHelpers
 
     public static int GetUtf8BufferSize(string str, bool zeroTerminated = true)
     {
-        return Encoding.UTF8.GetByteCount(str) + (zeroTerminated ? 1 : 0);
+        return Encoding.UTF8.GetMaxByteCount(str.Length) + (zeroTerminated ? 1 : 0);
     }
 
     public static int GetUtf8BufferSize(string[] strArray, bool zeroTerminated = true)

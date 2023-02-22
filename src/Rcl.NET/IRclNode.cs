@@ -1,6 +1,7 @@
 ﻿using Rcl.Actions;
 using Rcl.Graph;
 using Rcl.Internal.Services;
+using Rcl.Logging;
 using Rcl.Qos;
 using Rosidl.Runtime;
 using System.Text;
@@ -44,9 +45,9 @@ public interface IRclNode : IRclObject
     bool IsValid { get; }
 
     /// <summary>
-    /// Gets the logger of the node.
+    /// Logger of the node.
     /// </summary>
-    string LoggerName { get; }
+    IRclLogger Logger { get; }
 
     /// <summary>
     /// Gets the name of the node.

@@ -1,5 +1,6 @@
 ﻿using Rcl.Internal.Services;
 using Rcl.Introspection;
+using Rcl.Logging;
 using Rcl.Qos;
 using Rosidl.Messages.Action;
 using Rosidl.Messages.UniqueIdentifier;
@@ -75,6 +76,10 @@ internal class ActionServer : IActionServer
             if (_resultTimeout > TimeSpan.Zero)
             {
                 _ = ExpireResultsAsync(_shutdownSignal.Token);
+            }
+            else
+            {
+                node.Logger.LogDebug($"Result expiration for action server '{Name}' is disabled because result timeout is set to {_resultTimeout}.");
             }
         }
         finally
@@ -183,18 +188,18 @@ internal class ActionServer : IActionServer
             {
                 if (context.CancelSignal.IsCancellationRequested)
                 {
-                    Console.WriteLine($"Goal '{context.GoalId}' canceled due to client cancel request.");
+                    _node.Logger.LogDebug($"Goal '{context.GoalId}' canceled due to client cancel request.");
                     status = ActionGoalStatus.Canceled;
                 }
                 else
                 {
-                    Console.WriteLine($"Goal '{context.GoalId}' aborted due to server shutdown or preemption.");
+                    _node.Logger.LogDebug($"Goal '{context.GoalId}' aborted due to server shutdown or preemption.");
                     status = ActionGoalStatus.Aborted;
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Goal '{context.GoalId}' aborted due to exception: {e.Message}");
+                _node.Logger.LogWarning($"Goal '{context.GoalId}' aborted due to unhandled exception: {e.Message}");
                 status = ActionGoalStatus.Aborted;
             }
 
@@ -268,12 +273,14 @@ internal class ActionServer : IActionServer
         {
             if (!_goals.TryGetValue(goalId, out var ctx))
             {
+                _node.Logger.LogWarning($"Unable to cancel goal [{goalId}]: Goal not found.");
                 res.ReturnCode = CancelGoalServiceResponse.ERROR_UNKNOWN_GOAL_ID;
                 return;
             }
 
             if (ctx.Completion.IsCompleted)
             {
+                _node.Logger.LogWarning($"Unable to cancel goal [{goalId}]: Goal is in terminal state.");
                 res.ReturnCode = CancelGoalServiceResponse.ERROR_GOAL_TERMINATED;
                 return;
             }
@@ -295,6 +302,7 @@ internal class ActionServer : IActionServer
     {
         if (cancellableGoals.Length == 0)
         {
+            _node.Logger.LogWarning($"Unable to cancel goal: No matching goal found.");
             res.ReturnCode = CancelGoalServiceResponse.ERROR_REJECTED;
             return;
         }
@@ -391,6 +399,8 @@ internal class ActionServer : IActionServer
             _server._typesupport.FeedbackMessage.AsRef<UUID.Priv>(_feedbackMessageBuffer.Data, 0).CopyFrom(id);
 
             _resultBuffer = _server._typesupport.ResultService.Response.CreateBuffer();
+
+            _server._node.Logger.LogDebug($"Created action goal context [{GoalId}].");
         }
 
         public Guid GoalId => _goalId;
@@ -438,7 +448,7 @@ internal class ActionServer : IActionServer
             _abort.Dispose();
             _cancel.Dispose();
 
-            Console.WriteLine($"Goal Context [{GoalId}] disposed.");
+            _server._node.Logger.LogDebug($"Action goal context [{GoalId}] disposed.");
         }
 
         public unsafe void Report(RosMessageBuffer value)

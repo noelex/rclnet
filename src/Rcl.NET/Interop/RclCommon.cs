@@ -274,6 +274,24 @@ namespace Rcl.Interop
             RCL_SUBSCRIPTION_REQUESTED_INCOMPATIBLE_QOS,
         }
 
+        public struct rcutils_log_location_t
+        {
+            /// <summary>
+            /// The name of the function containing the log call.
+            /// </summary>
+            public byte* function_name;
+
+            /// <summary>
+            /// The name of the source file containing the log call.
+            /// </summary>
+            public byte* file_name;
+
+            /// <summary>
+            /// The line number containing the log call.
+            /// </summary>
+            public size_t line_number;
+        }
+
         /// <summary>
         /// Encapsulation of an allocator.
         /// </summary>
@@ -4710,5 +4728,15 @@ namespace Rcl.Interop
         /// </remarks>
         [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
         public static extern rcl_ret_t rcl_service_server_is_available(RclCommon.rcl_node_t* node, RclCommon.rcl_client_t* client, bool* is_available);
+
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        public static extern rcl_ret_t　rcl_logging_configure(rcl_arguments_t* global_args, rcl_allocator_t* allocator);
+
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        public static extern rcl_ret_t rcl_logging_fini();
+
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void rcutils_log(rcutils_log_location_t* location, int severity, byte* name, byte* format, nint args);
+
     }
 }
