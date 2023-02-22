@@ -84,11 +84,6 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             _totalActionClients, _newActionClients, _removedActionClients,
             _totalActionServers, _newActionServers, _removedActionServers
         };
-
-        Nodes = ReadOnlyCollection.Wrap(_nodes.Values);
-        Topics = ReadOnlyCollection.Wrap(_topics.Values);
-        Services = ReadOnlyCollection.Wrap(_services.Values);
-        Actions = ReadOnlyCollection.Wrap(_actions.Values);
     }
 
     /// <summary>
@@ -99,22 +94,22 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     /// <summary>
     /// Returns nodes currently available in the ROS graph.
     /// </summary>
-    public IReadOnlyCollection<RosNode> Nodes { get; }
+    public IReadOnlyCollection<RosNode> Nodes => (IReadOnlyCollection<RosNode>)_nodes.Values;
 
     /// <summary>
     /// Returns topics currently available in the ROS graph.
     /// </summary>
-    public IReadOnlyCollection<RosTopic> Topics { get; }
+    public IReadOnlyCollection<RosTopic> Topics => (IReadOnlyCollection<RosTopic>)_topics.Values;
 
     /// <summary>
     /// Returns services currently available in the ROS graph.
     /// </summary>
-    public IReadOnlyCollection<RosService> Services { get; }
+    public IReadOnlyCollection<RosService> Services => (IReadOnlyCollection<RosService>)_services.Values;
 
     /// <summary>
     /// Returns actions currently available in the ROS graph.
     /// </summary>
-    public IReadOnlyCollection<RosAction> Actions { get; }
+    public IReadOnlyCollection<RosAction> Actions => (IReadOnlyCollection<RosAction>)_actions.Values;
 
     internal unsafe void Build()
     {

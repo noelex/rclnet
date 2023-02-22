@@ -30,12 +30,12 @@ internal unsafe class RclNativePublisher : RclObject<SafePublisherHandle>, IRclP
         _actualQos = QosProfile.Create(in actualQos);
 
         _introspection = MessageIntrospection.Create(typesupport);
+        Name = StringMarshal.CreatePooledString(rcl_publisher_get_topic_name(Handle.Object))!;
     }
 
     public QosProfile ActualQos => _actualQos;
 
-    public unsafe string? Name
-        => StringMarshal.CreatePooledString(rcl_publisher_get_topic_name(Handle.Object));
+    public string Name { get; }
 
     public int Subscribers
     {

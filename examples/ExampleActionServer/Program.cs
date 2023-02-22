@@ -13,7 +13,7 @@ using var node = ctx.CreateNode("example_action_server");
 //    RotateAbsoluteActionFeedback>("/turtle1/rotate_absolute", new MyActionServer());
 
 using var server = node.CreateActionServer<RotateAbsoluteAction>(
-    "/turtle1/rotate_absolute", new MyNativeActionServer());
+    "/turtle1/rotate_absolute", new MyNativeActionServer(preemptive: true), resultTimeout: TimeSpan.Zero);
 
 Console.WriteLine("Action server started.");
 Console.ReadLine();
@@ -44,12 +44,41 @@ class MyActionServer : ActionGoalHandler<RotateAbsoluteActionGoal, RotateAbsolut
 
 class MyNativeActionServer : ActionGoalHandler
 {
+    private readonly bool _preemptive;
+    private INativeActionGoalController? _currentController;
+
+    public MyNativeActionServer(bool preemptive = false)
+    {
+        _preemptive = preemptive;
+    }
+
+    public override void OnAccepted(INativeActionGoalController controller)
+    {
+        if (_preemptive)
+        {
+            _currentController?.Abort();
+            _currentController = controller;
+        }
+
+        base.OnAccepted(controller);
+    }
+
+    public override void OnCompleted(INativeActionGoalController controller)
+    {
+        if (_preemptive)
+        {
+            _currentController = null;
+        }
+
+        base.OnCompleted(controller);
+    }
+
     public override async Task ExecuteAsync(
         INativeActionGoalController controller,
         RosMessageBuffer goal, RosMessageBuffer result, CancellationToken cancellationToken)
     {
         using var feedback = RosMessageBuffer.Create<RotateAbsoluteActionFeedback>();
-        var theta =  goal.AsRef<RotateAbsoluteActionGoal.Priv>().Theta;
+        var theta = goal.AsRef<RotateAbsoluteActionGoal.Priv>().Theta;
 
         Console.WriteLine("Received goal: " + theta);
 

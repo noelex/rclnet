@@ -12,8 +12,6 @@ public class RosAction
     public RosAction(string name)
     {
         Name = name;
-        Servers = ReadOnlyCollection.Wrap(_servers);
-        Clients = ReadOnlyCollection.Wrap(_clients);
     }
 
     /// <summary>
@@ -29,12 +27,12 @@ public class RosAction
     /// <summary>
     /// Gets a list of available ROS action servers registered with current <see cref="RosAction"/>.
     /// </summary>
-    public IReadOnlyCollection<RosActionEndPoint> Servers { get; }
+    public IReadOnlyCollection<RosActionEndPoint> Servers => _servers;
 
     /// <summary>
     /// Gets a list of available ROS action clients registered with current <see cref="RosAction"/>.
     /// </summary>
-    public IReadOnlyCollection<RosActionEndPoint> Clients { get; }
+    public IReadOnlyCollection<RosActionEndPoint> Clients => _clients;
 
     internal void ResetServers(ReadOnlySpan<RosActionEndPoint> servers)
     {

@@ -20,7 +20,7 @@ public interface IRclService : IRclObject
     /// <summary>
     /// Gets the name of the service.
     /// </summary>
-    string? Name { get; }
+    string Name { get; }
 }
 
 /// <summary>

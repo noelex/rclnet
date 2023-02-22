@@ -6,6 +6,9 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>Rosidl.Messages</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Config)' == 'Release'">
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 

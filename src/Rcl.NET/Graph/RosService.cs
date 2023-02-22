@@ -12,8 +12,6 @@ public class RosService
     public RosService(string name)
     {
         Name = name;
-        Servers = ReadOnlyCollection.Wrap(_servers);
-        Clients = ReadOnlyCollection.Wrap(_clients);
     }
 
     /// <summary>
@@ -29,12 +27,12 @@ public class RosService
     /// <summary>
     /// Gets a list of available ROS service servers registered with current <see cref="RosService"/>.
     /// </summary>
-    public IReadOnlyCollection<RosServiceEndPoint> Servers { get; }
+    public IReadOnlyCollection<RosServiceEndPoint> Servers => _servers;
 
     /// <summary>
     /// Gets a list of available ROS service clients registered with current <see cref="RosService"/>.
     /// </summary>
-    public IReadOnlyCollection<RosServiceEndPoint> Clients { get; }
+    public IReadOnlyCollection<RosServiceEndPoint> Clients => _clients;
 
     internal void ResetServers(IEnumerable<RosServiceEndPoint> servers)
     {

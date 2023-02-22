@@ -13,8 +13,6 @@ public class RosTopic
     internal RosTopic(string name)
     {
         Name = name;
-        Publishers = ReadOnlyCollection.Wrap(_publishers.Values);
-        Subscribers = ReadOnlyCollection.Wrap(_subscribers.Values);
     }
 
     /// <summary>
@@ -30,12 +28,12 @@ public class RosTopic
     /// <summary>
     /// Gets a list of available ROS topic publishers registered with current <see cref="RosTopic"/>.
     /// </summary>
-    public IReadOnlyCollection<RosTopicEndPoint> Publishers { get; }
+    public IReadOnlyCollection<RosTopicEndPoint> Publishers => (IReadOnlyCollection<RosTopicEndPoint>)_publishers.Values;
 
     /// <summary>
     /// Gets a list of available ROS topic subscribers registered with current <see cref="RosTopic"/>.
     /// </summary>
-    public IReadOnlyCollection<RosTopicEndPoint> Subscribers { get; }
+    public IReadOnlyCollection<RosTopicEndPoint> Subscribers => (IReadOnlyCollection<RosTopicEndPoint>)_subscribers.Values;
 
     internal void UpdatePublishers(
         IGraphBuilder builder,

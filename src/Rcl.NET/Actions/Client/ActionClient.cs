@@ -270,4 +270,19 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
     DynamicFunctionTable IActionClientImpl.Functions => _functions;
 
     bool IActionClientImpl.TryRemoveGoal(Guid goalId) => _goals.TryRemove(goalId, out _);
+
+    public Task<bool> TryWaitForServerAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default)
+        => _node.Graph.TryWaitForActionServerAsync(Name, timeoutMilliseconds, cancellationToken);
+
+    public Task<bool> TryWaitForServerAsync(TimeSpan timeout, CancellationToken cancellationToken = default)
+        => _node.Graph.TryWaitForActionServerAsync(Name, timeout, cancellationToken);
+
+    public Task WaitForServerAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default)
+        => _node.Graph.WaitForActionServerAsync(Name, timeoutMilliseconds, cancellationToken);
+
+    public Task WaitForServerAsync(TimeSpan timeout, CancellationToken cancellationToken = default)
+        => _node.Graph.WaitForActionServerAsync(Name, timeout, cancellationToken);
+
+    public Task WaitForServerAsync(CancellationToken cancellationToken = default)
+        => _node.Graph.WaitForActionServerAsync(Name, cancellationToken);
 }

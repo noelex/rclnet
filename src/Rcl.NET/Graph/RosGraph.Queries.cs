@@ -44,7 +44,7 @@ public partial class RosGraph
         return false;
     }
 
-    private async Task<bool> TryWaitForConditionAsync(Func<RosGraphEvent, object?, bool> predicate,
+    internal async Task<bool> TryWaitForEventAsync(Func<RosGraphEvent, object?, bool> predicate,
         object? state, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {
         var obs = new Observer(predicate, state);
@@ -86,7 +86,7 @@ public partial class RosGraph
             return true;
         }
 
-        return await TryWaitForConditionAsync(
+        return await TryWaitForEventAsync(
              static (e, s) => e is ServerEstablishedEvent se && se.Server.Service.Name == (string)s!,
              serviceName, timeoutMilliseconds, cancellationToken);
     }
@@ -155,7 +155,7 @@ public partial class RosGraph
             return true;
         }
 
-        return await TryWaitForConditionAsync(
+        return await TryWaitForEventAsync(
              static (e, s) => e is ActionServerEstablishedEvent se && se.ActionServer.Action.Name == (string)s!,
              actionName, timeoutMilliseconds, cancellationToken);
     }

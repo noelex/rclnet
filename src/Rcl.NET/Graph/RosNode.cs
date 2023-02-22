@@ -20,14 +20,6 @@ public class RosNode
     {
         Name = name;
         Enclave = enclave;
-
-        Servers = ReadOnlyCollection.Wrap(_servers.Values);
-        Clients = ReadOnlyCollection.Wrap(_clients.Values);
-        Subscribers = ReadOnlyCollection.Wrap(_subscribers);
-        Publishers = ReadOnlyCollection.Wrap(_publishers);
-
-        ActionServers = ReadOnlyCollection.Wrap(_actionServers.Values);
-        ActionClients = ReadOnlyCollection.Wrap(_actionClients.Values);
     }
 
     public override string ToString()
@@ -48,26 +40,26 @@ public class RosNode
     /// <summary>
     /// Gets a list of <see cref="RosService"/> servers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosServiceEndPoint> Servers { get; }
+    public IReadOnlyCollection<RosServiceEndPoint> Servers => (IReadOnlyCollection<RosServiceEndPoint>)_servers.Values;
 
     /// <summary>
     /// Gets a list of <see cref="RosService"/> clients registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosServiceEndPoint> Clients { get; }
+    public IReadOnlyCollection<RosServiceEndPoint> Clients => (IReadOnlyCollection<RosServiceEndPoint>)_clients.Values;
 
     /// <summary>
     /// Gets a list of <see cref="RosTopic"/> subscribers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosTopicEndPoint> Subscribers { get; }
+    public IReadOnlyCollection<RosTopicEndPoint> Subscribers => _subscribers;
 
     /// <summary>
     /// Gets a list of <see cref="RosTopic"/> publishers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosTopicEndPoint> Publishers { get; }
+    public IReadOnlyCollection<RosTopicEndPoint> Publishers => _publishers;
 
-    public IReadOnlyCollection<RosActionEndPoint> ActionServers { get; }
+    public IReadOnlyCollection<RosActionEndPoint> ActionServers => (IReadOnlyCollection<RosActionEndPoint>)_actionServers.Values;
 
-    public IReadOnlyCollection<RosActionEndPoint> ActionClients { get; }
+    public IReadOnlyCollection<RosActionEndPoint> ActionClients => (IReadOnlyCollection<RosActionEndPoint>)_actionClients.Values;
 
     internal void UpdateServers(
         IGraphBuilder builder,

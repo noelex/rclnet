@@ -19,6 +19,8 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
         : base(node.Context, new(node.Handle, typesupport, serviceName, qos))
     {
         _typesupport = new ServiceIntrospection(typesupport);
+
+        Name = StringMarshal.CreatePooledString(rcl_service_get_service_name(Handle.Object))!;
     }
 
     protected virtual RosMessageBuffer CreateRequestBuffer()
@@ -27,8 +29,7 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
     protected virtual RosMessageBuffer CreateResponseBuffer()
         => _typesupport.Response.CreateBuffer();
 
-    public unsafe string? Name
-        => StringMarshal.CreatePooledString(rcl_service_get_service_name(Handle.Object));
+    public string Name { get; }
 
     public unsafe bool IsValid
          => rcl_service_is_valid(Handle.Object);

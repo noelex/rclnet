@@ -11,7 +11,7 @@ public interface IRclPublisher : IRclObject
 
     int Subscribers { get; }
 
-    string? Name { get; }
+    string Name { get; }
 
     void Publish(RosMessageBuffer message);
 

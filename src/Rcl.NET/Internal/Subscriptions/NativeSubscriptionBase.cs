@@ -45,14 +45,15 @@ internal unsafe abstract class NativeSubscriptionBase :
         ref var actualQos = ref Unsafe.AsRef<rmw_qos_profile_t>(
             rcl_subscription_get_actual_qos(Handle.Object));
         _actualQos = QosProfile.Create(in actualQos);
+
+        Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object))!;
     }
 
     protected TypeSupportHandle TypeSupport { get; }
 
     public QosProfile ActualQos => _actualQos;
 
-    public unsafe string? Name
-        => StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object));
+    public string Name { get; }
 
     public int Publishers
     {

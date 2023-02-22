@@ -57,9 +57,6 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
 
     public async Task<RosMessageBuffer> GetResultAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
-        ThrowIfNonSuccess(
-            await Completion.WaitAsync(timeout, cancellationToken));
-
         using var requestBuffer = _client.GetResultClient.CreateRequestBuffer();
         BuildRequest(requestBuffer.Data);
 

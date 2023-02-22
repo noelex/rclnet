@@ -25,6 +25,8 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         : base(node.Context, new(node.Handle, typeSupport, serviceName, qos))
     {
         _node = node;
+
+        Name = StringMarshal.CreatePooledString(rcl_client_get_service_name(Handle.Object))!;
     }
 
     public unsafe bool IsServerAvailable
@@ -37,8 +39,22 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         }
     }
 
-    public unsafe string? Name
-        => StringMarshal.CreatePooledString(rcl_client_get_service_name(Handle.Object));
+    public Task<bool> TryWaitForServerAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default)
+        => _node.Graph.TryWaitForServiceServerAsync(Name!, timeoutMilliseconds, cancellationToken);
+
+    public Task<bool> TryWaitForServerAsync(TimeSpan timeout, CancellationToken cancellationToken = default)
+        => _node.Graph.TryWaitForServiceServerAsync(Name!, timeout, cancellationToken);
+
+    public Task WaitForServerAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default)
+        => _node.Graph.WaitForServiceServerAsync(Name!, timeoutMilliseconds, cancellationToken);
+
+    public Task WaitForServerAsync(TimeSpan timeout, CancellationToken cancellationToken = default)
+        => _node.Graph.WaitForServiceServerAsync(Name!, timeout, cancellationToken);
+
+    public Task WaitForServerAsync(CancellationToken cancellationToken = default)
+        => _node.Graph.WaitForServiceServerAsync(Name!, cancellationToken);
+
+    public string Name { get; }
 
     public unsafe bool IsValid
          => rcl_client_is_valid(Handle.Object);

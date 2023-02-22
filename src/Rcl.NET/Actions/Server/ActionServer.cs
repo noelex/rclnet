@@ -23,16 +23,18 @@ internal class ActionServer : IActionServer
     private readonly CancellationTokenSource _shutdownSignal = new();
 
     private readonly RclClock _clock;
-    private readonly TimeSpan _resultTimeout = TimeSpan.FromMinutes(1);
+    private readonly TimeSpan _resultTimeout;
 
     public ActionServer(RclNodeImpl node, string actionName,
         string typesupportName, TypeSupportHandle actionTypesupport,
-        INativeActionGoalHandler handler, Encoding textEncoding, RclClock clock)
+        INativeActionGoalHandler handler, Encoding textEncoding, RclClock clock,
+        TimeSpan resultTimeout)
     {
         _node = node;
         _clock = clock;
         _handler = handler;
         _textEncoding = textEncoding;
+        _resultTimeout = resultTimeout;
 
         var statusTopicName = actionName + Constants.StatusTopic;
         var feedbackTopicName = actionName + Constants.FeedbackTopic;
@@ -70,7 +72,10 @@ internal class ActionServer : IActionServer
             Name = _feedbackPublisher.Name.Substring(0, sep);
             done = true;
 
-            _ = ExpireResultsAsync(_shutdownSignal.Token);
+            if (_resultTimeout > TimeSpan.Zero)
+            {
+                _ = ExpireResultsAsync(_shutdownSignal.Token);
+            }
         }
         finally
         {
@@ -183,7 +188,7 @@ internal class ActionServer : IActionServer
                 }
                 else
                 {
-                    Console.WriteLine($"Goal '{context.GoalId}' aborted due to server shutdown.");
+                    Console.WriteLine($"Goal '{context.GoalId}' aborted due to server shutdown or preemption.");
                     status = ActionGoalStatus.Aborted;
                 }
             }
@@ -202,9 +207,9 @@ internal class ActionServer : IActionServer
             }
 
             NotifyStatusChange();
-            context.Complete();
-
             _handler.OnCompleted(context);
+
+            context.Complete();
         }
     }
 
@@ -222,6 +227,18 @@ internal class ActionServer : IActionServer
                     _functions.CopyResult(ctx.ResultBuffer.Data,
                         _typesupport.ResultService.Response.GetMemberPointer(response.Data, 1));
                 }
+            }
+
+            // If the timeout is configured to have value -1,
+            // then goal results will be “kept forever” (until the action server shuts down).
+            //
+            // If the timeout is configured to have value 0,
+            // then goal results are discarded immediately (after responding to any pending result requests).
+            if (_resultTimeout == TimeSpan.Zero)
+            {
+                if (!_node.Context.IsCurrent) await _node.Context.Yield();
+                _goals.Remove(ctx.GoalId);
+                ctx.Dispose();
             }
         }
         else
@@ -362,7 +379,7 @@ internal class ActionServer : IActionServer
         private readonly RosMessageBuffer _feedbackMessageBuffer, _resultBuffer;
 
         private readonly CancellationTokenSource _abort = new(), _cancel = new();
-        private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _completion = new();
 
         public GoalContext(Guid id, ActionServer server, TimeSpan accepted)
         {
@@ -420,6 +437,8 @@ internal class ActionServer : IActionServer
 
             _abort.Dispose();
             _cancel.Dispose();
+
+            Console.WriteLine($"Goal Context [{GoalId}] disposed.");
         }
 
         public unsafe void Report(RosMessageBuffer value)

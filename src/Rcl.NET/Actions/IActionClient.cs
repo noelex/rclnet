@@ -29,6 +29,47 @@ public interface IActionClient<TGoal, TResult, TFeedback> : IRclObject
     bool IsServerAvailable { get; }
 
     /// <summary>
+    /// Try wait for the server become available, or until timeout.
+    /// </summary>
+    /// <param name="timeoutMilliseconds">Timeout in milliseconds. Specify <see cref="Timeout.Infinite"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns><see langword="true"/> if the server is available, <see langword="false"/> if timed out.</returns>
+    Task<bool> TryWaitForServerAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Try wait for the server become available, or until timeout.
+    /// </summary>
+    /// <param name="timeout">Timeout of the operation. Specify <see cref="Timeout.InfiniteTimeSpan"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns><see langword="true"/> if the server is available, <see langword="false"/> if timed out.</returns>
+    Task<bool> TryWaitForServerAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Wait until the server become available.
+    /// </summary>
+    /// <param name="timeoutMilliseconds">Timeout in milliseconds. Specify <see cref="Timeout.Infinite"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    /// <exception cref="TimeoutException">The server didn't become available during the wait.</exception>
+    Task WaitForServerAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Wait until the server become available.
+    /// </summary>
+    /// <param name="timeout">Timeout of the operation. Specify <see cref="Timeout.InfiniteTimeSpan"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    /// <exception cref="TimeoutException">The server didn't become available during the wait.</exception>
+    Task WaitForServerAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Wait until the server become available.
+    /// </summary>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    Task WaitForServerAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Send a goal to the action server and receive result and feedbacks using native message buffers.
     /// </summary>
     /// <remarks>

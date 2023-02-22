@@ -14,8 +14,11 @@
 		<Description>
 			<![CDATA[rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.]]>
 		</Description>
-		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
+
+  <PropertyGroup Condition="'$(Config)' == 'Release'">
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />

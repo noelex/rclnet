@@ -46,12 +46,12 @@ internal unsafe class RclSubscription<T> :
         _actualQos = QosProfile.Create(in actualQos);
 
         _textEncoding = textEncoding;
+        Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object))!;
     }
 
     public QosProfile ActualQos => _actualQos;
 
-    public unsafe string? Name
-        => StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object));
+    public string Name { get; }
 
     public int Publishers
     {

@@ -37,23 +37,24 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
         var graphSignal = new RclGuardConditionImpl(context,
             new(rcl_node_get_graph_guard_condition(Handle.Object)));
         _ = GraphBuilder(graphSignal, _cts.Token);
+
+        Name = StringMarshal.CreatePooledString(rcl_node_get_name(Handle.Object))!;
+        Namespace = StringMarshal.CreatePooledString(rcl_node_get_namespace(Handle.Object))!;
+        LoggerName = StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object))!;
+        FullyQualifiedName = StringMarshal.CreatePooledString(rcl_node_get_fully_qualified_name(Handle.Object))!;
     }
 
     public RclContext Context { get; }
 
     public RosGraph Graph => _graph;
 
-    public unsafe string? LoggerName
-        => StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object));
+    public string LoggerName { get; }
 
-    public unsafe string? Name
-        => StringMarshal.CreatePooledString(rcl_node_get_name(Handle.Object));
+    public string Name { get; }
 
-    public unsafe string? Namespace
-        => StringMarshal.CreatePooledString(rcl_node_get_namespace(Handle.Object));
+    public string Namespace { get; }
 
-    public unsafe string? FullyQualifiedName
-        => StringMarshal.CreatePooledString(rcl_node_get_fully_qualified_name(Handle.Object));
+    public string FullyQualifiedName { get; }
 
     public unsafe ulong InstanceId
          => rcl_node_get_rcl_instance_id(Handle.Object);
@@ -257,10 +258,10 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
     public IActionClient<TGoal, TResult, TFeedback> CreateActionClient<TAction, TGoal, TResult, TFeedback>(
         string actionName,
         Encoding? textEncoding = null)
-        where TAction:IAction<TGoal, TResult, TFeedback>
-        where TGoal:IActionGoal
-        where TFeedback:IActionFeedback
-        where TResult:IActionResult
+        where TAction : IAction<TGoal, TResult, TFeedback>
+        where TGoal : IActionGoal
+        where TFeedback : IActionFeedback
+        where TResult : IActionResult
     {
         return new ActionClient<TAction, TGoal, TResult, TFeedback>(this, actionName, textEncoding ?? Encoding.UTF8);
     }
@@ -305,8 +306,8 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
     public IRclNativeSubscription CreateNativeSubscription(
         string topicName,
         TypeSupportHandle typeSupport,
-        QosProfile? qos = null, 
-        int queueSize = 1, 
+        QosProfile? qos = null,
+        int queueSize = 1,
         BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest)
     {
         return new IntrospectionNativeSubscription(
@@ -320,18 +321,20 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
 
     public IActionServer CreateActionServer<TAction>(
         string actionName, INativeActionGoalHandler handler,
-        RclClock? clock = null, Encoding? textEncoding = null) where TAction : IAction
+        RclClock? clock = null, TimeSpan? resultTimeout = null, Encoding? textEncoding = null) where TAction : IAction
         => new ActionServer(this,
             actionName,
             TAction.TypeSupportName,
             TAction.GetTypeSupportHandle(), handler,
             textEncoding ?? Encoding.UTF8,
-            clock ?? RclClock.Ros);
+            clock ?? RclClock.Ros,
+            resultTimeout ?? TimeSpan.FromMinutes(15));
 
     public IActionServer CreateActionServer<TAction, TGoal, TResult, TFeedback>(
         string actionName,
         IActionGoalHandler<TGoal, TResult, TFeedback> handler,
         RclClock? clock = null,
+        TimeSpan? resultTimeout = null,
         Encoding? textEncoding = null)
         where TAction : IAction<TGoal, TResult, TFeedback>
         where TGoal : IActionGoal
@@ -341,5 +344,6 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
             actionName,
             new ActionGoalHandlerWrapper<TGoal, TResult, TFeedback>(handler, textEncoding ?? Encoding.UTF8),
             clock,
+            resultTimeout,
             textEncoding);
 }

@@ -1,4 +1,5 @@
 ﻿using Rosidl.Runtime;
+using System.Xml.Linq;
 
 namespace Rcl;
 
@@ -24,7 +25,48 @@ public interface IRclClient<TRequest, TResponse> : IRclObject
     /// <summary>
     /// Gets the name of the service being invoked.
     /// </summary>
-    string? Name { get; }
+    string Name { get; }
+
+    /// <summary>
+    /// Try wait for the server become available, or until timeout.
+    /// </summary>
+    /// <param name="timeoutMilliseconds">Timeout in milliseconds. Specify <see cref="Timeout.Infinite"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns><see langword="true"/> if the server is available, <see langword="false"/> if timed out.</returns>
+    Task<bool> TryWaitForServerAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Try wait for the server become available, or until timeout.
+    /// </summary>
+    /// <param name="timeout">Timeout of the operation. Specify <see cref="Timeout.InfiniteTimeSpan"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns><see langword="true"/> if the server is available, <see langword="false"/> if timed out.</returns>
+    Task<bool> TryWaitForServerAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Wait until the server become available.
+    /// </summary>
+    /// <param name="timeoutMilliseconds">Timeout in milliseconds. Specify <see cref="Timeout.Infinite"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    /// <exception cref="TimeoutException">The server didn't become available during the wait.</exception>
+    Task WaitForServerAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Wait until the server become available.
+    /// </summary>
+    /// <param name="timeout">Timeout of the operation. Specify <see cref="Timeout.InfiniteTimeSpan"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    /// <exception cref="TimeoutException">The server didn't become available during the wait.</exception>
+    Task WaitForServerAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Wait until the server become available.
+    /// </summary>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    Task WaitForServerAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Initiate a service request by sending a pre-allocated <see cref="RosMessageBuffer"/> and wait for the response asynchronously.
