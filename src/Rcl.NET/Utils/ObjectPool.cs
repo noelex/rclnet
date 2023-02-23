@@ -15,7 +15,7 @@ static class ObjectPool
     }
 }
 
-internal class ObjectPool<T> where T : class, new()
+internal class ObjectPool<T> : IDisposable where T : class, new()
 {
     private SpinLock _lock = new();
     private readonly Queue<T> _queue = new();
@@ -46,6 +46,17 @@ internal class ObjectPool<T> where T : class, new()
         finally
         {
             if (success) _lock.Exit();
+        }
+    }
+
+    public void Dispose()
+    {
+        using (ScopedLock.Lock(ref _lock))
+        {
+            while(_queue.TryDequeue(out var obj))
+            {
+                if (obj is IDisposable d) d.Dispose();
+            }
         }
     }
 

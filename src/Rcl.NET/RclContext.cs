@@ -1,6 +1,7 @@
 ﻿using Rcl.Logging;
 using Rcl.Logging.Impl;
 using Rcl.SafeHandles;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Rcl;
 
@@ -30,6 +31,8 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     private readonly SafeGuardConditionHandle _interruptSignal;
     private readonly SafeContextHandle _context;
     private readonly Thread _mainLoopRunner;
+
+    private readonly Dictionary<string, object> _features = new();
 
     private int _disposed;
     private long _waitHandleToken;
@@ -98,6 +101,15 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     /// <inheritdoc/>
     public void Dispose()
     {
+        foreach(var feature in _features)
+        {
+            if(feature.Value is IDisposable d)
+            {
+                d.Dispose();
+            }
+        }
+        _features.Clear();
+
         if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
         {
             Interrupt();
@@ -444,6 +456,28 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
         {
             storage.Clear();
         }
+    }
+
+    internal void AddFeature<T>(string name, T feature)where T : class
+    {
+        _features.Add(name, feature);
+    }
+
+    internal T GetFeature<T>(string name) where T : class
+    {
+        return (T)_features[name];
+    }
+
+    internal bool TryGetFeature<T>(string name, [NotNullWhen(true)] out T? feature) where T : class
+    {
+        feature = null;
+        if (_features.TryGetValue(name, out var v))
+        {
+            feature = (T)v;
+            return true;
+        }
+
+        return false;
     }
 
     private record struct WaitSetWorkItem(RclObjectHandle WaitHandle, Action<object?> Callback, object? State);

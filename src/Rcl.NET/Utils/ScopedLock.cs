@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Rcl.Utils;
 
-public ref struct ScopedLock
+ref struct ScopedLock
 {
     private readonly bool _taken;
     private ref SpinLock _spinLock;

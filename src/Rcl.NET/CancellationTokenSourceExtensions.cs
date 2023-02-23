@@ -4,6 +4,8 @@ namespace Rcl;
 
 public static class CancellationTokenSourceExtensions
 {
+    private const string CancellationTokenSourceTimerPoolFeature = nameof(CancellationTokenSourceTimerPoolFeature);
+
     public static IDisposable CancelAfter(this CancellationTokenSource source, TimeSpan timeout, RclClock clock, RclContext context)
     {
         if (clock.Type == RclClockType.Steady)
@@ -17,10 +19,25 @@ public static class CancellationTokenSourceExtensions
             throw new ArgumentOutOfRangeException(nameof(timeout), "Specified timeout value is out of range.");
         }
 
+        if (timeout == Timeout.InfiniteTimeSpan)
+        {
+            return NoopTimer.Default;
+        }
+
+        //if(!context.TryGetFeature<ObjectPool<ReusableTimer>>(CancellationTokenSourceTimerPoolFeature, out var pool))
+        //{
+        //    pool = new();
+        //    context.AddFeature(CancellationTokenSourceTimerPoolFeature, pool);
+        //}
+
+        //var timer = pool.Rent();
+        //if(timer.Timer == null)
+        //{
+
+        //}
+
         // TODO: Make CancellationTokenSourceTimer reusable.
-        return timeout == Timeout.InfiniteTimeSpan
-              ? NoopTimer.Default
-              : new CancellationTokenSourceTimer(source, context, clock.Impl, timeout);
+        return new CancellationTokenSourceTimer(source, context, clock.Impl, timeout);
     }
 
     public static IDisposable CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, RclClock clock, RclContext context)
@@ -45,6 +62,16 @@ public static class CancellationTokenSourceExtensions
     /// <returns></returns>
     public static IDisposable CancelAfter(this CancellationTokenSource source, TimeSpan timeout, IRclNode node)
         => source.CancelAfter(timeout, node.Clock, node.Context);
+
+    private class ReusableTimer : IDisposable
+    {
+        public CancellationTokenSourceTimer? Timer { get; set; }
+
+        public void Dispose()
+        {
+            Timer?.Dispose();
+        }
+    }
 
     private unsafe class CancellationTokenSourceTimer : RclObject<SafeTimerHandle>
     {
