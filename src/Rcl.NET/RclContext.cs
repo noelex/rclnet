@@ -158,6 +158,13 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
         Interrupt();
     }
 
+    internal WaitHandleRegistration Register(SafeTimerHandle handle, Action<object?> callback, object? state = null)
+    {
+        var token = Interlocked.Increment(ref _waitHandleToken);
+        RegisterWaitHandle(token, handle, callback, state);
+        return new WaitHandleRegistration(this, static (ctx, x) => ctx.UnregisterWaitHandle(x), token);
+    }
+
     private WaitHandleRegistration RegisterCore<T>(RclObject<T> waitObject, Action<object?> callback, object? state = null)
         where T : RclObjectHandle
     {

@@ -50,7 +50,7 @@ public partial class RosGraph
         var obs = new Observer(predicate, state);
         using var sub = Subscribe(obs);
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        cts.CancelAfter(timeoutMilliseconds);
+        using var reg = cts.CancelAfter(timeoutMilliseconds, _node);
 
         try
         {

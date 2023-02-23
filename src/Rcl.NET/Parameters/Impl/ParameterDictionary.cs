@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Rcl.Parameters;
+namespace Rcl.Parameters.Impl;
 
-internal class ParameterDictionary:Dictionary<string, Variant>
+internal class ParameterDictionary : Dictionary<string, Variant>
 {
 }

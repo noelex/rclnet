@@ -28,11 +28,11 @@ internal class ActionServer : IActionServer
 
     public ActionServer(RclNodeImpl node, string actionName,
         string typesupportName, TypeSupportHandle actionTypesupport,
-        INativeActionGoalHandler handler, Encoding textEncoding, RclClock clock,
+        INativeActionGoalHandler handler, Encoding textEncoding,
         TimeSpan resultTimeout)
     {
         _node = node;
-        _clock = clock;
+        _clock = node.Clock;
         _handler = handler;
         _textEncoding = textEncoding;
         _resultTimeout = resultTimeout;

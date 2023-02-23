@@ -6,7 +6,10 @@ class RclClockImpl : RclObject<SafeClockHandle>
 {
     public RclClockImpl(RclClockType type) : base(new(type))
     {
+        Type = type;
     }
+
+    public RclClockType Type { get; }
 
     public unsafe TimeSpan Elapsed
     {

@@ -6,6 +6,8 @@ using Rcl.Internal.Clients;
 using Rcl.Internal.Services;
 using Rcl.Internal.Subscriptions;
 using Rcl.Logging;
+using Rcl.Parameters;
+using Rcl.Parameters.Impl;
 using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
@@ -30,19 +32,24 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
     {
         Context = context;
         Options = options ?? NodeOptions.Default;
-
-        _graph = new(this);
-
-        var graphSignal = new RclGuardConditionImpl(context,
-            new(rcl_node_get_graph_guard_condition(Handle.Object)));
-        _ = GraphBuilder(graphSignal, _cts.Token);
+        Clock = Options.Clock;
 
         Name = StringMarshal.CreatePooledString(rcl_node_get_name(Handle.Object))!;
         Namespace = StringMarshal.CreatePooledString(rcl_node_get_namespace(Handle.Object))!;
         FullyQualifiedName = StringMarshal.CreatePooledString(rcl_node_get_fully_qualified_name(Handle.Object))!;
-
         Logger = context.LoggerFactory.CreateLogger(StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object))!);
+
+        _graph = new(this);
+        var graphSignal = new RclGuardConditionImpl(context,
+            new(rcl_node_get_graph_guard_condition(Handle.Object)));
+        _ = GraphBuilder(graphSignal, _cts.Token);
+
+        Parameters = new ParameterProvider(this, new());
     }
+
+    public IParameterProvider Parameters { get; }
+
+    public RclClock Clock { get; }
 
     public NodeOptions Options { get; }
 
@@ -323,19 +330,17 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
 
     public IActionServer CreateActionServer<TAction>(
         string actionName, INativeActionGoalHandler handler,
-        RclClock? clock = null, TimeSpan? resultTimeout = null, Encoding? textEncoding = null) where TAction : IAction
+        TimeSpan? resultTimeout = null, Encoding? textEncoding = null) where TAction : IAction
         => new ActionServer(this,
             actionName,
             TAction.TypeSupportName,
             TAction.GetTypeSupportHandle(), handler,
             textEncoding ?? Encoding.UTF8,
-            clock ?? RclClock.Ros,
             resultTimeout ?? TimeSpan.FromMinutes(15));
 
     public IActionServer CreateActionServer<TAction, TGoal, TResult, TFeedback>(
         string actionName,
         IActionGoalHandler<TGoal, TResult, TFeedback> handler,
-        RclClock? clock = null,
         TimeSpan? resultTimeout = null,
         Encoding? textEncoding = null)
         where TAction : IAction<TGoal, TResult, TFeedback>
@@ -345,7 +350,6 @@ class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
         => CreateActionServer<TAction>(
             actionName,
             new ActionGoalHandlerWrapper<TGoal, TResult, TFeedback>(handler, textEncoding ?? Encoding.UTF8),
-            clock,
             resultTimeout,
             textEncoding);
 }

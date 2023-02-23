@@ -2,6 +2,9 @@
 
 namespace Rcl.Parameters;
 
+/// <summary>
+/// Stores a value being one of the type defined in <see cref="ValueType"/>.
+/// </summary>
 [StructLayout(LayoutKind.Explicit)]
 public readonly struct Variant : IEquatable<Variant>
 {
@@ -32,78 +35,81 @@ public readonly struct Variant : IEquatable<Variant>
     [FieldOffset(8)]
     private readonly string[]? _stringArray;
 
+    /// <summary>
+    /// Type of the value store in the <see cref="Variant"/>.
+    /// </summary>
     [FieldOffset(16)]
-    private readonly ParameterType _type;
+    public readonly ValueType Type;
 
     public Variant(long value)
     {
-        _type = ParameterType.Integer;
+        Type = ValueType.Integer;
         _integerValue = value;
     }
 
     public Variant(int value)
     {
-        _type = ParameterType.Integer;
+        Type = ValueType.Integer;
         _integerValue = value;
     }
 
     public Variant(bool value)
     {
-        _type = ParameterType.Bool;
+        Type = ValueType.Bool;
         _boolValue = value;
     }
 
     public Variant(double value)
     {
-        _type = ParameterType.Double;
+        Type = ValueType.Double;
         _doubleValue = value;
     }
 
     public Variant(float value)
     {
-        _type = ParameterType.Double;
+        Type = ValueType.Double;
         _doubleValue = value;
     }
 
     public Variant(string value)
     {
-        _type = ParameterType.String;
+        Type = ValueType.String;
         _stringValue = value;
     }
 
     public Variant(bool[] value)
     {
-        _type = ParameterType.BoolArray;
+        Type = ValueType.BoolArray;
         _boolArray = value;
     }
 
     public Variant(long[] value)
     {
-        _type = ParameterType.IntegerArray;
+        Type = ValueType.IntegerArray;
         _integerArray = value;
     }
 
     public Variant(double[] value)
     {
-        _type = ParameterType.DoubleArray;
+        Type = ValueType.DoubleArray;
         _doubleArray = value;
     }
 
     public Variant(string[] value)
     {
-        _type = ParameterType.StringArray;
+        Type = ValueType.StringArray;
         _stringArray = value;
     }
 
     public Variant(byte[] value)
     {
-        _type = ParameterType.ByteArray;
+        Type = ValueType.ByteArray;
         _byteArray = value;
     }
 
-    private void CheckType(ParameterType type)
+    private void CheckType(ValueType type)
     {
-        if (_type != type)
+        if (Type != type)
         {
             throw new InvalidCastException();
         }
@@ -111,95 +117,95 @@ public readonly struct Variant : IEquatable<Variant>
 
     public bool AsBoolean()
     {
-        CheckType(ParameterType.Bool);
+        CheckType(ValueType.Bool);
         return _boolValue;
     }
 
     public long AsInt64()
     {
-        CheckType(ParameterType.Integer);
+        CheckType(ValueType.Integer);
         return _integerValue;
     }
 
     public int AsInt32()
     {
-        CheckType(ParameterType.Integer);
+        CheckType(ValueType.Integer);
         return (int)_integerValue;
     }
 
     public double AsDouble()
     {
-        CheckType(ParameterType.Double);
+        CheckType(ValueType.Double);
         return _doubleValue;
     }
 
     public float AsSingle()
     {
-        CheckType(ParameterType.Double);
+        CheckType(ValueType.Double);
         return (float)_doubleValue;
     }
 
     public string AsString()
     {
-        CheckType(ParameterType.String);
+        CheckType(ValueType.String);
         return _stringValue!;
     }
 
     public bool[] AsBooleanArray()
     {
-        CheckType(ParameterType.BoolArray);
+        CheckType(ValueType.BoolArray);
         return _boolArray!;
     }
 
     public byte[] AsByteArray()
     {
-        CheckType(ParameterType.ByteArray);
+        CheckType(ValueType.ByteArray);
         return _byteArray!;
     }
 
     public long[] AsInt64Array()
     {
-        CheckType(ParameterType.IntegerArray);
+        CheckType(ValueType.IntegerArray);
         return _integerArray!;
     }
 
     public double[] AsDoubleArray()
     {
-        CheckType(ParameterType.DoubleArray);
+        CheckType(ValueType.DoubleArray);
         return _doubleArray!;
     }
 
     public string[] AsStringArray()
     {
-        CheckType(ParameterType.StringArray);
+        CheckType(ValueType.StringArray);
         return _stringArray!;
     }
 
     public override string ToString()
     {
-        return _type switch
+        return Type switch
         {
-            ParameterType.Bool => _boolValue.ToString(),
-            ParameterType.Double => _doubleValue.ToString(),
-            ParameterType.Integer => _integerValue.ToString(),
-            ParameterType.String => _stringValue ?? "",
-            ParameterType.BoolArray => "Count = " + _boolArray!.Length,
-            ParameterType.ByteArray => "Count = " + _byteArray!.Length,
-            ParameterType.IntegerArray => "Count = " + _integerArray!.Length,
-            ParameterType.StringArray => "Count = " + _stringArray!.Length,
-            ParameterType.DoubleArray => "Count = " + _doubleArray!.Length,
+            ValueType.Bool => _boolValue.ToString(),
+            ValueType.Double => _doubleValue.ToString(),
+            ValueType.Integer => _integerValue.ToString(),
+            ValueType.String => _stringValue ?? "",
+            ValueType.BoolArray => "Count = " + _boolArray!.Length,
+            ValueType.ByteArray => "Count = " + _byteArray!.Length,
+            ValueType.IntegerArray => "Count = " + _integerArray!.Length,
+            ValueType.StringArray => "Count = " + _stringArray!.Length,
+            ValueType.DoubleArray => "Count = " + _doubleArray!.Length,
             _ => string.Empty,
         };
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(_type, _integerValue);
+        return HashCode.Combine(Type, _integerValue);
     }
 
     public bool Equals(Variant other)
     {
-        return other._type == _type && _integerValue == other._integerValue;
+        return other.Type == Type && _integerValue == other._integerValue;
     }
 
     public override bool Equals(object? other)

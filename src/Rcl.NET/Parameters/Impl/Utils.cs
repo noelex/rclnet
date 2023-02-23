@@ -8,14 +8,14 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Rcl.Parameters;
+namespace Rcl.Parameters.Impl;
 
 internal static class Utils
 {
     private static bool MatchNodeName(string node_name, string node_fqn)
     {
         // Update the regular expression ["/*" -> "(/\\w+)" and "/**" -> "(/\\w+)*"]
-        var regex = Regex.Replace(node_name, "/*", "(/\\w+)");
+        var regex = node_name.Replace("/*", "(/\\w+)");
         return Regex.IsMatch(node_fqn, regex);
     }
     public unsafe static ParameterDictionary ResolveParameterOverrides(
@@ -28,7 +28,7 @@ internal static class Utils
         LoadParameters(result, globalArgs);
         LoadParameters(result, localArgs);
 
-        foreach(var (k,v) in overrides)
+        foreach (var (k, v) in overrides)
         {
             result[k] = v;
         }
@@ -54,14 +54,7 @@ internal static class Utils
 
             try
             {
-                var initial_map = FromRclParams(param, nodeFqn);
-                if (initial_map.TryGetValue(nodeFqn, out var dict))
-                {
-                    foreach (var (k, v) in dict)
-                    {
-                        result[k] = v;
-                    }
-                }
+                ExtractRclParams(nodeFqn, param, result);
             }
             finally
             {
@@ -70,47 +63,35 @@ internal static class Utils
         }
     }
 
-    private static unsafe Dictionary<string, ParameterDictionary> FromRclParams(rcl_params_t* c_params, string nodeFqn = "")
+    private static unsafe void ExtractRclParams(string nodeFqn, rcl_params_t* src, ParameterDictionary dest)
     {
-        var dest = new Dictionary<string, ParameterDictionary>();
-        for (int i = 0; i < (int)c_params->num_nodes.Value; i++)
+        for (int i = 0; i < (int)src->num_nodes.Value; i++)
         {
-            var node_name = StringMarshal.CreatePooledString(c_params->node_names[i])!;
+            var node_name = StringMarshal.CreatePooledString(src->node_names[i])!;
             if (!node_name.StartsWith('/'))
             {
                 node_name = "/" + node_name;
             }
 
-            if (nodeFqn != "")
+            if (!MatchNodeName(node_name, nodeFqn))
             {
-                if (!MatchNodeName(node_name, nodeFqn))
-                {
-                    continue;
-                }
-
-                node_name = nodeFqn;
+                continue;
             }
 
-            if (!dest.TryGetValue(node_name, out var param_node))
-            {
-                param_node = new ParameterDictionary();
-                dest[node_name] = param_node;
-            }
+            node_name = nodeFqn;
 
-            rcl_node_params_t* c_params_node = &(c_params->@params[i]);
+            rcl_node_params_t* c_params_node = &src->@params[i];
 
             for (int p = 0; p < (int)c_params_node->num_params.Value; ++p)
             {
                 var c_param_name = StringMarshal.CreatePooledString(c_params_node->parameter_names[p]);
                 if (c_param_name != null)
                 {
-                    var c_param_value = &(c_params_node->parameter_values[p]);
-                    param_node[c_param_name] = ConvertVariant(c_param_value);
+                    var c_param_value = &c_params_node->parameter_values[p];
+                    dest[c_param_name] = ConvertVariant(c_param_value);
                 }
             }
         }
-
-        return dest;
 
         static Variant ConvertVariant(rcl_variant_t* c_variant)
         {

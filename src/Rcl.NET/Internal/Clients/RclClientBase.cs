@@ -117,7 +117,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         // TODO: Maybe use private ObjectPools?
         var completion = ObjectPool.Rent<ManualResetValueTaskSource<RosMessageBuffer>>();
         var timeoutCts = ObjectPool.Rent<CancellationTokenSource>();
-        timeoutCts.CancelAfter(timeoutMilliseconds);
+        using var reg = timeoutCts.CancelAfter(timeoutMilliseconds, _node);
 
         // Yielding back to the event loop is required to avoid the situation that response 
         // has already been received at the point we add the ValueTaskSource into _pendingRequests,

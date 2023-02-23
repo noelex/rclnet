@@ -29,6 +29,8 @@ public sealed class RclClock : IRclClock
 
     public static RclClock System { get; } = new RclClock(RclClockType.System, true);
 
+    public RclClockType Type => _impl.Type;
+
     public void Dispose()
     {
         if (_shared)

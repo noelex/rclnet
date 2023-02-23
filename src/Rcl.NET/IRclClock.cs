@@ -6,6 +6,11 @@
 public interface IRclClock: IRclObject
 {
     /// <summary>
+    /// Type of the clock.
+    /// </summary>
+    RclClockType Type { get; }
+
+    /// <summary>
     /// Time elasped since the clock's epoch time.
     /// </summary>
     TimeSpan Elapsed { get; }

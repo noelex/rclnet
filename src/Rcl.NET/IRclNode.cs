@@ -2,6 +2,7 @@
 using Rcl.Graph;
 using Rcl.Internal.Services;
 using Rcl.Logging;
+using Rcl.Parameters;
 using Rcl.Qos;
 using Rosidl.Runtime;
 using System.Text;
@@ -18,6 +19,10 @@ public interface IRclNode : IRclObject
     /// Gets the <see cref="IRclContext"/> object which the node belongs.
     /// </summary>
     RclContext Context { get; }
+
+    RclClock Clock { get; }
+
+    IParameterProvider Parameters { get; }
 
     /// <summary>
     /// Gets the domain ID of the node.
@@ -321,7 +326,6 @@ public interface IRclNode : IRclObject
     IActionServer CreateActionServer<TAction>(
         string actionName,
         INativeActionGoalHandler handler,
-        RclClock? clock = null,
         TimeSpan? resultTimeout = null,
         Encoding? textEncoding = null)
         where TAction : IAction;
@@ -348,7 +352,6 @@ public interface IRclNode : IRclObject
     IActionServer CreateActionServer<TAction, TGoal, TResult, TFeedback>(
         string actionName,
         IActionGoalHandler<TGoal,TResult, TFeedback> handler,
-        RclClock? clock = null,
         TimeSpan? resultTimeout = null,
         Encoding? textEncoding = null)
         where TAction : IAction<TGoal, TResult, TFeedback>
