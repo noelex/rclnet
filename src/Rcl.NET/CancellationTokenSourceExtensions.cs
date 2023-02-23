@@ -1,17 +1,88 @@
-﻿using Rcl.SafeHandles;
+﻿using Rcl.Logging;
+using Rcl.SafeHandles;
 
 namespace Rcl;
 
+public readonly struct RosTimerCallbackRegistration : IDisposable
+{
+    private readonly ObjectPool<ReusableTimer> _pool;
+    private readonly ReusableTimer _timer;
+
+    internal RosTimerCallbackRegistration(ObjectPool<ReusableTimer> pool, ReusableTimer timer)
+    {
+        _pool= pool;
+        _timer= timer;
+    }
+
+    public static readonly RosTimerCallbackRegistration Empty = new();
+
+    public void Dispose()
+    {
+        if (_pool != null)
+        {
+            _timer.Reset();
+            _pool.Return(_timer);
+        }
+        
+    }
+}
+
+unsafe class ReusableTimer:IDisposable
+{
+    private RclContext? _context;
+    private SafeTimerHandle? _handle;
+    private CancellationTokenSource? _cts;
+    private WaitHandleRegistration _registration;
+
+    public void Start(CancellationTokenSource cts,
+        RclContext context, RclClockImpl clock, TimeSpan period)
+    {
+        _context = context;
+        _handle = new SafeTimerHandle(context.Handle, clock.Handle, (long)period.TotalNanoseconds);
+        _cts = cts;
+        _registration = context.Register(_handle, OnWaitCompleted, this);
+
+        context.DefaultLogger.LogDebug($"Started new ReusableTimer {_handle.DangerousGetHandle()} with period {period}.");
+    }
+
+    public void Reset()
+    {
+        if (!_registration.IsEmpty)
+        {
+            _registration = WaitHandleRegistration.Empty;
+            _handle!.Dispose();
+
+            _context?.DefaultLogger.LogDebug($"Released ReusableTimer {_handle.DangerousGetHandle()}.");
+
+            _cts = null;
+            _handle = null;
+            _context = null;
+        }
+    }
+
+    private static void OnWaitCompleted(object? state)
+    {
+        var self = (ReusableTimer)state!;
+        self._cts?.Cancel();
+    }
+
+    public void Dispose()
+    {
+        Reset();
+    }
+}
+
 public static class CancellationTokenSourceExtensions
 {
-    private const string CancellationTokenSourceTimerPoolFeature = nameof(CancellationTokenSourceTimerPoolFeature);
+    private const string ReusableTimerPoolFeature = nameof(ReusableTimerPoolFeature);
 
-    public static IDisposable CancelAfter(this CancellationTokenSource source, TimeSpan timeout, RclClock clock, RclContext context)
+    public static RosTimerCallbackRegistration CancelAfter(
+        this CancellationTokenSource source, TimeSpan timeout, RclClock clock, RclContext context)
     {
         if (clock.Type == RclClockType.Steady)
         {
             source.CancelAfter(timeout);
-            return NoopTimer.Default;
+            return RosTimerCallbackRegistration.Empty;
         }
 
         if (timeout < Timeout.InfiniteTimeSpan)
@@ -21,26 +92,17 @@ public static class CancellationTokenSourceExtensions
 
         if (timeout == Timeout.InfiniteTimeSpan)
         {
-            return NoopTimer.Default;
+            return RosTimerCallbackRegistration.Empty;
         }
 
-        //if(!context.TryGetFeature<ObjectPool<ReusableTimer>>(CancellationTokenSourceTimerPoolFeature, out var pool))
-        //{
-        //    pool = new();
-        //    context.AddFeature(CancellationTokenSourceTimerPoolFeature, pool);
-        //}
+        var pool = context.GetOrAddFeature<ObjectPool<ReusableTimer>>(ReusableTimerPoolFeature, x => new());
+        var timer = pool.Rent();
+        timer.Start(source, context, clock.Impl, timeout);
 
-        //var timer = pool.Rent();
-        //if(timer.Timer == null)
-        //{
-
-        //}
-
-        // TODO: Make CancellationTokenSourceTimer reusable.
-        return new CancellationTokenSourceTimer(source, context, clock.Impl, timeout);
+        return new RosTimerCallbackRegistration(pool, timer);
     }
 
-    public static IDisposable CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, RclClock clock, RclContext context)
+    public static RosTimerCallbackRegistration CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, RclClock clock, RclContext context)
         => source.CancelAfter(TimeSpan.FromMilliseconds(timeoutMilliseconds), clock, context);
 
     /// <summary>
@@ -50,7 +112,7 @@ public static class CancellationTokenSourceExtensions
     /// <param name="timeoutMilliseconds"></param>
     /// <param name="node"></param>
     /// <returns></returns>
-    public static IDisposable CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, IRclNode node)
+    public static RosTimerCallbackRegistration CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, IRclNode node)
         => source.CancelAfter(timeoutMilliseconds, node.Clock, node.Context);
 
     /// <summary>
@@ -60,47 +122,8 @@ public static class CancellationTokenSourceExtensions
     /// <param name="timeout"></param>
     /// <param name="node"></param>
     /// <returns></returns>
-    public static IDisposable CancelAfter(this CancellationTokenSource source, TimeSpan timeout, IRclNode node)
+    public static RosTimerCallbackRegistration CancelAfter(this CancellationTokenSource source, TimeSpan timeout, IRclNode node)
         => source.CancelAfter(timeout, node.Clock, node.Context);
-
-    private class ReusableTimer : IDisposable
-    {
-        public CancellationTokenSourceTimer? Timer { get; set; }
-
-        public void Dispose()
-        {
-            Timer?.Dispose();
-        }
-    }
-
-    private unsafe class CancellationTokenSourceTimer : RclObject<SafeTimerHandle>
-    {
-        private readonly CancellationTokenSource _cts;
-        private readonly WaitHandleRegistration _registration;
-
-        public CancellationTokenSourceTimer(
-            CancellationTokenSource cts, RclContext context, RclClockImpl clock, TimeSpan period)
-            : base(new SafeTimerHandle(context.Handle, clock.Handle, (long)period.TotalNanoseconds))
-        {
-            _cts = cts;
-            _registration = context.Register(Handle, OnWaitCompleted, this);
-        }
-
-        public override void Dispose()
-        {
-            _registration.Dispose();
-            base.Dispose();
-        }
-
-        private static void OnWaitCompleted(object? state)
-        {
-            var self = (CancellationTokenSourceTimer)state!;
-            if (!self._cts.IsCancellationRequested)
-            {
-                self._cts.Cancel();
-            }
-        }
-    }
 
     private class NoopTimer : IDisposable
     {

@@ -1,6 +1,7 @@
 ﻿using Rcl.Logging;
 using Rcl.Logging.Impl;
 using Rcl.SafeHandles;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Rcl;
@@ -32,7 +33,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     private readonly SafeContextHandle _context;
     private readonly Thread _mainLoopRunner;
 
-    private readonly Dictionary<string, object> _features = new();
+    private readonly ConcurrentDictionary<string, object> _features = new();
 
     private int _disposed;
     private long _waitHandleToken;
@@ -458,26 +459,10 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
         }
     }
 
-    internal void AddFeature<T>(string name, T feature)where T : class
-    {
-        _features.Add(name, feature);
-    }
 
-    internal T GetFeature<T>(string name) where T : class
+    internal T GetOrAddFeature<T>(string name, Func<string, T> featureFactory) where T : class
     {
-        return (T)_features[name];
-    }
-
-    internal bool TryGetFeature<T>(string name, [NotNullWhen(true)] out T? feature) where T : class
-    {
-        feature = null;
-        if (_features.TryGetValue(name, out var v))
-        {
-            feature = (T)v;
-            return true;
-        }
-
-        return false;
+        return (T)_features.GetOrAdd(name, featureFactory);
     }
 
     private record struct WaitSetWorkItem(RclObjectHandle WaitHandle, Action<object?> Callback, object? State);

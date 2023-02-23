@@ -22,30 +22,18 @@ internal class ObjectPool<T> : IDisposable where T : class, new()
 
     public T Rent()
     {
-        bool success = false;
-        try
+        using (ScopedLock.Lock(ref _lock))
         {
-            _lock.Enter(ref success);
             var obj = _queue.TryDequeue(out var result) ? result : new();
             return obj;
-        }
-        finally
-        {
-            if (success) _lock.Exit();
         }
     }
 
     public void Return(T obj)
     {
-        bool success = false;
-        try
+        using (ScopedLock.Lock(ref _lock))
         {
-            _lock.Enter(ref success);
             _queue.Enqueue(obj);
-        }
-        finally
-        {
-            if (success) _lock.Exit();
         }
     }
 
@@ -53,7 +41,7 @@ internal class ObjectPool<T> : IDisposable where T : class, new()
     {
         using (ScopedLock.Lock(ref _lock))
         {
-            while(_queue.TryDequeue(out var obj))
+            while (_queue.TryDequeue(out var obj))
             {
                 if (obj is IDisposable d) d.Dispose();
             }
