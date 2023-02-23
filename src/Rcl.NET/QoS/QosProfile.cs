@@ -127,6 +127,19 @@ public record QosProfile(
             TimeSpan.Zero
         );
 
+    public static QosProfile Clock { get; } =
+        new(
+            HistoryPolicy.KeepLast,
+            1,
+            ReliabilityPolicy.BestEffort,
+            DurabilityPolicy.Volatile,
+            TimeSpan.Zero,
+            TimeSpan.Zero,
+            LivelinessPolicy.Default,
+            TimeSpan.Zero,
+            false
+        );
+
     public static QosProfile Unknown { get; } =
         new(
             HistoryPolicy.Unknown,

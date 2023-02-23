@@ -11,6 +11,34 @@ class RclClockImpl : RclObject<SafeClockHandle>
 
     public RclClockType Type { get; }
 
+    public unsafe bool IsRosTimeOverrideEnabled
+    {
+        get
+        {
+            bool enabled;
+            rcl_is_enabled_ros_time_override(Handle.Object, &enabled);
+            return enabled;
+        }
+    }
+
+    public unsafe void ToggleRosTimeOverride(bool enabled)
+    {
+        if (enabled)
+        {
+            rcl_enable_ros_time_override(Handle.Object);
+        }
+        else
+        {
+            rcl_disable_ros_time_override(Handle.Object);
+        }
+    }
+
+    public unsafe void SetRosTimeOverride(long nanoseconds)
+    {
+        RclException.ThrowIfNonSuccess(
+            rcl_set_ros_time_override(Handle.Object, nanoseconds));
+    }
+
     public unsafe TimeSpan Elapsed
     {
         get

@@ -1,8 +1,8 @@
 ﻿using Rcl.SafeHandles;
 
-namespace Rcl.Utils;
+namespace Rcl;
 
-internal static class CancellationTokenExtensions
+public static class CancellationTokenSourceExtensions
 {
     public static IDisposable CancelAfter(this CancellationTokenSource source, TimeSpan timeout, RclClock clock, RclContext context)
     {
@@ -14,16 +14,17 @@ internal static class CancellationTokenExtensions
 
         if (timeout < Timeout.InfiniteTimeSpan)
         {
-            throw new ArgumentOutOfRangeException(nameof(timeout), "Specified timeout is out of range.");
+            throw new ArgumentOutOfRangeException(nameof(timeout), "Specified timeout value is out of range.");
         }
 
+        // TODO: Make CancellationTokenSourceTimer reusable.
         return timeout == Timeout.InfiniteTimeSpan
               ? NoopTimer.Default
               : new CancellationTokenSourceTimer(source, context, clock.Impl, timeout);
     }
 
     public static IDisposable CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, RclClock clock, RclContext context)
-        => CancelAfter(source, TimeSpan.FromMilliseconds(timeoutMilliseconds), clock, context);
+        => source.CancelAfter(TimeSpan.FromMilliseconds(timeoutMilliseconds), clock, context);
 
     /// <summary>
     /// Cancel the <see cref="CancellationTokenSource"/> after specific period of time, measured with <see cref="IRclNode.Clock"/>.
@@ -33,7 +34,7 @@ internal static class CancellationTokenExtensions
     /// <param name="node"></param>
     /// <returns></returns>
     public static IDisposable CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, IRclNode node)
-        => CancelAfter(source, timeoutMilliseconds, node.Clock, node.Context);
+        => source.CancelAfter(timeoutMilliseconds, node.Clock, node.Context);
 
     /// <summary>
     /// Cancel the <see cref="CancellationTokenSource"/> after specific period of time, measured with <see cref="IRclNode.Clock"/>.
@@ -43,7 +44,7 @@ internal static class CancellationTokenExtensions
     /// <param name="node"></param>
     /// <returns></returns>
     public static IDisposable CancelAfter(this CancellationTokenSource source, TimeSpan timeout, IRclNode node)
-        => CancelAfter(source, timeout, node.Clock, node.Context);
+        => source.CancelAfter(timeout, node.Clock, node.Context);
 
     private unsafe class CancellationTokenSourceTimer : RclObject<SafeTimerHandle>
     {

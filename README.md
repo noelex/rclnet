@@ -23,20 +23,23 @@ Supported ROS 2 Distributions:
 |  Topics                  | ✅      | N/A                           |
 |  Services                | ✅      | N/A                           | 
 |  Actions                 | ✅      | Managed implementation.       | 
-|  Clocks                  | ⚠️      | ROS time abstraction override and time jump observation are not supported.   |
+|  Clocks                  | ✅      | Supports external time source by setting `use_sim_time` to `true`.<br/>`CancellationTokenSource`s can also be configured to cancel with timeout measured by external clock.  |
 |  Timers                  | ⚠️      | Changing period of timers is not supported.    | 
 |  Guard Conditions        | ✅      | N/A                           | 
 |  Events                  | ❌      | N/A                           | 
 |  Lifecycles              | ❌      | N/A                           | 
-|  Parameter Services      | ⏳      | N/A                           | 
+|  Parameter Services      | ⏳      | Only supports loading parameters from command-line and parameter files locally.                           | 
 |  ROS Graph               | ✅      | Managed implementation.       | 
 |  Logging                 | ✅      | Configurable via `--ros-args`.| 
 |  Network Flow Endpoints  | ❌      | Available since galactic.     |
 |  Content Filtered Topics | ❌      | Available since humble.       |
 
 ✅ Fully supported
+
 ⚠️Partial support
+
 ❌ Not supported
+
 ⏳ In development
 
 ## Installing

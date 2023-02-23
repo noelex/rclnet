@@ -20,13 +20,13 @@ namespace Rcl.Parameters;
 /// <param name="FloatingPointRange">
 /// Restrict the range and step of the parameter value.
 /// <para>
-/// This is only effective when <paramref name="Type"/> is <see cref="ValueType.Double"/>.
+/// This is only effective when <paramref name="Type"/> is <see cref="ValueKind.Double"/>.
 /// </para>
 /// </param>
 /// <param name="IntegerRange">
 /// Restrict the range and step of the parameter value.
 /// <para>
-/// This is only effective when <paramref name="Type"/> is <see cref="ValueType.Integer"/>.
+/// This is only effective when <paramref name="Type"/> is <see cref="ValueKind.Integer"/>.
 /// </para>
 /// </param>
 /// <param name="DynamicTyping">
@@ -36,7 +36,7 @@ public record ParameterDescriptor
 (
     string Name,
 
-    ValueType Type,
+    ValueKind Type,
 
     bool ReadOnly = false,
 

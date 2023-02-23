@@ -4740,5 +4740,21 @@ namespace Rcl.Interop
 
         [DllImport("rcl_yaml_param_parser", CallingConvention = CallingConvention.Cdecl)]
         public static extern void rcl_yaml_node_struct_fini(rcl_params_t* params_st);
+
+        [SuppressGCTransition]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        public static extern rcl_ret_t rcl_enable_ros_time_override(rcl_clock_t* clock);
+
+        [SuppressGCTransition]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        public static extern rcl_ret_t rcl_disable_ros_time_override(rcl_clock_t* clock);
+
+        [SuppressGCTransition]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        public static extern rcl_ret_t rcl_is_enabled_ros_time_override(rcl_clock_t* clock, bool* is_enabled);
+
+        [SuppressGCTransition]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        public static extern rcl_ret_t rcl_set_ros_time_override(rcl_clock_t* clock, rcl_time_point_value_t time_value);
     }
 }

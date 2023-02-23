@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents the type of the value stored in <see cref="Variant"/>.
 /// </summary>
-public enum ValueType : byte
+public enum ValueKind : byte
 {
     /// <summary>
     /// Value type of the <see cref="Variant"/> is unknown.

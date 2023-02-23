@@ -12,7 +12,7 @@ public interface IParameterProvider
 
     Variant Declare(string name, Variant defaultValue, bool ignoreOverride = false);
 
-    Variant Declare(string name, ValueType type, bool ignoreOverride = false);
+    Variant Declare(string name, ValueKind type, bool ignoreOverride = false);
 
     Variant Declare(ParameterDescriptor descriptor, bool ignoreOverride = false);
 

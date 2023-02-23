@@ -36,20 +36,20 @@ internal class ParameterProvider : IParameterProvider
         return null;
     }
 
-    private static Variant GetDefaultValue(ValueType type)
+    private static Variant GetDefaultValue(ValueKind type)
     {
         return type switch
         {
-            ValueType.Bool => false,
-            ValueType.BoolArray => Array.Empty<bool>(),
-            ValueType.ByteArray => Array.Empty<byte>(),
-            ValueType.Double => 0d,
-            ValueType.DoubleArray => Array.Empty<double>(),
-            ValueType.Integer => 0L,
-            ValueType.IntegerArray => Array.Empty<long>(),
-            ValueType.String => string.Empty,
-            ValueType.StringArray => Array.Empty<string>(),
-            ValueType.Unknown => new(),
+            ValueKind.Bool => false,
+            ValueKind.BoolArray => Array.Empty<bool>(),
+            ValueKind.ByteArray => Array.Empty<byte>(),
+            ValueKind.Double => 0d,
+            ValueKind.DoubleArray => Array.Empty<double>(),
+            ValueKind.Integer => 0L,
+            ValueKind.IntegerArray => Array.Empty<long>(),
+            ValueKind.String => string.Empty,
+            ValueKind.StringArray => Array.Empty<string>(),
+            ValueKind.Unknown => new(),
             _ => throw new RclException($"Value type '{type}' is not supported.")
         };
     }
@@ -61,13 +61,13 @@ internal class ParameterProvider : IParameterProvider
             throw new RclException($"Parameter is read-only.");
         }
 
-        if (descriptor.Type != value.Type && !descriptor.DynamicTyping)
+        if (descriptor.Type != value.Kind && !descriptor.DynamicTyping)
         {
             throw new RclException($"Parameter of type '{descriptor.Type}' " +
-                $"cannot be assigned with value of type '{value.Type}'.");
+                $"cannot be assigned with value of type '{value.Kind}'.");
         }
 
-        if (value.Type == ValueType.Integer && descriptor.IntegerRange != null)
+        if (value.Kind == ValueKind.Integer && descriptor.IntegerRange != null)
         {
             if (!descriptor.IntegerRange.IsInRange((long)value))
             {
@@ -75,7 +75,7 @@ internal class ParameterProvider : IParameterProvider
             }
         }
 
-        if (value.Type == ValueType.Double && descriptor.FloatingPointRange != null)
+        if (value.Kind == ValueKind.Double && descriptor.FloatingPointRange != null)
         {
             if (!descriptor.FloatingPointRange.IsInRange((double)value))
             {
@@ -95,7 +95,7 @@ internal class ParameterProvider : IParameterProvider
     {
         if (!descriptor.DynamicTyping)
         {
-            if (descriptor.Type == ValueType.Unknown)
+            if (descriptor.Type == ValueKind.Unknown)
             {
                 throw new RclException($"Cannot declare parameter of specific type '{descriptor.Type}' when dynamic typing is enabled.");
             }
@@ -117,9 +117,9 @@ internal class ParameterProvider : IParameterProvider
     }
 
     public Variant Declare(string name, Variant defaultValue, bool ignoreOverride = false)
-        => Declare(new ParameterDescriptor(name, defaultValue.Type), defaultValue, ignoreOverride);
+        => Declare(new ParameterDescriptor(name, defaultValue.Kind), defaultValue, ignoreOverride);
 
-    public Variant Declare(string name, ValueType type, bool ignoreOverride = false)
+    public Variant Declare(string name, ValueKind type, bool ignoreOverride = false)
         => Declare(new(name, type), ignoreOverride);
 
     public Variant Declare(ParameterDescriptor descriptor, bool ignoreOverride = false)
@@ -131,7 +131,7 @@ internal class ParameterProvider : IParameterProvider
         {
             if (_parameters.TryGetValue(name, out var p))
             {
-                if (p.Value.Type != ValueType.Unknown || p.Descriptor.DynamicTyping)
+                if (p.Value.Kind != ValueKind.Unknown || p.Descriptor.DynamicTyping)
                 {
                     return p;
                 }
@@ -152,7 +152,7 @@ internal class ParameterProvider : IParameterProvider
             parameter = Parameter.Empty;
             if (_parameters.TryGetValue(name, out var p))
             {
-                if (p.Value.Type != ValueType.Unknown || p.Descriptor.DynamicTyping)
+                if (p.Value.Kind != ValueKind.Unknown || p.Descriptor.DynamicTyping)
                 {
                     parameter = p;
                     return true;
@@ -241,7 +241,7 @@ internal class ParameterProvider : IParameterProvider
                 throw new RclException($"Parameter '{name}' is not declared yet.");
             }
 
-            if (oldValue.Descriptor.Type != value.Type && !oldValue.Descriptor.DynamicTyping)
+            if (oldValue.Descriptor.Type != value.Kind && !oldValue.Descriptor.DynamicTyping)
             {
                 throw new RclException("Trying to update parameter with a differnet type.");
             }

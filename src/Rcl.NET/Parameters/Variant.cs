@@ -3,7 +3,7 @@
 namespace Rcl.Parameters;
 
 /// <summary>
-/// Stores a value being one of the type defined in <see cref="ValueType"/>.
+/// Stores a value being one of the type defined in <see cref="ValueKind"/>.
 /// </summary>
 [StructLayout(LayoutKind.Explicit)]
 public readonly struct Variant : IEquatable<Variant>
@@ -39,77 +39,77 @@ public readonly struct Variant : IEquatable<Variant>
     /// Type of the value store in the <see cref="Variant"/>.
     /// </summary>
     [FieldOffset(16)]
-    public readonly ValueType Type;
+    public readonly ValueKind Kind;
 
     public Variant(long value)
     {
-        Type = ValueType.Integer;
+        Kind = ValueKind.Integer;
         _integerValue = value;
     }
 
     public Variant(int value)
     {
-        Type = ValueType.Integer;
+        Kind = ValueKind.Integer;
         _integerValue = value;
     }
 
     public Variant(bool value)
     {
-        Type = ValueType.Bool;
+        Kind = ValueKind.Bool;
         _boolValue = value;
     }
 
     public Variant(double value)
     {
-        Type = ValueType.Double;
+        Kind = ValueKind.Double;
         _doubleValue = value;
     }
 
     public Variant(float value)
     {
-        Type = ValueType.Double;
+        Kind = ValueKind.Double;
         _doubleValue = value;
     }
 
     public Variant(string value)
     {
-        Type = ValueType.String;
+        Kind = ValueKind.String;
         _stringValue = value;
     }
 
     public Variant(bool[] value)
     {
-        Type = ValueType.BoolArray;
+        Kind = ValueKind.BoolArray;
         _boolArray = value;
     }
 
     public Variant(long[] value)
     {
-        Type = ValueType.IntegerArray;
+        Kind = ValueKind.IntegerArray;
         _integerArray = value;
     }
 
     public Variant(double[] value)
     {
-        Type = ValueType.DoubleArray;
+        Kind = ValueKind.DoubleArray;
         _doubleArray = value;
     }
 
     public Variant(string[] value)
     {
-        Type = ValueType.StringArray;
+        Kind = ValueKind.StringArray;
         _stringArray = value;
     }
 
     public Variant(byte[] value)
     {
-        Type = ValueType.ByteArray;
+        Kind = ValueKind.ByteArray;
         _byteArray = value;
     }
 
-    private void CheckType(ValueType type)
+    private void CheckType(ValueKind type)
     {
-        if (Type != type)
+        if (Kind != type)
         {
             throw new InvalidCastException();
         }
@@ -117,95 +117,95 @@ public readonly struct Variant : IEquatable<Variant>
 
     public bool AsBoolean()
     {
-        CheckType(ValueType.Bool);
+        CheckType(ValueKind.Bool);
         return _boolValue;
     }
 
     public long AsInt64()
     {
-        CheckType(ValueType.Integer);
+        CheckType(ValueKind.Integer);
         return _integerValue;
     }
 
     public int AsInt32()
     {
-        CheckType(ValueType.Integer);
+        CheckType(ValueKind.Integer);
         return (int)_integerValue;
     }
 
     public double AsDouble()
     {
-        CheckType(ValueType.Double);
+        CheckType(ValueKind.Double);
         return _doubleValue;
     }
 
     public float AsSingle()
     {
-        CheckType(ValueType.Double);
+        CheckType(ValueKind.Double);
         return (float)_doubleValue;
     }
 
     public string AsString()
     {
-        CheckType(ValueType.String);
+        CheckType(ValueKind.String);
         return _stringValue!;
     }
 
     public bool[] AsBooleanArray()
     {
-        CheckType(ValueType.BoolArray);
+        CheckType(ValueKind.BoolArray);
         return _boolArray!;
     }
 
     public byte[] AsByteArray()
     {
-        CheckType(ValueType.ByteArray);
+        CheckType(ValueKind.ByteArray);
         return _byteArray!;
     }
 
     public long[] AsInt64Array()
     {
-        CheckType(ValueType.IntegerArray);
+        CheckType(ValueKind.IntegerArray);
         return _integerArray!;
     }
 
     public double[] AsDoubleArray()
     {
-        CheckType(ValueType.DoubleArray);
+        CheckType(ValueKind.DoubleArray);
         return _doubleArray!;
     }
 
     public string[] AsStringArray()
     {
-        CheckType(ValueType.StringArray);
+        CheckType(ValueKind.StringArray);
         return _stringArray!;
     }
 
     public override string ToString()
     {
-        return Type switch
+        return Kind switch
         {
-            ValueType.Bool => _boolValue.ToString(),
-            ValueType.Double => _doubleValue.ToString(),
-            ValueType.Integer => _integerValue.ToString(),
-            ValueType.String => _stringValue ?? "",
-            ValueType.BoolArray => "Count = " + _boolArray!.Length,
-            ValueType.ByteArray => "Count = " + _byteArray!.Length,
-            ValueType.IntegerArray => "Count = " + _integerArray!.Length,
-            ValueType.StringArray => "Count = " + _stringArray!.Length,
-            ValueType.DoubleArray => "Count = " + _doubleArray!.Length,
+            ValueKind.Bool => _boolValue.ToString(),
+            ValueKind.Double => _doubleValue.ToString(),
+            ValueKind.Integer => _integerValue.ToString(),
+            ValueKind.String => _stringValue ?? "",
+            ValueKind.BoolArray => "Count = " + _boolArray!.Length,
+            ValueKind.ByteArray => "Count = " + _byteArray!.Length,
+            ValueKind.IntegerArray => "Count = " + _integerArray!.Length,
+            ValueKind.StringArray => "Count = " + _stringArray!.Length,
+            ValueKind.DoubleArray => "Count = " + _doubleArray!.Length,
             _ => string.Empty,
         };
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Type, _integerValue);
+        return HashCode.Combine(Kind, _integerValue);
     }
 
     public bool Equals(Variant other)
     {
-        return other.Type == Type && _integerValue == other._integerValue;
+        return other.Kind == Kind && _integerValue == other._integerValue;
     }
 
     public override bool Equals(object? other)
