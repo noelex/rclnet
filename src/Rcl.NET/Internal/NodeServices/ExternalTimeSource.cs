@@ -1,16 +1,10 @@
 ﻿using Rcl.Parameters;
 using Rcl.Qos;
 using Rosidl.Messages.Rosgraph;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace Rcl.Internal.NodeServices;
 
-class ExternalTimeSource:IDisposable
+class ExternalTimeSource : IDisposable
 {
     private const string UseSimTime = "use_sim_time";
 
@@ -35,7 +29,7 @@ class ExternalTimeSource:IDisposable
 
         if (useSimTime.AsBoolean())
         {
-            if(node.Clock.Type != RclClockType.Ros)
+            if (node.Clock.Type != RclClockType.Ros)
             {
                 throw new RclException("use_sim_time parameter can't be true while not using ROS clock.");
             }
@@ -49,7 +43,7 @@ class ExternalTimeSource:IDisposable
 
     private async Task UpdateClockAsync(IRclNativeSubscription sub)
     {
-        await foreach(var e in sub.ReadAllAsync())
+        await foreach (var e in sub.ReadAllAsync())
         {
             using (e) UpdateClock(e);
         }

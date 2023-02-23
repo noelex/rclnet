@@ -1,11 +1,6 @@
 ﻿using Rcl.Interop;
 using Rcl.Qos;
-using Rcl.SafeHandles;
 using Rosidl.Runtime;
-using Rosidl.Runtime.Interop;
-using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Channels;
 
 namespace Rcl.Internal.Subscriptions;
@@ -31,16 +26,17 @@ internal unsafe class NativeSubscription<T> :
         // Defined as RclHumble.rmw_message_info_t only because it has bigger size
         // to be compatible with both foxy and humble.
         RclHumble.rmw_message_info_t header;
-        void* rosMessage;
 
-        rosMessage = T.UnsafeCreate().ToPointer();
+        var rosMessage = RosMessageBuffer.Create<T>();
         if (rcl_ret_t.RCL_RET_OK ==
-            rcl_take(Handle.Object, rosMessage, &header, null))
+            rcl_take(Handle.Object, rosMessage.Data.ToPointer(), &header, null))
         {
-            return new RosMessageBuffer(
-                new(rosMessage), static (p, _) => T.UnsafeDestroy(p));
+            return rosMessage;
         }
-
-        return RosMessageBuffer.Empty;
+        else
+        {
+            rosMessage.Dispose();
+            return RosMessageBuffer.Empty;
+        }
     }
 }

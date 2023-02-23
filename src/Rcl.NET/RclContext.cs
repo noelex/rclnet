@@ -53,6 +53,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
             rcl_logging_configure(&_context.Object->global_arguments, &allocator));
 
         LoggerFactory = loggerFactory ?? new RcutilsLoggerFactory(_rclSyncContext);
+        DefaultLogger = LoggerFactory.CreateLogger("rclnet");
 
         _interruptSignal = new SafeGuardConditionHandle(_context);
 
@@ -66,6 +67,8 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     internal SafeContextHandle Handle => _context;
 
     internal IRclLoggerFactory LoggerFactory { get; }
+
+    internal IRclLogger DefaultLogger { get; }
 
     /// <inheritdoc/>
     public SynchronizationContext SynchronizationContext => _rclSyncContext;

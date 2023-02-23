@@ -25,6 +25,7 @@ internal class ActionServer : IActionServer
 
     private readonly RclClock _clock;
     private readonly TimeSpan _resultTimeout;
+    private readonly IRclLogger _logger;
 
     public ActionServer(RclNodeImpl node, string actionName,
         string typesupportName, TypeSupportHandle actionTypesupport,
@@ -36,6 +37,7 @@ internal class ActionServer : IActionServer
         _handler = handler;
         _textEncoding = textEncoding;
         _resultTimeout = resultTimeout;
+        _logger = _node.Context.DefaultLogger;
 
         var statusTopicName = actionName + Constants.StatusTopic;
         var feedbackTopicName = actionName + Constants.FeedbackTopic;
@@ -79,7 +81,7 @@ internal class ActionServer : IActionServer
             }
             else
             {
-                node.Logger.LogDebug($"Result expiration for action server '{Name}' is disabled because result timeout is set to {_resultTimeout}.");
+                _logger.LogDebug($"Result expiration for action server '{Name}' is disabled because result timeout is set to {_resultTimeout}.");
             }
         }
         finally
@@ -188,18 +190,18 @@ internal class ActionServer : IActionServer
             {
                 if (context.CancelSignal.IsCancellationRequested)
                 {
-                    _node.Logger.LogDebug($"Goal '{context.GoalId}' canceled due to client cancel request.");
+                    _logger.LogDebug($"Goal '{context.GoalId}' canceled due to client cancel request.");
                     status = ActionGoalStatus.Canceled;
                 }
                 else
                 {
-                    _node.Logger.LogDebug($"Goal '{context.GoalId}' aborted due to server shutdown or preemption.");
+                    _logger.LogDebug($"Goal '{context.GoalId}' aborted due to server shutdown or preemption.");
                     status = ActionGoalStatus.Aborted;
                 }
             }
             catch (Exception e)
             {
-                _node.Logger.LogWarning($"Goal '{context.GoalId}' aborted due to unhandled exception: {e.Message}");
+                _logger.LogWarning($"Goal '{context.GoalId}' aborted due to unhandled exception: {e.Message}");
                 status = ActionGoalStatus.Aborted;
             }
 
@@ -273,14 +275,14 @@ internal class ActionServer : IActionServer
         {
             if (!_goals.TryGetValue(goalId, out var ctx))
             {
-                _node.Logger.LogWarning($"Unable to cancel goal [{goalId}]: Goal not found.");
+                _logger.LogWarning($"Unable to cancel goal [{goalId}]: Goal not found.");
                 res.ReturnCode = CancelGoalServiceResponse.ERROR_UNKNOWN_GOAL_ID;
                 return;
             }
 
             if (ctx.Completion.IsCompleted)
             {
-                _node.Logger.LogWarning($"Unable to cancel goal [{goalId}]: Goal is in terminal state.");
+                _logger.LogWarning($"Unable to cancel goal [{goalId}]: Goal is in terminal state.");
                 res.ReturnCode = CancelGoalServiceResponse.ERROR_GOAL_TERMINATED;
                 return;
             }
@@ -302,7 +304,7 @@ internal class ActionServer : IActionServer
     {
         if (cancellableGoals.Length == 0)
         {
-            _node.Logger.LogWarning($"Unable to cancel goal: No matching goal found.");
+            _logger.LogWarning($"Unable to cancel goal: No matching goal found.");
             res.ReturnCode = CancelGoalServiceResponse.ERROR_REJECTED;
             return;
         }
@@ -400,7 +402,7 @@ internal class ActionServer : IActionServer
 
             _resultBuffer = _server._typesupport.ResultService.Response.CreateBuffer();
 
-            _server._node.Logger.LogDebug($"Created action goal context [{GoalId}].");
+            _server._logger.LogDebug($"Created action goal context [{GoalId}].");
         }
 
         public Guid GoalId => _goalId;
@@ -448,7 +450,7 @@ internal class ActionServer : IActionServer
             _abort.Dispose();
             _cancel.Dispose();
 
-            _server._node.Logger.LogDebug($"Action goal context [{GoalId}] disposed.");
+            _server._logger.LogDebug($"Action goal context [{GoalId}] disposed.");
         }
 
         public unsafe void Report(RosMessageBuffer value)

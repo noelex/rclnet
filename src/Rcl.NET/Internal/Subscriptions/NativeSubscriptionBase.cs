@@ -1,16 +1,9 @@
-﻿using Rcl.Interop;
-using Rcl.Qos;
+﻿using Rcl.Qos;
 using Rcl.SafeHandles;
-using Rosidl.Runtime.Interop;
 using Rosidl.Runtime;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
+using Rosidl.Runtime.Interop;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Channels;
-using System.Threading.Tasks;
 
 namespace Rcl.Internal.Subscriptions;
 
@@ -87,7 +80,7 @@ internal unsafe abstract class NativeSubscriptionBase :
 
     public override void Dispose()
     {
-        if(_messageChannel.Writer.TryComplete())
+        if (_messageChannel.Writer.TryComplete())
         {
             while (_messageChannel.Reader.TryRead(out var buffer))
             {
