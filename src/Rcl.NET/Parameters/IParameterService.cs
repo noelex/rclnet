@@ -2,7 +2,7 @@
 
 public delegate ValidationResult OnParameterChangingDelegate(ReadOnlySpan<ParameterChangingInfo> parameters, object? state);
 
-public interface IParameterProvider
+public interface IParameterService
 {
     Variant Declare(ParameterDescriptor descriptor, Variant defaultValue, bool ignoreOverride = false);
 

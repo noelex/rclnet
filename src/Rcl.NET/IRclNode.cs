@@ -22,7 +22,7 @@ public interface IRclNode : IRclObject
 
     RclClock Clock { get; }
 
-    IParameterProvider Parameters { get; }
+    IParameterService Parameters { get; }
 
     /// <summary>
     /// Gets the domain ID of the node.

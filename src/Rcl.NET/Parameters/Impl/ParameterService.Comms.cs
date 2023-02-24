@@ -1,7 +1,8 @@
-﻿using Rosidl.Messages.Rcl;
+﻿using Rcl.Interop;
+using Rosidl.Messages.Rcl;
 
 namespace Rcl.Parameters.Impl;
-partial class ParameterProvider :
+partial class ParameterService :
     IServiceHandler<GetParametersServiceRequest, GetParametersServiceResponse>,
     IServiceHandler<GetParameterTypesServiceRequest, GetParameterTypesServiceResponse>,
     IServiceHandler<ListParametersServiceRequest, ListParametersServiceResponse>,
@@ -89,6 +90,11 @@ partial class ParameterProvider :
         return new(result.IsSuccessful, result.Message);
     }
 
+    private static Parameter ToParameter(ParameterStore ps)
+    {
+        return new Parameter(ps.Descriptor.Name, ToParameterValue(ps.Value));
+    }
+
     private static Rosidl.Messages.Rcl.ParameterDescriptor ToParameterDescriptor(ParameterDescriptor descriptor)
     {
         return new Rosidl.Messages.Rcl.ParameterDescriptor(
@@ -118,6 +124,36 @@ partial class ParameterProvider :
             integerRange: descriptor.IntegerRange == null ? null :
                 new IntegerRange[] { new(descriptor.IntegerRange.Min, descriptor.IntegerRange.Max, (ulong)descriptor.IntegerRange.Step) }
             );
+    }
+
+    private void PublishRemovedParameter(ParameterStore ps)
+    {
+        var t = _node.Clock.Elapsed.ToRmwTime();
+        _parameterEvents.Publish(new ParameterEvent(
+            stamp: new(sec: (int)t.sec, nanosec: (uint)t.nsec),
+            node: _node.FullyQualifiedName,
+            deletedParameters: new[] { ToParameter(ps) }
+        ));
+    }
+
+    private void PublishNewParameter(ParameterStore ps)
+    {
+        var t = _node.Clock.Elapsed.ToRmwTime();
+        _parameterEvents.Publish(new ParameterEvent(
+            stamp: new(sec: (int)t.sec, nanosec: (uint)t.nsec),
+            node: _node.FullyQualifiedName,
+            changedParameters: new[] { ToParameter(ps) }
+        ));
+    }
+
+    private void PublishChangedParameters(IEnumerable<ParameterStore> ps)
+    {
+        var t = _node.Clock.Elapsed.ToRmwTime();
+        _parameterEvents.Publish(new ParameterEvent(
+            stamp: new(sec: (int)t.sec, nanosec: (uint)t.nsec),
+            node: _node.FullyQualifiedName,
+            changedParameters: ps.Select(ToParameter).ToArray()
+        ));
     }
 
     public GetParametersServiceResponse ProcessRequest(GetParametersServiceRequest request)

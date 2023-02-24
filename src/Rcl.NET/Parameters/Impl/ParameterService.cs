@@ -9,19 +9,23 @@ using System.Xml.Linq;
 
 namespace Rcl.Parameters.Impl;
 
-partial class ParameterProvider : IParameterProvider, IDisposable
+partial class ParameterService : IParameterService, IDisposable
 {
     [ThreadStatic]
     private static bool _recursionFlag;
 
     private SpinLock _lock;
+
+    private readonly RclNodeImpl _node;
     private readonly ParameterDictionary _overrides = new();
     private readonly ConcurrentDictionary<string, ParameterStore> _parameters = new();
 
     private readonly List<ParameterChangingCallback> _onParameterChangingCallbacks = new();
 
-    internal unsafe ParameterProvider(RclNodeImpl node, ParameterDictionary paramOverrides)
+    internal unsafe ParameterService(RclNodeImpl node, ParameterDictionary paramOverrides)
     {
+        _node = node;
+
         rcl_arguments_t* global_args = null, local_args = GetNodeArguments(node.Handle);
         if (node.Options.UseGlobalArguments)
         {
@@ -172,6 +176,7 @@ partial class ParameterProvider : IParameterProvider, IDisposable
             result = ValidationResult.Failure($"Parameter '{descriptor.Name}' is already declared.");
         }
 
+        PublishNewParameter(ps);
         return result;
     }
 
@@ -195,8 +200,9 @@ partial class ParameterProvider : IParameterProvider, IDisposable
     public void Undeclare(string name)
     {
         // Just checking whether the parameter is declared.
-        GetStore(name);
+        var ps = GetStore(name);
         _parameters.Remove(name, out _);
+        PublishRemovedParameter(ps);
     }
 
     public bool IsDeclared(string name)
@@ -295,6 +301,7 @@ partial class ParameterProvider : IParameterProvider, IDisposable
             temp[k].UnsafeSet(v);
         }
 
+        PublishChangedParameters(temp.Values);
         return result;
     }
 
@@ -322,6 +329,7 @@ partial class ParameterProvider : IParameterProvider, IDisposable
 
         ps.UnsafeSet(value);
 
+        PublishChangedParameters(Enumerable.Repeat(ps, 1));
         return result;
     }
 
@@ -397,7 +405,7 @@ partial class ParameterProvider : IParameterProvider, IDisposable
         ShutdownComms();
     }
 
-    private record ParameterChangingCallback(ParameterProvider Provider, OnParameterChangingDelegate Callback, object? State) : IDisposable
+    private record ParameterChangingCallback(ParameterService Provider, OnParameterChangingDelegate Callback, object? State) : IDisposable
     {
         public void Dispose()
         {
