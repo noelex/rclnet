@@ -20,9 +20,13 @@ public class MessageClassBuilder
     }
 
 
-    public CSharpElement Build(string? path)
+    public CSharpElement Build(string? path, bool isInternal)
     {
         var cls = new CSharpClass(_context.ClassName);
+        if (isInternal)
+        {
+            cls.Visibility = CSharpVisibility.Internal;
+        }
 
         cls.AddCommentsForClass(_context.Metadata);
 

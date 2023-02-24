@@ -376,8 +376,8 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine($"Unhandled exception thrown by wait handle callback: {ex.Message}");
-                            Console.WriteLine(ex.StackTrace);
+                            DefaultLogger.LogWarning($"Unhandled exception thrown by wait handle callback: {ex.Message}");
+                            DefaultLogger.LogWarning(ex.StackTrace);
                         }
                     }
                 }
@@ -443,8 +443,8 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                 {
                     if (cb.CompletionSource is null)
                     {
-                        Console.WriteLine("Unhandled exception thrown by scheduled callback: " + ex.Message);
-                        Console.WriteLine(ex.StackTrace);
+                        DefaultLogger.LogWarning("Unhandled exception thrown by scheduled callback: " + ex.Message);
+                        DefaultLogger.LogWarning(ex.StackTrace);
                     }
                     else
                     {

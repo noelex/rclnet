@@ -1,13 +1,15 @@
 ﻿using Microsoft.Toolkit.HighPerformance.Buffers;
 using Rcl.Interop;
+using Rcl.Qos;
 using Rcl.SafeHandles;
+using Rosidl.Messages.Rcl;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Xml.Linq;
 
 namespace Rcl.Parameters.Impl;
 
-internal class ParameterProvider : IParameterProvider
+partial class ParameterProvider : IParameterProvider, IDisposable
 {
     [ThreadStatic]
     private static bool _recursionFlag;
@@ -27,6 +29,44 @@ internal class ParameterProvider : IParameterProvider
         }
 
         _overrides = Utils.ResolveParameterOverrides(node.FullyQualifiedName, paramOverrides, local_args, global_args);
+
+        if (RosEnvironment.IsFoxy)
+        {
+            _describeParametersService = node.CreateService<
+                DescribeParametersServiceFoxy,
+                DescribeParametersServiceRequestFoxy,
+                DescribeParametersServiceResponseFoxy>($"{node.Name}/describe_parameters", this, QosProfile.Parameters);
+        }
+        else
+        {
+            _describeParametersService = node.CreateService<
+                DescribeParametersService,
+                DescribeParametersServiceRequest,
+                DescribeParametersServiceResponse>($"{node.Name}/describe_parameters", this, QosProfile.Parameters);
+        }
+
+        _listParametersService = node.CreateService<
+                ListParametersService,
+                ListParametersServiceRequest,
+                ListParametersServiceResponse>($"{node.Name}/list_parameters", this, QosProfile.Parameters);
+        _getParametersService = node.CreateService<
+                GetParametersService,
+                GetParametersServiceRequest,
+                GetParametersServiceResponse>($"{node.Name}/get_parameters", this, QosProfile.Parameters);
+        _getParameterTypesService = node.CreateService<
+                GetParameterTypesService,
+                GetParameterTypesServiceRequest,
+                GetParameterTypesServiceResponse>($"{node.Name}/get_parameter_types", this, QosProfile.Parameters);
+        _setParametersService = node.CreateService<
+                SetParametersService,
+                SetParametersServiceRequest,
+                SetParametersServiceResponse>($"{node.Name}/set_parameters", this, QosProfile.Parameters);
+        _setParametersAtomicallyService = node.CreateService<
+                SetParametersAtomicallyService,
+                SetParametersAtomicallyServiceRequest,
+                SetParametersAtomicallyServiceResponse>($"{node.Name}/set_parameters_atomically", this, QosProfile.Parameters);
+
+        _parameterEvents = node.CreatePublisher<ParameterEvent>("/parameter_events", QosProfile.ParameterEvents);
     }
 
     private unsafe static rcl_arguments_t* GetNodeArguments(SafeNodeHandle node)
@@ -350,6 +390,11 @@ internal class ParameterProvider : IParameterProvider
         {
             throw new RclException(result.Message);
         }
+    }
+
+    public void Dispose()
+    {
+        ShutdownComms();
     }
 
     private record ParameterChangingCallback(ParameterProvider Provider, OnParameterChangingDelegate Callback, object? State) : IDisposable

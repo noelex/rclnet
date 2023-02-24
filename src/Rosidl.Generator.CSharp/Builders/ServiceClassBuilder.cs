@@ -17,9 +17,13 @@ public class ServiceClassBuilder
         _context = context;
     }
 
-    private CSharpElement[] Build()
+    private CSharpElement[] Build(bool isInternal)
     {
         var cls = new CSharpClass(_context.ClassName);
+        if (isInternal)
+        {
+            cls.Visibility = CSharpVisibility.Internal;
+        }
 
         cls.AddComments(_context.Metadata);
         cls.AddTypeSupportAttribute(_context.Metadata.ToString());
@@ -44,15 +48,15 @@ public class ServiceClassBuilder
         return new CSharpElement[]
         {
             cls,
-            new MessageClassBuilder(_context.Request).Build(null),
-            new MessageClassBuilder(_context.Response).Build(null)
+            new MessageClassBuilder(_context.Request).Build(null, isInternal),
+            new MessageClassBuilder(_context.Response).Build(null, isInternal)
         };
     }
-    public CSharpElement Build(string path)
+    public CSharpElement Build(string path, bool isInternal)
     {
         var ns = new CSharpNamespace(_context.Request.Namespace);
 
-        foreach (var item in Build())
+        foreach (var item in Build(isInternal))
         {
             ns.Members.Add(item);
         }
@@ -65,9 +69,9 @@ public class ServiceClassBuilder
         return file;
     }
 
-    public void Build(CSharpNamespace ns)
+    public void Build(CSharpNamespace ns, bool isInternal)
     {
-        foreach (var item in Build())
+        foreach (var item in Build(isInternal))
         {
             ns.Members.Add(item);
         }

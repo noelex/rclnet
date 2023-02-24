@@ -1,4 +1,5 @@
-﻿using Rcl.Parameters;
+﻿using Rcl.Logging;
+using Rcl.Parameters;
 using Rcl.Qos;
 using Rosidl.Messages.Rosgraph;
 using System.Xml.Linq;
@@ -50,6 +51,8 @@ class ExternalTimeSource : IDisposable
                 self._overrideEnabled = self._node.Clock.Impl.IsRosTimeOverrideEnabled;
                 self._subscription = self._node.CreateNativeSubscription<Clock>("/clock", self._qos);
                 _ = self.UpdateClockAsync(self._subscription);
+
+                self._node.Context.DefaultLogger.LogInformation("use_sim_time is enabled.");
             }
             else
             {
@@ -59,6 +62,8 @@ class ExternalTimeSource : IDisposable
                     self._node.Clock.Impl.ToggleRosTimeOverride(false);
                     self._overrideEnabled = false;
                 }
+
+                self._node.Context.DefaultLogger.LogInformation("use_sim_time is disabled.");
             }
         }
 

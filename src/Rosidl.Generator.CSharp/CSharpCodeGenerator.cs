@@ -32,6 +32,8 @@ class ParseSpec
 
     public List<string> Excludes { get; } = new();
 
+    public bool IsInternal { get; } = false;
+
     public ParseSpec(string specFile)
     {
         if (!File.Exists(specFile))
@@ -49,6 +51,8 @@ class ParseSpec
             {
                 case "output":
                     OutputDirectory = parts[1]; break;
+                case "internal":
+                    IsInternal = true; break;
                 case "namespace":
                     DefaultRootNamespace = parts[1]; break;
                 case "from-ament-index":
@@ -147,7 +151,7 @@ public class CSharpCodeGenerator
                         Directory.CreateDirectory(dir);
                     var ctx = new ActionBuildContext(action, opts);
                     code = new ActionClassBuilder(ctx)
-                        .Build($"{msg.Name}.cs");
+                        .Build($"{msg.Name}.cs", spec.IsInternal);
                 }
                 else if (metadata is ServiceMetadata service)
                 {
@@ -156,7 +160,7 @@ public class CSharpCodeGenerator
                         Directory.CreateDirectory(dir);
                     var ctx = new ServiceBuildContext(service, opts);
                     code = new ServiceClassBuilder(ctx)
-                        .Build($"{msg.Name}.cs");
+                        .Build($"{msg.Name}.cs", spec.IsInternal);
                 }
                 else
                 {
@@ -165,7 +169,7 @@ public class CSharpCodeGenerator
                         Directory.CreateDirectory(dir);
                     var ctx = new MessageBuildContext((MessageMetadata)metadata, opts);
                     code = new MessageClassBuilder(ctx)
-                        .Build($"{msg.Name}.cs");
+                        .Build($"{msg.Name}.cs", spec.IsInternal);
                 }
                 var file = (CSharpGeneratedFile)code;
 

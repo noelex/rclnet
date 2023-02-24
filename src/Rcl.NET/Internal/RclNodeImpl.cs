@@ -22,7 +22,7 @@ partial class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
 {
     private readonly RosGraph _graph;
     private readonly ExternalTimeSource _timeSource;
-
+    private readonly ParameterProvider _parameters;
     private readonly CancellationTokenSource _cts = new();
 
     public unsafe RclNodeImpl(
@@ -46,11 +46,11 @@ partial class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
             new(rcl_node_get_graph_guard_condition(Handle.Object)));
         _ = GraphBuilder(graphSignal, _cts.Token);
 
-        Parameters = new ParameterProvider(this, new());
+        _parameters = new ParameterProvider(this, new());
         _timeSource = new ExternalTimeSource(this, Options.ClockQoS);
     }
 
-    public IParameterProvider Parameters { get; }
+    public IParameterProvider Parameters => _parameters;
 
     public RclClock Clock { get; }
 
@@ -116,6 +116,7 @@ partial class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
 
     public override void Dispose()
     {
+        _parameters.Dispose();
         _timeSource.Dispose();
         _cts.Cancel();
         _cts.Dispose();

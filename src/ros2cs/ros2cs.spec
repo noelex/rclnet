@@ -2,6 +2,9 @@
 # A path relative to this file or an absolute path can be used.
 output ./
 
+# Generate classes with internal visibility rather than public.
+# internal
+
 # Set the default root namespace.
 namespace Rosidl.Messages
 

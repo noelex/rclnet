@@ -49,6 +49,7 @@ unsafe class ReusableTimer:IDisposable
     {
         if (!_registration.IsEmpty)
         {
+            _registration.Dispose();
             _registration = WaitHandleRegistration.Empty;
             _handle!.Dispose();
 

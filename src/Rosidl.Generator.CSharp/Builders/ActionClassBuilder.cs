@@ -17,9 +17,14 @@ public class ActionClassBuilder
         _context = context;
     }
 
-    public CSharpElement Build(string path)
+    public CSharpElement Build(string path, bool isInternal)
     {
         var cls = new CSharpClass(_context.ClassName);
+
+        if (isInternal)
+        {
+            cls.Visibility = CSharpVisibility.Internal;
+        }
 
         cls.AddTypeSupportAttribute(_context.Metadata.ToString());
         cls.AddComments(_context.Metadata);
@@ -45,9 +50,9 @@ public class ActionClassBuilder
         var ns = new CSharpNamespace(_context.Goal.Namespace);
 
         ns.Members.Add(cls);
-        ns.Members.Add(new MessageClassBuilder(_context.Goal).Build(null));
-        ns.Members.Add(new MessageClassBuilder(_context.Result).Build(null));
-        ns.Members.Add(new MessageClassBuilder(_context.Feedback).Build(null));
+        ns.Members.Add(new MessageClassBuilder(_context.Goal).Build(null, isInternal));
+        ns.Members.Add(new MessageClassBuilder(_context.Result).Build(null, isInternal));
+        ns.Members.Add(new MessageClassBuilder(_context.Feedback).Build(null, isInternal));
 
         // The following types will not be used by application codes.
         // Rcl.NET access these types using message introspection,

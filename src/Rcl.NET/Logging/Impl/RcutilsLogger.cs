@@ -57,12 +57,12 @@ internal class RcutilsLogger : IRclLogger
 
     public string Name => _name;
 
-    public void Log(LogSeverity severity, string message,
+    public void Log(LogSeverity severity, string? message,
         [CallerFilePath] string file = "", [CallerMemberName] string functionName = "", [CallerLineNumber] int lineNumber = 0)
     {
         var entry = ObjectPool.Rent<LogEntry>();
         entry.Severity = severity;
-        entry.Message = message;
+        entry.Message = message ?? "";
         entry.FilePath = file;
         entry.LineNumber = lineNumber;
         entry.Category = _name;
