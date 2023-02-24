@@ -6,7 +6,4 @@ using System.Threading.Tasks;
 
 namespace Rcl.Parameters;
 
-public record struct Parameter(ParameterDescriptor Descriptor, Variant Value)
-{
-    public static readonly Parameter Empty = new();
-}
+public record struct ParameterChangingInfo(ParameterDescriptor Descriptor, Variant OldValue, Variant NewValue);

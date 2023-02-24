@@ -2,11 +2,20 @@
 
 namespace Rcl;
 
+public enum VersionRequirement
+{
+    Exact,
+    SinceInclusive,
+    UntilExclusive
+}
+
 /// <summary>
 /// Helper class for accessing ROS 2 environment information.
 /// </summary>
 public unsafe static class RosEnvironment
 {
+    private static readonly string[] SupportedDistributions = new[] { Foxy, Humble };
+
     /// <summary>
     /// ROS 2 Foxy Fitzroy.
     /// </summary>
@@ -45,5 +54,36 @@ public unsafe static class RosEnvironment
     internal static void ThrowUnsupportedDistribution()
     {
         throw new NotSupportedException($"ROS distribution '{Distribution}' is not supported.");
+    }
+
+    internal static bool IsSupported(string targetDistro, VersionRequirement requirement = VersionRequirement.SinceInclusive)
+    {
+        var v = Array.IndexOf(SupportedDistributions, targetDistro);
+        if (v < 0)
+        {
+            return false;
+        }
+
+        var t = Array.IndexOf(SupportedDistributions, targetDistro);
+        if (t < 0)
+        {
+            throw new ArgumentException("Specified target distribution is not supported.", nameof(targetDistro));
+        }
+
+        return requirement switch
+        {
+            VersionRequirement.SinceInclusive => v >= t,
+            VersionRequirement.UntilExclusive => v < t,
+            VersionRequirement.Exact => v == t,
+            _ => false,
+        };
+    }
+
+    internal static void Require(string targetDistro, VersionRequirement rule = VersionRequirement.SinceInclusive)
+    {
+        if (!IsSupported(targetDistro, rule))
+        {
+            ThrowUnsupportedDistribution();
+        }
     }
 }

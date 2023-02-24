@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Rcl.Parameters;
 
-namespace Rcl.Parameters;
+public delegate ValidationResult OnParameterChangingDelegate(ReadOnlySpan<ParameterChangingInfo> parameters, object? state);
 
 public interface IParameterProvider
 {
@@ -16,19 +12,31 @@ public interface IParameterProvider
 
     Variant Declare(ParameterDescriptor descriptor, bool ignoreOverride = false);
 
-    Parameter Get(string name);
+    Variant GetOrDeclare(string name, Variant defaultValue, bool ignoreOverride = false);
 
-    bool TryGet(string name, out Parameter parameter);
+    Variant GetOrDeclare(string name, ValueKind type, bool ignoreOverride = false);
 
-    void Set(Parameter parameter);
+    Variant Get(string name);
 
-    Variant GetValue(string name);
-
-    bool TryGetValue(string name, out Variant variant);
+    bool TryGet(string name, out Variant variant);
 
     void Set(string name, Variant value);
+
+    void Set(IDictionary<string, Variant> parameters);
+
+    void SetAtomically(IDictionary<string, Variant> parameters);
+
+    Variant[] Get(params string[] names);
+
+    IDictionary<string, Variant> GetByPrefix(string prefix);
+
+    ParameterDescriptor Describe(string name);
+
+    ParameterDescriptor[] Describe(params string[] names);
 
     void Undeclare(string name);
 
     bool IsDeclared(string name);
+
+    IDisposable RegisterParameterChangingCallback(OnParameterChangingDelegate callback, object? state = null);
 }

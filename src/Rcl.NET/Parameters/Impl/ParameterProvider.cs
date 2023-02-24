@@ -1,13 +1,22 @@
-﻿using Rcl.Interop;
+﻿using Microsoft.Toolkit.HighPerformance.Buffers;
+using Rcl.Interop;
 using Rcl.SafeHandles;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Xml.Linq;
 
 namespace Rcl.Parameters.Impl;
 
 internal class ParameterProvider : IParameterProvider
 {
+    [ThreadStatic]
+    private static bool _recursionFlag;
+
     private SpinLock _lock;
     private readonly ParameterDictionary _overrides = new();
-    private readonly Dictionary<string, Parameter> _parameters = new();
+    private readonly ConcurrentDictionary<string, ParameterStore> _parameters = new();
+
+    private readonly List<ParameterChangingCallback> _onParameterChangingCallbacks = new();
 
     internal unsafe ParameterProvider(RclNodeImpl node, ParameterDictionary paramOverrides)
     {
@@ -54,66 +63,84 @@ internal class ParameterProvider : IParameterProvider
         };
     }
 
-    private void Validate(ParameterDescriptor descriptor, Variant value, bool verifyReadOnly)
+    public IDisposable RegisterParameterChangingCallback(OnParameterChangingDelegate callback, object? state = null)
     {
-        if (verifyReadOnly && descriptor.ReadOnly)
+        using (ScopedLock.Lock(ref _lock))
         {
-            throw new RclException($"Parameter is read-only.");
-        }
-
-        if (descriptor.Type != value.Kind && !descriptor.DynamicTyping)
-        {
-            throw new RclException($"Parameter of type '{descriptor.Type}' " +
-                $"cannot be assigned with value of type '{value.Kind}'.");
-        }
-
-        if (value.Kind == ValueKind.Integer && descriptor.IntegerRange != null)
-        {
-            if (!descriptor.IntegerRange.IsInRange((long)value))
-            {
-                throw new RclException($"Parameter value is out of range.");
-            }
-        }
-
-        if (value.Kind == ValueKind.Double && descriptor.FloatingPointRange != null)
-        {
-            if (!descriptor.FloatingPointRange.IsInRange((double)value))
-            {
-                throw new RclException($"Parameter value is out of range.");
-            }
+            var cb = new ParameterChangingCallback(this, callback, state);
+            _onParameterChangingCallbacks.Add(cb);
+            return cb;
         }
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="name"></param>
-    /// <param name="descriptor"></param>
-    /// <returns></returns>
-    public Variant Declare(ParameterDescriptor descriptor, Variant defaultValue, bool ignoreOverride = false)
+    private void UnregisterParameterChangingCallback(ParameterChangingCallback cb)
     {
-        if (!descriptor.DynamicTyping)
-        {
-            if (descriptor.Type == ValueKind.Unknown)
-            {
-                throw new RclException($"Cannot declare parameter of specific type '{descriptor.Type}' when dynamic typing is enabled.");
-            }
-        }
-
-        var value = !ignoreOverride && _overrides.TryGetValue(descriptor.Name, out var v) ? v : defaultValue;
-        Validate(descriptor, value, false);
-
         using (ScopedLock.Lock(ref _lock))
         {
-            var p = new Parameter(descriptor, value);
-            if (!_parameters.TryAdd(descriptor.Name, p))
-            {
-                throw new RclException($"Parameter '{descriptor.Name}' is already declared.");
-            }
-
-            return value;
+            _onParameterChangingCallbacks.Remove(cb);
         }
+    }
+
+    private ValidationResult NotifyParameterChanging(ReadOnlySpan<ParameterChangingInfo> parameters)
+    {
+        SpanOwner<ParameterChangingCallback> callbacksSnapshot;
+        using (ScopedLock.Lock(ref _lock))
+        {
+            callbacksSnapshot = SpanOwner<ParameterChangingCallback>.Allocate(_onParameterChangingCallbacks.Count);
+            for (var i = 0; i < _onParameterChangingCallbacks.Count; i++)
+            {
+                callbacksSnapshot.Span[i] = _onParameterChangingCallbacks[i];
+            }
+        }
+
+        // Prevent callbacks from declaring / setting parameters.
+        using var gurad = new RecursionGuard(ref _recursionFlag);
+        var result = ValidationResult.Success();
+        foreach (var cb in callbacksSnapshot.Span)
+        {
+            result = cb.Callback(parameters, cb.State);
+            if (!result.IsSuccessful)
+            {
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    private ValidationResult DeclareCore(ParameterDescriptor descriptor, Variant defaultValue, bool ignoreOverride, out Variant value)
+    {
+        value = !ignoreOverride && _overrides.TryGetValue(descriptor.Name, out var v) ? v : defaultValue;
+        var ps = new ParameterStore(descriptor);
+
+        var result = ps.Initialize(value);
+        if (!result.IsSuccessful)
+        {
+            return result;
+        }
+
+        using var info = SpanOwner<ParameterChangingInfo>.Allocate(1);
+        info.Span[0] = new(ps.Descriptor, default, value);
+        result = NotifyParameterChanging(info.Span);
+        if (!result.IsSuccessful)
+        {
+            return result;
+        }
+
+        if (!_parameters.TryAdd(descriptor.Name, ps))
+        {
+            result = ValidationResult.Failure($"Parameter '{descriptor.Name}' is already declared.");
+        }
+
+        return result;
+    }
+
+    public Variant Declare(ParameterDescriptor descriptor, Variant defaultValue, bool ignoreOverride = false)
+    {
+        var result = DeclareCore(descriptor, defaultValue, ignoreOverride, out var value);
+        EnsureSuccessful(result);
+
+        return value;
     }
 
     public Variant Declare(string name, Variant defaultValue, bool ignoreOverride = false)
@@ -125,129 +152,211 @@ internal class ParameterProvider : IParameterProvider
     public Variant Declare(ParameterDescriptor descriptor, bool ignoreOverride = false)
         => Declare(descriptor, GetDefaultValue(descriptor.Type), ignoreOverride);
 
-    public Parameter Get(string name)
-    {
-        using (ScopedLock.Lock(ref _lock))
-        {
-            if (_parameters.TryGetValue(name, out var p))
-            {
-                if (p.Value.Kind != ValueKind.Unknown || p.Descriptor.DynamicTyping)
-                {
-                    return p;
-                }
-                else
-                {
-                    throw new RclException($"Parameter '{name}' is not initialized yet.");
-                }
-            }
-
-            throw new RclException($"Parameter '{name}' is not declared yet.");
-        }
-    }
-
-    public bool TryGet(string name, out Parameter parameter)
-    {
-        using (ScopedLock.Lock(ref _lock))
-        {
-            parameter = Parameter.Empty;
-            if (_parameters.TryGetValue(name, out var p))
-            {
-                if (p.Value.Kind != ValueKind.Unknown || p.Descriptor.DynamicTyping)
-                {
-                    parameter = p;
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-
-            return false;
-        }
-    }
-
-    public void Set(Parameter parameter)
-    {
-        using (ScopedLock.Lock(ref _lock))
-        {
-            if (!_parameters.TryGetValue(parameter.Descriptor.Name, out var oldValue))
-            {
-                throw new RclException($"Parameter '{parameter.Descriptor.Name}' is not declared yet.");
-            }
-
-            if (oldValue.Descriptor != parameter.Descriptor)
-            {
-                throw new RclException("Trying to update parameter with a differnet descriptor.");
-            }
-
-            Validate(parameter.Descriptor, parameter.Value, true);
-            _parameters[parameter.Descriptor.Name] = parameter;
-        }
-    }
-
     public void Undeclare(string name)
     {
-        using (ScopedLock.Lock(ref _lock))
-        {
-            if (!_parameters.TryGetValue(name, out var p))
-            {
-                throw new RclException($"Parameter '{name}' is not declared yet.");
-            }
-
-            if (p.Descriptor.ReadOnly)
-            {
-                throw new RclException($"Parameter '{name}' is read-only.");
-            }
-
-            if (!p.Descriptor.DynamicTyping)
-            {
-                throw new RclException($"Cannot undeclare statically typed parameter '{name}'.");
-            }
-
-            _parameters.Remove(name, out _);
-        }
+        // Just checking whether the parameter is declared.
+        GetStore(name);
+        _parameters.Remove(name, out _);
     }
 
     public bool IsDeclared(string name)
     {
-        using(ScopedLock.Lock(ref _lock))
-        {
-            return _parameters.ContainsKey(name);
-        }
+        return _parameters.ContainsKey(name);
     }
 
-    public Variant GetValue(string name)
-        => Get(name).Value;
+    public Variant Get(string name)
+        => GetStore(name).Value;
 
-    public bool TryGetValue(string name, out Variant variant)
+    public bool TryGet(string name, out Variant value)
     {
-        if (TryGet(name, out var p))
+        if (_parameters.TryGetValue(name, out var ps))
         {
-            variant = p.Value;
+            value = ps.Value;
             return true;
         }
 
-        variant = new();
+        value = default;
         return false;
     }
 
     public void Set(string name, Variant value)
     {
-        using (ScopedLock.Lock(ref _lock))
+        var result = SetAndNotify(name, value);
+        EnsureSuccessful(result);
+    }
+
+    public Variant GetOrDeclare(string name, Variant defaultValue, bool ignoreOverride = false)
+    {
+        if (TryGet(name, out var val))
         {
-            if (!_parameters.TryGetValue(name, out var oldValue))
+            return val;
+        }
+
+        return Declare(name, defaultValue, ignoreOverride);
+    }
+
+    public Variant GetOrDeclare(string name, ValueKind type, bool ignoreOverride = false)
+    {
+        if (TryGet(name, out var val))
+        {
+            return val;
+        }
+
+        return Declare(name, type, ignoreOverride);
+    }
+
+    public void Set(IDictionary<string, Variant> parameters)
+    {
+        foreach (var (k, v) in parameters)
+        {
+            Set(k, v);
+        }
+    }
+
+    public void SetAtomically(IDictionary<string, Variant> parameters)
+    {
+        EnsureSuccessful(SetAndNotify(parameters));
+    }
+
+    private ValidationResult SetAndNotify(IDictionary<string, Variant> parameters)
+    {
+        ValidationResult result;
+        var temp = new Dictionary<string, ParameterStore>();
+        using var info = SpanOwner<ParameterChangingInfo>.Allocate(parameters.Count);
+
+        var i = 0;
+
+        foreach (var (k, v) in parameters)
+        {
+            result = TryGetStore(k, out var ps);
+            if (!result.IsSuccessful)
             {
-                throw new RclException($"Parameter '{name}' is not declared yet.");
+                return result;
             }
 
-            if (oldValue.Descriptor.Type != value.Kind && !oldValue.Descriptor.DynamicTyping)
+            result = ps.Validate(v);
+            if (!result.IsSuccessful)
             {
-                throw new RclException("Trying to update parameter with a differnet type.");
+                return result;
             }
 
-            Validate(oldValue.Descriptor, value, true);
-            _parameters[oldValue.Descriptor.Name] = new(oldValue.Descriptor, value);
+            info.Span[i++] = new(ps.Descriptor, ps.Value, v);
+            temp[k] = ps;
+        }
+
+        result = NotifyParameterChanging(info.Span);
+        if (!result.IsSuccessful)
+        {
+            return result;
+        }
+
+        foreach (var (k, v) in parameters)
+        {
+            temp[k].UnsafeSet(v);
+        }
+
+        return result;
+    }
+
+    private ValidationResult SetAndNotify(string name, Variant value)
+    {
+        var result = TryGetStore(name, out var ps);
+        if (!result.IsSuccessful)
+        {
+            return result;
+        }
+
+        result = ps.Validate(value);
+        if (!result.IsSuccessful)
+        {
+            return result;
+        }
+
+        using var info = SpanOwner<ParameterChangingInfo>.Allocate(1);
+        info.Span[0] = new(ps.Descriptor, ps.Value, value);
+        result = NotifyParameterChanging(info.Span);
+        if (!result.IsSuccessful)
+        {
+            return result;
+        }
+
+        ps.UnsafeSet(value);
+
+        return result;
+    }
+
+    public Variant[] Get(params string[] names)
+    {
+        var result = new Variant[names.Length];
+        for (var i = 0; i < result.Length; i++)
+        {
+            result[i] = Get(names[i]);
+        }
+
+        return result;
+    }
+
+    public IDictionary<string, Variant> GetByPrefix(string prefix)
+    {
+        prefix = prefix == "" ? prefix : prefix + ".";
+        var result = new Dictionary<string, Variant>();
+        foreach (var (k, v) in _parameters)
+        {
+            if (k.StartsWith(prefix))
+            {
+                result[k.Substring(prefix.Length)] = v.Value;
+            }
+        }
+
+        return result;
+    }
+
+    public ParameterDescriptor Describe(string name)
+    {
+        return GetStore(name).Descriptor;
+    }
+
+    public ParameterDescriptor[] Describe(params string[] names)
+    {
+        var result = new ParameterDescriptor[names.Length];
+        for (var i = 0; i < result.Length; i++)
+        {
+            result[i] = Describe(names[i]);
+        }
+
+        return result;
+    }
+
+    private ParameterStore GetStore(string name)
+    {
+        var result = TryGetStore(name, out var p);
+        EnsureSuccessful(result);
+        return p;
+    }
+
+    private ValidationResult TryGetStore(string name, out ParameterStore ps)
+    {
+        if (!_parameters.TryGetValue(name, out ps!))
+        {
+            return ValidationResult.Failure($"Parameter '{name}' is not declared.");
+        }
+
+        return ValidationResult.Success();
+    }
+
+    private static void EnsureSuccessful(ValidationResult result)
+    {
+        if (!result.IsSuccessful)
+        {
+            throw new RclException(result.Message);
+        }
+    }
+
+    private record ParameterChangingCallback(ParameterProvider Provider, OnParameterChangingDelegate Callback, object? State) : IDisposable
+    {
+        public void Dispose()
+        {
+            Provider.UnregisterParameterChangingCallback(this);
         }
     }
 }

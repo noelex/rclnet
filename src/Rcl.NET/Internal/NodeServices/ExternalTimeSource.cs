@@ -1,6 +1,7 @@
 ﻿using Rcl.Parameters;
 using Rcl.Qos;
 using Rosidl.Messages.Rosgraph;
+using System.Xml.Linq;
 
 namespace Rcl.Internal.NodeServices;
 
@@ -9,36 +10,59 @@ class ExternalTimeSource : IDisposable
     private const string UseSimTime = "use_sim_time";
 
     private readonly IRclNode _node;
-    private readonly IRclNativeSubscription? _subscription;
+    private readonly QosProfile _qos;
+    private readonly IDisposable _reg;
 
     private bool _overrideEnabled;
+    private IRclNativeSubscription? _subscription;
 
     public ExternalTimeSource(IRclNode node, QosProfile clockQoS)
     {
         _node = node;
+        _qos = clockQoS;
 
-        if (!node.Parameters.TryGetValue(UseSimTime, out var useSimTime))
-        {
-            useSimTime = node.Parameters.Declare(UseSimTime, false);
-        }
+        _reg = node.Parameters.RegisterParameterChangingCallback(OnParameterChanging, this);
+        node.Parameters.Declare(UseSimTime, false);
+    }
 
-        if (useSimTime.Kind != ValueKind.Bool)
+    private static ValidationResult OnParameterChanging(ReadOnlySpan<ParameterChangingInfo> info, object? state)
+    {
+        var self = (ExternalTimeSource)state!;
+        foreach (var (descriptor, oldValue, newValue) in info)
         {
-            throw new RclException($"Invalid type '{useSimTime.Kind}' for parameter '{UseSimTime}', should be 'bool'");
-        }
-
-        if (useSimTime.AsBoolean())
-        {
-            if (node.Clock.Type != RclClockType.Ros)
+            if (descriptor.Name != UseSimTime)
             {
-                throw new RclException("use_sim_time parameter can't be true while not using ROS clock.");
+                continue;
             }
 
-            _overrideEnabled = node.Clock.Impl.IsRosTimeOverrideEnabled;
+            if (oldValue == newValue)
+            {
+                continue;
+            }
 
-            _subscription = node.CreateNativeSubscription<Clock>("/clock", clockQoS);
-            _ = UpdateClockAsync(_subscription);
+            if (newValue.AsBoolean())
+            {
+                if(self._node.Clock.Type != RclClockType.Ros)
+                {
+                    return ValidationResult.Failure("use_sim_time parameter can't be true while not using ROS clock.");
+                }
+
+                self._overrideEnabled = self._node.Clock.Impl.IsRosTimeOverrideEnabled;
+                self._subscription = self._node.CreateNativeSubscription<Clock>("/clock", self._qos);
+                _ = self.UpdateClockAsync(self._subscription);
+            }
+            else
+            {
+                self._subscription?.Dispose();
+                if (self._overrideEnabled)
+                {
+                    self._node.Clock.Impl.ToggleRosTimeOverride(false);
+                    self._overrideEnabled = false;
+                }
+            }
         }
+
+        return ValidationResult.Success();
     }
 
     private async Task UpdateClockAsync(IRclNativeSubscription sub)
@@ -64,10 +88,14 @@ class ExternalTimeSource : IDisposable
 
     public void Dispose()
     {
+        _reg.Dispose();
+        _node.Parameters.Undeclare(UseSimTime);
+
         _subscription?.Dispose();
         if (_overrideEnabled)
         {
             _node.Clock.Impl.ToggleRosTimeOverride(false);
+            _overrideEnabled = false;
         }
     }
 }
