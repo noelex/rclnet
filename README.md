@@ -28,19 +28,13 @@ Supported ROS 2 Distributions:
 |  Guard Conditions        | ✅      | N/A                           | 
 |  Events                  | ❌      | N/A                           | 
 |  Lifecycles              | ❌      | N/A                           | 
-|  Parameter Services      | ⏳      | Only supports loading parameters from command-line and parameter files locally.                           | 
+|  Parameter Services      | ⚠️      | Supports loading parameters from command-line arguments and parameter files.<br/>Also exposes locally declared parameters via [Parameter API](https://design.ros2.org/articles/ros_parameters.html).<br/>Parameter client is not implemented.                          | 
 |  ROS Graph               | ✅      | Managed implementation.       | 
 |  Logging                 | ✅      | Configurable via `--ros-args`.| 
 |  Network Flow Endpoints  | ❌      | Available since galactic.     |
 |  Content Filtered Topics | ❌      | Available since humble.       |
 
-✅ Fully supported
-
-⚠️Partial support
-
-❌ Not supported
-
-⏳ In development
+✅ Supported⚠️ Partial support❌ Not supported⏳ In development
 
 ## Installing
 rclnet is being actively developed currently, thus no stable package available for now.
@@ -139,15 +133,11 @@ await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
    </PropertyGroup>
 
    <ItemGroup>
-      <!--Uncomment the following line if generated code depends on common messages included in Rosidl.CommonMessages-->
-      <!--<PackageReference Include="Rosidl.CommonMessages" Version="1.0.0-preview.5" />-->
-      <PackageReference Include="Rosidl.Runtime" Version="1.0.0-preview.5" />
+      <PackageReference Include="Rosidl.Runtime" Version="1.0.0-preview.6" />
    </ItemGroup>
    ```
 3. Add a `ros2cs.spec` file to the root of the project.
     See [here](https://github.com/noelex/rclnet/blob/main/src/ros2cs/ros2cs.spec) for detailed explanations on how to write a `ros2cs.spec` file.
-
-    You may want to exclude packages that are already included in [Rosidl.CommonMessages](https://github.com/noelex/rclnet/tree/main/src/Rosidl.CommonMessages/ros2cs.spec).
 4. Add a `_AssemblyAttributes.cs` to the root of the project with the following contents:
     ```csharp
     [assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]

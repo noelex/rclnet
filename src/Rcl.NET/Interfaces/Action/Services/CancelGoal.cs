@@ -28,7 +28,7 @@ namespace Rosidl.Messages.Action
     /// Service interface definition for <c>action_msgs/srv/CancelGoal</c>.
     /// </remarks>
     [global::Rosidl.Runtime.TypeSupportAttribute("action_msgs/srv/CancelGoal")]
-    public unsafe partial class CancelGoalService : global::Rosidl.Runtime.IService<CancelGoalServiceRequest, CancelGoalServiceResponse>
+    internal unsafe partial class CancelGoalService : global::Rosidl.Runtime.IService<CancelGoalServiceRequest, CancelGoalServiceResponse>
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -61,7 +61,7 @@ namespace Rosidl.Messages.Action
     /// Message interface definition for <c>action_msgs/srv/CancelGoal_Request</c>.
     /// </remarks>
     [global::Rosidl.Runtime.TypeSupportAttribute("action_msgs/srv/CancelGoal_Request")]
-    public unsafe partial class CancelGoalServiceRequest : global::Rosidl.Runtime.IServiceRequest
+    internal unsafe partial class CancelGoalServiceRequest : global::Rosidl.Runtime.IServiceRequest
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -634,7 +634,7 @@ namespace Rosidl.Messages.Action
     /// Message interface definition for <c>action_msgs/srv/CancelGoal_Response</c>.
     /// </remarks>
     [global::Rosidl.Runtime.TypeSupportAttribute("action_msgs/srv/CancelGoal_Response")]
-    public unsafe partial class CancelGoalServiceResponse : global::Rosidl.Runtime.IServiceResponse
+    internal unsafe partial class CancelGoalServiceResponse : global::Rosidl.Runtime.IServiceResponse
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]

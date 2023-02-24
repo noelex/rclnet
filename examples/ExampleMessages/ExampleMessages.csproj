@@ -8,7 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Rosidl.CommonMessages\Rosidl.CommonMessages.csproj" />
     <ProjectReference Include="..\..\src\Rosidl.Runtime\Rosidl.Runtime.csproj" />
   </ItemGroup>
 

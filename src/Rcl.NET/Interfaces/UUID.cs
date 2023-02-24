@@ -2,7 +2,7 @@
 
 namespace Rosidl.Messages.UniqueIdentifier;
 
-public partial class UUID
+partial class UUID
 {
     public unsafe partial struct Priv
     {

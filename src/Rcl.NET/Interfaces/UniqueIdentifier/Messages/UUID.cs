@@ -11,22 +11,23 @@ using System;
 
 #nullable enable
 
-namespace Rosidl.Messages.Rosgraph
+namespace Rosidl.Messages.UniqueIdentifier
 {
     /// <summary>
-    /// This message communicates the current time.
+    /// A universally unique identifier (UUID).
     /// 
-    /// For more information, see https://design.ros2.org/articles/clock_and_time.html.
+    /// http://en.wikipedia.org/wiki/Universally_unique_identifier
+    /// http://tools.ietf.org/html/rfc4122.html
     /// </summary>
     /// <remarks>
-    /// Message interface definition for <c>rosgraph_msgs/msg/Clock</c>.
+    /// Message interface definition for <c>unique_identifier_msgs/msg/UUID</c>.
     /// </remarks>
-    [global::Rosidl.Runtime.TypeSupportAttribute("rosgraph_msgs/msg/Clock")]
-    public unsafe partial class Clock : global::Rosidl.Runtime.IMessage
+    [global::Rosidl.Runtime.TypeSupportAttribute("unique_identifier_msgs/msg/UUID")]
+    internal unsafe partial class UUID : global::Rosidl.Runtime.IMessage
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public static string TypeSupportName => "rosgraph_msgs/msg/Clock";
+        public static string TypeSupportName => "unique_identifier_msgs/msg/UUID";
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -35,53 +36,65 @@ namespace Rosidl.Messages.Rosgraph
             return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
             
             [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-            [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__rosgraph_msgs__msg__Clock")]
+            [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__unique_identifier_msgs__msg__UUID")]
             static extern nint _PInvoke();
         }
         
         /// <summary>
-        /// Create a new instance of <see cref="Clock"/> with fields initialized to specified values.
+        /// Create a new instance of <see cref="UUID"/> with fields initialized to specified values.
         /// </summary>
-        /// <param name='clock'>
-        /// This message communicates the current time.
-        /// 
-        /// For more information, see https://design.ros2.org/articles/clock_and_time.html.
-        /// <para>(originally defined as: <c><![CDATA[builtin_interfaces/Time clock]]></c>)</para>
+        /// <param name='uuid'>
+        /// Originally defined as: <c><![CDATA[uint8[16] uuid]]></c>
         /// </param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public Clock(
-            global::Rosidl.Messages.Builtin.Time? @clock = null
+        public UUID(
+            byte[]? @uuid = null
         )
         {
-            Clock_ = @clock ?? new global::Rosidl.Messages.Builtin.Time();
+            if (@uuid != null)
+            {
+                Uuid = @uuid;
+            }
+            else
+            {
+                Uuid = new byte[16];
+            }
         }
         
         
         /// <summary>
-        /// Create a new instance of <see cref="Clock"/>, and copy its data from the specified <see cref="Priv"/> structure.
+        /// Create a new instance of <see cref="UUID"/>, and copy its data from the specified <see cref="Priv"/> structure.
         /// </summary>
         /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
         /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public Clock(in Priv priv, global::System.Text.Encoding textEncoding)
+        public UUID(in Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.Clock_ = new global::Rosidl.Messages.Builtin.Time(in priv.Clock_, textEncoding);
+            this.Uuid = priv.Uuid.ToArray();
         }
         
         
+        private byte[] __backingField__Uuid;
+        
         /// <summary>
-        /// This message communicates the current time.
-        /// 
-        /// For more information, see https://design.ros2.org/articles/clock_and_time.html.
+        /// Originally defined as: <c><![CDATA[uint8[16] uuid]]></c>
         /// </summary>
-        /// <remarks>
-        /// Originally defined as: <c><![CDATA[builtin_interfaces/Time clock]]></c>
-        /// </remarks>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public global::Rosidl.Messages.Builtin.Time Clock_ { get; set; }
+        public byte[] Uuid
+        {
+            get
+            {
+                return __backingField__Uuid;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__Uuid))]
+            set
+            {
+                __backingField__Uuid = value.Length == 16 ? value : throw new global::System.ArgumentException("Size of the array 'Uuid' must be 16.");
+            }
+        }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -94,21 +107,21 @@ namespace Rosidl.Messages.Rosgraph
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.Clock_.WriteTo(ref priv.Clock_, textEncoding);
+            this.Uuid.CopyTo(priv.Uuid);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
         {
-            return new Clock(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+            return new UUID(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public static nint UnsafeCreate()
         {
-            return new(global::Rosidl.Messages.Rosgraph.Clock.Priv.Create());
+            return new(global::Rosidl.Messages.UniqueIdentifier.UUID.Priv.Create());
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -119,25 +132,31 @@ namespace Rosidl.Messages.Rosgraph
         }
         
         /// <summary>
-        /// This message communicates the current time.
+        /// A universally unique identifier (UUID).
         /// 
-        /// For more information, see https://design.ros2.org/articles/clock_and_time.html.
+        /// http://en.wikipedia.org/wiki/Universally_unique_identifier
+        /// http://tools.ietf.org/html/rfc4122.html
         /// </summary>
         /// <remarks>
-        /// Blittable native structure for <c>rosgraph_msgs/msg/Clock</c>.
+        /// Blittable native structure for <c>unique_identifier_msgs/msg/UUID</c>.
         /// </remarks>
         [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
         public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
         {
+            private fixed byte __Uuid[16];
+            
             /// <summary>
-            /// This message communicates the current time.
-            /// 
-            /// For more information, see https://design.ros2.org/articles/clock_and_time.html.
+            /// Originally defined as: <c><![CDATA[uint8[16] uuid]]></c>
             /// </summary>
-            /// <remarks>
-            /// Originally defined as: <c><![CDATA[builtin_interfaces/Time clock]]></c>
-            /// </remarks>
-            public global::Rosidl.Messages.Builtin.Time.Priv Clock_;
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<byte> Uuid
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.UniqueIdentifier.UUID.Priv* __p = &this) return new (__p->__Uuid, 16);
+                }
+            }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -226,7 +245,11 @@ namespace Rosidl.Messages.Rosgraph
             public override int GetHashCode()
             {
                 var __hashCode = new global::System.HashCode();
-                __hashCode.Add(this.Clock_);
+                for (int i = 0; i < 16; i++)
+                {
+                    __hashCode.Add(this.Uuid[i]);
+                }
+            
                 return __hashCode.ToHashCode();
             }
             
@@ -251,7 +274,7 @@ namespace Rosidl.Messages.Rosgraph
                 return _PInvoke();
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_generator_c", EntryPoint = "rosgraph_msgs__msg__Clock__create")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_generator_c", EntryPoint = "unique_identifier_msgs__msg__UUID__create")]
                 static extern Priv* _PInvoke();
             }
             
@@ -262,7 +285,7 @@ namespace Rosidl.Messages.Rosgraph
                 _PInvoke(msg);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_generator_c", EntryPoint = "rosgraph_msgs__msg__Clock__destroy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_generator_c", EntryPoint = "unique_identifier_msgs__msg__UUID__destroy")]
                 static extern void _PInvoke(Priv* msg);
             }
             
@@ -276,7 +299,7 @@ namespace Rosidl.Messages.Rosgraph
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_generator_c", EntryPoint = "rosgraph_msgs__msg__Clock__init")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_generator_c", EntryPoint = "unique_identifier_msgs__msg__UUID__init")]
                 static extern bool _PInvoke(Priv* msg);
             }
             
@@ -290,7 +313,7 @@ namespace Rosidl.Messages.Rosgraph
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_generator_c", EntryPoint = "rosgraph_msgs__msg__Clock__fini")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_generator_c", EntryPoint = "unique_identifier_msgs__msg__UUID__fini")]
                 static extern void _PInvoke(Priv* msg);
             }
             
@@ -304,7 +327,7 @@ namespace Rosidl.Messages.Rosgraph
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_generator_c", EntryPoint = "rosgraph_msgs__msg__Clock__are_qual")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_generator_c", EntryPoint = "unique_identifier_msgs__msg__UUID__are_qual")]
                 static extern bool _PInvoke(Priv* lhs, Priv* rhs);
             }
             
@@ -315,7 +338,7 @@ namespace Rosidl.Messages.Rosgraph
                 return _PInvoke(input, output);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_generator_c", EntryPoint = "rosgraph_msgs__msg__Clock__copy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_generator_c", EntryPoint = "unique_identifier_msgs__msg__UUID__copy")]
                 static extern bool _PInvoke(Priv* input, Priv* output);
             }
             
@@ -326,18 +349,19 @@ namespace Rosidl.Messages.Rosgraph
             {
                 if (!ret)
                 {
-                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Rosgraph.Clock.Priv.{caller}'.");
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.UniqueIdentifier.UUID.Priv.{caller}'.");
                 }
             }
         }
         
         /// <summary>
-        /// This message communicates the current time.
+        /// A universally unique identifier (UUID).
         /// 
-        /// For more information, see https://design.ros2.org/articles/clock_and_time.html.
+        /// http://en.wikipedia.org/wiki/Universally_unique_identifier
+        /// http://tools.ietf.org/html/rfc4122.html
         /// </summary>
         /// <remarks>
-        /// Blittable native sequence structure for <c>rosgraph_msgs/msg/Clock</c>.
+        /// Blittable native sequence structure for <c>unique_identifier_msgs/msg/UUID</c>.
         /// </remarks>
         [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
         public partial struct PrivSequence : global::System.IEquatable<PrivSequence>, global::System.IDisposable
@@ -493,7 +517,7 @@ namespace Rosidl.Messages.Rosgraph
                 return _PInvoke();
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_generator_c", EntryPoint = "rosgraph_msgs__msg__Clock__Sequence__create")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_generator_c", EntryPoint = "unique_identifier_msgs__msg__UUID__Sequence__create")]
                 static extern PrivSequence* _PInvoke();
             }
             
@@ -504,7 +528,7 @@ namespace Rosidl.Messages.Rosgraph
                 _PInvoke(msg);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_generator_c", EntryPoint = "rosgraph_msgs__msg__Clock__Sequence__destroy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_generator_c", EntryPoint = "unique_identifier_msgs__msg__UUID__Sequence__destroy")]
                 static extern void _PInvoke(PrivSequence* msg);
             }
             
@@ -518,7 +542,7 @@ namespace Rosidl.Messages.Rosgraph
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_generator_c", EntryPoint = "rosgraph_msgs__msg__Clock__Sequence__init")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_generator_c", EntryPoint = "unique_identifier_msgs__msg__UUID__Sequence__init")]
                 static extern bool _PInvoke(PrivSequence* msg, nuint size);
             }
             
@@ -532,7 +556,7 @@ namespace Rosidl.Messages.Rosgraph
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_generator_c", EntryPoint = "rosgraph_msgs__msg__Clock__Sequence__fini")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_generator_c", EntryPoint = "unique_identifier_msgs__msg__UUID__Sequence__fini")]
                 static extern void _PInvoke(PrivSequence* msg);
             }
             
@@ -546,7 +570,7 @@ namespace Rosidl.Messages.Rosgraph
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_generator_c", EntryPoint = "rosgraph_msgs__msg__Clock__Sequence__are_qual")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_generator_c", EntryPoint = "unique_identifier_msgs__msg__UUID__Sequence__are_qual")]
                 static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
             }
             
@@ -557,7 +581,7 @@ namespace Rosidl.Messages.Rosgraph
                 return _PInvoke(input, output);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("rosgraph_msgs__rosidl_generator_c", EntryPoint = "rosgraph_msgs__msg__Clock__Sequence__copy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("unique_identifier_msgs__rosidl_generator_c", EntryPoint = "unique_identifier_msgs__msg__UUID__Sequence__copy")]
                 static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
             }
             
@@ -568,7 +592,7 @@ namespace Rosidl.Messages.Rosgraph
             {
                 if (!ret)
                 {
-                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Rosgraph.Clock.PrivSequence.{caller}'.");
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.UniqueIdentifier.UUID.PrivSequence.{caller}'.");
                 }
             }
         }

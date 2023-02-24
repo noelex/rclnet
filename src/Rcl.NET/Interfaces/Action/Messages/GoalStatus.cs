@@ -11,21 +11,23 @@ using System;
 
 #nullable enable
 
-namespace Rosidl.Messages.Builtin
+namespace Rosidl.Messages.Action
 {
     /// <summary>
-    /// Duration defines a period between two time points. It is comprised of a
-    /// seconds component and a nanoseconds component.
+    /// An action goal can be in one of these states after it is accepted by an action
+    /// server.
+    /// 
+    /// For more information, see http://design.ros2.org/articles/actions.html
     /// </summary>
     /// <remarks>
-    /// Message interface definition for <c>builtin_interfaces/msg/Duration</c>.
+    /// Message interface definition for <c>action_msgs/msg/GoalStatus</c>.
     /// </remarks>
-    [global::Rosidl.Runtime.TypeSupportAttribute("builtin_interfaces/msg/Duration")]
-    public unsafe partial class Duration : global::Rosidl.Runtime.IMessage
+    [global::Rosidl.Runtime.TypeSupportAttribute("action_msgs/msg/GoalStatus")]
+    internal unsafe partial class GoalStatus : global::Rosidl.Runtime.IMessage
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public static string TypeSupportName => "builtin_interfaces/msg/Duration";
+        public static string TypeSupportName => "action_msgs/msg/GoalStatus";
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -34,66 +36,123 @@ namespace Rosidl.Messages.Builtin
             return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
             
             [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-            [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__builtin_interfaces__msg__Duration")]
+            [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__action_msgs__msg__GoalStatus")]
             static extern nint _PInvoke();
         }
         
         /// <summary>
-        /// Create a new instance of <see cref="Duration"/> with fields initialized to specified values.
+        /// Create a new instance of <see cref="GoalStatus"/> with fields initialized to specified values.
         /// </summary>
-        /// <param name='sec'>
-        /// Seconds component, range is valid over any possible int32 value.
-        /// <para>(originally defined as: <c><![CDATA[int32 sec]]></c>)</para>
+        /// <param name='goalInfo'>
+        /// Goal info (contains ID and timestamp).
+        /// <para>(originally defined as: <c><![CDATA[action_msgs/GoalInfo goal_info]]></c>)</para>
         /// </param>
-        /// <param name='nanosec'>
-        /// Nanoseconds component in the range of [0, 10e9).
-        /// <para>(originally defined as: <c><![CDATA[uint32 nanosec]]></c>)</para>
+        /// <param name='status'>
+        /// Action goal state-machine status.
+        /// <para>(originally defined as: <c><![CDATA[int8 status]]></c>)</para>
         /// </param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public Duration(
-            int @sec = 0,
-            uint @nanosec = 0
+        public GoalStatus(
+            global::Rosidl.Messages.Action.GoalInfo? @goalInfo = null,
+            sbyte @status = 0
         )
         {
-            Sec = @sec;
-            Nanosec = @nanosec;
+            GoalInfo = @goalInfo ?? new global::Rosidl.Messages.Action.GoalInfo();
+            Status = @status;
         }
         
         
         /// <summary>
-        /// Create a new instance of <see cref="Duration"/>, and copy its data from the specified <see cref="Priv"/> structure.
+        /// Create a new instance of <see cref="GoalStatus"/>, and copy its data from the specified <see cref="Priv"/> structure.
         /// </summary>
         /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
         /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public Duration(in Priv priv, global::System.Text.Encoding textEncoding)
+        public GoalStatus(in Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.Sec = priv.Sec;
-            this.Nanosec = priv.Nanosec;
+            this.GoalInfo = new global::Rosidl.Messages.Action.GoalInfo(in priv.GoalInfo, textEncoding);
+            this.Status = priv.Status;
         }
         
         
         /// <summary>
-        /// Seconds component, range is valid over any possible int32 value.
+        /// Indicates status has not been properly set.
         /// </summary>
         /// <remarks>
-        /// Originally defined as: <c><![CDATA[int32 sec]]></c>
+        /// Originally defined as: <c><![CDATA[int8 STATUS_UNKNOWN = 0]]></c>
         /// </remarks>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public int Sec { get; set; }
+        public const sbyte STATUS_UNKNOWN = 0;
         
         /// <summary>
-        /// Nanoseconds component in the range of [0, 10e9).
+        /// The goal has been accepted and is awaiting execution.
         /// </summary>
         /// <remarks>
-        /// Originally defined as: <c><![CDATA[uint32 nanosec]]></c>
+        /// Originally defined as: <c><![CDATA[int8 STATUS_ACCEPTED = 1]]></c>
+        /// </remarks>
+        public const sbyte STATUS_ACCEPTED = 1;
+        
+        /// <summary>
+        /// The goal is currently being executed by the action server.
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[int8 STATUS_EXECUTING = 2]]></c>
+        /// </remarks>
+        public const sbyte STATUS_EXECUTING = 2;
+        
+        /// <summary>
+        /// The client has requested that the goal be canceled and the action server has
+        /// accepted the cancel request.
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[int8 STATUS_CANCELING = 3]]></c>
+        /// </remarks>
+        public const sbyte STATUS_CANCELING = 3;
+        
+        /// <summary>
+        /// The goal was achieved successfully by the action server.
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[int8 STATUS_SUCCEEDED = 4]]></c>
+        /// </remarks>
+        public const sbyte STATUS_SUCCEEDED = 4;
+        
+        /// <summary>
+        /// The goal was canceled after an external request from an action client.
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[int8 STATUS_CANCELED = 5]]></c>
+        /// </remarks>
+        public const sbyte STATUS_CANCELED = 5;
+        
+        /// <summary>
+        /// The goal was terminated by the action server without an external request.
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[int8 STATUS_ABORTED = 6]]></c>
+        /// </remarks>
+        public const sbyte STATUS_ABORTED = 6;
+        
+        /// <summary>
+        /// Goal info (contains ID and timestamp).
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[action_msgs/GoalInfo goal_info]]></c>
         /// </remarks>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public uint Nanosec { get; set; }
+        public global::Rosidl.Messages.Action.GoalInfo GoalInfo { get; set; }
+        
+        /// <summary>
+        /// Action goal state-machine status.
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[int8 status]]></c>
+        /// </remarks>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public sbyte Status { get; set; }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -106,22 +165,22 @@ namespace Rosidl.Messages.Builtin
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
-            priv.Sec = this.Sec;
-            priv.Nanosec = this.Nanosec;
+            this.GoalInfo.WriteTo(ref priv.GoalInfo, textEncoding);
+            priv.Status = this.Status;
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
         {
-            return new Duration(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+            return new GoalStatus(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public static nint UnsafeCreate()
         {
-            return new(global::Rosidl.Messages.Builtin.Duration.Priv.Create());
+            return new(global::Rosidl.Messages.Action.GoalStatus.Priv.Create());
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -132,30 +191,32 @@ namespace Rosidl.Messages.Builtin
         }
         
         /// <summary>
-        /// Duration defines a period between two time points. It is comprised of a
-        /// seconds component and a nanoseconds component.
+        /// An action goal can be in one of these states after it is accepted by an action
+        /// server.
+        /// 
+        /// For more information, see http://design.ros2.org/articles/actions.html
         /// </summary>
         /// <remarks>
-        /// Blittable native structure for <c>builtin_interfaces/msg/Duration</c>.
+        /// Blittable native structure for <c>action_msgs/msg/GoalStatus</c>.
         /// </remarks>
         [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
         public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
         {
             /// <summary>
-            /// Seconds component, range is valid over any possible int32 value.
+            /// Goal info (contains ID and timestamp).
             /// </summary>
             /// <remarks>
-            /// Originally defined as: <c><![CDATA[int32 sec]]></c>
+            /// Originally defined as: <c><![CDATA[action_msgs/GoalInfo goal_info]]></c>
             /// </remarks>
-            public int Sec;
+            public global::Rosidl.Messages.Action.GoalInfo.Priv GoalInfo;
             
             /// <summary>
-            /// Nanoseconds component in the range of [0, 10e9).
+            /// Action goal state-machine status.
             /// </summary>
             /// <remarks>
-            /// Originally defined as: <c><![CDATA[uint32 nanosec]]></c>
+            /// Originally defined as: <c><![CDATA[int8 status]]></c>
             /// </remarks>
-            public uint Nanosec;
+            public sbyte Status;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -244,8 +305,8 @@ namespace Rosidl.Messages.Builtin
             public override int GetHashCode()
             {
                 var __hashCode = new global::System.HashCode();
-                __hashCode.Add(this.Sec);
-                __hashCode.Add(this.Nanosec);
+                __hashCode.Add(this.GoalInfo);
+                __hashCode.Add(this.Status);
                 return __hashCode.ToHashCode();
             }
             
@@ -270,7 +331,7 @@ namespace Rosidl.Messages.Builtin
                 return _PInvoke();
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_generator_c", EntryPoint = "builtin_interfaces__msg__Duration__create")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__create")]
                 static extern Priv* _PInvoke();
             }
             
@@ -281,7 +342,7 @@ namespace Rosidl.Messages.Builtin
                 _PInvoke(msg);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_generator_c", EntryPoint = "builtin_interfaces__msg__Duration__destroy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__destroy")]
                 static extern void _PInvoke(Priv* msg);
             }
             
@@ -295,7 +356,7 @@ namespace Rosidl.Messages.Builtin
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_generator_c", EntryPoint = "builtin_interfaces__msg__Duration__init")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__init")]
                 static extern bool _PInvoke(Priv* msg);
             }
             
@@ -309,7 +370,7 @@ namespace Rosidl.Messages.Builtin
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_generator_c", EntryPoint = "builtin_interfaces__msg__Duration__fini")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__fini")]
                 static extern void _PInvoke(Priv* msg);
             }
             
@@ -323,7 +384,7 @@ namespace Rosidl.Messages.Builtin
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_generator_c", EntryPoint = "builtin_interfaces__msg__Duration__are_qual")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__are_qual")]
                 static extern bool _PInvoke(Priv* lhs, Priv* rhs);
             }
             
@@ -334,7 +395,7 @@ namespace Rosidl.Messages.Builtin
                 return _PInvoke(input, output);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_generator_c", EntryPoint = "builtin_interfaces__msg__Duration__copy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__copy")]
                 static extern bool _PInvoke(Priv* input, Priv* output);
             }
             
@@ -345,17 +406,19 @@ namespace Rosidl.Messages.Builtin
             {
                 if (!ret)
                 {
-                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Builtin.Duration.Priv.{caller}'.");
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Action.GoalStatus.Priv.{caller}'.");
                 }
             }
         }
         
         /// <summary>
-        /// Duration defines a period between two time points. It is comprised of a
-        /// seconds component and a nanoseconds component.
+        /// An action goal can be in one of these states after it is accepted by an action
+        /// server.
+        /// 
+        /// For more information, see http://design.ros2.org/articles/actions.html
         /// </summary>
         /// <remarks>
-        /// Blittable native sequence structure for <c>builtin_interfaces/msg/Duration</c>.
+        /// Blittable native sequence structure for <c>action_msgs/msg/GoalStatus</c>.
         /// </remarks>
         [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
         public partial struct PrivSequence : global::System.IEquatable<PrivSequence>, global::System.IDisposable
@@ -511,7 +574,7 @@ namespace Rosidl.Messages.Builtin
                 return _PInvoke();
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_generator_c", EntryPoint = "builtin_interfaces__msg__Duration__Sequence__create")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__Sequence__create")]
                 static extern PrivSequence* _PInvoke();
             }
             
@@ -522,7 +585,7 @@ namespace Rosidl.Messages.Builtin
                 _PInvoke(msg);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_generator_c", EntryPoint = "builtin_interfaces__msg__Duration__Sequence__destroy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__Sequence__destroy")]
                 static extern void _PInvoke(PrivSequence* msg);
             }
             
@@ -536,7 +599,7 @@ namespace Rosidl.Messages.Builtin
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_generator_c", EntryPoint = "builtin_interfaces__msg__Duration__Sequence__init")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__Sequence__init")]
                 static extern bool _PInvoke(PrivSequence* msg, nuint size);
             }
             
@@ -550,7 +613,7 @@ namespace Rosidl.Messages.Builtin
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_generator_c", EntryPoint = "builtin_interfaces__msg__Duration__Sequence__fini")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__Sequence__fini")]
                 static extern void _PInvoke(PrivSequence* msg);
             }
             
@@ -564,7 +627,7 @@ namespace Rosidl.Messages.Builtin
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_generator_c", EntryPoint = "builtin_interfaces__msg__Duration__Sequence__are_qual")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__Sequence__are_qual")]
                 static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
             }
             
@@ -575,7 +638,7 @@ namespace Rosidl.Messages.Builtin
                 return _PInvoke(input, output);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("builtin_interfaces__rosidl_generator_c", EntryPoint = "builtin_interfaces__msg__Duration__Sequence__copy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__Sequence__copy")]
                 static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
             }
             
@@ -586,7 +649,7 @@ namespace Rosidl.Messages.Builtin
             {
                 if (!ret)
                 {
-                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Builtin.Duration.PrivSequence.{caller}'.");
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Action.GoalStatus.PrivSequence.{caller}'.");
                 }
             }
         }

@@ -2,7 +2,7 @@
 
 namespace Rosidl.Messages.Builtin;
 
-public partial class Time
+partial class Time
 {
     public unsafe partial struct Priv
     {

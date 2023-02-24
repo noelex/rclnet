@@ -14,20 +14,17 @@ using System;
 namespace Rosidl.Messages.Action
 {
     /// <summary>
-    /// An action goal can be in one of these states after it is accepted by an action
-    /// server.
-    /// 
-    /// For more information, see http://design.ros2.org/articles/actions.html
+    /// An array of goal statuses.
     /// </summary>
     /// <remarks>
-    /// Message interface definition for <c>action_msgs/msg/GoalStatus</c>.
+    /// Message interface definition for <c>action_msgs/msg/GoalStatusArray</c>.
     /// </remarks>
-    [global::Rosidl.Runtime.TypeSupportAttribute("action_msgs/msg/GoalStatus")]
-    public unsafe partial class GoalStatus : global::Rosidl.Runtime.IMessage
+    [global::Rosidl.Runtime.TypeSupportAttribute("action_msgs/msg/GoalStatusArray")]
+    internal unsafe partial class GoalStatusArray : global::Rosidl.Runtime.IMessage
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public static string TypeSupportName => "action_msgs/msg/GoalStatus";
+        public static string TypeSupportName => "action_msgs/msg/GoalStatusArray";
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -36,123 +33,54 @@ namespace Rosidl.Messages.Action
             return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
             
             [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-            [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__action_msgs__msg__GoalStatus")]
+            [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__action_msgs__msg__GoalStatusArray")]
             static extern nint _PInvoke();
         }
         
         /// <summary>
-        /// Create a new instance of <see cref="GoalStatus"/> with fields initialized to specified values.
+        /// Create a new instance of <see cref="GoalStatusArray"/> with fields initialized to specified values.
         /// </summary>
-        /// <param name='goalInfo'>
-        /// Goal info (contains ID and timestamp).
-        /// <para>(originally defined as: <c><![CDATA[action_msgs/GoalInfo goal_info]]></c>)</para>
-        /// </param>
-        /// <param name='status'>
-        /// Action goal state-machine status.
-        /// <para>(originally defined as: <c><![CDATA[int8 status]]></c>)</para>
+        /// <param name='statusList'>
+        /// An array of goal statuses.
+        /// <para>(originally defined as: <c><![CDATA[action_msgs/GoalStatus[] status_list]]></c>)</para>
         /// </param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public GoalStatus(
-            global::Rosidl.Messages.Action.GoalInfo? @goalInfo = null,
-            sbyte @status = 0
+        public GoalStatusArray(
+            global::Rosidl.Messages.Action.GoalStatus[]? @statusList = null
         )
         {
-            GoalInfo = @goalInfo ?? new global::Rosidl.Messages.Action.GoalInfo();
-            Status = @status;
+            StatusList = @statusList ?? global::System.Array.Empty<global::Rosidl.Messages.Action.GoalStatus>();
         }
         
         
         /// <summary>
-        /// Create a new instance of <see cref="GoalStatus"/>, and copy its data from the specified <see cref="Priv"/> structure.
+        /// Create a new instance of <see cref="GoalStatusArray"/>, and copy its data from the specified <see cref="Priv"/> structure.
         /// </summary>
         /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
         /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public GoalStatus(in Priv priv, global::System.Text.Encoding textEncoding)
+        public GoalStatusArray(in Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.GoalInfo = new global::Rosidl.Messages.Action.GoalInfo(in priv.GoalInfo, textEncoding);
-            this.Status = priv.Status;
+            this.StatusList = new global::Rosidl.Messages.Action.GoalStatus[priv.StatusList.Size];
+            var StatusList_span = priv.StatusList.AsSpan();
+            for (int i = 0; i < this.StatusList.Length; i++)
+            {
+                this.StatusList[i] = new global::Rosidl.Messages.Action.GoalStatus(in StatusList_span[i], textEncoding);
+            }
         }
         
         
         /// <summary>
-        /// Indicates status has not been properly set.
+        /// An array of goal statuses.
         /// </summary>
         /// <remarks>
-        /// Originally defined as: <c><![CDATA[int8 STATUS_UNKNOWN = 0]]></c>
-        /// </remarks>
-        public const sbyte STATUS_UNKNOWN = 0;
-        
-        /// <summary>
-        /// The goal has been accepted and is awaiting execution.
-        /// </summary>
-        /// <remarks>
-        /// Originally defined as: <c><![CDATA[int8 STATUS_ACCEPTED = 1]]></c>
-        /// </remarks>
-        public const sbyte STATUS_ACCEPTED = 1;
-        
-        /// <summary>
-        /// The goal is currently being executed by the action server.
-        /// </summary>
-        /// <remarks>
-        /// Originally defined as: <c><![CDATA[int8 STATUS_EXECUTING = 2]]></c>
-        /// </remarks>
-        public const sbyte STATUS_EXECUTING = 2;
-        
-        /// <summary>
-        /// The client has requested that the goal be canceled and the action server has
-        /// accepted the cancel request.
-        /// </summary>
-        /// <remarks>
-        /// Originally defined as: <c><![CDATA[int8 STATUS_CANCELING = 3]]></c>
-        /// </remarks>
-        public const sbyte STATUS_CANCELING = 3;
-        
-        /// <summary>
-        /// The goal was achieved successfully by the action server.
-        /// </summary>
-        /// <remarks>
-        /// Originally defined as: <c><![CDATA[int8 STATUS_SUCCEEDED = 4]]></c>
-        /// </remarks>
-        public const sbyte STATUS_SUCCEEDED = 4;
-        
-        /// <summary>
-        /// The goal was canceled after an external request from an action client.
-        /// </summary>
-        /// <remarks>
-        /// Originally defined as: <c><![CDATA[int8 STATUS_CANCELED = 5]]></c>
-        /// </remarks>
-        public const sbyte STATUS_CANCELED = 5;
-        
-        /// <summary>
-        /// The goal was terminated by the action server without an external request.
-        /// </summary>
-        /// <remarks>
-        /// Originally defined as: <c><![CDATA[int8 STATUS_ABORTED = 6]]></c>
-        /// </remarks>
-        public const sbyte STATUS_ABORTED = 6;
-        
-        /// <summary>
-        /// Goal info (contains ID and timestamp).
-        /// </summary>
-        /// <remarks>
-        /// Originally defined as: <c><![CDATA[action_msgs/GoalInfo goal_info]]></c>
+        /// Originally defined as: <c><![CDATA[action_msgs/GoalStatus[] status_list]]></c>
         /// </remarks>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public global::Rosidl.Messages.Action.GoalInfo GoalInfo { get; set; }
-        
-        /// <summary>
-        /// Action goal state-machine status.
-        /// </summary>
-        /// <remarks>
-        /// Originally defined as: <c><![CDATA[int8 status]]></c>
-        /// </remarks>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public sbyte Status { get; set; }
+        public global::Rosidl.Messages.Action.GoalStatus[] StatusList { get; set; }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -165,22 +93,26 @@ namespace Rosidl.Messages.Action
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.GoalInfo.WriteTo(ref priv.GoalInfo, textEncoding);
-            priv.Status = this.Status;
+            priv.StatusList = new global::Rosidl.Messages.Action.GoalStatus.PrivSequence(this.StatusList.Length);
+            var StatusList_span = priv.StatusList.AsSpan();
+            for (int i = 0; i < this.StatusList.Length; i++)
+            {
+                this.StatusList[i].WriteTo(ref StatusList_span[i], textEncoding);
+            }
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
         {
-            return new GoalStatus(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+            return new GoalStatusArray(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public static nint UnsafeCreate()
         {
-            return new(global::Rosidl.Messages.Action.GoalStatus.Priv.Create());
+            return new(global::Rosidl.Messages.Action.GoalStatusArray.Priv.Create());
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -191,32 +123,21 @@ namespace Rosidl.Messages.Action
         }
         
         /// <summary>
-        /// An action goal can be in one of these states after it is accepted by an action
-        /// server.
-        /// 
-        /// For more information, see http://design.ros2.org/articles/actions.html
+        /// An array of goal statuses.
         /// </summary>
         /// <remarks>
-        /// Blittable native structure for <c>action_msgs/msg/GoalStatus</c>.
+        /// Blittable native structure for <c>action_msgs/msg/GoalStatusArray</c>.
         /// </remarks>
         [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
         public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
         {
             /// <summary>
-            /// Goal info (contains ID and timestamp).
+            /// An array of goal statuses.
             /// </summary>
             /// <remarks>
-            /// Originally defined as: <c><![CDATA[action_msgs/GoalInfo goal_info]]></c>
+            /// Originally defined as: <c><![CDATA[action_msgs/GoalStatus[] status_list]]></c>
             /// </remarks>
-            public global::Rosidl.Messages.Action.GoalInfo.Priv GoalInfo;
-            
-            /// <summary>
-            /// Action goal state-machine status.
-            /// </summary>
-            /// <remarks>
-            /// Originally defined as: <c><![CDATA[int8 status]]></c>
-            /// </remarks>
-            public sbyte Status;
+            public global::Rosidl.Messages.Action.GoalStatus.PrivSequence StatusList;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -305,8 +226,7 @@ namespace Rosidl.Messages.Action
             public override int GetHashCode()
             {
                 var __hashCode = new global::System.HashCode();
-                __hashCode.Add(this.GoalInfo);
-                __hashCode.Add(this.Status);
+                __hashCode.Add(this.StatusList);
                 return __hashCode.ToHashCode();
             }
             
@@ -331,7 +251,7 @@ namespace Rosidl.Messages.Action
                 return _PInvoke();
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__create")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatusArray__create")]
                 static extern Priv* _PInvoke();
             }
             
@@ -342,7 +262,7 @@ namespace Rosidl.Messages.Action
                 _PInvoke(msg);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__destroy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatusArray__destroy")]
                 static extern void _PInvoke(Priv* msg);
             }
             
@@ -356,7 +276,7 @@ namespace Rosidl.Messages.Action
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__init")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatusArray__init")]
                 static extern bool _PInvoke(Priv* msg);
             }
             
@@ -370,7 +290,7 @@ namespace Rosidl.Messages.Action
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__fini")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatusArray__fini")]
                 static extern void _PInvoke(Priv* msg);
             }
             
@@ -384,7 +304,7 @@ namespace Rosidl.Messages.Action
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__are_qual")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatusArray__are_qual")]
                 static extern bool _PInvoke(Priv* lhs, Priv* rhs);
             }
             
@@ -395,7 +315,7 @@ namespace Rosidl.Messages.Action
                 return _PInvoke(input, output);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__copy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatusArray__copy")]
                 static extern bool _PInvoke(Priv* input, Priv* output);
             }
             
@@ -406,19 +326,16 @@ namespace Rosidl.Messages.Action
             {
                 if (!ret)
                 {
-                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Action.GoalStatus.Priv.{caller}'.");
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Action.GoalStatusArray.Priv.{caller}'.");
                 }
             }
         }
         
         /// <summary>
-        /// An action goal can be in one of these states after it is accepted by an action
-        /// server.
-        /// 
-        /// For more information, see http://design.ros2.org/articles/actions.html
+        /// An array of goal statuses.
         /// </summary>
         /// <remarks>
-        /// Blittable native sequence structure for <c>action_msgs/msg/GoalStatus</c>.
+        /// Blittable native sequence structure for <c>action_msgs/msg/GoalStatusArray</c>.
         /// </remarks>
         [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
         public partial struct PrivSequence : global::System.IEquatable<PrivSequence>, global::System.IDisposable
@@ -574,7 +491,7 @@ namespace Rosidl.Messages.Action
                 return _PInvoke();
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__Sequence__create")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatusArray__Sequence__create")]
                 static extern PrivSequence* _PInvoke();
             }
             
@@ -585,7 +502,7 @@ namespace Rosidl.Messages.Action
                 _PInvoke(msg);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__Sequence__destroy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatusArray__Sequence__destroy")]
                 static extern void _PInvoke(PrivSequence* msg);
             }
             
@@ -599,7 +516,7 @@ namespace Rosidl.Messages.Action
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__Sequence__init")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatusArray__Sequence__init")]
                 static extern bool _PInvoke(PrivSequence* msg, nuint size);
             }
             
@@ -613,7 +530,7 @@ namespace Rosidl.Messages.Action
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__Sequence__fini")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatusArray__Sequence__fini")]
                 static extern void _PInvoke(PrivSequence* msg);
             }
             
@@ -627,7 +544,7 @@ namespace Rosidl.Messages.Action
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__Sequence__are_qual")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatusArray__Sequence__are_qual")]
                 static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
             }
             
@@ -638,7 +555,7 @@ namespace Rosidl.Messages.Action
                 return _PInvoke(input, output);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatus__Sequence__copy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("action_msgs__rosidl_generator_c", EntryPoint = "action_msgs__msg__GoalStatusArray__Sequence__copy")]
                 static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
             }
             
@@ -649,7 +566,7 @@ namespace Rosidl.Messages.Action
             {
                 if (!ret)
                 {
-                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Action.GoalStatus.PrivSequence.{caller}'.");
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Action.GoalStatusArray.PrivSequence.{caller}'.");
                 }
             }
         }

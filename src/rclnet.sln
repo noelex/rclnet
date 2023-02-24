@@ -11,8 +11,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rosidl.Runtime", "Rosidl.Ru
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rosidl.Runtime.SourceGeneration", "Rosidl.Runtime.SourceGeneration\Rosidl.Runtime.SourceGeneration.csproj", "{A3A84B20-C909-44FF-B598-AAD31876E7C9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rosidl.CommonMessages", "Rosidl.CommonMessages\Rosidl.CommonMessages.csproj", "{61778E1E-86DB-4EB2-AA2A-73DC1DED3011}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
