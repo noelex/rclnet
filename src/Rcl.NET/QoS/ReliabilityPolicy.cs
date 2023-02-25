@@ -1,5 +1,8 @@
 namespace Rcl.Qos;
 
+/// <summary>
+/// Reliability requirement of the service.
+/// </summary>
 public enum ReliabilityPolicy
 {
     /// <summary>

@@ -18,10 +18,8 @@ internal unsafe class IntrospectionNativeSubscription
         RclNodeImpl node,
         string topicName,
         TypeSupportHandle typeSupport,
-        QosProfile qos,
-        int queueSize,
-        BoundedChannelFullMode fullMode)
-        : base(node, topicName, typeSupport, qos, queueSize, fullMode)
+        SubscriptionOptions options)
+        : base(node, topicName, typeSupport, options)
     {
         _introspection = MessageIntrospection.Create(typeSupport);
     }

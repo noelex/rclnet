@@ -12,10 +12,8 @@ internal unsafe class NativeSubscription<T> :
     public NativeSubscription(
         RclNodeImpl node,
         string topicName,
-        QosProfile qos,
-        int queueSize,
-        BoundedChannelFullMode fullMode)
-        : base(node, topicName, T.GetTypeSupportHandle(), qos, queueSize, fullMode)
+        SubscriptionOptions options)
+        : base(node, topicName, T.GetTypeSupportHandle(), options)
     {
     }
 

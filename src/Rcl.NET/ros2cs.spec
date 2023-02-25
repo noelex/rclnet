@@ -1,4 +1,4 @@
-# rcl_interfaces/msg/ParameterDescriptor is changed since humble.
+# rcl_interfaces/msg/ParameterDescriptor has been changed since humble.
 # ros2cs this file on humble and manually make a backward
 # compatible copy of ParameterDescriptor and friends is required.
 

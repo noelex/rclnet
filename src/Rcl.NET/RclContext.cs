@@ -212,14 +212,14 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
         var timers = new List<SafeTimerHandle>();
         var clients = new List<SafeClientHandle>();
         var services = new List<SafeServiceHandle>();
-        var events = new List<SafeGuardConditionHandle>();
+        var events = new List<RclObjectHandle>();
 
         List<size_t> subscriptionIndices = new(),
         guardConditionIndices = new(),
         timerIndices = new(),
         clientsIndices = new(),
         servicesIndices = new(),
-        eventsIndices = new();
+        eventIndices = new();
 
         while (Volatile.Read(ref _disposed) == 0)
         {
@@ -252,7 +252,12 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                             case SafeClientHandle client:
                                 clients.Add(client);
                                 break;
-                                // ...
+                            case SafePublisherEventHandle client:
+                                events.Add(client);
+                                break;
+                            case SafeSubscriptionEventHandle client:
+                                events.Add(client);
+                                break;
                         }
                     }
                 }
@@ -297,7 +302,8 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                 }
                 foreach (var @event in events)
                 {
-                    // ...
+                    rcl_wait_set_add_event(&ws, (rcl_event_t*)@event.DangerousGetHandle().ToPointer(), &idx);
+                    eventIndices.Add(idx);
                 }
 
                 // TODO: Possible race condition
@@ -368,7 +374,16 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                     }
                 }
 
-                // Check for events here.
+                // Check for events.
+                for (var i = 0; i < eventIndices.Count; i++)
+                {
+                    idx = eventIndices[i];
+                    var target = events[i].DangerousGetHandle();
+                    if (target == new nint(ws.events[idx]))
+                    {
+                        completedHandles.Add(target);
+                    }
+                }
 
                 // Call register callbacks for triggered signals.
                 foreach (var wh in waitHandles)
@@ -404,7 +419,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                 timerIndices.Clear();
                 clientsIndices.Clear();
                 servicesIndices.Clear();
-                eventsIndices.Clear();
+                eventIndices.Clear();
             }
         }
 

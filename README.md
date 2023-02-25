@@ -25,11 +25,11 @@ Supported ROS 2 Distributions:
 |  Actions                 | ✅      | Managed implementation.       | 
 |  Clocks                  | ✅      | Supports external time source by setting `use_sim_time` to `true`.<br/>`CancellationTokenSource`s can also be configured to cancel with timeout measured by external clock.  |
 |  Timers                  | ✅      | N/A                           | 
-|  Guard Conditions        | ✅      | N/A                           | 
+|  Guard Conditions        | ✅      | N/A                           |
+|  Events                  | ✅      | N/A                           | 
 |  ROS Graph               | ✅      | Managed implementation.       | 
 |  Logging                 | ✅      | Supports logging to stdout, /rosout and log files. Configurable with `--ros-args`.| 
 |  Parameter Service       | ⚠️      | Supports loading parameters from command-line arguments and parameter files.<br/>Locally declared parameters are exposed via [Parameter API](https://design.ros2.org/articles/ros_parameters.html).<br/>Parameter client is not implemented.                          | 
-|  Events                  | ❌      | N/A                           | 
 |  Lifecycle               | ❌      | N/A                           | 
 |  Network Flow Endpoints  | ❌      | Available since galactic.     |
 |  Content Filtered Topics | ❌      | Available since humble.       |

@@ -1,9 +1,12 @@
-﻿using Rcl.Qos;
+﻿using Rcl.Internal.Events;
+using Rcl.Logging;
+using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
+using System.Xml.Linq;
 
 namespace Rcl.Internal.Subscriptions;
 
@@ -11,25 +14,27 @@ internal unsafe abstract class NativeSubscriptionBase :
     RclWaitObject<SafeSubscriptionHandle>,
     IRclNativeSubscription
 {
+    private readonly RclNodeImpl _node;
     private readonly Channel<RosMessageBuffer> _messageChannel;
     private readonly QosProfile _actualQos;
+
+    private readonly RclSubscriptionEvent? _livelinessEvent, _deadlineMissedEvent, _qosEvent;
 
     public NativeSubscriptionBase(
         RclNodeImpl node,
         string topicName,
         TypeSupportHandle typeSupport,
-        QosProfile qos,
-        int queueSize,
-        BoundedChannelFullMode fullMode)
-        : base(node.Context, new(node.Handle, typeSupport, topicName, qos))
+        SubscriptionOptions options)
+        : base(node.Context, new(node.Handle, typeSupport, topicName, options.Qos))
     {
+        _node = node;
         TypeSupport = typeSupport;
 
-        var opts = new BoundedChannelOptions(queueSize)
+        var opts = new BoundedChannelOptions(options.QueueSize)
         {
             SingleWriter = true,
             SingleReader = false,
-            FullMode = fullMode,
+            FullMode = options.FullMode,
             AllowSynchronousContinuations = true
         };
 
@@ -40,7 +45,77 @@ internal unsafe abstract class NativeSubscriptionBase :
         _actualQos = QosProfile.Create(in actualQos);
 
         Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object))!;
+        Options = options;
+
+        try
+        {
+            _livelinessEvent = new RclSubscriptionLivelinessChangedEvent(
+                Context, Handle,
+                options.LivelinessChangedHandler ?? OnLivelinessChanged);
+        }
+        catch (RclException ex)
+        {
+            if (options.LivelinessChangedHandler != null)
+            {
+                _node.Context.DefaultLogger.LogWarning("Unable to register LivelinessChangedEvent:");
+                _node.Context.DefaultLogger.LogWarning(ex.Message);
+            }
+        }
+
+        try
+        {
+            _deadlineMissedEvent = new RclSubscriptionRequestedDeadlineMissedEvent(
+                Context, Handle,
+                options.RequestedDeadlineMissedHandler ?? OnDeadlineMissed);
+        }
+        catch (RclException ex)
+        {
+            if (options.RequestedDeadlineMissedHandler != null)
+            {
+                _node.Context.DefaultLogger.LogWarning("Unable to register RequestedDeadlineMissedEvent:");
+                _node.Context.DefaultLogger.LogWarning(ex.Message);
+            }
+        }
+
+        try
+        {
+            _qosEvent = new RclSubscriptionRequestedIncompatibleQosEvent(
+                Context, Handle,
+                options.RequestedQosIncompatibleHandler ?? OnIncompatibleQos);
+        }
+        catch (RclException ex)
+        {
+            if(options.RequestedQosIncompatibleHandler != null)
+            {
+                _node.Context.DefaultLogger.LogWarning("Unable to register RequestedQosIncompatibleEvent:");
+                _node.Context.DefaultLogger.LogWarning(ex.Message);
+            }
+        }
     }
+
+    private void OnLivelinessChanged(LivelinessChangedEvent info)
+    {
+        _node.Logger.LogWarning(
+            $"Received LivelinessChangedEvent on subscription of topic '{Name}': " +
+            $"Alive = {info.AliveCount}, AliveDelta = {info.AliveCountDelta}, " +
+            $"NotAlive = {info.NotAliveCount}, NotAliveDelta = {info.NotAliveCountDelta}");
+    }
+
+    private void OnDeadlineMissed(RequestedDeadlineMissedEvent info)
+    {
+        _node.Logger.LogWarning(
+            $"Received RequestedDeadlineMissedEvent on subscription of topic '{Name}': " +
+            $"Total = {info.TotalCount}, Delta = {info.Delta}");
+    }
+
+    private void OnIncompatibleQos(IncompatibleQosEvent info)
+    {
+        _node.Logger.LogWarning(
+           $"Received IncompatibleQosEvent on subscription of topic '{Name}': " +
+           $"Total = {info.TotalCount}, Delta = {info.Delta}, PolicyKind = {info.LastPolicyKind}");
+    }
+
+    public SubscriptionOptions Options { get; }
 
     protected TypeSupportHandle TypeSupport { get; }
 
@@ -80,6 +155,10 @@ internal unsafe abstract class NativeSubscriptionBase :
 
     public override void Dispose()
     {
+        _livelinessEvent?.Dispose();
+        _deadlineMissedEvent?.Dispose();
+        _qosEvent?.Dispose();
+
         if (_messageChannel.Writer.TryComplete())
         {
             while (_messageChannel.Reader.TryRead(out var buffer))

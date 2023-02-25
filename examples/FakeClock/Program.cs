@@ -9,10 +9,10 @@ var scale = args.Length > 0 && double.TryParse(args[0], out var r) ? r : 1.0;
 using var ctx = new RclContext(args);
 using var node = ctx.CreateNode("fake_clock");
 
-using var clockPub = node.CreatePublisher<Clock>("/clock", QosProfile.Clock);
+using var clockPub = node.CreatePublisher<Clock>("/clock", new(qos: QosProfile.Clock));
 using var cts = new CancellationTokenSource();
 
-_ = Task.Run(async () =>
+var t = Task.Run(async () =>
 {
     var current = 0L;
     using var periodicTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(resolution / 100_000));
@@ -36,3 +36,7 @@ _ = Task.Run(async () =>
 
 Console.ReadLine();
 cts.Cancel();
+
+// Make sure the clock loop is completed before exit,
+// otherwise we may hit segmentation fault.
+await Task.WhenAny(t);

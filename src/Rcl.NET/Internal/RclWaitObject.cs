@@ -16,7 +16,10 @@ internal abstract class RclWaitObject<T> : RclObject<T>, IRclWaitObject where T 
     protected RclWaitObject(RclContext context, T handle) : base(handle)
     {
         _registration = context.Register(this, OnSignalReceived, this);
+        Context = context;
     }
+
+    public RclContext Context { get; }
 
     protected virtual void OnWaitCompleted()
     {

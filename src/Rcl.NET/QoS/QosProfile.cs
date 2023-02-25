@@ -13,7 +13,7 @@ namespace Rcl.Qos;
 /// <param name="LifeSpan">The age at which messages are considered expired and no longer valid.</param>
 /// <param name="Liveliness">Liveliness QoS policy setting。</param>
 /// <param name="LivelinessLeaseDuration">The time within which the node or publisher must show that it is alive</param>
-/// <param name="AvoidRosNamespaceConversions">
+/// <param name="AvoidRosNamespaceConventions">
 /// If <see langword="true"/>, any ROS specific namespacing conventions will be circumvented.
 /// <p>
 /// In the case of DDS and topics, for example, this means the typical
@@ -33,7 +33,7 @@ public record QosProfile(
     TimeSpan LifeSpan = default,
     LivelinessPolicy Liveliness = LivelinessPolicy.Default,
     TimeSpan LivelinessLeaseDuration = default,
-    bool AvoidRosNamespaceConversions = false
+    bool AvoidRosNamespaceConventions = false
 )
 {
     public static QosProfile SensorData { get; } =
@@ -190,7 +190,7 @@ public record QosProfile(
             deadline = Deadline.ToRmwTime(),
             lifespan = LifeSpan.ToRmwTime(),
             liveliness = (rmw_qos_liveliness_policy_t)Liveliness,
-            avoid_ros_namespace_conventions = AvoidRosNamespaceConversions
+            avoid_ros_namespace_conventions = AvoidRosNamespaceConventions
         };
     }
 

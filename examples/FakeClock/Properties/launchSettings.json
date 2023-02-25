@@ -6,6 +6,7 @@
     "WSL : Foxy": {
       "commandName": "WSL",
       "distributionName": "Ubuntu-20.04",
+      "commandLineArgs": " /mnt/d/git/noelex/rclnet/examples/FakeClock/bin/Debug/net7.0/FakeClock.dll --ros-args --log-level debug",
       "environmentVariables": {
         "ROS_DISTRO": "foxy",
         "ROS_LOCALHOST_ONLY": "0",

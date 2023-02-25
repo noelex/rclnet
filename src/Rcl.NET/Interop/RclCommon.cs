@@ -12,6 +12,7 @@ using System;
 namespace Rcl.Interop
 {
     using Rosidl.Runtime.Interop;
+    using System.Collections.Generic;
     using System.Runtime.InteropServices;
 
     internal static unsafe partial class RclCommon
@@ -772,6 +773,49 @@ namespace Rcl.Interop
             /// The change in total_count since the last time the status was last read.
             /// </summary>
             public int total_count_change;
+        }
+
+        /// <summary>
+        /// Event state for a subscription's 'RMW_EVENT_REQUESTED_QOS_INCOMPATIBLE' events and
+        /// a publisher's 'RMW_EVENT_OFFERED_QOS_INCOMPATIBLE' events.
+        /// </summary>
+        [StructLayout(LayoutKind.Sequential)]
+        public partial struct rmw_qos_incompatible_event_status_t
+        {
+            /// <summary>
+            /// Total cumulative number of times the concerned subscription discovered a
+            /// publisher for the same topic with an offered QoS that was incompatible
+            /// with that requested by the subscription.
+            /// </summary>
+            public int total_count;
+
+            /// <summary>
+            /// The change in total_count since the last time the status was read.
+            /// </summary>
+            public int total_count_change;
+
+            /// <summary>
+            /// The Qos Policy Kind of one of the policies that was found to be
+            /// incompatible the last time an incompatibility was detected.
+            /// </summary>
+            public rmw_qos_policy_kind_t last_policy_kind;
+        }
+
+        /// <summary>
+        /// QoS Policy Kinds
+        /// </summary>
+        public enum rmw_qos_policy_kind_t
+        {
+            RMW_QOS_POLICY_INVALID = 1 << 0,
+            RMW_QOS_POLICY_DURABILITY = 1 << 1,
+            RMW_QOS_POLICY_DEADLINE = 1 << 2,
+            RMW_QOS_POLICY_LIVELINESS = 1 << 3,
+            RMW_QOS_POLICY_RELIABILITY = 1 << 4,
+            RMW_QOS_POLICY_HISTORY = 1 << 5,
+            RMW_QOS_POLICY_LIFESPAN = 1 << 6,
+            RMW_QOS_POLICY_DEPTH = 1 << 7,
+            RMW_QOS_POLICY_LIVELINESS_LEASE_DURATION = 1 << 8,
+            RMW_QOS_POLICY_AVOID_ROS_NAMESPACE_CONVENTIONS = 1 << 9,
         }
 
         /// <summary>

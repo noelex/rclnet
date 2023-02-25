@@ -67,8 +67,8 @@ internal class ActionServer : IActionServer
                 cancelGoalServiceName, static (request, response, state) =>
                 ((ActionServer)state!).HandleCancelGoal(request, response), QosProfile.ServicesDefault, this);
 
-            _statusPublisher = _node.CreatePublisher<GoalStatusArray>(statusTopicName, Constants.StatusQoS, textEncoding);
-            _feedbackPublisher = new RclNativePublisher(node, feedbackTopicName, _typesupport.FeedbackMessageTypeSupport, QosProfile.SensorData);
+            _statusPublisher = _node.CreatePublisher<GoalStatusArray>(statusTopicName, new(qos: QosProfile.ActionStatusDefault, textEncoding: textEncoding));
+            _feedbackPublisher = new RclNativePublisher(node, feedbackTopicName, _typesupport.FeedbackMessageTypeSupport, new(qos: QosProfile.SensorData));
 
             // In case the given action name gets normalized.
             var sep = _feedbackPublisher.Name!.LastIndexOf(Constants.FeedbackTopic);

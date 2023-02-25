@@ -55,7 +55,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
             _statusSubscription = _node.CreateNativeSubscription<GoalStatusArray>(
                 statusTopicName,
-                QosProfile.ActionStatusDefault);
+               new(qos: QosProfile.ActionStatusDefault));
 
             var feedbackQos = RosEnvironment.IsFoxy
                 ? QosProfile.SensorData : QosProfile.Default;
@@ -63,7 +63,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
             _feedbackSubscription = _node.CreateNativeSubscription(
                 feedbackTopicName,
                 _typesupport.FeedbackMessageTypeSupport,
-                feedbackQos);
+                new(qos: feedbackQos));
 
             // In case the given action name gets normalized.
             var sep = _feedbackSubscription.Name!.LastIndexOf("/_action/feedback");

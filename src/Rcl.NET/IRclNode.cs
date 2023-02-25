@@ -69,61 +69,39 @@ public interface IRclNode : IRclObject
     /// </summary>
     /// <typeparam name="T">Type of the message to receive.</typeparam>
     /// <param name="topicName">Name of the topic to subscribe.</param>
-    /// <param name="qos"><see cref="QosProfile"/> to be used for the subscription. Defaults to <see cref="QosProfile.Default"/>.</param>
-    /// <param name="queueSize">Size of the message delivery queue. This parameter is used for seting up the delivery queue on .NET side, and is irrelevant to <see cref="QosProfile.Depth"/>. </param>
-    /// <param name="fullMode">Behavior to use when the delivery queue is full.</param>
+    /// <param name="options"><see cref="SubscriptionOptions"/> to be used for the subscription. Defaults to <see cref="SubscriptionOptions.Default"/>.</param>
     /// <returns>A <see cref="IRclNativeSubscription"/> to be used for receiving topic messages.</returns>
     IRclNativeSubscription CreateNativeSubscription<T>(
-        string topicName,
-        QosProfile? qos = null,
-        int queueSize = 1,
-        BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest) where T : IMessage;
+        string topicName,SubscriptionOptions? options = null) where T : IMessage;
 
     /// <summary>
     /// Create an ROS subscription and receive messages using native message buffers.
     /// </summary>
     /// <param name="topicName">Name of the topic to subscribe.</param>
     /// <param name="typeSupport">Type support handle of the message.</param>
-    /// <param name="qos"><see cref="QosProfile"/> to be used for the subscription. Defaults to <see cref="QosProfile.Default"/>.</param>
-    /// <param name="queueSize">Size of the message delivery queue. This parameter is used for setting up the delivery queue on .NET side, and is irrelevant to <see cref="QosProfile.Depth"/>. </param>
-    /// <param name="fullMode">Behavior to use when the delivery queue is full.</param>
+    /// <param name="options"><see cref="SubscriptionOptions"/> to be used for the subscription. Defaults to <see cref="SubscriptionOptions.Default"/>.</param>
     /// <returns>A <see cref="IRclNativeSubscription"/> to be used for receiving topic messages.</returns>
     IRclNativeSubscription CreateNativeSubscription(
-        string topicName,
-        TypeSupportHandle typeSupport,
-        QosProfile? qos = null,
-        int queueSize = 1,
-        BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest);
+        string topicName, TypeSupportHandle typeSupport, SubscriptionOptions? options = null);
 
     /// <summary>
     /// Create an ROS subscription and receive messages of type <typeparamref name="T"/>.
     /// </summary>
     /// <typeparam name="T">Type of the message to receive.</typeparam>
     /// <param name="topicName">Name of the topic to subscribe.</param>
-    /// <param name="qos"><see cref="QosProfile"/> to be used for the subscription. Defaults to <see cref="QosProfile.Default"/>.</param>
-    /// <param name="queueSize">Size of the message delivery queue. This parameter is used for setting up the delivery queue on .NET side, and is irrelevant to <see cref="QosProfile.Depth"/>.</param>
-    /// <param name="fullMode">Behavior to use when the delivery queue is full.</param>
-    /// <param name="textEncoding">Specify the encoding of the string in the message. Defaults to <see cref="Encoding.UTF8"/>.</param>
+    /// <param name="options"><see cref="SubscriptionOptions"/> to be used for the subscription. Defaults to <see cref="SubscriptionOptions.Default"/>.</param>
     /// <returns>A <see cref="IRclNativeSubscription"/> to be used for receiving topic messages.</returns>
     IRclSubscription<T> CreateSubscription<T>(
-        string topicName,
-        QosProfile? qos = null,
-        int queueSize = 1,
-        BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest,
-        Encoding? textEncoding = null) where T : IMessage;
+        string topicName, SubscriptionOptions? options = null) where T : IMessage;
 
     /// <summary>
     /// Create an ROS publisher to publish messages of type <typeparamref name="T"/>
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="topicName">Name of the topic.</param>
-    /// <param name="qos"><see cref="QosProfile"/> to be used for the publisher. Defaults to <see cref="QosProfile.Default"/>.</param>
-    /// <param name="textEncoding">Specify the encoding of the string in the message. Defaults to <see cref="Encoding.UTF8"/>.</param>
+    /// <param name="options"><see cref="PublisherOptions"/> to be used for the publisher. Defaults to <see cref="PublisherOptions.Default"/>.</param>
     /// <returns>A <see cref="IRclPublisher{T}"/> to be used for publishing topic messages.</returns>
-    IRclPublisher<T> CreatePublisher<T>(
-        string topicName,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null) where T : IMessage;
+    IRclPublisher<T> CreatePublisher<T>(string topicName, PublisherOptions? options = null) where T : IMessage;
 
     /// <summary>
     /// Create an ROS service server.

@@ -49,7 +49,7 @@ class ExternalTimeSource : IDisposable
                 }
 
                 self._overrideEnabled = self._node.Clock.Impl.IsRosTimeOverrideEnabled;
-                self._subscription = self._node.CreateNativeSubscription<Clock>("/clock", self._qos);
+                self._subscription = self._node.CreateNativeSubscription<Clock>("/clock", new(qos: self._qos));
                 _ = self.UpdateClockAsync(self._subscription);
 
                 self._node.Context.DefaultLogger.LogDebug("use_sim_time is enabled.");

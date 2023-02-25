@@ -70,7 +70,7 @@ partial class ParameterService : IParameterService, IDisposable
                 SetParametersAtomicallyServiceRequest,
                 SetParametersAtomicallyServiceResponse>($"{node.Name}/set_parameters_atomically", this, QosProfile.Parameters);
 
-        _parameterEvents = node.CreatePublisher<ParameterEvent>("/parameter_events", QosProfile.ParameterEvents);
+        _parameterEvents = node.CreatePublisher<ParameterEvent>("/parameter_events", new(qos: QosProfile.ParameterEvents));
     }
 
     private unsafe static rcl_arguments_t* GetNodeArguments(SafeNodeHandle node)

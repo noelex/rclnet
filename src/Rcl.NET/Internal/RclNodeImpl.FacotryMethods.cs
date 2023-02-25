@@ -19,42 +19,24 @@ internal partial class RclNodeImpl
 {
     public IRclNativeSubscription CreateNativeSubscription<T>(
        string topicName,
-       QosProfile? qos = null,
-       int queueSize = 1,
-       BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest) where T : IMessage
+       SubscriptionOptions? options = null) where T : IMessage
     {
-        return new NativeSubscription<T>(this, topicName,
-                qos ?? QosProfile.Default,
-                queueSize,
-                fullMode);
+        return new NativeSubscription<T>(this, topicName, options ?? SubscriptionOptions.Default);
     }
 
     public IRclSubscription<T> CreateSubscription<T>(
         string topicName,
-        QosProfile? qos = null,
-        int queueSize = 1,
-        BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest,
-        Encoding? textEncoding = null) where T : IMessage
+        SubscriptionOptions? options = null) where T : IMessage
     {
-        return new RclSubscription<T>(
-                this,
-                topicName,
-                qos ?? QosProfile.Default,
-                queueSize,
-                fullMode,
-                textEncoding ?? Encoding.UTF8);
+        return new RclSubscription<T>(this,topicName, options ?? SubscriptionOptions.Default);
     }
 
     public IRclPublisher<T> CreatePublisher<T>(
-        string topicName,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null)
+        string topicName, PublisherOptions? options = null)
         where T : IMessage
     {
         return new RclPublisher<T>(
-            this, topicName,
-            qos ?? QosProfile.Default,
-            textEncoding ?? Encoding.UTF8);
+            this, topicName, options ?? PublisherOptions.Default);
     }
 
     public IRclService CreateService<TService, TRequest, TResponse>(
@@ -214,17 +196,13 @@ internal partial class RclNodeImpl
     public IRclNativeSubscription CreateNativeSubscription(
         string topicName,
         TypeSupportHandle typeSupport,
-        QosProfile? qos = null,
-        int queueSize = 1,
-        BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest)
+        SubscriptionOptions? options = null)
     {
         return new IntrospectionNativeSubscription(
             this,
             topicName,
             typeSupport,
-            qos ?? QosProfile.Default,
-            queueSize,
-            fullMode);
+            options ?? SubscriptionOptions.Default);
     }
 
     public IActionServer CreateActionServer<TAction>(

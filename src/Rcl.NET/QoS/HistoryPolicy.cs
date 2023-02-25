@@ -1,7 +1,7 @@
 namespace Rcl.Qos;
 
 /// <summary>
-/// QoS history enumerations describing how samples endure
+/// QoS history enumerations describing how samples endure.
 /// </summary>
 public enum HistoryPolicy
 {

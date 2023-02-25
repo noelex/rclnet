@@ -1,7 +1,7 @@
 namespace Rcl.Qos;
 
 /// <summary>
-/// QoS durability enumerations describing how samples persist
+/// QoS durability enumerations describing how samples persist.
 /// </summary>
 public enum DurabilityPolicy
 {
