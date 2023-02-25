@@ -2,12 +2,11 @@
 using Rcl.Logging.Impl;
 using Rcl.SafeHandles;
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Rcl;
 
 /// <summary>
-/// A context that, runs an event loop to provide asynchronous programming support for the rclnet library.
+/// A context that runs an event loop to provide asynchronous programming support for the rclnet library.
 /// </summary>
 /// <remarks>
 /// <see cref="RclContext"/> servers as a host for other rcl concepts such as <see cref="IRclNode"/>s,
@@ -15,12 +14,14 @@ namespace Rcl;
 /// Applications can initiate as many <see cref="RclContext"/> as they want, but having a single context will
 /// usually suffice.
 /// <para>
-/// Internally, <see cref="RclContext"/> runs an event loop to handle waitsets and callbacks, and provides
-/// an asynchronous API for users to interact with these concepts easily.
+/// Please note that rcl logging configuration is application wide, thus logging is only configured once with the
+/// arguments used for creating the first <see cref="RclContext"/> instance.
 /// </para>
 /// </remarks>
 public sealed unsafe class RclContext : IDisposable, IRclContext
 {
+    private static int _contextRefCount = 0;
+
     private static readonly ObjectPool<ManualResetValueTaskSource<bool>> TcsPool = ObjectPool<ManualResetValueTaskSource<bool>>.Shared;
 
     private readonly SynchronizationContext _rclSyncContext;
@@ -53,8 +54,12 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
         _context = new SafeContextHandle(args);
 
         var allocator = RclAllocator.Default.Object;
-        RclException.ThrowIfNonSuccess(
-            rcl_logging_configure(&_context.Object->global_arguments, &allocator));
+
+        if (Interlocked.Increment(ref _contextRefCount) == 1)
+        {
+            RclException.ThrowIfNonSuccess(
+                rcl_logging_configure(&_context.Object->global_arguments, &allocator));
+        }
 
         LoggerFactory = loggerFactory ?? new RcutilsLoggerFactory(_rclSyncContext);
         DefaultLogger = LoggerFactory.CreateLogger("rclnet");
@@ -102,9 +107,9 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     /// <inheritdoc/>
     public void Dispose()
     {
-        foreach(var feature in _features)
+        foreach (var feature in _features)
         {
-            if(feature.Value is IDisposable d)
+            if (feature.Value is IDisposable d)
             {
                 d.Dispose();
             }
@@ -410,7 +415,10 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
         _interruptSignal.Dispose();
         _context.Dispose();
 
-        rcl_logging_fini();
+        if (Interlocked.Decrement(ref _contextRefCount) == 0)
+        {
+            rcl_logging_fini();
+        }
     }
 
     private void ExecuteCallbacks(List<CallbackWorkItem> storage)

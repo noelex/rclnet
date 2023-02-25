@@ -1,7 +1,7 @@
 ﻿namespace Rcl;
 
 /// <summary>
-/// Represents an ROS clock.
+/// Represents an abstraction over various kind of clocks.
 /// </summary>
 public interface IRclClock: IRclObject
 {

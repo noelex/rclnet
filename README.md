@@ -24,17 +24,17 @@ Supported ROS 2 Distributions:
 |  Services                | ✅      | N/A                           | 
 |  Actions                 | ✅      | Managed implementation.       | 
 |  Clocks                  | ✅      | Supports external time source by setting `use_sim_time` to `true`.<br/>`CancellationTokenSource`s can also be configured to cancel with timeout measured by external clock.  |
-|  Timers                  | ⚠️      | Changing period of timers is not supported.    | 
+|  Timers                  | ✅      | N/A                           | 
 |  Guard Conditions        | ✅      | N/A                           | 
-|  Events                  | ❌      | N/A                           | 
-|  Lifecycles              | ❌      | N/A                           | 
-|  Parameter Services      | ⚠️      | Supports loading parameters from command-line arguments and parameter files.<br/>Also exposes locally declared parameters via [Parameter API](https://design.ros2.org/articles/ros_parameters.html).<br/>Parameter client is not implemented.                          | 
 |  ROS Graph               | ✅      | Managed implementation.       | 
-|  Logging                 | ✅      | Configurable via `--ros-args`.| 
+|  Logging                 | ✅      | Supports logging to stdout, /rosout and log files. Configurable with `--ros-args`.| 
+|  Parameter Service       | ⚠️      | Supports loading parameters from command-line arguments and parameter files.<br/>Locally declared parameters are exposed via [Parameter API](https://design.ros2.org/articles/ros_parameters.html).<br/>Parameter client is not implemented.                          | 
+|  Events                  | ❌      | N/A                           | 
+|  Lifecycle               | ❌      | N/A                           | 
 |  Network Flow Endpoints  | ❌      | Available since galactic.     |
 |  Content Filtered Topics | ❌      | Available since humble.       |
 
-✅ Supported⚠️ Partial support❌ Not supported⏳ In development
+✅Supported ⚠️Partial support ❌Not supported ⏳In development
 
 ## Installing
 rclnet is being actively developed currently, thus no stable package available for now.
@@ -82,7 +82,7 @@ await client.InvokeAsync(new EmptyServiceRequest());
 ### Monitoring ROS Graph Changes
 ```csharp
 node.Graph
-    .OfType<NodeEstablishedEvent>()
+    .OfType<NodeAppearedEvent>()
     .Subscribe(x =>
     {
         Console.WriteLine($"Node {x.Node.Name} is online.");

@@ -14,22 +14,21 @@ namespace Rcl.Graph;
 /// <remarks>
 /// <see cref="RosGraph"/> allows user to query ROS graph and monitor graph changes in an
 /// object-oriented and <see langword="async"/>/<see langword="await"/> friendly way.
-/// <p>
+/// <para>
 /// All public properities and methods of a <see cref="RosGraph"/> object are thread-safe, which
 /// means querying the state of the graph and monitoring graph events concurrently from many threads
 /// are allowed.
-/// </p>
-/// <p>
-/// Please note that 'thread-safe' means that any form of access to the
-/// <see cref="RosGraph"/> object will never corrupt its internal state.
-/// Though if a user tries to query the graph from another thread while
-/// <see cref="RosGraph"/> is still building the graph, inconsistent results might be returned.
-/// </p>
-/// <p>
+/// </para>
+/// <para>
+/// Though concurrent access to the <see cref="RosGraph"/> object will never corrupt its internal state,
+/// but if a user attempts to query the graph from another thread while
+/// <see cref="RosGraph"/> is still building, inconsistent results might be returned.
+/// </para>
+/// <para>
 /// For retrieving consistent results, you can access the <see cref="RosGraph"/> object from
 /// the <see cref="RclContext"/> which the <see cref="RosGraph"/> object belongs (e.g. by yielding
 /// to the <see cref="RclContext"/> using <c><see langword="await"/> graph.Owner.Context.Yield()</c>).
-/// </p>
+/// </para>
 /// </remarks>
 public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 {

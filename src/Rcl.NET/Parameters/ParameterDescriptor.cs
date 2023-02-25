@@ -51,7 +51,7 @@ public record ParameterDescriptor
     {
         if (dynamicTyping)
         {
-            RosEnvironment.Require(RosEnvironment.Humble);
+            RosEnvironment.Require(RosEnvironment.Humble, feature: nameof(DynamicTyping));
 
             if (type != ValueKind.Unknown)
             {

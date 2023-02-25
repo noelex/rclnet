@@ -85,8 +85,7 @@ partial class ParameterService : IParameterService, IDisposable
             return &((RclHumble.rcl_node_options_t*)handle)->arguments;
         }
 
-        RosEnvironment.ThrowUnsupportedDistribution();
-        return null;
+        throw new NotImplementedException();
     }
 
     private static Variant GetDefaultValue(ValueKind type)

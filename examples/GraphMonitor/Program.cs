@@ -11,75 +11,75 @@ _ = Task.Run(async () =>
     {
         switch (item)
         {
-            case NodeEstablishedEvent nodeEstablished:
-                node.Logger.LogInformation("NodeEstablished: " + nodeEstablished.Node.Name);
+            case NodeAppearedEvent nodeEstablished:
+                node.Logger.LogInformation("NodeAppeared: " + nodeEstablished.Node.Name);
                 break;
-            case NodeRemovedEvent nodeRemoved:
-                node.Logger.LogInformation("NodeRemoved: " + nodeRemoved.Node.Name);
+            case NodeDisappearedEvent nodeRemoved:
+                node.Logger.LogInformation("NodeDisappeared: " + nodeRemoved.Node.Name);
                 break;
-            case TopicEstablishedEvent topicEstablished:
-                node.Logger.LogInformation("TopicEstablished: " + topicEstablished.Topic.Name);
+            case TopicAppearedEvent topicEstablished:
+                node.Logger.LogInformation("TopicAppeared: " + topicEstablished.Topic.Name);
                 break;
-            case TopicRemovedEvent topicRemoved:
-                node.Logger.LogInformation("TopicRemoved: " + topicRemoved.Topic.Name);
+            case TopicDisappearedEvent topicRemoved:
+                node.Logger.LogInformation("TopicDisappeared: " + topicRemoved.Topic.Name);
                 break;
-            case ServiceEstablishedEvent serviceEstablished:
-                node.Logger.LogInformation("ServiceEstablished: " + serviceEstablished.Service.Name);
+            case ServiceAppearedEvent serviceEstablished:
+                node.Logger.LogInformation("ServiceAppeared: " + serviceEstablished.Service.Name);
                 break;
-            case ServiceRemovedEvent serviceRemoved:
-                node.Logger.LogInformation("ServiceRemoved: " + serviceRemoved.Service.Name);
+            case ServiceDisappearedEvent serviceRemoved:
+                node.Logger.LogInformation("ServiceDisappeared: " + serviceRemoved.Service.Name);
                 break;
-            case PublisherEstablishedEvent publisherEstablished:
-                node.Logger.LogInformation("PublisherEstablished: " + publisherEstablished.Publisher.Topic.Name +
+            case PublisherAppearedEvent publisherEstablished:
+                node.Logger.LogInformation("PublisherAppeared: " + publisherEstablished.Publisher.Topic.Name +
                  ", Type = " + publisherEstablished.Publisher.Type + ", Node = " + publisherEstablished.Publisher.Node);
                 break;
-            case PublisherRemovedEvent publisherRemoved:
-                node.Logger.LogInformation("PublisherRemoved: " + publisherRemoved.Publisher.Topic.Name +
+            case PublisherDisappearedEvent publisherRemoved:
+                node.Logger.LogInformation("PublisherDisappeared: " + publisherRemoved.Publisher.Topic.Name +
                  ", Type = " + publisherRemoved.Publisher.Type + ", Node = " + publisherRemoved.Publisher.Node);
                 break;
-            case SubscriberEstablishedEvent subscriberEstablished:
-                node.Logger.LogInformation("SubscriberEstablished: " + subscriberEstablished.Subscriber.Topic.Name +
+            case SubscriberAppearedEvent subscriberEstablished:
+                node.Logger.LogInformation("SubscriberAppeared: " + subscriberEstablished.Subscriber.Topic.Name +
                  ", Type = " + subscriberEstablished.Subscriber.Type + ", Node = " + subscriberEstablished.Subscriber.Node);
                 break;
-            case SubscriberRemovedEvent subscriberRemoved:
-                node.Logger.LogInformation("SubscriberRemoved: " + subscriberRemoved.Subscriber.Topic.Name +
+            case SubscriberDisappearedEvent subscriberRemoved:
+                node.Logger.LogInformation("SubscriberDisappeared: " + subscriberRemoved.Subscriber.Topic.Name +
                  ", Type = " + subscriberRemoved.Subscriber.Type + ", Node = " + subscriberRemoved.Subscriber.Node);
                 break;
-            case ServerEstablishedEvent serverEstablished:
-                node.Logger.LogInformation("ServerEstablished: " + serverEstablished.Server.Service.Name +
+            case ServerAppearedEvent serverEstablished:
+                node.Logger.LogInformation("ServerAppeared: " + serverEstablished.Server.Service.Name +
                 ", Type = " + serverEstablished.Server.Type + ", Node = " + serverEstablished.Server.Node);
                 break;
-            case ServerRemovedEvent serverRemoved:
-                node.Logger.LogInformation("ServerRemoved: " + serverRemoved.Server.Service.Name +
+            case ServerDisappearedEvent serverRemoved:
+                node.Logger.LogInformation("ServerDisappeared: " + serverRemoved.Server.Service.Name +
                 ", Type = " + serverRemoved.Server.Type + ", Node = " + serverRemoved.Server.Node);
                 break;
-            case ClientEstablishedEvent clientEstablished:
-                node.Logger.LogInformation("ClientEstablished: " + clientEstablished.Client.Service.Name +
+            case ClientAppearedEvent clientEstablished:
+                node.Logger.LogInformation("ClientAppeared: " + clientEstablished.Client.Service.Name +
                 ", Type = " + clientEstablished.Client.Type + ", Node = " + clientEstablished.Client.Node);
                 break;
-            case ClientRemovedEvent clientRemoved:
-                node.Logger.LogInformation("ClientRemoved: " + clientRemoved.Client.Service.Name + ", Type = " + clientRemoved.Client.Type);
+            case ClientDisappearedEvent clientRemoved:
+                node.Logger.LogInformation("ClientDisappeared: " + clientRemoved.Client.Service.Name + ", Type = " + clientRemoved.Client.Type);
                 break;
-            case ActionEstablishedEvent serviceEstablished:
-                node.Logger.LogInformation("ActionEstablished: " + serviceEstablished.Action.Name);
+            case ActionAppearedEvent serviceEstablished:
+                node.Logger.LogInformation("ActionAppeared: " + serviceEstablished.Action.Name);
                 break;
-            case ActionRemovedEvent serviceRemoved:
-                node.Logger.LogInformation("ActionRemoved: " + serviceRemoved.Action.Name);
+            case ActionDisappearedEvent serviceRemoved:
+                node.Logger.LogInformation("ActionDisappeared: " + serviceRemoved.Action.Name);
                 break;
-            case ActionServerEstablishedEvent serverEstablished:
-                node.Logger.LogInformation("ActionServerEstablished: " + serverEstablished.ActionServer.Action.Name +
+            case ActionServerAppearedEvent serverEstablished:
+                node.Logger.LogInformation("ActionServerAppeared: " + serverEstablished.ActionServer.Action.Name +
                 ", Type = " + serverEstablished.ActionServer.Type + ", Node = " + serverEstablished.ActionServer.Node);
                 break;
-            case ActionServerRemovedEvent serverRemoved:
-                node.Logger.LogInformation("ActionServerRemoved: " + serverRemoved.ActionServer.Action.Name +
+            case ActionServerDisappearedEvent serverRemoved:
+                node.Logger.LogInformation("ActionServerDisappeared: " + serverRemoved.ActionServer.Action.Name +
                 ", Type = " + serverRemoved.ActionServer.Type + ", Node = " + serverRemoved.ActionServer.Node);
                 break;
-            case ActionClientEstablishedEvent clientEstablished:
-                node.Logger.LogInformation("ActionClientEstablished: " + clientEstablished.ActionClient.Action.Name +
+            case ActionClientAppearedEvent clientEstablished:
+                node.Logger.LogInformation("ActionClientAppeared: " + clientEstablished.ActionClient.Action.Name +
                 ", Type = " + clientEstablished.ActionClient.Type + ", Node = " + clientEstablished.ActionClient.Node);
                 break;
-            case ActionClientRemovedEvent clientRemoved:
-                node.Logger.LogInformation("ActionClientRemoved: " + clientRemoved.ActionClient.Action.Name + ", Type = " + clientRemoved.ActionClient.Type);
+            case ActionClientDisappearedEvent clientRemoved:
+                node.Logger.LogInformation("ActionClientDisappeared: " + clientRemoved.ActionClient.Action.Name + ", Type = " + clientRemoved.ActionClient.Type);
                 break;
         }
     }

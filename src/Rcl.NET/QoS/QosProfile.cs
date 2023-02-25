@@ -140,6 +140,27 @@ public record QosProfile(
             false
         );
 
+    /// <summary>
+    /// The default qos profile setting for topic /rosout
+    /// <list type="bullet">
+    /// <item>depth = 1000</item>
+    /// <item>durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL</item>
+    /// <item>lifespan = {10, 0}</item>
+    /// </list>
+    /// </summary>
+    public static QosProfile RosOut { get; } =
+        new(
+            HistoryPolicy.KeepLast,
+            1000,
+            ReliabilityPolicy.Reliable,
+            DurabilityPolicy.TransientLocal,
+            TimeSpan.Zero,
+            TimeSpan.FromSeconds(10),
+            LivelinessPolicy.Default,
+            TimeSpan.Zero,
+            false
+        );
+
     public static QosProfile Unknown { get; } =
         new(
             HistoryPolicy.Unknown,

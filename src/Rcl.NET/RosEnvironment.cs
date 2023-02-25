@@ -51,9 +51,10 @@ public unsafe static class RosEnvironment
     /// </summary>
     public static string Distribution { get; } = Environment.GetEnvironmentVariable("ROS_DISTRO") ?? "";
 
-    internal static void ThrowUnsupportedDistribution()
+    private static void ThrowUnsupportedDistribution(string? featureName = null)
     {
-        throw new NotSupportedException($"ROS distribution '{Distribution}' is not supported.");
+        featureName = featureName == null ? "The specific feature" : $"'{featureName}'";
+        throw new NotSupportedException($"{featureName} is not supported by ROS distribution '{Distribution}'.");
     }
 
     internal static bool IsSupported(string targetDistro, VersionRequirement requirement = VersionRequirement.SinceInclusive)
@@ -79,11 +80,11 @@ public unsafe static class RosEnvironment
         };
     }
 
-    internal static void Require(string targetDistro, VersionRequirement rule = VersionRequirement.SinceInclusive)
+    internal static void Require(string targetDistro, VersionRequirement requirement = VersionRequirement.SinceInclusive, string? feature = null)
     {
-        if (!IsSupported(targetDistro, rule))
+        if (!IsSupported(targetDistro, requirement))
         {
-            ThrowUnsupportedDistribution();
+            ThrowUnsupportedDistribution(feature);
         }
     }
 }

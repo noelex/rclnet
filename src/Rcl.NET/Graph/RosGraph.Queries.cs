@@ -87,7 +87,7 @@ public partial class RosGraph
         }
 
         return await TryWaitForEventAsync(
-             static (e, s) => e is ServerEstablishedEvent se && se.Server.Service.Name == (string)s!,
+             static (e, s) => e is ServerAppearedEvent se && se.Server.Service.Name == (string)s!,
              serviceName, timeoutMilliseconds, cancellationToken);
     }
 
@@ -156,7 +156,7 @@ public partial class RosGraph
         }
 
         return await TryWaitForEventAsync(
-             static (e, s) => e is ActionServerEstablishedEvent se && se.ActionServer.Action.Name == (string)s!,
+             static (e, s) => e is ActionServerAppearedEvent se && se.ActionServer.Action.Name == (string)s!,
              actionName, timeoutMilliseconds, cancellationToken);
     }
 

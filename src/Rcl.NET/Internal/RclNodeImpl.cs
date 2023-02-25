@@ -47,7 +47,7 @@ partial class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
         _ = GraphBuilder(graphSignal, _cts.Token);
 
         _parameters = new ParameterService(this, new());
-        _timeSource = new ExternalTimeSource(this, Options.ClockQoS);
+        _timeSource = new ExternalTimeSource(this, Options.ClockQos);
     }
 
     public IParameterService Parameters => _parameters;
