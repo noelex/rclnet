@@ -79,6 +79,9 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
 
     internal IRclLogger DefaultLogger { get; }
 
+    public IRclLogger CreateLogger(string loggerName)
+        => LoggerFactory.CreateLogger(loggerName);
+
     /// <inheritdoc/>
     public SynchronizationContext SynchronizationContext => _rclSyncContext;
 

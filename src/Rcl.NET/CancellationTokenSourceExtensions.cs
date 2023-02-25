@@ -3,18 +3,18 @@ using Rcl.SafeHandles;
 
 namespace Rcl;
 
-public readonly struct RosTimerCallbackRegistration : IDisposable
+public readonly struct TimeoutRegistration : IDisposable
 {
     private readonly ObjectPool<ReusableTimer> _pool;
     private readonly ReusableTimer _timer;
 
-    internal RosTimerCallbackRegistration(ObjectPool<ReusableTimer> pool, ReusableTimer timer)
+    internal TimeoutRegistration(ObjectPool<ReusableTimer> pool, ReusableTimer timer)
     {
         _pool= pool;
         _timer= timer;
     }
 
-    public static readonly RosTimerCallbackRegistration Empty = new();
+    public static readonly TimeoutRegistration Empty = new();
 
     public void Dispose()
     {
@@ -77,13 +77,13 @@ public static class CancellationTokenSourceExtensions
 {
     private const string ReusableTimerPoolFeature = nameof(ReusableTimerPoolFeature);
 
-    public static RosTimerCallbackRegistration CancelAfter(
+    public static TimeoutRegistration CancelAfter(
         this CancellationTokenSource source, TimeSpan timeout, RclClock clock, RclContext context)
     {
         if (clock.Type == RclClockType.Steady)
         {
             source.CancelAfter(timeout);
-            return RosTimerCallbackRegistration.Empty;
+            return TimeoutRegistration.Empty;
         }
 
         if (timeout < Timeout.InfiniteTimeSpan)
@@ -93,17 +93,17 @@ public static class CancellationTokenSourceExtensions
 
         if (timeout == Timeout.InfiniteTimeSpan)
         {
-            return RosTimerCallbackRegistration.Empty;
+            return TimeoutRegistration.Empty;
         }
 
         var pool = context.GetOrAddFeature<ObjectPool<ReusableTimer>>(ReusableTimerPoolFeature, x => new());
         var timer = pool.Rent();
         timer.Start(source, context, clock.Impl, timeout);
 
-        return new RosTimerCallbackRegistration(pool, timer);
+        return new TimeoutRegistration(pool, timer);
     }
 
-    public static RosTimerCallbackRegistration CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, RclClock clock, RclContext context)
+    public static TimeoutRegistration CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, RclClock clock, RclContext context)
         => source.CancelAfter(TimeSpan.FromMilliseconds(timeoutMilliseconds), clock, context);
 
     /// <summary>
@@ -113,7 +113,7 @@ public static class CancellationTokenSourceExtensions
     /// <param name="timeoutMilliseconds"></param>
     /// <param name="node"></param>
     /// <returns></returns>
-    public static RosTimerCallbackRegistration CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, IRclNode node)
+    public static TimeoutRegistration CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, IRclNode node)
         => source.CancelAfter(timeoutMilliseconds, node.Clock, node.Context);
 
     /// <summary>
@@ -123,7 +123,7 @@ public static class CancellationTokenSourceExtensions
     /// <param name="timeout"></param>
     /// <param name="node"></param>
     /// <returns></returns>
-    public static RosTimerCallbackRegistration CancelAfter(this CancellationTokenSource source, TimeSpan timeout, IRclNode node)
+    public static TimeoutRegistration CancelAfter(this CancellationTokenSource source, TimeSpan timeout, IRclNode node)
         => source.CancelAfter(timeout, node.Clock, node.Context);
 
     private class NoopTimer : IDisposable

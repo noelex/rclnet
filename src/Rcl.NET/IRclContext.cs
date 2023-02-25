@@ -1,7 +1,9 @@
-﻿namespace Rcl;
+﻿using Rcl.Logging;
+
+namespace Rcl;
 
 /// <summary>
-/// Exposes various operations can be performed an <see cref="RclContext"/>.
+/// Represents a context for hosting nodes and wait primitives. 
 /// </summary>
 public interface IRclContext : IDisposable
 {
@@ -9,6 +11,13 @@ public interface IRclContext : IDisposable
     /// A context for scheduling executions on current <see cref="IRclContext"/> event loop.
     /// </summary>
     SynchronizationContext SynchronizationContext { get; }
+
+    /// <summary>
+    /// Creates a logger with specific name.
+    /// </summary>
+    /// <param name="loggerName">The name of the logger.</param>
+    /// <returns>A <see cref="IRclLogger"/> instance for writing logs.</returns>
+    IRclLogger CreateLogger(string loggerName);
 
     /// <summary>
     /// Creates a guard condition that allows manual signaling.

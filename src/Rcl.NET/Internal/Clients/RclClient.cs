@@ -14,11 +14,10 @@ internal class RclClient<TService, TRequest, TResponse> : RclClientBase, IRclCli
     public unsafe RclClient(
         RclNodeImpl node,
         string serviceName,
-        QosProfile qos,
-        Encoding textEncoding)
-        : base(node, serviceName, TService.GetTypeSupportHandle(), qos)
+        ClientOptions options)
+        : base(node, serviceName, TService.GetTypeSupportHandle(), options)
     {
-        _textEncoding = textEncoding;
+        _textEncoding = options.TextEncoding;
     }
 
     protected override RosMessageBuffer CreateResponseBuffer()
@@ -39,6 +38,6 @@ internal class RclClient<TService, TRequest, TResponse> : RclClientBase, IRclCli
         => InvokeAsync(request, TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
 
     public Task<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default)
-        => InvokeAsync(request, cancellationToken);
+        => InvokeAsync(request, Timeout.Infinite, cancellationToken);
 
 }

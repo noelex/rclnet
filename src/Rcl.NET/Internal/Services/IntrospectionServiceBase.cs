@@ -15,8 +15,8 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
         RclNodeImpl node,
         string serviceName,
         TypeSupportHandle typesupport,
-        QosProfile qos)
-        : base(node.Context, new(node.Handle, typesupport, serviceName, qos))
+        ServerOptions options)
+        : base(node.Context, new(node.Handle, typesupport, serviceName, options.Qos))
     {
         _typesupport = new ServiceIntrospection(typesupport);
 

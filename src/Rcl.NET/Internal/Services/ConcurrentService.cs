@@ -25,9 +25,8 @@ internal class ConcurrentService<TService, TRequest, TResponse>
         RclNodeImpl node,
         string serviceName,
         IConcurrentServiceHandler<TRequest, TResponse> handler,
-        QosProfile qos,
-        Encoding textEncoding)
-        : base(node, serviceName, new Handler(handler, textEncoding), TService.GetTypeSupportHandle(), qos)
+        ServerOptions options)
+        : base(node, serviceName, new Handler(handler, options.TextEncoding), TService.GetTypeSupportHandle(), options)
     {
     }
 

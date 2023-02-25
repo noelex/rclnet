@@ -18,8 +18,8 @@ internal class ConcurrentIntrospectionService : IntrospectionServiceBase
         string serviceName,
         IConcurrentNativeServiceHandler handler,
         TypeSupportHandle typesupport,
-        QosProfile qos)
-        : base(node, serviceName, typesupport, qos)
+        ServerOptions options)
+        : base(node, serviceName, typesupport, options)
     {
         _node = node;
         _handler = handler;

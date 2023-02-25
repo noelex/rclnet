@@ -1,13 +1,8 @@
 ﻿using Rcl.Interop;
 using Rcl.Qos;
 using Rcl.SafeHandles;
-using Rosidl.Runtime.Interop;
 using Rosidl.Runtime;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Rosidl.Runtime.Interop;
 
 namespace Rcl.Internal.Clients;
 internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
@@ -21,8 +16,8 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         RclNodeImpl node,
         string serviceName,
         TypeSupportHandle typeSupport,
-        QosProfile qos)
-        : base(node.Context, new(node.Handle, typeSupport, serviceName, qos))
+        ClientOptions options)
+        : base(node.Context, new(node.Handle, typeSupport, serviceName, options.Qos))
     {
         _node = node;
 

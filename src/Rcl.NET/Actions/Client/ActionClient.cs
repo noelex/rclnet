@@ -47,11 +47,12 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         var done = false;
         try
         {
-            _cancelGoalClient = new(node, cancelGoalServiceName, QosProfile.ServicesDefault, textEncoding);
+            _cancelGoalClient = new(node, cancelGoalServiceName, 
+                new(qos: QosProfile.ServicesDefault, textEncoding: textEncoding));
             _sendGoalClient = new(node, sendGoalServiceName,
-                _typesupport.GoalServiceTypeSupport, QosProfile.ServicesDefault);
+                _typesupport.GoalServiceTypeSupport, new(qos: QosProfile.ServicesDefault));
             _getResultClient = new(node, getResultServiceName,
-                _typesupport.ResultServiceTypeSupport, QosProfile.ServicesDefault);
+                _typesupport.ResultServiceTypeSupport, new(qos: QosProfile.ServicesDefault));
 
             _statusSubscription = _node.CreateNativeSubscription<GoalStatusArray>(
                 statusTopicName,

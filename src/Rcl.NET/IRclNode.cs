@@ -111,14 +111,15 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TResponse">Type of the service response.</typeparam>
     /// <param name="serviceName"></param>
     /// <param name="handler"></param>
-    /// <param name="qos"></param>
-    /// <param name="textEncoding"></param>
+    /// <param name="options">
+    /// <see cref="ServerOptions"/> to be used for the server.
+    /// Defaults to <see cref="ServerOptions.Default"/>.
+    /// </param>
     /// <returns></returns>
     IRclService CreateService<TService, TRequest, TResponse>(
         string serviceName,
         IServiceHandler<TRequest, TResponse> handler,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null)
+        ServerOptions? options = null)
         where TService : IService<TRequest, TResponse>
         where TRequest : IServiceRequest
         where TResponse : IServiceResponse;
@@ -131,16 +132,17 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TResponse">Type of the service response.</typeparam>
     /// <param name="serviceName"></param>
     /// <param name="handler"></param>
-    /// <param name="qos"></param>
-    /// <param name="textEncoding"></param>
+    /// <param name="options">
+    /// <see cref="ServerOptions"/> to be used for the server.
+    /// Defaults to <see cref="ServerOptions.Default"/>.
+    /// </param>
     /// <param name="state"></param>
     /// <returns></returns>
     IRclService CreateService<TService, TRequest, TResponse>(
         string serviceName,
         Func<TRequest, object?, TResponse> handler,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null,
-        object? state = null)
+        object? state = null,
+        ServerOptions? options = null)
         where TService : IService<TRequest, TResponse>
         where TRequest : IServiceRequest
         where TResponse : IServiceResponse;
@@ -153,14 +155,15 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TResponse">Type of the service response.</typeparam>
     /// <param name="serviceName"></param>
     /// <param name="handler"></param>
-    /// <param name="qos"></param>
-    /// <param name="textEncoding"></param>
+    /// <param name="options">
+    /// <see cref="ServerOptions"/> to be used for the server.
+    /// Defaults to <see cref="ServerOptions.Default"/>.
+    /// </param>
     /// <returns></returns>
     IRclService CreateConcurrentService<TService, TRequest, TResponse>(
         string serviceName,
         IConcurrentServiceHandler<TRequest, TResponse> handler,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null)
+        ServerOptions? options = null)
         where TService : IService<TRequest, TResponse>
         where TRequest : IServiceRequest
         where TResponse : IServiceResponse;
@@ -173,16 +176,17 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TResponse">Type of the service response.</typeparam>
     /// <param name="serviceName"></param>
     /// <param name="handler"></param>
-    /// <param name="qos"></param>
-    /// <param name="textEncoding"></param>
     /// <param name="state"></param>
+    /// <param name="options">
+    /// <see cref="ServerOptions"/> to be used for the server.
+    /// Defaults to <see cref="ServerOptions.Default"/>.
+    /// </param>
     /// <returns></returns>
     IRclService CreateConcurrentService<TService, TRequest, TResponse>(
         string serviceName,
         Func<TRequest, object?, CancellationToken, Task<TResponse>> handler,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null,
-        object? state = null)
+        object? state = null,
+        ServerOptions? options = null)
         where TService : IService<TRequest, TResponse>
         where TRequest : IServiceRequest
         where TResponse : IServiceResponse;
@@ -193,12 +197,15 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TService">Type of the service.</typeparam>
     /// <param name="serviceName"></param>
     /// <param name="handler"></param>
-    /// <param name="qos"></param>
+    /// <param name="options">
+    /// <see cref="ServerOptions"/> to be used for the server.
+    /// Defaults to <see cref="ServerOptions.Default"/>.
+    /// </param>
     /// <returns></returns>
     IRclService CreateNativeService<TService>(
         string serviceName,
         INativeServiceHandler handler,
-        QosProfile? qos = null)
+        ServerOptions? options = null)
         where TService : IService;
 
     /// <summary>
@@ -207,14 +214,17 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TService">Type of the service.</typeparam>
     /// <param name="serviceName"></param>
     /// <param name="handler"></param>
-    /// <param name="qos"></param>
+    /// <param name="options">
+    /// <see cref="ServerOptions"/> to be used for the server.
+    /// Defaults to <see cref="ServerOptions.Default"/>.
+    /// </param>
     /// <param name="state"></param>
     /// <returns></returns>
     IRclService CreateNativeService<TService>(
         string serviceName,
         Action<RosMessageBuffer, RosMessageBuffer, object?> handler,
-        QosProfile? qos = null,
-        object? state = null)
+        object? state = null,
+        ServerOptions? options = null)
         where TService : IService;
 
     /// <summary>
@@ -224,12 +234,15 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TService">Type of the service.</typeparam>
     /// <param name="serviceName"></param>
     /// <param name="handler"></param>
-    /// <param name="qos"></param>
+    /// <param name="options">
+    /// <see cref="ServerOptions"/> to be used for the server.
+    /// Defaults to <see cref="ServerOptions.Default"/>.
+    /// </param>
     /// <returns></returns>
     IRclService CreateConcurrentNativeService<TService>(
         string serviceName,
         IConcurrentNativeServiceHandler handler,
-        QosProfile? qos = null)
+        ServerOptions? options = null)
         where TService : IService;
 
     /// <summary>
@@ -239,14 +252,17 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TService">Type of the service.</typeparam>
     /// <param name="serviceName"></param>
     /// <param name="handler"></param>
-    /// <param name="qos"></param>
+    /// <param name="options">
+    /// <see cref="ServerOptions"/> to be used for the server.
+    /// Defaults to <see cref="ServerOptions.Default"/>.
+    /// </param>
     /// <param name="state"></param>
     /// <returns></returns>
     IRclService CreateConcurrentNativeService<TService>(
         string serviceName,
         Func<RosMessageBuffer, RosMessageBuffer, object?, CancellationToken, Task> handler,
-        QosProfile? qos = null,
-        object? state = null)
+        object? state = null,
+        ServerOptions? options = null)
         where TService : IService;
 
     /// <summary>
@@ -256,13 +272,11 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TRequest">Type of the request message.</typeparam>
     /// <typeparam name="TResponse">Type of the response message.</typeparam>
     /// <param name="serviceName">Name of the service to call.</param>
-    /// <param name="qos"><see cref="QosProfile"/> to be used for the client. Defaults to <see cref="QosProfile.ServicesDefault"/>.</param>
-    /// <param name="textEncoding">Specify the encoding of the string in the message. Defaults to <see cref="Encoding.UTF8"/>.</param>
-    /// <returns></returns>
+    /// <param name="options"><see cref="PublisherOptions"/> to be used for the client. Defaults to <see cref="ClientOptions.Default"/>.</param>
+    /// <returns>An <see cref="IRclClient{TRequest, TResponse}"/> object invoking service calls.</returns>
     IRclClient<TRequest, TResponse> CreateClient<TService, TRequest, TResponse>(
         string serviceName,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null)
+        ClientOptions? options = null)
         where TService : IService<TRequest, TResponse>
         where TRequest : IServiceRequest
         where TResponse : IServiceResponse;

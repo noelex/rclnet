@@ -6,7 +6,6 @@ using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
-using System.Xml.Linq;
 
 namespace Rcl.Internal.Subscriptions;
 
@@ -85,7 +84,7 @@ internal unsafe abstract class NativeSubscriptionBase :
         }
         catch (RclException ex)
         {
-            if(options.RequestedQosIncompatibleHandler != null)
+            if (options.RequestedQosIncompatibleHandler != null)
             {
                 _node.Context.DefaultLogger.LogWarning("Unable to register RequestedQosIncompatibleEvent:");
                 _node.Context.DefaultLogger.LogWarning(ex.Message);

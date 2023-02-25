@@ -54,18 +54,18 @@ internal class ActionServer : IActionServer
             _sendGoalService = new IntrospectionService(node,
                 sendGoalServiceName, _typesupport.GoalServiceTypeSupport,
                 new DelegateNativeServiceCallHandler(static (request, response, state) =>
-                ((ActionServer)state!).HandleSendGoal(request, response), this), QosProfile.ServicesDefault);
+                ((ActionServer)state!).HandleSendGoal(request, response), this), new(qos: QosProfile.ServicesDefault));
 
             _getResultService = new ConcurrentIntrospectionService(node,
                 getResultServiceName,
                 new DelegateConcurrentNativeServiceCallHandler((request, response, state, ct) =>
                    ((ActionServer)state!).HandleGetResult(request, response, ct), this),
                 _typesupport.ResultServiceTypeSupport,
-                QosProfile.ServicesDefault);
+                new(qos: QosProfile.ServicesDefault));
 
             _cancelGoalService = _node.CreateNativeService<CancelGoalService>(
                 cancelGoalServiceName, static (request, response, state) =>
-                ((ActionServer)state!).HandleCancelGoal(request, response), QosProfile.ServicesDefault, this);
+                ((ActionServer)state!).HandleCancelGoal(request, response), this, new(qos: QosProfile.ServicesDefault));
 
             _statusPublisher = _node.CreatePublisher<GoalStatusArray>(statusTopicName, new(qos: QosProfile.ActionStatusDefault, textEncoding: textEncoding));
             _feedbackPublisher = new RclNativePublisher(node, feedbackTopicName, _typesupport.FeedbackMessageTypeSupport, new(qos: QosProfile.SensorData));

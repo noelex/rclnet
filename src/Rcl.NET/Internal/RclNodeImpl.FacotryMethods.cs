@@ -42,8 +42,7 @@ internal partial class RclNodeImpl
     public IRclService CreateService<TService, TRequest, TResponse>(
         string serviceName,
         IServiceHandler<TRequest, TResponse> handler,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null)
+        ServerOptions? options = null)
         where TService : IService<TRequest, TResponse>
         where TRequest : IServiceRequest
         where TResponse : IServiceResponse
@@ -52,16 +51,14 @@ internal partial class RclNodeImpl
             this,
             serviceName,
             handler,
-            qos ?? QosProfile.ServicesDefault,
-            textEncoding ?? Encoding.UTF8);
+            options ?? ServerOptions.Default);
     }
 
     public IRclService CreateService<TService, TRequest, TResponse>(
         string serviceName,
         Func<TRequest, object?, TResponse> handler,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null,
-        object? state = null)
+        object? state = null,
+        ServerOptions? options = null)
         where TService : IService<TRequest, TResponse>
         where TRequest : IServiceRequest
         where TResponse : IServiceResponse
@@ -70,15 +67,13 @@ internal partial class RclNodeImpl
             this,
             serviceName,
             new DelegateDefaultServiceCallHandler<TRequest, TResponse>(handler, state),
-            qos ?? QosProfile.ServicesDefault,
-            textEncoding ?? Encoding.UTF8);
+            options ?? ServerOptions.Default);
     }
 
     public IRclService CreateConcurrentService<TService, TRequest, TResponse>(
         string serviceName,
         IConcurrentServiceHandler<TRequest, TResponse> handler,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null)
+        ServerOptions? options = null)
         where TService : IService<TRequest, TResponse>
         where TRequest : IServiceRequest
         where TResponse : IServiceResponse
@@ -87,16 +82,14 @@ internal partial class RclNodeImpl
             this,
             serviceName,
             handler,
-            qos ?? QosProfile.ServicesDefault,
-            textEncoding ?? Encoding.UTF8);
+            options ?? ServerOptions.Default);
     }
 
     public IRclService CreateConcurrentService<TService, TRequest, TResponse>(
         string serviceName,
         Func<TRequest, object?, CancellationToken, Task<TResponse>> handler,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null,
-        object? state = null)
+        object? state = null,
+        ServerOptions? options = null)
         where TService : IService<TRequest, TResponse>
         where TRequest : IServiceRequest
         where TResponse : IServiceResponse
@@ -105,14 +98,13 @@ internal partial class RclNodeImpl
             this,
             serviceName,
             new DelegateConcurrentServiceCallHandler<TRequest, TResponse>(handler, state),
-            qos ?? QosProfile.ServicesDefault,
-            textEncoding ?? Encoding.UTF8);
+            options ?? ServerOptions.Default);
     }
 
     public IRclService CreateNativeService<TService>(
         string serviceName,
         INativeServiceHandler handler,
-        QosProfile? qos = null)
+        ServerOptions? options = null)
         where TService : IService
     {
         return new IntrospectionService(
@@ -120,14 +112,14 @@ internal partial class RclNodeImpl
             serviceName,
             TService.GetTypeSupportHandle(),
             handler,
-            qos ?? QosProfile.ServicesDefault);
+            options ?? ServerOptions.Default);
     }
 
     public IRclService CreateNativeService<TService>(
         string serviceName,
         Action<RosMessageBuffer, RosMessageBuffer, object?> handler,
-        QosProfile? qos = null,
-        object? state = null)
+        object? state = null,
+        ServerOptions? options = null)
         where TService : IService
     {
         return new IntrospectionService(
@@ -135,13 +127,13 @@ internal partial class RclNodeImpl
             serviceName,
             TService.GetTypeSupportHandle(),
             new DelegateNativeServiceCallHandler(handler, state),
-            qos ?? QosProfile.ServicesDefault);
+            options ?? ServerOptions.Default);
     }
 
     public IRclService CreateConcurrentNativeService<TService>(
         string serviceName,
         IConcurrentNativeServiceHandler handler,
-        QosProfile? qos = null)
+        ServerOptions? options = null)
         where TService : IService
     {
         return new ConcurrentIntrospectionService(
@@ -149,14 +141,14 @@ internal partial class RclNodeImpl
             serviceName,
             handler,
             TService.GetTypeSupportHandle(),
-            qos ?? QosProfile.ServicesDefault);
+            options ?? ServerOptions.Default);
     }
 
     public IRclService CreateConcurrentNativeService<TService>(
         string serviceName,
         Func<RosMessageBuffer, RosMessageBuffer, object?, CancellationToken, Task> handler,
-        QosProfile? qos = null,
-        object? state = null)
+        object? state = null,
+        ServerOptions? options = null)
         where TService : IService
     {
         return new ConcurrentIntrospectionService(
@@ -164,13 +156,12 @@ internal partial class RclNodeImpl
             serviceName,
             new DelegateConcurrentNativeServiceCallHandler(handler, state),
             TService.GetTypeSupportHandle(),
-            qos ?? QosProfile.ServicesDefault);
+            options ?? ServerOptions.Default);
     }
 
     public IRclClient<TRequest, TResponse> CreateClient<TService, TRequest, TResponse>(
         string serviceName,
-        QosProfile? qos = null,
-        Encoding? textEncoding = null)
+        ClientOptions? options = null)
         where TService : IService<TRequest, TResponse>
         where TRequest : IServiceRequest
         where TResponse : IServiceResponse
@@ -178,8 +169,7 @@ internal partial class RclNodeImpl
         return new RclClient<TService, TRequest, TResponse>(
             this,
             serviceName,
-            qos ?? QosProfile.ServicesDefault,
-            textEncoding ?? Encoding.UTF8);
+            options ?? ClientOptions.Default);
     }
 
     public IActionClient<TGoal, TResult, TFeedback> CreateActionClient<TAction, TGoal, TResult, TFeedback>(

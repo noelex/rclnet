@@ -2,7 +2,7 @@
 
 namespace Rcl;
 
-public enum VersionRequirement
+internal enum VersionRequirement
 {
     Exact,
     SinceInclusive,

@@ -13,8 +13,8 @@ internal class IntrospectionService : IntrospectionServiceBase
         string serviceName,
         TypeSupportHandle typesupport,
         INativeServiceHandler handler,
-        QosProfile qos)
-        : base(node, serviceName, typesupport, qos)
+        ServerOptions options)
+        : base(node, serviceName, typesupport, options)
     {
         _handler = handler;
     }

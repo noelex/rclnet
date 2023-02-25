@@ -23,9 +23,8 @@ internal class DefaultService<TService, TRequest, TResponse>
         RclNodeImpl node,
         string serviceName,
         IServiceHandler<TRequest, TResponse> handler,
-        QosProfile qos,
-        Encoding textEncoding)
-        : base(node, serviceName, TService.GetTypeSupportHandle(), new Handler(handler, textEncoding), qos )
+        ServerOptions options)
+        : base(node, serviceName, TService.GetTypeSupportHandle(), new Handler(handler, options.TextEncoding), options)
     {
     }
 

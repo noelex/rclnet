@@ -39,36 +39,36 @@ partial class ParameterService : IParameterService, IDisposable
             _describeParametersService = node.CreateService<
                 DescribeParametersServiceFoxy,
                 DescribeParametersServiceRequestFoxy,
-                DescribeParametersServiceResponseFoxy>($"{node.Name}/describe_parameters", this, QosProfile.Parameters);
+                DescribeParametersServiceResponseFoxy>($"{node.Name}/describe_parameters", this, new(qos: QosProfile.Parameters));
         }
         else
         {
             _describeParametersService = node.CreateService<
                 DescribeParametersService,
                 DescribeParametersServiceRequest,
-                DescribeParametersServiceResponse>($"{node.Name}/describe_parameters", this, QosProfile.Parameters);
+                DescribeParametersServiceResponse>($"{node.Name}/describe_parameters", this, new(qos: QosProfile.Parameters));
         }
 
         _listParametersService = node.CreateService<
                 ListParametersService,
                 ListParametersServiceRequest,
-                ListParametersServiceResponse>($"{node.Name}/list_parameters", this, QosProfile.Parameters);
+                ListParametersServiceResponse>($"{node.Name}/list_parameters", this, new(qos: QosProfile.Parameters));
         _getParametersService = node.CreateService<
                 GetParametersService,
                 GetParametersServiceRequest,
-                GetParametersServiceResponse>($"{node.Name}/get_parameters", this, QosProfile.Parameters);
+                GetParametersServiceResponse>($"{node.Name}/get_parameters", this, new(qos: QosProfile.Parameters));
         _getParameterTypesService = node.CreateService<
                 GetParameterTypesService,
                 GetParameterTypesServiceRequest,
-                GetParameterTypesServiceResponse>($"{node.Name}/get_parameter_types", this, QosProfile.Parameters);
+                GetParameterTypesServiceResponse>($"{node.Name}/get_parameter_types", this, new(qos: QosProfile.Parameters));
         _setParametersService = node.CreateService<
                 SetParametersService,
                 SetParametersServiceRequest,
-                SetParametersServiceResponse>($"{node.Name}/set_parameters", this, QosProfile.Parameters);
+                SetParametersServiceResponse>($"{node.Name}/set_parameters", this, new(qos: QosProfile.Parameters));
         _setParametersAtomicallyService = node.CreateService<
                 SetParametersAtomicallyService,
                 SetParametersAtomicallyServiceRequest,
-                SetParametersAtomicallyServiceResponse>($"{node.Name}/set_parameters_atomically", this, QosProfile.Parameters);
+                SetParametersAtomicallyServiceResponse>($"{node.Name}/set_parameters_atomically", this, new(qos: QosProfile.Parameters));
 
         _parameterEvents = node.CreatePublisher<ParameterEvent>("/parameter_events", new(qos: QosProfile.ParameterEvents));
     }

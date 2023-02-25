@@ -35,8 +35,14 @@ public readonly struct RosMessageBuffer : IDisposable
         _state = state;
     }
 
+    /// <summary>
+    /// Gets an empty <see cref="RosMessageBuffer"/>.
+    /// </summary>
     public static readonly RosMessageBuffer Empty = new();
 
+    /// <summary>
+    /// Checks whether current <see cref="RosMessageBuffer"/> is empty.
+    /// </summary>
     public bool IsEmpty => Data == nint.Zero;
 
     /// <summary>
@@ -55,6 +61,7 @@ public readonly struct RosMessageBuffer : IDisposable
         return ref Unsafe.AsRef<T>(Data.ToPointer());
     }
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         _destroyCallback(Data, _state);
