@@ -13,3 +13,4 @@ include tf2_msgs
 include sensor_msgs
 include turtlesim
 include custom_msgs
+include rosgraph_msgs
