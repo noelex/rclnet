@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 
 namespace Rcl.Internal;
 
-internal unsafe class RclNativePublisher : RclObject<SafePublisherHandle>, IRclPublisher
+internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHandle>, IRclPublisher
 {
     private readonly QosProfile _actualQos;
     private readonly IMessageIntrospection _introspection;
@@ -22,7 +22,7 @@ internal unsafe class RclNativePublisher : RclObject<SafePublisherHandle>, IRclP
         string topicName,
         TypeSupportHandle typesupport,
         PublisherOptions options)
-        : base(new(node.Handle, typesupport, topicName, options.Qos))
+        : base(node.Context, new(node.Handle, typesupport, topicName, options.Qos))
     {
         _node = node;
         ref var actualQos = ref Unsafe.AsRef<rmw_qos_profile_t>(
@@ -83,6 +83,8 @@ internal unsafe class RclNativePublisher : RclObject<SafePublisherHandle>, IRclP
                 _node.Context.DefaultLogger.LogDebug("Unable to register OfferedQosIncompatibleEvent:");
                 _node.Context.DefaultLogger.LogDebug(ex.Message);
             }
+
+            completelyInitialized = true;
         }
         finally
         {
@@ -141,9 +143,9 @@ internal unsafe class RclNativePublisher : RclObject<SafePublisherHandle>, IRclP
 
     public override void Dispose()
     {
-        _livelinessEvent?.Dispose();
         _deadlineMissedEvent?.Dispose();
         _qosEvent?.Dispose();
+        _livelinessEvent?.Dispose();
 
         base.Dispose();
     }

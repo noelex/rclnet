@@ -4,7 +4,6 @@ using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Messages.Rcl;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Xml.Linq;
 
 namespace Rcl.Parameters.Impl;

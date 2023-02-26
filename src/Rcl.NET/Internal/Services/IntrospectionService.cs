@@ -22,7 +22,8 @@ internal class IntrospectionService : IntrospectionServiceBase
     protected unsafe override void DispatchRequest(
         RosMessageBuffer request, RosMessageBuffer response, rmw_request_id_t id)
     {
-        using(request)
+        // TODO: Reuse buffers by finializing rather than detroying after use.
+        using (request)
         using (response)
         {
             _handler.ProcessRequest(request, response);

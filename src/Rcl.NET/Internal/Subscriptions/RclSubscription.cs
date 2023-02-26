@@ -18,6 +18,7 @@ internal unsafe class RclSubscription<T> :
     IRclSubscription<T> where T : IMessage
 {
     private readonly RclNodeImpl _node;
+    private readonly RosMessageBuffer _messageBuffer = RosMessageBuffer.Create<T>();
     private readonly Channel<T> _messageChannel;
     private readonly QosProfile _actualQos;
     private readonly Encoding _textEncoding;
@@ -136,15 +137,21 @@ internal unsafe class RclSubscription<T> :
         // to be compatible with both foxy and humble.
         RclHumble.rmw_message_info_t header;
 
-        using var messageBuffer = RosMessageBuffer.Create<T>();
-        if (rcl_ret_t.RCL_RET_OK == rcl_take(Handle.Object, messageBuffer.Data.ToPointer(), &header, null))
+        try
         {
-            var msg = (T)T.CreateFrom(messageBuffer.Data, _textEncoding);
-            _messageChannel.Writer.TryWrite(msg);
-            foreach (var (_, obs) in _observers)
+            if (rcl_ret_t.RCL_RET_OK == rcl_take(Handle.Object, _messageBuffer.Data.ToPointer(), &header, null))
             {
-                obs.OnNext(msg);
+                var msg = (T)T.CreateFrom(_messageBuffer.Data, _textEncoding);
+                _messageChannel.Writer.TryWrite(msg);
+                foreach (var (_, obs) in _observers)
+                {
+                    obs.OnNext(msg);
+                }
             }
+        }
+        finally
+        {
+            T.UnsafeFinalize(_messageBuffer.Data);
         }
     }
 
@@ -155,12 +162,14 @@ internal unsafe class RclSubscription<T> :
 
     public override void Dispose()
     {
+        _node.Context.DefaultLogger.LogDebug($"Disposing RclSubscription '{Name}' ...");
         _livelinessEvent?.Dispose();
         _deadlineMissedEvent?.Dispose();
         _qosEvent?.Dispose();
 
         if (_messageChannel.Writer.TryComplete())
         {
+            _messageBuffer.Dispose();
             foreach (var (_, obs) in _observers)
             {
                 obs.OnCompleted();
@@ -169,6 +178,7 @@ internal unsafe class RclSubscription<T> :
         }
 
         base.Dispose();
+        _node.Context.DefaultLogger.LogDebug($"Disposed RclSubscription '{Name}'.");
     }
 
     public IDisposable Subscribe(IObserver<T> observer)
@@ -185,7 +195,7 @@ internal unsafe class RclSubscription<T> :
 
     private void OnLivelinessChanged(LivelinessChangedEvent info)
     {
-        _node.Logger.LogWarning(
+        _node.Logger.LogDebug(
             $"Received LivelinessChangedEvent on subscription of topic '{Name}': " +
             $"Alive = {info.AliveCount}, AliveDelta = {info.AliveCountDelta}, " +
             $"NotAlive = {info.NotAliveCount}, NotAliveDelta = {info.NotAliveCountDelta}");

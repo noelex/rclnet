@@ -1,4 +1,5 @@
 ﻿using Rcl.Interop;
+using Rcl.Logging;
 using Rosidl.Messages.Rcl;
 
 namespace Rcl.Parameters.Impl;
@@ -23,13 +24,13 @@ partial class ParameterService :
 
     private void ShutdownComms()
     {
-        _parameterEvents.Dispose();
         _getParametersService.Dispose();
         _getParameterTypesService.Dispose();
         _listParametersService.Dispose();
         _setParametersService.Dispose();
         _setParametersAtomicallyService.Dispose();
         _describeParametersService.Dispose();
+        _parameterEvents.Dispose();
     }
 
     private static ParameterValue ToParameterValue(Variant value)

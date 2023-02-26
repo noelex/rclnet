@@ -36,6 +36,8 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
 
     private readonly ConcurrentDictionary<string, object> _features = new();
 
+    private readonly IRclLoggerFactory _loggerFactory;
+
     private int _disposed;
     private long _waitHandleToken;
 
@@ -61,8 +63,8 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                 rcl_logging_configure(&_context.Object->global_arguments, &allocator));
         }
 
-        LoggerFactory = loggerFactory ?? new RcutilsLoggerFactory(_rclSyncContext);
-        DefaultLogger = LoggerFactory.CreateLogger("rclnet");
+        _loggerFactory = loggerFactory ?? new RcutilsLoggerFactory(this);
+        DefaultLogger = CreateLogger("rclnet");
 
         _interruptSignal = new SafeGuardConditionHandle(_context);
 
@@ -75,12 +77,10 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
 
     internal SafeContextHandle Handle => _context;
 
-    internal IRclLoggerFactory LoggerFactory { get; }
-
     internal IRclLogger DefaultLogger { get; }
 
     public IRclLogger CreateLogger(string loggerName)
-        => LoggerFactory.CreateLogger(loggerName);
+        => _loggerFactory.CreateLogger(loggerName);
 
     /// <inheritdoc/>
     public SynchronizationContext SynchronizationContext => _rclSyncContext;
@@ -110,17 +110,17 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     /// <inheritdoc/>
     public void Dispose()
     {
-        foreach (var feature in _features)
-        {
-            if (feature.Value is IDisposable d)
-            {
-                d.Dispose();
-            }
-        }
-        _features.Clear();
-
         if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
         {
+            foreach (var feature in _features)
+            {
+                if (feature.Value is IDisposable d)
+                {
+                    d.Dispose();
+                }
+            }
+            _features.Clear();
+
             Interrupt();
         }
     }
@@ -171,7 +171,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
         return new WaitHandleRegistration(this, static (ctx, x) => ctx.UnregisterWaitHandle(x), token);
     }
 
-    private WaitHandleRegistration RegisterCore<T>(RclObject<T> waitObject, Action<object?> callback, object? state = null)
+    private WaitHandleRegistration RegisterCore<T>(RclContextualObject<T> waitObject, Action<object?> callback, object? state = null)
         where T : RclObjectHandle
     {
         var token = Interlocked.Increment(ref _waitHandleToken);
@@ -285,6 +285,8 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                     eventIndices.Add(idx);
                 }
 
+                RclException.ThrowIfNonSuccess(rcl_wait(&ws, -1));
+
                 // TODO: Possible race condition
                 //
                 // Consider the following situation. Another thread queues a callback and trigger
@@ -294,8 +296,6 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                 // If there's no other wait handle in the wait set is triggered, rcl_wait will block
                 // indefinitely, causing the registered callback never being executed.
                 ExecuteCallbacks(callbacks);
-
-                RclException.ThrowIfNonSuccess(rcl_wait(&ws, -1));
 
                 // Check for guard conditions, skipping the first element
                 // since it's the interrupt signal.
@@ -453,7 +453,6 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
             storage.Clear();
         }
     }
-
 
     internal T GetOrAddFeature<T>(string name, Func<string, T> featureFactory) where T : class
     {

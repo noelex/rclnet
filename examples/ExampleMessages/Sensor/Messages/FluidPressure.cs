@@ -142,7 +142,7 @@ namespace Rosidl.Messages.Sensor
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public static nint UnsafeCreate()
         {
-            return new(global::Rosidl.Messages.Sensor.FluidPressure.Priv.Create());
+            return new(Priv.Create());
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -150,6 +150,34 @@ namespace Rosidl.Messages.Sensor
         public static void UnsafeDestroy(nint data)
         {
             Priv.Destroy((Priv*)data);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public static bool UnsafeInitialize(nint data)
+        {
+            return Priv.TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public static void UnsafeFinalize(nint data)
+        {
+            Priv.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public static bool UnsafeInitializeSequence(int size, nint data)
+        {
+            return PrivSequence.TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public static void UnsafeFinalizeSequence(nint data)
+        {
+            PrivSequence.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
         }
         
         /// <summary>
@@ -320,7 +348,7 @@ namespace Rosidl.Messages.Sensor
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-            private static bool TryInitialize(out Priv msg)
+            public static bool TryInitialize(out Priv msg)
             {
                 fixed (Priv* pMsg = &msg)
                 {
@@ -334,7 +362,7 @@ namespace Rosidl.Messages.Sensor
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-            private static void Finalize(ref Priv msg)
+            public static void Finalize(ref Priv msg)
             {
                 fixed (Priv* pMsg = &msg)
                 {
@@ -564,7 +592,7 @@ namespace Rosidl.Messages.Sensor
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-            private static bool TryInitialize(int size, out PrivSequence msg)
+            public static bool TryInitialize(int size, out PrivSequence msg)
             {
                 fixed (PrivSequence* pMsg = &msg)
                 {
@@ -578,7 +606,7 @@ namespace Rosidl.Messages.Sensor
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-            private static void Finalize(ref PrivSequence msg)
+            public static void Finalize(ref PrivSequence msg)
             {
                 fixed (PrivSequence* pMsg = &msg)
                 {

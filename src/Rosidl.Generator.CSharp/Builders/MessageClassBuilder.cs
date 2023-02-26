@@ -1,7 +1,6 @@
 ﻿using CppAst.CodeGen.Common;
 using CppAst.CodeGen.CSharp;
 using Rosidl.Generator.CSharp.Helpers;
-using System.Numerics;
 using System.Text;
 
 namespace Rosidl.Generator.CSharp.Builders;
@@ -53,6 +52,11 @@ public class MessageClassBuilder
         cls.Members.Add(EmitCreateFrom());
         cls.Members.Add(EmitUnsafeCreate());
         cls.Members.Add(EmitUnsafeDestroy());
+        cls.Members.Add(EmitUnsafeInitialize());
+        cls.Members.Add(EmitUnsafeFinalize());
+        cls.Members.Add(EmitUnsafeInitializeSequence());
+        cls.Members.Add(EmitUnsafeFinalizeSequence());
+
         cls.Members.Add(PrivStructBuilder.Build(_context));
         cls.Members.Add(PrivStructSequenceBuilder.Build(_context));
 
@@ -462,7 +466,96 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
-            writer.WriteLine($"return new({_context.PrivStructNameFullyQualified}.Create());");
+            writer.WriteLine($"return new({_context.PrivStructName}.Create());");
+        };
+        return method;
+    }
+
+    private CSharpMethod EmitUnsafeInitialize()
+    {
+        var method = new CSharpMethod()
+        {
+            Name = "UnsafeInitialize",
+            Modifiers = CSharpModifiers.Static,
+            Visibility = CSharpVisibility.Public,
+            ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Bool)
+        };
+
+        method.Parameters.Add(new("data") { ParameterType = new CSharpFreeType("nint") });
+
+        method.Body = (writer, element) =>
+        {
+            
+            writer.WriteLine($"return {_context.PrivStructName}" +
+                $".TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<" +
+                    $"{_context.PrivStructName}>(data.ToPointer()));");
+        };
+        return method;
+    }
+
+    private CSharpMethod EmitUnsafeFinalize()
+    {
+        var method = new CSharpMethod()
+        {
+            Name = "UnsafeFinalize",
+            Modifiers = CSharpModifiers.Static,
+            Visibility = CSharpVisibility.Public,
+            ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
+        };
+
+        method.Parameters.Add(new("data") { ParameterType = new CSharpFreeType("nint") });
+
+        method.Body = (writer, element) =>
+        {
+
+            writer.WriteLine($"{_context.PrivStructName}" +
+                $".Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<" +
+                    $"{_context.PrivStructName}>(data.ToPointer()));");
+        };
+        return method;
+    }
+
+    private CSharpMethod EmitUnsafeInitializeSequence()
+    {
+        var method = new CSharpMethod()
+        {
+            Name = "UnsafeInitializeSequence",
+            Modifiers = CSharpModifiers.Static,
+            Visibility = CSharpVisibility.Public,
+            ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Bool)
+        };
+
+        method.Parameters.Add(new("size") { ParameterType = new CSharpFreeType("int") });
+        method.Parameters.Add(new("data") { ParameterType = new CSharpFreeType("nint") });
+
+        method.Body = (writer, element) =>
+        {
+
+            writer.WriteLine($"return {_context.PrivStructSequenceName}" +
+                $".TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<" +
+                    $"{_context.PrivStructSequenceName}>(data.ToPointer()));");
+        };
+        return method;
+    }
+
+    private CSharpMethod EmitUnsafeFinalizeSequence()
+    {
+        var method = new CSharpMethod()
+        {
+            Name = "UnsafeFinalizeSequence",
+            Modifiers = CSharpModifiers.Static,
+            Visibility = CSharpVisibility.Public,
+            ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
+        };
+
+        method.Parameters.Add(new("data") { ParameterType = new CSharpFreeType("nint") });
+
+        method.Body = (writer, element) =>
+        {
+
+            writer.WriteLine($"{_context.PrivStructSequenceName}" +
+                $".Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<" +
+                    $"{_context.PrivStructSequenceName}>(data.ToPointer()));");
         };
         return method;
     }

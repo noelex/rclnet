@@ -2,7 +2,7 @@
 
 namespace Rcl.Internal;
 
-internal abstract class RclWaitObject<T> : RclObject<T>, IRclWaitObject where T : RclObjectHandle
+internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObject where T : RclObjectHandle
 {
     private SpinLock _syncRoot = new();
     private readonly WaitHandleRegistration _registration;
@@ -13,13 +13,10 @@ internal abstract class RclWaitObject<T> : RclObject<T>, IRclWaitObject where T 
     private int _id, _disposed;
     protected bool IsDisposed => _disposed != 0;
 
-    protected RclWaitObject(RclContext context, T handle) : base(handle)
+    protected RclWaitObject(RclContext context, T handle) : base(context, handle)
     {
         _registration = context.Register(this, OnSignalReceived, this);
-        Context = context;
     }
-
-    public RclContext Context { get; }
 
     protected virtual void OnWaitCompleted()
     {

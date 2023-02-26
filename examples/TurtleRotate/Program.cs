@@ -24,7 +24,7 @@ if (!await client.TryWaitForServerAsync(5000))
     node.Logger.LogInformation("Action server is offline.");
     return;
 }
-
+node.Logger.LogInformation($"Sending goal ...");
 using var goal = await client.SendGoalAsync(new RotateAbsoluteActionGoal(theta: angle));
 goal.StatusChanged += (s) => node.Logger.LogInformation("Goal Status: " + s);
 await foreach (var feedback in goal.ReadFeedbacksAsync())

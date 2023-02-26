@@ -11,7 +11,7 @@ using var server = node.CreateActionServer<RotateAbsoluteAction>(
     "/turtle1/rotate_absolute", new MyNativeActionServer(node, preemptive: true), resultTimeout: TimeSpan.Zero);
 
 node.Logger.LogInformation("Action server started.");
-Console.ReadLine();
+await Task.Run(()=>Console.ReadLine());
 
 class MyNativeActionServer : ActionGoalHandler
 {

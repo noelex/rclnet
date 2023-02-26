@@ -1,24 +1,14 @@
-using Rcl.Actions;
-using Rcl.Actions.Client;
-using Rcl.Actions.Server;
 using Rcl.Graph;
-using Rcl.Internal.Clients;
 using Rcl.Internal.NodeServices;
-using Rcl.Internal.Services;
-using Rcl.Internal.Subscriptions;
 using Rcl.Logging;
 using Rcl.Parameters;
 using Rcl.Parameters.Impl;
-using Rcl.Qos;
 using Rcl.SafeHandles;
-using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
-using System.Text;
-using System.Threading.Channels;
 
 namespace Rcl.Internal;
 
-partial class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
+partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
 {
     private readonly RosGraph _graph;
     private readonly ExternalTimeSource _timeSource;
@@ -30,16 +20,15 @@ partial class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
         string name,
          string @namespace = "",
         NodeOptions? options = null)
-        : base(new(context.Handle, name, @namespace, options ?? NodeOptions.Default))
+        : base(context, new(context.Handle, name, @namespace, options ?? NodeOptions.Default))
     {
-        Context = context;
         Options = options ?? NodeOptions.Default;
         Clock = Options.Clock;
 
         Name = StringMarshal.CreatePooledString(rcl_node_get_name(Handle.Object))!;
         Namespace = StringMarshal.CreatePooledString(rcl_node_get_namespace(Handle.Object))!;
         FullyQualifiedName = StringMarshal.CreatePooledString(rcl_node_get_fully_qualified_name(Handle.Object))!;
-        Logger = context.LoggerFactory.CreateLogger(StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object))!);
+        Logger = context.CreateLogger(StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object))!);
 
         _graph = new(this);
         var graphSignal = new RclGuardConditionImpl(context,
@@ -55,8 +44,6 @@ partial class RclNodeImpl : RclObject<SafeNodeHandle>, IRclNode
     public RclClock Clock { get; }
 
     public NodeOptions Options { get; }
-
-    public RclContext Context { get; }
 
     public RosGraph Graph => _graph;
 

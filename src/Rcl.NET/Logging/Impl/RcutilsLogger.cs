@@ -7,9 +7,9 @@ namespace Rcl.Logging.Impl;
 
 internal class RcutilsLoggerFactory : IRclLoggerFactory
 {
-    private readonly SynchronizationContext _syncContext;
+    private readonly RclContext _syncContext;
 
-    public RcutilsLoggerFactory(SynchronizationContext syncContext)
+    public RcutilsLoggerFactory(RclContext syncContext)
     {
         _syncContext = syncContext;
     }
@@ -47,9 +47,9 @@ class LogEntry
 internal class RcutilsLogger : IRclLogger
 {
     private readonly string _name;
-    private readonly SynchronizationContext _syncContext;
+    private readonly RclContext _syncContext;
 
-    public RcutilsLogger(string name, SynchronizationContext syncContext)
+    public RcutilsLogger(string name, RclContext syncContext)
     {
         _name = name;
         _syncContext = syncContext;
@@ -68,7 +68,14 @@ internal class RcutilsLogger : IRclLogger
         entry.Category = _name;
         entry.MemberName = functionName;
 
-        _syncContext.Post(s => Log((LogEntry)s!), entry);
+        if (!_syncContext.IsCurrent)
+        {
+            _syncContext.SynchronizationContext.Post(s => Log((LogEntry)s!), entry);
+        }
+        else
+        {
+            Log(entry);
+        }
     }
 
     private static void Log(LogEntry entry)

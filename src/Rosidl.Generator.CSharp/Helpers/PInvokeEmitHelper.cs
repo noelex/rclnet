@@ -17,7 +17,7 @@ internal static class PInvokeEmitHelper
         var method = new CSharpMethod()
         {
             Name = "Finalize",
-            Visibility = CSharpVisibility.Private,
+            Visibility = CSharpVisibility.Public,
             Modifiers = CSharpModifiers.Static,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
         };

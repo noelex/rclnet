@@ -107,7 +107,7 @@ internal unsafe abstract class NativeSubscriptionBase :
 
     private void OnLivelinessChanged(LivelinessChangedEvent info)
     {
-        _node.Logger.LogWarning(
+        _node.Logger.LogDebug(
             $"Received LivelinessChangedEvent on subscription of topic '{Name}': " +
             $"Alive = {info.AliveCount}, AliveDelta = {info.AliveCountDelta}, " +
             $"NotAlive = {info.NotAliveCount}, NotAliveDelta = {info.NotAliveCountDelta}");

@@ -60,6 +60,33 @@ public interface IMessage : ITypeSupport
     abstract static void UnsafeDestroy(nint data);
 
     /// <summary>
+    /// Initialize a previously allocated native message structure.
+    /// </summary>
+    /// <param name="data">A pointer to the underlying ROS message structure.</param>
+    /// <returns><see langword="true"/> is the initialization is successful, otherwise <see langword="false"/>.</returns>
+    abstract static bool UnsafeInitialize(nint data);
+
+    /// <summary>
+    /// Finalize a native message structure, but without freeing the message pointer.
+    /// </summary>
+    /// <param name="data">A pointer to the underlying ROS message structure.</param>
+    abstract static void UnsafeFinalize(nint data);
+
+    /// <summary>
+    /// Initialize a previously allocated native message sequence structure.
+    /// </summary>
+    /// <param name="size">Size of the sequence.</param>
+    /// <param name="data">A pointer to the underlying ROS message sequence structure.</param>
+    /// <returns><see langword="true"/> is the initialization is successful, otherwise <see langword="false"/>.</returns>
+    abstract static bool UnsafeInitializeSequence(int size, nint data);
+
+    /// <summary>
+    /// Finalize a native message sequence structure, but without freeing the message sequence pointer.
+    /// </summary>
+    /// <param name="data">A pointer to the underlying ROS message sequence structure.</param>
+    abstract static void UnsafeFinalizeSequence(nint data);
+
+    /// <summary>
     /// Write data of current message instance into native message buffer.
     /// </summary>
     /// <param name="data">A pointer to the underlying ROS message structure.</param>

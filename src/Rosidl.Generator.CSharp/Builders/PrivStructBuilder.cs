@@ -204,7 +204,7 @@ public class PrivStructBuilder
         var method = new CSharpMethod()
         {
             Name = "TryInitialize",
-            Visibility = CSharpVisibility.Private,
+            Visibility = CSharpVisibility.Public,
             Modifiers = CSharpModifiers.Static,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Bool)
         };
