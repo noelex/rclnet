@@ -134,15 +134,9 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     {
         ThrowIfDisposed();
 
-        bool success = false;
-        try
+        using (ScopedLock.Lock(ref _callbackLock))
         {
-            _callbackLock.Enter(ref success);
             _callbacks.Enqueue(new(callback, state, completion));
-        }
-        finally
-        {
-            if (success) _callbackLock.Exit();
         }
 
         Interrupt();
@@ -152,15 +146,9 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     {
         ThrowIfDisposed();
 
-        bool success = false;
-        try
+        using (ScopedLock.Lock(ref _handleLock))
         {
-            _handleLock.Enter(ref success);
             _waitHandles[token] = new(handle, callback, state);
-        }
-        finally
-        {
-            if (success) _handleLock.Exit();
         }
 
         Interrupt();
@@ -168,15 +156,9 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
 
     private void UnregisterWaitHandle(long token)
     {
-        bool success = false;
-        try
+        using (ScopedLock.Lock(ref _handleLock))
         {
-            _handleLock.Enter(ref success);
             _waitHandles.Remove(token);
-        }
-        finally
-        {
-            if (success) _handleLock.Exit();
         }
 
         Interrupt();
@@ -230,10 +212,8 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
             {
                 guardConditions.Add(_interruptSignal);
 
-                bool success = false;
-                try
+                using (ScopedLock.Lock(ref _handleLock))
                 {
-                    _handleLock.Enter(ref success);
                     foreach (var (key, value) in _waitHandles)
                     {
                         waitHandles.Add(value);
@@ -255,18 +235,14 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                             case SafeClientHandle client:
                                 clients.Add(client);
                                 break;
-                            case SafePublisherEventHandle client:
-                                events.Add(client);
+                            case SafePublisherEventHandle pubEvent:
+                                events.Add(pubEvent);
                                 break;
-                            case SafeSubscriptionEventHandle client:
-                                events.Add(client);
+                            case SafeSubscriptionEventHandle subEvent:
+                                events.Add(subEvent);
                                 break;
                         }
                     }
-                }
-                finally
-                {
-                    if (success) _handleLock.Exit();
                 }
 
                 rcl_wait_set_resize(&ws,
@@ -443,20 +419,13 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     {
         try
         {
-            bool success = false;
-            try
+            using (ScopedLock.Lock(ref _callbackLock))
             {
-                _callbackLock.Enter(ref success);
                 while (_callbacks.TryDequeue(out var cb))
                 {
                     storage.Add(cb);
                 }
             }
-            finally
-            {
-                if (success) _callbackLock.Exit();
-            }
-
 
             foreach (var cb in storage)
             {

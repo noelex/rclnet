@@ -37,14 +37,11 @@ internal abstract class RclWaitObject<T> : RclObject<T>, IRclWaitObject where T 
 
         self.OnWaitCompleted();
 
-        bool success = false;
-        try
+        using (ScopedLock.Lock(ref self._syncRoot))
         {
-            self._syncRoot.Enter(ref success);
-
             // Snapshot awaiters to prevent prematurely completing "future" awaiters
             // which will be registered in synchronous continuation.
-            foreach (var (id, v) in self._awaiters)
+            foreach (var (_, v) in self._awaiters)
             {
                 self._awaiterSnapshot.Add(v);
             }
@@ -56,10 +53,6 @@ internal abstract class RclWaitObject<T> : RclObject<T>, IRclWaitObject where T 
             // ValueTaskSource.
             self._awaiters.Clear();
         }
-        finally
-        {
-            if (success) self._syncRoot.Exit();
-        }
 
         foreach (var awaiter in self._awaiterSnapshot)
         {
@@ -70,29 +63,17 @@ internal abstract class RclWaitObject<T> : RclObject<T>, IRclWaitObject where T 
 
     private void AddAwaiter(int token, ManualResetValueTaskSource<bool> item)
     {
-        bool success = false;
-        try
+        using (ScopedLock.Lock(ref _syncRoot))
         {
-            _syncRoot.Enter(ref success);
             _awaiters[token] = item;
-        }
-        finally
-        {
-            if (success) _syncRoot.Exit();
         }
     }
 
     private bool RemoveAwaiter(int token)
     {
-        bool success = false;
-        try
+        using (ScopedLock.Lock(ref _syncRoot))
         {
-            _syncRoot.Enter(ref success);
             return _awaiters.Remove(token);
-        }
-        finally
-        {
-            if (success) _syncRoot.Exit();
         }
     }
 
@@ -116,7 +97,7 @@ internal abstract class RclWaitObject<T> : RclObject<T>, IRclWaitObject where T 
         var completionArg =
             ObjectPool.Rent<CompletedCallbackArgs>()
             .Reset(this, reg, id, tcs, cancellationArgs);
-        tcs.OnFinally(static state => 
+        tcs.OnFinally(static state =>
             ((RclWaitObject<T>.CompletedCallbackArgs)state!).Return(), (object)completionArg);
 
         AddAwaiter(id, tcs);
@@ -133,21 +114,14 @@ internal abstract class RclWaitObject<T> : RclObject<T>, IRclWaitObject where T 
             _registration.Dispose();
             base.Dispose();
 
-            bool success = false;
             Dictionary<int, ManualResetValueTaskSource<bool>> snapshot;
-
-            try
+            using (ScopedLock.Lock(ref _syncRoot))
             {
-                _syncRoot.Enter(ref success);
                 snapshot = new(_awaiters);
                 _awaiters.Clear();
             }
-            finally
-            {
-                if (success) _syncRoot.Exit();
-            }
 
-            foreach (var (id, v) in snapshot)
+            foreach (var (_, v) in snapshot)
             {
                 v.SetException(new ObjectDisposedException(GetType().Name));
             }
@@ -223,7 +197,7 @@ internal abstract class RclWaitObject<T> : RclObject<T>, IRclWaitObject where T 
             Completion.Reset();
 
             CancellationArgs.Return();
-            
+
             ObjectPool.Return(Completion);
             ObjectPool.Return(this);
         }
