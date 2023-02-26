@@ -18,7 +18,6 @@ internal unsafe class RclSubscription<T> :
     IRclSubscription<T> where T : IMessage
 {
     private readonly RclNodeImpl _node;
-    private readonly RosMessageBuffer _messageBuffer = RosMessageBuffer.Create<T>();
     private readonly Channel<T> _messageChannel;
     private readonly QosProfile _actualQos;
     private readonly Encoding _textEncoding;
@@ -52,49 +51,62 @@ internal unsafe class RclSubscription<T> :
         _textEncoding = options.TextEncoding;
         Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object))!;
 
+        var completelyInitialized = false;
         try
         {
-            _livelinessEvent = new RclSubscriptionLivelinessChangedEvent(
-                Context, Handle,
-                options.LivelinessChangedHandler ?? OnLivelinessChanged);
-        }
-        catch (RclException ex)
-        {
-            if (options.LivelinessChangedHandler != null)
+            try
             {
-                _node.Context.DefaultLogger.LogWarning("Unable to register LivelinessChangedEvent:");
-                _node.Context.DefaultLogger.LogWarning(ex.Message);
+                _livelinessEvent = new RclSubscriptionLivelinessChangedEvent(
+                    Context, Handle,
+                    options.LivelinessChangedHandler ?? OnLivelinessChanged);
             }
-        }
+            catch (RclException ex)
+            {
+                if (options.LivelinessChangedHandler != null)
+                {
+                    throw;
+                }
+                _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessChangedEvent:");
+                _node.Context.DefaultLogger.LogDebug(ex.Message);
+            }
 
-        try
-        {
-            _deadlineMissedEvent = new RclSubscriptionRequestedDeadlineMissedEvent(
-                Context, Handle,
-                options.RequestedDeadlineMissedHandler ?? OnDeadlineMissed);
-        }
-        catch (RclException ex)
-        {
-            if (options.RequestedDeadlineMissedHandler != null)
+            try
             {
-                _node.Context.DefaultLogger.LogWarning("Unable to register RequestedDeadlineMissedEvent:");
-                _node.Context.DefaultLogger.LogWarning(ex.Message);
+                _deadlineMissedEvent = new RclSubscriptionRequestedDeadlineMissedEvent(
+                    Context, Handle,
+                    options.RequestedDeadlineMissedHandler ?? OnDeadlineMissed);
             }
-        }
+            catch (RclException ex)
+            {
+                if (options.RequestedDeadlineMissedHandler != null)
+                {
+                    throw;
+                }
+                _node.Context.DefaultLogger.LogDebug("Unable to register RequestedDeadlineMissedEvent:");
+                _node.Context.DefaultLogger.LogDebug(ex.Message);
+            }
 
-        try
-        {
-            _qosEvent = new RclSubscriptionRequestedIncompatibleQosEvent(
-                Context, Handle,
-                options.RequestedQosIncompatibleHandler ?? OnIncompatibleQos);
-        }
-        catch (RclException ex)
-        {
-            if (options.RequestedQosIncompatibleHandler != null)
+            try
             {
-                _node.Context.DefaultLogger.LogWarning("Unable to register RequestedQosIncompatibleEvent:");
-                _node.Context.DefaultLogger.LogWarning(ex.Message);
+                _qosEvent = new RclSubscriptionRequestedIncompatibleQosEvent(
+                    Context, Handle,
+                    options.RequestedQosIncompatibleHandler ?? OnIncompatibleQos);
             }
+            catch (RclException ex)
+            {
+                if (options.RequestedQosIncompatibleHandler != null)
+                {
+                    throw;
+                }
+                _node.Context.DefaultLogger.LogDebug("Unable to register RequestedQosIncompatibleEvent:");
+                _node.Context.DefaultLogger.LogDebug(ex.Message);
+            }
+
+            completelyInitialized = true;
+        }
+        finally
+        {
+            if (!completelyInitialized) Dispose();
         }
     }
 
@@ -124,9 +136,10 @@ internal unsafe class RclSubscription<T> :
         // to be compatible with both foxy and humble.
         RclHumble.rmw_message_info_t header;
 
-        if (rcl_ret_t.RCL_RET_OK == rcl_take(Handle.Object, _messageBuffer.Data.ToPointer(), &header, null))
+        using var messageBuffer = RosMessageBuffer.Create<T>();
+        if (rcl_ret_t.RCL_RET_OK == rcl_take(Handle.Object, messageBuffer.Data.ToPointer(), &header, null))
         {
-            var msg = (T)T.CreateFrom(_messageBuffer.Data, _textEncoding);
+            var msg = (T)T.CreateFrom(messageBuffer.Data, _textEncoding);
             _messageChannel.Writer.TryWrite(msg);
             foreach (var (_, obs) in _observers)
             {
@@ -148,7 +161,6 @@ internal unsafe class RclSubscription<T> :
 
         if (_messageChannel.Writer.TryComplete())
         {
-            _messageBuffer.Dispose();
             foreach (var (_, obs) in _observers)
             {
                 obs.OnCompleted();

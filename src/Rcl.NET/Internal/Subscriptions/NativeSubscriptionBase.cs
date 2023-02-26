@@ -46,49 +46,62 @@ internal unsafe abstract class NativeSubscriptionBase :
         Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object))!;
         Options = options;
 
+        var completelyInitialized = false;
         try
         {
-            _livelinessEvent = new RclSubscriptionLivelinessChangedEvent(
-                Context, Handle,
-                options.LivelinessChangedHandler ?? OnLivelinessChanged);
-        }
-        catch (RclException ex)
-        {
-            if (options.LivelinessChangedHandler != null)
+            try
             {
-                _node.Context.DefaultLogger.LogWarning("Unable to register LivelinessChangedEvent:");
-                _node.Context.DefaultLogger.LogWarning(ex.Message);
+                _livelinessEvent = new RclSubscriptionLivelinessChangedEvent(
+                    Context, Handle,
+                    options.LivelinessChangedHandler ?? OnLivelinessChanged);
             }
-        }
+            catch (RclException ex)
+            {
+                if (options.LivelinessChangedHandler != null)
+                {
+                    throw;
+                }
+                _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessChangedEvent:");
+                _node.Context.DefaultLogger.LogDebug(ex.Message);
+            }
 
-        try
-        {
-            _deadlineMissedEvent = new RclSubscriptionRequestedDeadlineMissedEvent(
-                Context, Handle,
-                options.RequestedDeadlineMissedHandler ?? OnDeadlineMissed);
-        }
-        catch (RclException ex)
-        {
-            if (options.RequestedDeadlineMissedHandler != null)
+            try
             {
-                _node.Context.DefaultLogger.LogWarning("Unable to register RequestedDeadlineMissedEvent:");
-                _node.Context.DefaultLogger.LogWarning(ex.Message);
+                _deadlineMissedEvent = new RclSubscriptionRequestedDeadlineMissedEvent(
+                    Context, Handle,
+                    options.RequestedDeadlineMissedHandler ?? OnDeadlineMissed);
             }
-        }
+            catch (RclException ex)
+            {
+                if (options.RequestedDeadlineMissedHandler != null)
+                {
+                    throw;
+                }
+                _node.Context.DefaultLogger.LogDebug("Unable to register RequestedDeadlineMissedEvent:");
+                _node.Context.DefaultLogger.LogDebug(ex.Message);
+            }
 
-        try
-        {
-            _qosEvent = new RclSubscriptionRequestedIncompatibleQosEvent(
-                Context, Handle,
-                options.RequestedQosIncompatibleHandler ?? OnIncompatibleQos);
-        }
-        catch (RclException ex)
-        {
-            if (options.RequestedQosIncompatibleHandler != null)
+            try
             {
-                _node.Context.DefaultLogger.LogWarning("Unable to register RequestedQosIncompatibleEvent:");
-                _node.Context.DefaultLogger.LogWarning(ex.Message);
+                _qosEvent = new RclSubscriptionRequestedIncompatibleQosEvent(
+                    Context, Handle,
+                    options.RequestedQosIncompatibleHandler ?? OnIncompatibleQos);
             }
+            catch (RclException ex)
+            {
+                if (options.RequestedQosIncompatibleHandler != null)
+                {
+                    throw;
+                }
+                _node.Context.DefaultLogger.LogDebug("Unable to register RequestedQosIncompatibleEvent:");
+                _node.Context.DefaultLogger.LogDebug(ex.Message);
+            }
+
+            completelyInitialized = true;
+        }
+        finally
+        {
+           if(!completelyInitialized) Dispose();
         }
     }
 

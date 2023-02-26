@@ -1,17 +1,11 @@
-﻿using Rcl.Qos;
-using Rcl.SafeHandles;
-using Rosidl.Runtime.Interop;
-using Rosidl.Runtime;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Rcl.Internal.Events;
 using Rcl.Introspection;
-using Rcl.Internal.Events;
 using Rcl.Logging;
+using Rcl.Qos;
+using Rcl.SafeHandles;
+using Rosidl.Runtime;
+using Rosidl.Runtime.Interop;
+using System.Runtime.CompilerServices;
 
 namespace Rcl.Internal;
 
@@ -39,55 +33,66 @@ internal unsafe class RclNativePublisher : RclObject<SafePublisherHandle>, IRclP
         Name = StringMarshal.CreatePooledString(rcl_publisher_get_topic_name(Handle.Object))!;
         Options = options;
 
+        bool completelyInitialized = false;
         try
         {
-            _livelinessEvent = new RclPublisherLivelinessLostEvent(
-                node.Context, Handle,
-                options.LivelinessLostHandler ?? OnLivelinessEvent);
-        }
-        catch (RclException ex)
-        {
-            if (options.LivelinessLostHandler != null)
+            try
             {
-                _node.Context.DefaultLogger.LogWarning("Unable to register LivelinessLostEvent:");
-                _node.Context.DefaultLogger.LogWarning(ex.Message);
+                _livelinessEvent = new RclPublisherLivelinessLostEvent(
+                    node.Context, Handle,
+                    options.LivelinessLostHandler ?? OnLivelinessEvent);
             }
-        }
+            catch (RclException ex)
+            {
+                if (options.LivelinessLostHandler != null)
+                {
+                    throw;
+                }
+                _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessLostEvent:");
+                _node.Context.DefaultLogger.LogDebug(ex.Message);
+            }
 
-        try
-        {
-            _deadlineMissedEvent = new RclPublisherOfferedDeadlineMissedEvent(
-                node.Context, Handle,
-                options.OfferedDeadlineMissedHandler ?? OnDeadlineEvent);
-        }
-        catch (RclException ex)
-        {
-            if(options.OfferedDeadlineMissedHandler != null)
+            try
             {
-                _node.Context.DefaultLogger.LogWarning("Unable to register OfferedDeadlineMissedEvent:");
-                _node.Context.DefaultLogger.LogWarning(ex.Message);
+                _deadlineMissedEvent = new RclPublisherOfferedDeadlineMissedEvent(
+                    node.Context, Handle,
+                    options.OfferedDeadlineMissedHandler ?? OnDeadlineEvent);
             }
-        }
+            catch (RclException ex)
+            {
+                if (options.OfferedDeadlineMissedHandler != null)
+                {
+                    throw;
+                }
+                _node.Context.DefaultLogger.LogDebug("Unable to register OfferedDeadlineMissedEvent:");
+                _node.Context.DefaultLogger.LogDebug(ex.Message);
+            }
 
-        try
-        {
-            _qosEvent = new RclPublisherIncompatibleQosEvent(
-                node.Context, Handle,
-                options.OfferedQosIncompatibleHandler ?? OnIncompatibleQosEvent);
-        }
-        catch (RclException ex)
-        {
-            if(options.OfferedQosIncompatibleHandler != null)
+            try
             {
-                _node.Context.DefaultLogger.LogWarning("Unable to register OfferedQosIncompatibleEvent:");
-                _node.Context.DefaultLogger.LogWarning(ex.Message);
+                _qosEvent = new RclPublisherIncompatibleQosEvent(
+                    node.Context, Handle,
+                    options.OfferedQosIncompatibleHandler ?? OnIncompatibleQosEvent);
             }
+            catch (RclException ex)
+            {
+                if (options.OfferedQosIncompatibleHandler != null)
+                {
+                    throw;
+                }
+                _node.Context.DefaultLogger.LogDebug("Unable to register OfferedQosIncompatibleEvent:");
+                _node.Context.DefaultLogger.LogDebug(ex.Message);
+            }
+        }
+        finally
+        {
+            if (!completelyInitialized) Dispose();
         }
     }
 
     private void OnLivelinessEvent(LivelinessLostEvent info)
     {
-        _node.Logger.LogWarning(
+        _node.Logger.LogDebug(
             $"Received LivelinessLostEvent on publisher of topic '{Name}': " +
             $"Total = {info.TotalCount}, Delta = {info.Delta}");
     }
