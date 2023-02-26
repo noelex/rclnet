@@ -8,10 +8,10 @@ using var ctx = new RclContext(args);
 using var node = ctx.CreateNode("example_action_server");
 
 using var server = node.CreateActionServer<RotateAbsoluteAction>(
-    "/turtle1/rotate_absolute", new MyNativeActionServer(node, preemptive: true), resultTimeout: TimeSpan.Zero);
+    "/turtle1/rotate_absolute", new MyNativeActionServer(node, preemptive: true), new(resultTimeout: TimeSpan.Zero));
 
 node.Logger.LogInformation("Action server started.");
-await Task.Run(()=>Console.ReadLine());
+Console.ReadLine();
 
 class MyNativeActionServer : ActionGoalHandler
 {

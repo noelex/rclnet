@@ -289,11 +289,11 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TResult">Type of the result message.</typeparam>
     /// <typeparam name="TFeedback">Type of the feedback message.</typeparam>
     /// <param name="actionName">Name of the action.</param>
-    /// <param name="textEncoding">Specify the encoding of the string in the message. Defaults to <see cref="Encoding.UTF8"/>.</param>
+    /// <param name="options"><see cref="ActionClientOptions"/> to be used for the client. Defaults to <see cref="ActionClientOptions.Default"/>.</param>
     /// <returns></returns>
     IActionClient<TGoal, TResult, TFeedback> CreateActionClient<TAction, TGoal, TResult, TFeedback>(
         string actionName,
-        Encoding? textEncoding = null)
+        ActionClientOptions? options = null)
         where TAction : IAction<TGoal, TResult, TFeedback>
         where TGoal : IActionGoal
         where TFeedback : IActionFeedback
@@ -305,21 +305,15 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TAction">Type of the action.</typeparam>
     /// <param name="actionName"></param>
     /// <param name="handler"></param>
-    /// <param name="clock"></param>
-    /// <param name="resultTimeout">
-    /// Timeout of the result cache.
-    /// Setting to a negative <see cref="TimeSpan"/> will cause the results to be kept indefinitely until server shutdown.
-    /// Setting to <see cref="TimeSpan.Zero"/> will disable caching and the result is removed as soon as the action
-    /// client gets the result.
-    /// <para>Default is 15 minutes.</para>
+    /// <param name="options">
+    /// <see cref="ActionServerOptions"/> to be used for the client. Defaults to <see cref="ActionServerOptions.Default"/>.
     /// </param>
     /// <param name="textEncoding"></param>
     /// <returns></returns>
     IActionServer CreateActionServer<TAction>(
         string actionName,
         INativeActionGoalHandler handler,
-        TimeSpan? resultTimeout = null,
-        Encoding? textEncoding = null)
+        ActionServerOptions? options = null)
         where TAction : IAction;
 
     /// <summary>
@@ -331,21 +325,14 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TFeedback">Type of the feedback message.</typeparam>
     /// <param name="actionName"></param>
     /// <param name="handler"></param>
-    /// <param name="clock"></param>
-    /// <param name="textEncoding"></param>
-    /// <param name="resultTimeout">
-    /// Timeout of the result cache.
-    /// Setting to a negative <see cref="TimeSpan"/> will cause the results to be kept indefinitely until server shutdown.
-    /// Setting to <see cref="TimeSpan.Zero"/> will disable caching and the result is removed as soon as the action
-    /// client gets the result.
-    /// <para>Default is 15 minutes.</para>
+    /// <param name="options">
+    /// <see cref="ActionServerOptions"/> to be used for the client. Defaults to <see cref="ActionServerOptions.Default"/>.
     /// </param>
     /// <returns></returns>
     IActionServer CreateActionServer<TAction, TGoal, TResult, TFeedback>(
         string actionName,
         IActionGoalHandler<TGoal,TResult, TFeedback> handler,
-        TimeSpan? resultTimeout = null,
-        Encoding? textEncoding = null)
+        ActionServerOptions? options = null)
         where TAction : IAction<TGoal, TResult, TFeedback>
         where TGoal : IActionGoal
         where TFeedback : IActionFeedback

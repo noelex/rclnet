@@ -29,14 +29,13 @@ internal class ActionServer : IActionServer
 
     public ActionServer(RclNodeImpl node, string actionName,
         string typesupportName, TypeSupportHandle actionTypesupport,
-        INativeActionGoalHandler handler, Encoding textEncoding,
-        TimeSpan resultTimeout)
+        INativeActionGoalHandler handler, ActionServerOptions options)
     {
         _node = node;
         _clock = node.Clock;
         _handler = handler;
-        _textEncoding = textEncoding;
-        _resultTimeout = resultTimeout;
+        _textEncoding = options.TextEncoding;
+        _resultTimeout = options.ResultTimeout;
         _logger = _node.Context.DefaultLogger;
 
         var statusTopicName = actionName + Constants.StatusTopic;
@@ -54,32 +53,28 @@ internal class ActionServer : IActionServer
             _sendGoalService = new IntrospectionService(node,
                 sendGoalServiceName, _typesupport.GoalServiceTypeSupport,
                 new DelegateNativeServiceCallHandler(static (request, response, state) =>
-                ((ActionServer)state!).HandleSendGoal(request, response), this), new(qos: QosProfile.ServicesDefault));
+                ((ActionServer)state!).HandleSendGoal(request, response), this), new(qos: options.GoalServiceQos));
 
             _getResultService = new ConcurrentIntrospectionService(node,
                 getResultServiceName,
                 new DelegateConcurrentNativeServiceCallHandler((request, response, state, ct) =>
                    ((ActionServer)state!).HandleGetResult(request, response, ct), this),
                 _typesupport.ResultServiceTypeSupport,
-                new(qos: QosProfile.ServicesDefault));
+                new(qos: options.ResultServiceQos));
 
             _cancelGoalService = _node.CreateNativeService<CancelGoalService>(
                 cancelGoalServiceName, static (request, response, state) =>
-                ((ActionServer)state!).HandleCancelGoal(request, response), this, new(qos: QosProfile.ServicesDefault));
-
-            var feedbackQos = RosEnvironment.IsFoxy
-                ? QosProfile.SensorData : QosProfile.Default;
+                ((ActionServer)state!).HandleCancelGoal(request, response), this, new(qos: options.CancelServiceQos));
 
             _statusPublisher = _node.CreatePublisher<GoalStatusArray>(statusTopicName,
-                new(qos: QosProfile.ActionStatusDefault, textEncoding: textEncoding));
+                new(qos: options.StatusTopicQos, textEncoding: options.TextEncoding));
 
             _feedbackPublisher = new RclNativePublisher(node, feedbackTopicName,
-                _typesupport.FeedbackMessageTypeSupport, new(qos: feedbackQos));
+                _typesupport.FeedbackMessageTypeSupport, new(qos: options.FeedbackTopicQos));
 
             // In case the given action name gets normalized.
             var sep = _feedbackPublisher.Name!.LastIndexOf(Constants.FeedbackTopic);
             Name = _feedbackPublisher.Name.Substring(0, sep);
-            done = true;
 
             if (_resultTimeout > TimeSpan.Zero)
             {
@@ -89,6 +84,8 @@ internal class ActionServer : IActionServer
             {
                 _logger.LogDebug($"Result expiration for action server '{Name}' is disabled because result timeout is set to {_resultTimeout}.");
             }
+
+            done = true;
         }
         finally
         {

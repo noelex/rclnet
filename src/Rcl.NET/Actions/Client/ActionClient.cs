@@ -31,10 +31,10 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
     private readonly CancellationTokenSource _cts = new();
 
-    public ActionClient(RclNodeImpl node, string actionName, Encoding textEncoding)
+    public ActionClient(RclNodeImpl node, string actionName, ActionClientOptions options)
     {
         _node = node;
-        _textEncoding = textEncoding;
+        _textEncoding = options.TextEncoding;
 
         var statusTopicName = actionName + Constants.StatusTopic;
         var feedbackTopicName = actionName + Constants.FeedbackTopic;
@@ -48,23 +48,19 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         try
         {
             _cancelGoalClient = new(node, cancelGoalServiceName, 
-                new(qos: QosProfile.ServicesDefault, textEncoding: textEncoding));
+                new(qos: options.CancelServiceQos, textEncoding: options.TextEncoding));
             _sendGoalClient = new(node, sendGoalServiceName,
-                _typesupport.GoalServiceTypeSupport, new(qos: QosProfile.ServicesDefault));
+                _typesupport.GoalServiceTypeSupport, new(qos: options.GoalServiceQos));
             _getResultClient = new(node, getResultServiceName,
-                _typesupport.ResultServiceTypeSupport, new(qos: QosProfile.ServicesDefault));
+                _typesupport.ResultServiceTypeSupport, new(qos: options.ResultServiceQos));
 
             _statusSubscription = _node.CreateNativeSubscription<GoalStatusArray>(
                 statusTopicName,
-               new(qos: QosProfile.ActionStatusDefault));
-
-            var feedbackQos = RosEnvironment.IsFoxy
-                ? QosProfile.SensorData : QosProfile.Default;
-
+               new(qos: options.StatusTopicQos));
             _feedbackSubscription = _node.CreateNativeSubscription(
                 feedbackTopicName,
                 _typesupport.FeedbackMessageTypeSupport,
-                new(qos: feedbackQos));
+                new(qos: options.FeedbackTopicQos));
 
             // In case the given action name gets normalized.
             var sep = _feedbackSubscription.Name!.LastIndexOf("/_action/feedback");

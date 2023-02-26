@@ -174,13 +174,14 @@ internal partial class RclNodeImpl
 
     public IActionClient<TGoal, TResult, TFeedback> CreateActionClient<TAction, TGoal, TResult, TFeedback>(
         string actionName,
-        Encoding? textEncoding = null)
+        ActionClientOptions? options = null)
         where TAction : IAction<TGoal, TResult, TFeedback>
         where TGoal : IActionGoal
         where TFeedback : IActionFeedback
         where TResult : IActionResult
     {
-        return new ActionClient<TAction, TGoal, TResult, TFeedback>(this, actionName, textEncoding ?? Encoding.UTF8);
+        return new ActionClient<TAction, TGoal, TResult, TFeedback>(
+            this, actionName, options ?? ActionClientOptions.Default);
     }
 
     public IRclNativeSubscription CreateNativeSubscription(
@@ -197,26 +198,26 @@ internal partial class RclNodeImpl
 
     public IActionServer CreateActionServer<TAction>(
         string actionName, INativeActionGoalHandler handler,
-        TimeSpan? resultTimeout = null, Encoding? textEncoding = null) where TAction : IAction
+        ActionServerOptions? options = null) where TAction : IAction
         => new ActionServer(this,
             actionName,
             TAction.TypeSupportName,
             TAction.GetTypeSupportHandle(), handler,
-            textEncoding ?? Encoding.UTF8,
-            resultTimeout ?? TimeSpan.FromMinutes(15));
+            options ?? ActionServerOptions.Default);
 
     public IActionServer CreateActionServer<TAction, TGoal, TResult, TFeedback>(
         string actionName,
         IActionGoalHandler<TGoal, TResult, TFeedback> handler,
-        TimeSpan? resultTimeout = null,
-        Encoding? textEncoding = null)
+        ActionServerOptions? options = null)
         where TAction : IAction<TGoal, TResult, TFeedback>
         where TGoal : IActionGoal
         where TResult : IActionResult
         where TFeedback : IActionFeedback
-        => CreateActionServer<TAction>(
+    {
+        options ??= ActionServerOptions.Default;
+        return CreateActionServer<TAction>(
             actionName,
-            new ActionGoalHandlerWrapper<TGoal, TResult, TFeedback>(handler, textEncoding ?? Encoding.UTF8),
-            resultTimeout,
-            textEncoding);
+            new ActionGoalHandlerWrapper<TGoal, TResult, TFeedback>(handler, options.TextEncoding),
+            options);
+    }
 }

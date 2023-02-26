@@ -9,6 +9,4 @@ internal static class Constants
     public const string SendGoalService = "/_action/send_goal";
     public const string CancelGoalService = "/_action/cancel_goal";
     public const string GetResultService = "/_action/get_result";
-
-    public static readonly QosProfile StatusQoS = new(Depth: 1, Durability: DurabilityPolicy.TransientLocal, Reliability: ReliabilityPolicy.Reliable);
 }
