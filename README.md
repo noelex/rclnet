@@ -16,6 +16,7 @@ Supported ROS 2 Distributions:
 - Easy-to-use POCO-based APIs.
 - Fast and zero managed heap allocation APIs operating directly on native message buffers.
 - Single package with runtime support for different ROS 2 distros.
+- Builtin support for querying topic messages and ROS graph events with [Reactive Extensions](https://github.com/dotnet/reactive).
 
 ### Supported ROS Features
 |  Feature                 |  Status |  Additional Information       |
@@ -37,9 +38,11 @@ Supported ROS 2 Distributions:
 ✅Supported ⚠️Partial support ❌Not supported ⏳In development
 
 ## Installing
-rclnet is being actively developed currently, thus no stable package available for now.
-
-You can try out by installing preview packages with the following command:
+Stable releases of rclnet are hosted on NuGet. You can install them using the following command:
+```
+dotnet add package Rcl.NET
+```
+To try out latest features being developed, you can install the preview packages with the following command:
 ```
 dotnet add package Rcl.NET --prerelease
 ```
@@ -65,7 +68,7 @@ using var server = node.CreateService<
     EmptyService,
     EmptyServiceRequest,
     EmptyServiceResponse>("/vec",
-        (request, cancellationToken, state) =>
+        (request, state) =>
         {
             return new EmptyServiceResponse();
         });

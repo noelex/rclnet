@@ -11,6 +11,9 @@
 	<Company />
 	<Copyright>Copyright (c) 2023, noelex@outlook.jp</Copyright>
 	<PackageTags>ros, ros2, rcl, rosidl</PackageTags>
+  <SignAssembly>true</SignAssembly>
+  <AssemblyOriginatorKeyFile>$(ProjectDir)..\SigningKey.snk</AssemblyOriginatorKeyFile>
+  <PublicSign>True</PublicSign>
 </PropertyGroup>
 	<ItemGroup >
 		<None Include="$(ProjectDir)..\..\README.md">
