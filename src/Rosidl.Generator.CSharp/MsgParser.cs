@@ -38,7 +38,7 @@ public class MsgParser
         = new(@"^([A-Za-z]+[A-Za-z0-9_/]*[A-Za-z0-9_]*)(\[(<=)?(\d*)\])?\s+([A-Za-z]+[A-Za-z0-9_]*)(\s+(.+))?$");
 
     private static readonly Regex StringFieldPattern
-        = new(@"^(string)(<=(\d+))?\s+([A-Za-z]+[A-Za-z0-9_]*)(\s+(.+))?$");
+        = new(@"^(wstring|string)(<=(\d+))?\s+([A-Za-z]+[A-Za-z0-9_]*)(\s+(.+))?$");
 
     private readonly Dictionary<string, PrimitiveTypeMetadata> _primitiveTypeCache = new()
     {
