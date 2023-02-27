@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rosidl.Runtime", "Rosidl.Ru
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rosidl.Runtime.SourceGeneration", "Rosidl.Runtime.SourceGeneration\Rosidl.Runtime.SourceGeneration.csproj", "{A3A84B20-C909-44FF-B598-AAD31876E7C9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rcl.NET.Tests", "Rcl.NET.Tests\Rcl.NET.Tests.csproj", "{24383CC9-942E-44C8-B774-D48FF690873E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,10 +35,10 @@ Global
 		{A3A84B20-C909-44FF-B598-AAD31876E7C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A3A84B20-C909-44FF-B598-AAD31876E7C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A3A84B20-C909-44FF-B598-AAD31876E7C9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{61778E1E-86DB-4EB2-AA2A-73DC1DED3011}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{61778E1E-86DB-4EB2-AA2A-73DC1DED3011}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{61778E1E-86DB-4EB2-AA2A-73DC1DED3011}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{61778E1E-86DB-4EB2-AA2A-73DC1DED3011}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24383CC9-942E-44C8-B774-D48FF690873E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24383CC9-942E-44C8-B774-D48FF690873E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24383CC9-942E-44C8-B774-D48FF690873E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24383CC9-942E-44C8-B774-D48FF690873E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

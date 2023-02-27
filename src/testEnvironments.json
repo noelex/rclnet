@@ -1,0 +1,15 @@
+﻿{
+  "version": "1",
+  "environments": [
+    {
+      "name": "WSL - Humble",
+      "type": "wsl",
+      "wslDistribution": "Ubuntu-22.04"
+    },
+    {
+      "name": "WSL - Foxy",
+      "type": "wsl",
+      "wslDistribution": "Ubuntu-20.04"
+    }
+  ]
+}
