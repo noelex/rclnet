@@ -52,7 +52,19 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     {
         if (!RosEnvironment.IsFoxy && !RosEnvironment.IsHumble)
         {
-            throw new NotSupportedException($"ROS distribution '{RosEnvironment.Distribution}' is not supported.");
+            string message;
+            if (RosEnvironment.Distribution == string.Empty)
+            {
+                message =
+                    "No ROS distribution detected. This usually indicates that either ROS is not installed on the system yet, " +
+                    "or you have not sourced the setup files of an installed ROS distribution.";
+            }
+            else
+            {
+                message = $"ROS distribution '{RosEnvironment.Distribution}' is not supported.";
+            }
+
+            throw new NotSupportedException(message);
         }
 
         _rclSyncContext = new RclSynchronizationContext(this);
