@@ -19,7 +19,8 @@ public enum PrimitiveTypes
     UInt64,
     Float32,
     Float64,
-    String
+    String,
+    WString
 }
 
 public abstract record TypeMetadata;

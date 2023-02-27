@@ -23,7 +23,7 @@ public class PrivStructBuilder
             if (variable.FixedSize != null)
             {
                 var arrayType = (ArrayTypeMetadata)variable.Metadata.Type;
-                if (arrayType.ElementType is PrimitiveTypeMetadata prim && prim.ValueType != PrimitiveTypes.String)
+                if (arrayType.ElementType is PrimitiveTypeMetadata prim && prim.ValueType is not PrimitiveTypes.String and not PrimitiveTypes.WString)
                 {
                     string typeName = context.GetPrimitiveTypeName(prim);
                     structure.Members.Add(
@@ -47,9 +47,18 @@ public class PrivStructBuilder
                 }
                 else
                 {
-                    string typeName = (arrayType.ElementType is PrimitiveTypeMetadata p && p.ValueType is PrimitiveTypes.String)
-                        ? "global::Rosidl.Runtime.Interop.CString"
-                        : context.GetMessagePrivStructReferenceName((ComplexTypeMetadata)arrayType.ElementType);
+                    string typeName;
+                    if (arrayType.ElementType is PrimitiveTypeMetadata p)
+                    {
+                        typeName = p.ValueType is PrimitiveTypes.String
+                            ? "global::Rosidl.Runtime.Interop.CString"
+                            : "global::Rosidl.Runtime.Interop.U16String";
+                    }
+                    else
+                    {
+                        typeName = context.GetMessagePrivStructReferenceName((ComplexTypeMetadata)arrayType.ElementType);
+                    }
+
                     var names = string.Join(", ", Enumerable.Range(0, variable.FixedSize.Value).Select(x => $"__{variable.Name}_{x}"));
                     structure.Members.Add(
                         new CSharpField(names)
@@ -153,6 +162,10 @@ public class PrivStructBuilder
             {
                 return $"global::Rosidl.Runtime.Interop.CString";
             }
+            else if (p.ValueType is PrimitiveTypes.WString)
+            {
+                return $"global::Rosidl.Runtime.Interop.U16String";
+            }
             return context.GetPrimitiveTypeName(p);
         }
 
@@ -191,6 +204,7 @@ public class PrivStructBuilder
                 PrimitiveTypes.UInt64 => $"global::Rosidl.Runtime.Interop.UInt64Sequence",
                 PrimitiveTypes.UInt8 => $"global::Rosidl.Runtime.Interop.UInt8Sequence",
                 PrimitiveTypes.String => $"global::Rosidl.Runtime.Interop.CStringSequence",
+                PrimitiveTypes.WString => $"global::Rosidl.Runtime.Interop.U16StringSequence",
                 _ => throw new NotSupportedException(),
             };
         }

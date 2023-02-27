@@ -14,8 +14,7 @@ using System;
 namespace Rosidl.Messages.Builtin
 {
     /// <summary>
-    /// This message communicates ROS Time defined here:
-    /// https://design.ros2.org/articles/clock_and_time.html
+    /// Time indicates a specific point in time, relative to a clock's 0 point.
     /// </summary>
     /// <remarks>
     /// Message interface definition for <c>builtin_interfaces/msg/Time</c>.
@@ -160,8 +159,7 @@ namespace Rosidl.Messages.Builtin
         }
         
         /// <summary>
-        /// This message communicates ROS Time defined here:
-        /// https://design.ros2.org/articles/clock_and_time.html
+        /// Time indicates a specific point in time, relative to a clock's 0 point.
         /// </summary>
         /// <remarks>
         /// Blittable native structure for <c>builtin_interfaces/msg/Time</c>.
@@ -379,8 +377,7 @@ namespace Rosidl.Messages.Builtin
         }
         
         /// <summary>
-        /// This message communicates ROS Time defined here:
-        /// https://design.ros2.org/articles/clock_and_time.html
+        /// Time indicates a specific point in time, relative to a clock's 0 point.
         /// </summary>
         /// <remarks>
         /// Blittable native sequence structure for <c>builtin_interfaces/msg/Time</c>.

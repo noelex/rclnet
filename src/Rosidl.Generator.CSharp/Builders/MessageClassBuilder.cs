@@ -167,7 +167,7 @@ public class MessageClassBuilder
                         builder.AppendLine($"        {_variables[i].PropertyName} = new {GetTypeName(arrType.ElementType)}[{arraySize}];");
 
 
-                        if (arrType.ElementType is PrimitiveTypeMetadata prim && prim.ValueType == PrimitiveTypes.String)
+                        if (arrType.ElementType is PrimitiveTypeMetadata prim && prim.ValueType is PrimitiveTypes.String or PrimitiveTypes.WString)
                         {
                             builder.AppendLine($"        for (int i = 0; i < {arraySize}; i++)");
                             builder.AppendLine("        {");
@@ -243,6 +243,10 @@ public class MessageClassBuilder
                     writer.AppendLine($"    this.{fieldName} = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}.AsSpan(), textEncoding);");
                     previousLineIsBlank = false;
                     break;
+                case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.WString:
+                    writer.AppendLine($"    this.{fieldName} = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}.AsSpan());");
+                    previousLineIsBlank = false;
+                    break;
                 case PrimitiveTypeMetadata prim:
                     writer.AppendLine($"    this.{fieldName} = priv.{fieldName};");
                     previousLineIsBlank = false;
@@ -256,12 +260,19 @@ public class MessageClassBuilder
                     {
                         switch (array.ElementType)
                         {
-                            case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String:
+                            case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String or PrimitiveTypes.WString:
                                 if (!previousLineIsBlank) writer.AppendLine();
                                 writer.AppendLine($"    this.{fieldName} = new string[{arraySize}];");
                                 writer.AppendLine($"    for (int i = 0; i < this.{fieldName}.Length; i++)");
                                 writer.AppendLine("    {");
-                                writer.AppendLine($"        this.{fieldName}[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}[i].AsSpan(), textEncoding);");
+                                if(prim.ValueType is PrimitiveTypes.String)
+                                {
+                                    writer.AppendLine($"        this.{fieldName}[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}[i].AsSpan(), textEncoding);");
+                                }
+                                else
+                                {
+                                    writer.AppendLine($"        this.{fieldName}[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}[i].AsSpan());");
+                                }
                                 writer.AppendLine("    }");
                                 if (!isLast)
                                 {
@@ -295,13 +306,20 @@ public class MessageClassBuilder
                     else
                         switch (array.ElementType)
                         {
-                            case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String:
+                            case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String or PrimitiveTypes.WString:
                                 if (!previousLineIsBlank) writer.AppendLine();
                                 writer.AppendLine($"    this.{fieldName} = new string[priv.{fieldName}.Size];");
                                 writer.AppendLine($"    var {fieldName}_span = priv.{fieldName}.AsSpan();");
                                 writer.AppendLine($"    for (int i = 0; i < this.{fieldName}.Length; i++)");
                                 writer.AppendLine("    {");
-                                writer.AppendLine($"        this.{fieldName}[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString({fieldName}_span[i].AsSpan(), textEncoding);");
+                                if (prim.ValueType is PrimitiveTypes.String)
+                                {
+                                    writer.AppendLine($"        this.{fieldName}[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString({fieldName}_span[i].AsSpan(), textEncoding);");
+                                }
+                                else
+                                {
+                                    writer.AppendLine($"        this.{fieldName}[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString({fieldName}_span[i].AsSpan());");
+                                }
                                 writer.AppendLine("    }");
                                 if (!isLast)
                                 {
@@ -374,7 +392,7 @@ public class MessageClassBuilder
             int size = -1;
             string? backingFieldName = null;
 
-            if (metadata.Type is PrimitiveTypeMetadata p && p.ValueType is PrimitiveTypes.String && p.MaxLength != null)
+            if (metadata.Type is PrimitiveTypeMetadata p && p.ValueType is PrimitiveTypes.String or PrimitiveTypes.WString && p.MaxLength != null)
             {
                 size = p.MaxLength.Value;
             }
@@ -405,7 +423,7 @@ public class MessageClassBuilder
                 prop.GetBody = (w, e) => w.WriteLine("return " + backingFieldName + ";");
 
                 if (metadata.Type is ArrayTypeMetadata or ComplexTypeMetadata ||
-                        metadata.Type is PrimitiveTypeMetadata pm && pm.ValueType is PrimitiveTypes.String)
+                        metadata.Type is PrimitiveTypeMetadata pm && pm.ValueType is PrimitiveTypes.String or PrimitiveTypes.WString)
                 {
                     prop.AttributesForSet.Add(new CSharpFreeAttribute($"global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof({backingFieldName}))"));
                 }
@@ -669,6 +687,10 @@ public class MessageClassBuilder
                     writer.WriteLine($"priv.{fieldName}.CopyFrom(this.{fieldName}, textEncoding);");
                     previousLineIsBlank = false;
                     break;
+                case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.WString:
+                    writer.WriteLine($"priv.{fieldName}.CopyFrom(this.{fieldName});");
+                    previousLineIsBlank = false;
+                    break;
                 case PrimitiveTypeMetadata prim:
                     writer.WriteLine($"priv.{fieldName} = this.{fieldName};");
                     previousLineIsBlank = false;
@@ -682,11 +704,18 @@ public class MessageClassBuilder
                     {
                         switch (array.ElementType)
                         {
-                            case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String:
+                            case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String or PrimitiveTypes.WString:
                                 if (!previousLineIsBlank) writer.WriteLine();
                                 writer.WriteLine($"for (int i = 0; i < {arraySize}; i++)");
                                 writer.WriteLine("{");
-                                writer.WriteLine($"    priv.{fieldName}[i].CopyFrom(this.{fieldName}[i], textEncoding);");
+                                if(prim.ValueType is PrimitiveTypes.String)
+                                {
+                                    writer.WriteLine($"    priv.{fieldName}[i].CopyFrom(this.{fieldName}[i], textEncoding);");
+                                }
+                                else
+                                {
+                                    writer.WriteLine($"    priv.{fieldName}[i].CopyFrom(this.{fieldName}[i]);");
+                                }
                                 writer.WriteLine("}");
                                 if (!isLast)
                                 {
@@ -727,6 +756,20 @@ public class MessageClassBuilder
                                 writer.WriteLine($"for (int i = 0; i < this.{fieldName}.Length; i++)");
                                 writer.WriteLine("{");
                                 writer.WriteLine($"    {fieldName}_span[i].CopyFrom(this.{fieldName}[i], textEncoding);");
+                                writer.WriteLine("}");
+                                if (!isLast)
+                                {
+                                    writer.WriteLine();
+                                    previousLineIsBlank = true;
+                                }
+                                break;
+                            case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.WString:
+                                if (!previousLineIsBlank) writer.WriteLine();
+                                writer.WriteLine($"priv.{fieldName} = new global::Rosidl.Runtime.Interop.U16StringSequence(this.{fieldName}.Length);");
+                                writer.WriteLine($"var {fieldName}_span = priv.{fieldName}.AsSpan();");
+                                writer.WriteLine($"for (int i = 0; i < this.{fieldName}.Length; i++)");
+                                writer.WriteLine("{");
+                                writer.WriteLine($"    {fieldName}_span[i].CopyFrom(this.{fieldName}[i]);");
                                 writer.WriteLine("}");
                                 if (!isLast)
                                 {
@@ -785,7 +828,7 @@ public class MessageClassBuilder
         {
             return p.ValueType switch
             {
-                PrimitiveTypes.String => "\"\"",
+                PrimitiveTypes.String or PrimitiveTypes.WString => "\"\"",
                 PrimitiveTypes.Bool => "false",
                 PrimitiveTypes.Float64 => "0d",
                 PrimitiveTypes.Float32 => "0f",

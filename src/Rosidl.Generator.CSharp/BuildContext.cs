@@ -69,6 +69,7 @@ public class MessageBuildContext
         {PrimitiveTypes.Float32, "float" },
         {PrimitiveTypes.Float64, "double" },
         {PrimitiveTypes.String, "string" },
+        {PrimitiveTypes.WString, "string" },
     };
 
     public GeneratorOptions Options { get; set; }

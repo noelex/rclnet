@@ -55,7 +55,8 @@ public class MsgParser
         { "bool", new(PrimitiveTypes.Bool, null) },
         { "byte", new(PrimitiveTypes.UInt8, null) },
         { "char", new(PrimitiveTypes.Int8, null) },
-        { "string", new(PrimitiveTypes.String, null) }
+        { "string", new(PrimitiveTypes.String, null) },
+        { "wstring", new(PrimitiveTypes.WString, null) }
     };
 
     private readonly Dictionary<string, ComplexTypeMetadata> _complexTypeCache = new();
@@ -323,7 +324,7 @@ public class MsgParser
         if (IsConstantField(declaration.Identifier))
         {
             if (type is PrimitiveTypeMetadata p &&
-                !(p.ValueType is PrimitiveTypes.Bool or PrimitiveTypes.Float32 or PrimitiveTypes.Float64 or PrimitiveTypes.String))
+                !(p.ValueType is PrimitiveTypes.Bool or PrimitiveTypes.Float32 or PrimitiveTypes.Float64 or PrimitiveTypes.String or PrimitiveTypes.WString))
             {
                 return CreateField(p, declaration, comments);
             }
@@ -346,6 +347,10 @@ public class MsgParser
         if (declaration.IsUpperBounded && declaration.Type == "string")
         {
             return new PrimitiveTypeMetadata(PrimitiveTypes.String, declaration.ArrayLength);
+        }
+        else if (declaration.IsUpperBounded && declaration.Type == "wstring")
+        {
+            return new PrimitiveTypeMetadata(PrimitiveTypes.WString, declaration.ArrayLength);
         }
 
         if (!_primitiveTypeCache.TryGetValue(declaration.Type, out var t))
@@ -413,7 +418,7 @@ public class MsgParser
                 PrimitiveTypes.UInt64 => ulong.Parse(value),
                 PrimitiveTypes.Float32 => float.Parse(value),
                 PrimitiveTypes.Float64 => double.Parse(value),
-                PrimitiveTypes.String => ParseString(value),
+                PrimitiveTypes.String or PrimitiveTypes.WString => ParseString(value),
                 PrimitiveTypes.Bool when value is "0" or "false" => false,
                 PrimitiveTypes.Bool when value is "1" or "true" => true,
                 PrimitiveTypes.Bool => throw new FormatException($"Unexpected boolean value '{value}'."),
@@ -438,7 +443,7 @@ public class MsgParser
         value = value[1..^1].Trim();
         if (typeHint.ElementType is PrimitiveTypeMetadata p)
         {
-            var ret = p.ValueType is not PrimitiveTypes.String ?
+            var ret = p.ValueType is not PrimitiveTypes.String and not PrimitiveTypes.WString ?
                 value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(x => ParseValue(p, x)).ToArray()
                 : ExtractStringTokens(value).Select(x => ParseString(x)).ToArray();

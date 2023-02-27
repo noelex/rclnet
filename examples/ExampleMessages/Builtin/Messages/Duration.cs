@@ -14,9 +14,8 @@ using System;
 namespace Rosidl.Messages.Builtin
 {
     /// <summary>
-    /// Duration defines a period between two time points.
-    /// Messages of this datatype are of ROS Time following this design:
-    /// https://design.ros2.org/articles/clock_and_time.html
+    /// Duration defines a period between two time points. It is comprised of a
+    /// seconds component and a nanoseconds component.
     /// </summary>
     /// <remarks>
     /// Message interface definition for <c>builtin_interfaces/msg/Duration</c>.
@@ -161,9 +160,8 @@ namespace Rosidl.Messages.Builtin
         }
         
         /// <summary>
-        /// Duration defines a period between two time points.
-        /// Messages of this datatype are of ROS Time following this design:
-        /// https://design.ros2.org/articles/clock_and_time.html
+        /// Duration defines a period between two time points. It is comprised of a
+        /// seconds component and a nanoseconds component.
         /// </summary>
         /// <remarks>
         /// Blittable native structure for <c>builtin_interfaces/msg/Duration</c>.
@@ -381,9 +379,8 @@ namespace Rosidl.Messages.Builtin
         }
         
         /// <summary>
-        /// Duration defines a period between two time points.
-        /// Messages of this datatype are of ROS Time following this design:
-        /// https://design.ros2.org/articles/clock_and_time.html
+        /// Duration defines a period between two time points. It is comprised of a
+        /// seconds component and a nanoseconds component.
         /// </summary>
         /// <remarks>
         /// Blittable native sequence structure for <c>builtin_interfaces/msg/Duration</c>.

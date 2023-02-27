@@ -58,6 +58,15 @@ namespace Rosidl.Messages.Custom
         /// <param name='d'>
         /// Originally defined as: <c><![CDATA[bool d]]></c>
         /// </param>
+        /// <param name='e'>
+        /// Originally defined as: <c><![CDATA[wstring e]]></c>
+        /// </param>
+        /// <param name='f'>
+        /// Originally defined as: <c><![CDATA[wstring[3] f]]></c>
+        /// </param>
+        /// <param name='g'>
+        /// Originally defined as: <c><![CDATA[wstring[] g]]></c>
+        /// </param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public MyMessage(
@@ -67,7 +76,10 @@ namespace Rosidl.Messages.Custom
             global::Rosidl.Messages.Geometry.Vector3[]? @vectors = null,
             long[]? @numbers = null,
             string[]? @c = null,
-            bool @d = false
+            bool @d = false,
+            string @e = "",
+            string[]? @f = null,
+            string[]? @g = null
         )
         {
             A = @a;
@@ -111,6 +123,22 @@ namespace Rosidl.Messages.Custom
         
             C = @c ?? global::System.Array.Empty<string>();
             D = @d;
+            E = @e;
+        
+            if (@f != null)
+            {
+                F = @f;
+            }
+            else
+            {
+                F = new string[3];
+                for (int i = 0; i < 3; i++)
+                {
+                    F[i] = "";
+                }
+            }
+        
+            G = @g ?? global::System.Array.Empty<string>();
         }
         
         
@@ -149,6 +177,20 @@ namespace Rosidl.Messages.Custom
             }
         
             this.D = priv.D;
+            this.E = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.E.AsSpan());
+        
+            this.F = new string[3];
+            for (int i = 0; i < this.F.Length; i++)
+            {
+                this.F[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.F[i].AsSpan());
+            }
+        
+            this.G = new string[priv.G.Size];
+            var G_span = priv.G.AsSpan();
+            for (int i = 0; i < this.G.Length; i++)
+            {
+                this.G[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(G_span[i].AsSpan());
+            }
         }
         
         
@@ -240,6 +282,40 @@ namespace Rosidl.Messages.Custom
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public bool D { get; set; }
         
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[wstring e]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string E { get; set; }
+        
+        private string[] __backingField__F;
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[wstring[3] f]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string[] F
+        {
+            get
+            {
+                return __backingField__F;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__F))]
+            set
+            {
+                __backingField__F = value.Length == 3 ? value : throw new global::System.ArgumentException("Size of the array 'F' must be 3.");
+            }
+        }
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[wstring[] g]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string[] G { get; set; }
+        
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public void WriteTo(nint data, global::System.Text.Encoding textEncoding)
@@ -275,6 +351,19 @@ namespace Rosidl.Messages.Custom
             }
             
             priv.D = this.D;
+            priv.E.CopyFrom(this.E);
+            
+            for (int i = 0; i < 3; i++)
+            {
+                priv.F[i].CopyFrom(this.F[i]);
+            }
+            
+            priv.G = new global::Rosidl.Runtime.Interop.U16StringSequence(this.G.Length);
+            var G_span = priv.G.AsSpan();
+            for (int i = 0; i < this.G.Length; i++)
+            {
+                G_span[i].CopyFrom(this.G[i]);
+            }
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -397,6 +486,31 @@ namespace Rosidl.Messages.Custom
             /// </summary>
             public bool D;
             
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[wstring e]]></c>
+            /// </summary>
+            public global::Rosidl.Runtime.Interop.U16String E;
+            
+            private global::Rosidl.Runtime.Interop.U16String __F_0, __F_1, __F_2;
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[wstring[3] f]]></c>
+            /// </summary>
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<global::Rosidl.Runtime.Interop.U16String> F
+            {
+                get
+                {
+                    fixed (global::Rosidl.Runtime.Interop.U16String* __p = &__F_0) return new (__p, 3);
+                }
+            }
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[wstring[] g]]></c>
+            /// </summary>
+            public global::Rosidl.Runtime.Interop.U16StringSequence G;
+            
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
             public Priv()
@@ -500,6 +614,12 @@ namespace Rosidl.Messages.Custom
                 }
                 __hashCode.Add(this.C);
                 __hashCode.Add(this.D);
+                __hashCode.Add(this.E);
+                for (int i = 0; i < 3; i++)
+                {
+                    __hashCode.Add(this.F[i]);
+                }
+                __hashCode.Add(this.G);
             
                 return __hashCode.ToHashCode();
             }
