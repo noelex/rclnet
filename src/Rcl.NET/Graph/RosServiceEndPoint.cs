@@ -25,6 +25,7 @@ public enum ServiceEndPointType
 /// <param name="Type">Message type name of the endpoint.</param>
 public record RosServiceEndPoint(RosNode Node, ServiceEndPointType EndPointType, RosService Service, string Type)
 {
+    /// <inheritdoc/>
     public override string ToString()
     {
         return $"Service{Enum.GetName(EndPointType)}(Service = {Service}, Type = {Type})";

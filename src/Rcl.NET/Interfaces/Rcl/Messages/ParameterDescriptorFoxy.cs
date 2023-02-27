@@ -64,10 +64,6 @@ namespace Rosidl.Messages.Rcl
         /// If 'true' then the value cannot change after it has been initialized.
         /// <para>(originally defined as: <c><![CDATA[bool read_only False]]></c>)</para>
         /// </param>
-        /// <param name='dynamicTyping'>
-        /// If true, the parameter is allowed to change type.
-        /// <para>(originally defined as: <c><![CDATA[bool dynamic_typing False]]></c>)</para>
-        /// </param>
         /// <param name='floatingPointRange'>
         /// FloatingPointRange consists of a from_value, a to_value, and a step.
         /// <para>(originally defined as: <c><![CDATA[rcl_interfaces/FloatingPointRange[<=1] floating_point_range]]></c>)</para>

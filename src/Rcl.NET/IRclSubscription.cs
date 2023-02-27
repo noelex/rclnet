@@ -24,7 +24,7 @@ public interface IRclSubscription : IRclObject
     int Publishers { get; }
 
     /// <summary>
-    /// Name of the subscribed topic. Returns null when <see cref="IRclSubscription"/> is disposed.
+    /// Name of the subscribed topic.
     /// </summary>
     string Name { get; }
 }

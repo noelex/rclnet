@@ -314,18 +314,21 @@ public record PublisherOptions
     /// <para>
     /// Setting this option may cause <see cref="RclException"/> when creating the publisher,
     /// depending on whether the underlying RMW implementation supports <see cref="LivelinessLostEvent"/>.
+    /// </para>
     /// </param>
     /// <param name="offeredDeadlineMissedHandler">
     /// Handler for receiving <see cref="OfferedDeadlineMissedEvent"/>s.
     /// <para>
     /// Setting this option may cause <see cref="RclException"/> when creating the publisher,
     /// depending on whether the underlying RMW implementation supports <see cref="OfferedDeadlineMissedEvent"/>.
+    /// </para>
     /// </param>
     /// <param name="offeredQosIncompatibleHandler">
     /// Handler for receiving <see cref="IncompatibleQosEvent"/>s.
     /// <para>
     /// Setting this option may cause <see cref="RclException"/> when creating the publisher,
     /// depending on whether the underlying RMW implementation supports <see cref="IncompatibleQosEvent"/>.
+    /// </para>
     /// </param>
     public PublisherOptions(
         QosProfile? qos = null,

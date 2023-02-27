@@ -2,6 +2,10 @@
 
 namespace Rcl.Actions;
 
+/// <summary>
+/// A base action goal handler to be inherited by application for
+/// processing action goals requested by action clients.
+/// </summary>
 public abstract class ActionGoalHandler : INativeActionGoalHandler
 {
     /// <inheritdoc/>
@@ -27,6 +31,13 @@ public abstract class ActionGoalHandler : INativeActionGoalHandler
     }
 }
 
+/// <summary>
+/// A base action goal handler to be inherited by application for
+/// processing action goals requested by action clients.
+/// </summary>
+/// <typeparam name="TFeedback">Type of the feedback message.</typeparam>
+/// <typeparam name="TGoal">Type of the goal message.</typeparam>
+/// <typeparam name="TResult">Type of the result message.</typeparam>
 public abstract class ActionGoalHandler<TGoal, TResult, TFeedback> : IActionGoalHandler<TGoal, TResult, TFeedback>
     where TGoal : IActionGoal
     where TResult : IActionResult

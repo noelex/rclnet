@@ -52,9 +52,28 @@ public unsafe readonly struct ServiceTypeSupport
 [StructLayout(LayoutKind.Sequential)]
 public unsafe readonly struct ActionTypeSupport
 {
+    /// <summary>
+    /// The native type support handle of the goal service.
+    /// </summary>
     public readonly ServiceTypeSupport* GoalService;
+
+    /// <summary>
+    /// The native type support handle of the result service.
+    /// </summary>
     public readonly ServiceTypeSupport* ResultService;
+
+    /// <summary>
+    /// The native type support handle of the cancel service.
+    /// </summary>
     public readonly ServiceTypeSupport* CancelService;
+
+    /// <summary>
+    /// The native type support handle of the feedback message.
+    /// </summary>
     public readonly MessageTypeSupport* FeedbackMessage;
+
+    /// <summary>
+    /// The native type support handle of the status message.
+    /// </summary>
     public readonly MessageTypeSupport* StatusMessage;
 }

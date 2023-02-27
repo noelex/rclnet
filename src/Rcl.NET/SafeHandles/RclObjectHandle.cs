@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Rcl.SafeHandles;
 
-public abstract class RclObjectHandle : SafeHandleZeroOrMinusOneIsInvalid
+abstract class RclObjectHandle : SafeHandleZeroOrMinusOneIsInvalid
 {
     protected RclObjectHandle(bool ownsHandle) : base(ownsHandle)
     {

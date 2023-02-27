@@ -73,8 +73,8 @@ public interface INativeServiceHandler
 /// <summary>
 /// Represents a handler which is able to handle multiple service requests concurrently.
 /// </summary>
-/// <typeparam name="TRequest"></typeparam>
-/// <typeparam name="TResponse"></typeparam>
+/// <typeparam name="TRequest">Type of the request messages.</typeparam>
+/// <typeparam name="TResponse">Type of the response messages.</typeparam>
 public interface IConcurrentServiceHandler<TRequest, TResponse>
     where TRequest : IServiceRequest
     where TResponse : IServiceResponse
@@ -82,17 +82,15 @@ public interface IConcurrentServiceHandler<TRequest, TResponse>
     /// <summary>
     /// Process the incoming request asynchronously.
     /// </summary>
-    /// <param name="request">A <see cref="TRequest"/> object containing the request data.</param>
+    /// <param name="request">A <typeparamref name="TRequest"/> object containing the request data.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> which will be canceled when the corresponding <see cref="IRclService"/> is being disposed.</param>
-    /// <returns>A <see cref="TResponse"/> object containing the response data.</returns>
+    /// <returns>A <typeparamref name="TResponse"/> object containing the response data.</returns>
     Task<TResponse> ProcessRequestAsync(TRequest request, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
 /// Same as <see cref="INativeServiceHandler"/>, but handles requests concurrently.
 /// </summary>
-/// <typeparam name="TRequest"></typeparam>
-/// <typeparam name="TResponse"></typeparam>
 public interface IConcurrentNativeServiceHandler
 {
     /// <summary>

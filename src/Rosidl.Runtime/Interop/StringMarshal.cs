@@ -22,7 +22,7 @@ namespace Rosidl.Runtime.Interop
         /// <summary>
         /// Creates a pooled string from specified string buffer.
         /// </summary>
-        /// <param name="str">A <see cref="ReadOnlySpan{char}"/> containing the string to be pooled.</param>
+        /// <param name="str">A <see cref="ReadOnlySpan{Char}"/> containing the string to be pooled.</param>
         /// <returns>A pooled string instance matching the content of the input buffer.</returns>
         public static string CreatePooledString(ReadOnlySpan<char> str)
         {
@@ -53,7 +53,6 @@ namespace Rosidl.Runtime.Interop
         /// Creates a pooled string from specified unmanaged string buffer with UTF-8 encoding.
         /// </summary>
         /// <param name="buffer">A null terminated string buffer.</param>
-        /// <param name="encoding">Encoding of the input buffer, defaults to <see cref="Encoding.UTF8"/>.</param>
         /// <returns>
         /// A pooled string instance matching the content of the input buffer if <paramref name="buffer"/> is not <see langword="null"/>.
         /// Otherwise, <see langword="null"/>.
@@ -135,7 +134,6 @@ namespace Rosidl.Runtime.Interop
         /// Creates a pooled string from specified unmanaged string buffer with UTF-8 encoding.
         /// </summary>
         /// <param name="buffer">A null terminated string buffer.</param>
-        /// <param name="encoding">Encoding of the input buffer, defaults to <see cref="Encoding.UTF8"/>.</param>
         /// <returns>
         /// A pooled string instance matching the content of the input buffer if <paramref name="buffer"/> is not <see langword="null"/>.
         /// Otherwise, <see langword="null"/>.

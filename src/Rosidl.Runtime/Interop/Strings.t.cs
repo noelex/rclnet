@@ -1,5 +1,5 @@
-﻿@output(CString.g.cs, StructName=CString, ElementType=sbyte, NativeStructName=String)@
-@output(U16String.g.cs, StructName=U16String, ElementType=char, NativeStructName=U16String, Ext)@
+﻿@output(CString.g.cs, StructName=CString, ElementType=SByte, NativeStructName=String)@
+@output(U16String.g.cs, StructName=U16String, ElementType=Char, NativeStructName=U16String, Ext)@
 
 using Microsoft.Toolkit.HighPerformance.Buffers;
 using System.Runtime.CompilerServices;
@@ -74,7 +74,6 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     /// Initialize a <see cref="@StructName@"/> structure, and copy its content from a buffer containing the string.
     /// </summary>
     /// <param name="value">A pointer to the <see cref="@ElementType@"/> buffer to copy from.</param>
-    /// <param name="n">Number of <see cref="@ElementType@"/>s to be copied.</param>
     public @StructName@(ReadOnlySpan<@ElementType@> value)
     {
         CopyFrom(value);
@@ -84,8 +83,8 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     /// <summary>
     /// Initialize a <see cref="@StructName@"/> structure, and copy its content from a buffer containing the string.
     /// </summary>
-    /// <param name="value">A pointer to the <see cref="sbyte"/> buffer to copy from.</param>
-    /// <param name="n">Number of <see cref="sbyte"/>s to be copied.</param>
+    /// <param name="value">A pointer to the <see cref="SByte"/> buffer to copy from.</param>
+    /// <param name="n">Number of <see cref="SByte"/>s to be copied.</param>
     public @StructName@(sbyte* value, int n)
     {
         CopyFrom(value, n);
@@ -94,8 +93,8 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     /// <summary>
     /// Copy the content of the <see cref="@StructName@"/> structure from a buffer containing the string.
     /// </summary>
-    /// <param name="value">A pointer to the <see cref="sbyte"/> buffer to copy from.</param>
-    /// <param name="n">Number of <see cref="sbyte"/>s to be copied.</param>
+    /// <param name="value">A pointer to the <see cref="SByte"/> buffer to copy from.</param>
+    /// <param name="n">Number of <see cref="SByte"/>s to be copied.</param>
     public void CopyFrom(sbyte* value, int n)
     {
         sbyte __empty = 0;
@@ -106,7 +105,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     /// <summary>
     /// Copy the content of the <see cref="@StructName@"/> structure from a buffer containing the string.
     /// </summary>
-    /// <param name="value">A <see cref="ReadOnlySpan{sbyte}"/> buffer to copy from.</param>
+    /// <param name="value">A <see cref="ReadOnlySpan{SByte}"/> buffer to copy from.</param>
     public void CopyFrom(ReadOnlySpan<sbyte> value)
     {
         fixed (sbyte* pValue = value)
@@ -122,13 +121,14 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     public void Resize(int n)
         => ThrowIfNonSuccess(TryResize(ref this, n));
 
+    /// <inheritdoc/>
     public override string ToString() => StringMarshal.CreatePooledString(AsSpan());
 
 @else@
     /// <summary>
     /// Copy the content of the <see cref="@StructName@"/> structure from the specified Unicode character buffer with specified encoding.
     /// </summary>
-    /// <param name="value">A <see cref="ReadOnlySpan{char}"/> buffer to copy from.</param>
+    /// <param name="str">A <see cref="ReadOnlySpan{Char}"/> buffer to copy from.</param>
     /// <param name="encoding">Encoding to be used to encode the Unicode character buffer.</param>
     public void CopyFrom(ReadOnlySpan<char> str, Encoding encoding)
     {
@@ -141,20 +141,23 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     /// <summary>
     /// Copy the content of the <see cref="@StructName@"/> structure from the specified Unicode character buffer with UTF-8 encoding.
     /// </summary>
-    /// <param name="value">A <see cref="ReadOnlySpan{char}"/> buffer to copy from.</param>
+    /// <param name="str">A <see cref="ReadOnlySpan{Char}"/> buffer to copy from.</param>
     public void CopyFrom(ReadOnlySpan<char> str)
         => CopyFrom(str, Encoding.UTF8);
-
+    
+    /// <inheritdoc/>
     public override string ToString() => StringMarshal.CreatePooledString(_data, Size);
 
 @endif@
+    /// <inheritdoc/>
     public override bool Equals(object obj) => obj is @StructName@ s ? Equals(s) : false;
     
+    /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine((nint)_data, _size, _capacity);
 
     /// <summary>
     /// Check for <see cref="@StructName@"/> structure equality.
-    /// </remarks>
+    /// </summary>
     /// <returns>
     /// <see langword="true"/> if <see cref="@StructName@"/> structures are equal in size and content, otherwise <see langword="false"/>.
     /// </returns>
@@ -181,8 +184,10 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     /// </summary>
     public Span<@ElementType@> AsSpan() => new(_data, (int)_size);
 
+    /// <inheritdoc/>
     public static bool operator ==(@StructName@ lhs, @StructName@ rhs) => lhs.Equals(rhs);
 
+    /// <inheritdoc/>
     public static bool operator !=(@StructName@ lhs, @StructName@ rhs) => !(lhs == rhs);
     
     /// <summary>

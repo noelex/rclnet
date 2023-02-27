@@ -20,8 +20,14 @@ public interface IRclNode : IRclObject
     /// </summary>
     RclContext Context { get; }
 
+    /// <summary>
+    /// The <see cref="RclClock"/> used by services hosted in current <see cref="IRclNode"/>.
+    /// </summary>
     RclClock Clock { get; }
 
+    /// <summary>
+    /// Gets an <see cref="IParameterService"/> for accessing parameters in the scope of the node.
+    /// </summary>
     IParameterService Parameters { get; }
 
     /// <summary>
@@ -250,13 +256,13 @@ public interface IRclNode : IRclObject
     /// and is able to handle multiple requests concurrently.
     /// </summary>
     /// <typeparam name="TService">Type of the service.</typeparam>
-    /// <param name="serviceName"></param>
-    /// <param name="handler"></param>
+    /// <param name="serviceName">The name of the service.</param>
+    /// <param name="handler">A callback for processing service requests.</param>
     /// <param name="options">
     /// <see cref="ServerOptions"/> to be used for the server.
     /// Defaults to <see cref="ServerOptions.Default"/>.
     /// </param>
-    /// <param name="state"></param>
+    /// <param name="state">A custom state object to be passed to the handler callback.</param>
     /// <returns></returns>
     IRclService CreateConcurrentNativeService<TService>(
         string serviceName,
@@ -303,12 +309,11 @@ public interface IRclNode : IRclObject
     /// Create an ROS action server which sends and receives messages using native message buffer.
     /// </summary>
     /// <typeparam name="TAction">Type of the action.</typeparam>
-    /// <param name="actionName"></param>
-    /// <param name="handler"></param>
+    /// <param name="actionName">The name of the action.</param>
+    /// <param name="handler">A <see cref="INativeActionGoalHandler"/> for processing action goals.</param>
     /// <param name="options">
     /// <see cref="ActionServerOptions"/> to be used for the client. Defaults to <see cref="ActionServerOptions.Default"/>.
     /// </param>
-    /// <param name="textEncoding"></param>
     /// <returns></returns>
     IActionServer CreateActionServer<TAction>(
         string actionName,
@@ -323,8 +328,8 @@ public interface IRclNode : IRclObject
     /// <typeparam name="TGoal">Type of the goal message.</typeparam>
     /// <typeparam name="TResult">Type of the result message.</typeparam>
     /// <typeparam name="TFeedback">Type of the feedback message.</typeparam>
-    /// <param name="actionName"></param>
-    /// <param name="handler"></param>
+    /// <param name="actionName">The name of the action.</param>
+    /// <param name="handler">A <see cref="IActionGoalHandler{TGoal, TResult, TFeedback}"/> for processing action goals.</param>
     /// <param name="options">
     /// <see cref="ActionServerOptions"/> to be used for the client. Defaults to <see cref="ActionServerOptions.Default"/>.
     /// </param>

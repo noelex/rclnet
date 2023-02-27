@@ -22,7 +22,7 @@ class ExternalTimeSource : IDisposable
         _node = node;
         _qos = clockQoS;
 
-        _reg = node.Parameters.RegisterParameterChangingCallback(OnParameterChanging, this);
+        _reg = node.Parameters.RegisterParameterChangingEvent(OnParameterChanging, this);
         node.Parameters.Declare(UseSimTime, false);
     }
 

@@ -1,14 +1,13 @@
-﻿using Rosidl.Runtime.Interop;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Rosidl.Runtime;
 
-namespace Rosidl.Runtime
+/// <summary>
+/// Represents errors occur in ROS IDL message processing.
+/// </summary>
+public class RosidlException : Exception
 {
-    public class RosidlException : Exception
-    {
-        public RosidlException(string message) : base(message) { }
-    }
+    /// <summary>
+    /// Create a new <see cref="RosidlException"/> with specified message.
+    /// </summary>
+    /// <param name="message">The error message.</param>
+    public RosidlException(string message) : base(message) { }
 }

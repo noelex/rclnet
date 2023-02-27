@@ -21,6 +21,9 @@ public readonly struct RosMessageBuffer : IDisposable
     private readonly object? _state;
     private readonly Action<nint, object?> _destroyCallback;
 
+    /// <summary>
+    /// A pointer to the buffer storing the native message structure.
+    /// </summary>
     public readonly nint Data;
 
     /// <summary>
@@ -28,6 +31,7 @@ public readonly struct RosMessageBuffer : IDisposable
     /// </summary>
     /// <param name="data">A pointer to the ROS message structure.</param>
     /// <param name="destroyCallback">A callback to be executed when <see cref="Dispose"/> is called to free the message buffer.</param>
+    /// <param name="state">A custom state object to be passed to the <paramref name="destroyCallback"/>.</param>
     internal RosMessageBuffer(nint data, Action<nint, object?> destroyCallback, object? state = default)
     {
         Data = data;

@@ -20,6 +20,7 @@ public class RosTopic
     /// </summary>
     public string Name { get; private set; }
 
+    /// <inheritdoc/>
     public override string ToString()
     {
         return Name;

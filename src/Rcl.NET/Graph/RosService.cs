@@ -9,7 +9,7 @@ public class RosService
 {
     private readonly ConcurrentBag<RosServiceEndPoint> _servers = new(), _clients = new();
 
-    public RosService(string name)
+    internal RosService(string name)
     {
         Name = name;
     }
@@ -19,6 +19,7 @@ public class RosService
     /// </summary>
     public string Name { get; }
 
+    /// <inheritdoc/>
     public override string ToString()
     {
         return Name;

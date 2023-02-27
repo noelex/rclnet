@@ -36,6 +36,9 @@ public record QosProfile(
     bool AvoidRosNamespaceConventions = false
 )
 {
+    /// <summary>
+    /// The default QoS for transceiving sensor data.
+    /// </summary>
     public static QosProfile SensorData { get; } =
         new(
             HistoryPolicy.KeepLast,
@@ -49,6 +52,9 @@ public record QosProfile(
             false
         );
 
+    /// <summary>
+    /// The default QoS for transceiving parameters.
+    /// </summary>
     public static QosProfile Parameters { get; } =
         new(
             HistoryPolicy.KeepLast,
@@ -62,6 +68,9 @@ public record QosProfile(
             false
         );
 
+    /// <summary>
+    /// The default QoS for ROS topics.
+    /// </summary>
     public static QosProfile Default { get; } =
         new(
             HistoryPolicy.KeepLast,
@@ -75,6 +84,9 @@ public record QosProfile(
             false
         );
 
+    /// <summary>
+    /// The default QoS for ROS services.
+    /// </summary>
     public static QosProfile ServicesDefault { get; } =
         new(
             HistoryPolicy.KeepLast,
@@ -88,6 +100,9 @@ public record QosProfile(
             false
         );
 
+    /// <summary>
+    /// The default QoS for transceiving parameter events.
+    /// </summary>
     public static QosProfile ParameterEvents { get; } =
         new(
             HistoryPolicy.KeepLast,
@@ -101,6 +116,9 @@ public record QosProfile(
             false
         );
 
+    /// <summary>
+    /// The system default QoS.
+    /// </summary>
     public static QosProfile SystemDefault { get; } =
         new(
             HistoryPolicy.Default,
@@ -114,6 +132,9 @@ public record QosProfile(
             false
         );
 
+    /// <summary>
+    /// The default QoS for tranceiving action status messages.
+    /// </summary>
     public static QosProfile ActionStatusDefault { get; } = RosEnvironment.IsFoxy ?
         new(Depth: 1, Durability: DurabilityPolicy.TransientLocal, Reliability: ReliabilityPolicy.Reliable) :
         new(
@@ -127,6 +148,9 @@ public record QosProfile(
             TimeSpan.Zero
         );
 
+    /// <summary>
+    /// The default QoS for tranceiving /clock messages.
+    /// </summary>
     public static QosProfile Clock { get; } =
         new(
             HistoryPolicy.KeepLast,
@@ -161,6 +185,9 @@ public record QosProfile(
             false
         );
 
+    /// <summary>
+    /// The QoS is unknown.
+    /// </summary>
     public static QosProfile Unknown { get; } =
         new(
             HistoryPolicy.Unknown,
@@ -174,6 +201,7 @@ public record QosProfile(
             false
         );
 
+    /// <inheritdoc/>
     public override string ToString()
     {
         return $"QosProfile(Depth = {Depth}, Reliability = {Enum.GetName(Reliability)}, Durability = {Enum.GetName(Durability)})";

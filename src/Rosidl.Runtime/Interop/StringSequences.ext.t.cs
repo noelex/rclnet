@@ -14,7 +14,7 @@ public unsafe partial struct @StructName@
     /// <remarks>
     /// The <see cre="@StructName@"/> initially has size and capacity equal to the <paramref name="size"/> parameter.
     /// The <see cre="@StructName@"/> should be deallocated using <see cref="Destroy(@StructName@*)"/> when it is no longer needed.
-    // </remakrs>
+    /// </remarks>
     /// <returns>
     /// A pointer to the created <see cre="@StructName@"/> structure if successful, otherwise <see langword="null"/>.
     /// </returns>

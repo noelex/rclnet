@@ -48,12 +48,16 @@ public interface IActionGoalHandler<TGoal, TResult, TFeedback>
     /// <remarks>
     /// This method may be called by the action server concurrently if there are multiple goals sent by action clients.
     /// </remarks>
+    /// <param name="controller">A <see cref="IActionGoalController{TFeedback}"/> for accessing the state of the goal.</param>
     /// <param name="goal"><typeparamref name="TGoal"/> object sent by action client.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> will be canceled when client sends cancel goal request.</param>
     /// <returns><typeparamref name="TResult"/> to be sent to the action client.</returns>
     Task<TResult> ExecuteAsync(IActionGoalController<TFeedback> controller, TGoal goal, CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// A controller for accessing and controlling the state of an action goal.
+/// </summary>
 public interface IActionGoalController
 {
     /// <summary>
@@ -110,7 +114,7 @@ public interface INativeActionGoalHandler
     /// <remarks>
     /// This method is non-reentrant.
     /// </remarks>
-    /// <param name="controller"></param>
+    /// <param name="controller">A <see cref="INativeActionGoalController"/> for accessing the state of the goal.</param>
     void OnAccepted(INativeActionGoalController controller);
 
     /// <summary>
@@ -119,7 +123,7 @@ public interface INativeActionGoalHandler
     /// <remarks>
     /// This method is non-reentrant.
     /// </remarks>
-    /// <param name="controller"></param>
+    /// <param name="controller">A <see cref="INativeActionGoalController"/> for accessing the state of the goal.</param>
     void OnCompleted(INativeActionGoalController controller);
 
     /// <summary>

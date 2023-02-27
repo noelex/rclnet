@@ -33,43 +33,62 @@ partial class ParameterService : IParameterService, IDisposable
 
         _overrides = Utils.ResolveParameterOverrides(node.FullyQualifiedName, paramOverrides, local_args, global_args);
 
-        if (RosEnvironment.IsFoxy)
+        var completelyInitialized = false;
+        try
         {
-            _describeParametersService = node.CreateService<
-                DescribeParametersServiceFoxy,
-                DescribeParametersServiceRequestFoxy,
-                DescribeParametersServiceResponseFoxy>($"{node.Name}/describe_parameters", this, new(qos: QosProfile.Parameters));
+            if (RosEnvironment.IsFoxy)
+            {
+                _describeParametersService = node.CreateService<
+                    DescribeParametersServiceFoxy,
+                    DescribeParametersServiceRequestFoxy,
+                    DescribeParametersServiceResponseFoxy>($"{node.Name}/describe_parameters", this, new(qos: QosProfile.Parameters));
+            }
+            else
+            {
+                _describeParametersService = node.CreateService<
+                    DescribeParametersService,
+                    DescribeParametersServiceRequest,
+                    DescribeParametersServiceResponse>($"{node.Name}/describe_parameters", this, new(qos: QosProfile.Parameters));
+            }
+
+            _listParametersService = node.CreateService<
+                    ListParametersService,
+                    ListParametersServiceRequest,
+                    ListParametersServiceResponse>($"{node.Name}/list_parameters", this, new(qos: QosProfile.Parameters));
+            _getParametersService = node.CreateService<
+                    GetParametersService,
+                    GetParametersServiceRequest,
+                    GetParametersServiceResponse>($"{node.Name}/get_parameters", this, new(qos: QosProfile.Parameters));
+            _getParameterTypesService = node.CreateService<
+                    GetParameterTypesService,
+                    GetParameterTypesServiceRequest,
+                    GetParameterTypesServiceResponse>($"{node.Name}/get_parameter_types", this, new(qos: QosProfile.Parameters));
+            _setParametersService = node.CreateService<
+                    SetParametersService,
+                    SetParametersServiceRequest,
+                    SetParametersServiceResponse>($"{node.Name}/set_parameters", this, new(qos: QosProfile.Parameters));
+            _setParametersAtomicallyService = node.CreateService<
+                    SetParametersAtomicallyService,
+                    SetParametersAtomicallyServiceRequest,
+                    SetParametersAtomicallyServiceResponse>($"{node.Name}/set_parameters_atomically", this, new(qos: QosProfile.Parameters));
+
+            _parameterEvents = node.CreatePublisher<ParameterEvent>("/parameter_events", new(qos: QosProfile.ParameterEvents));
+            completelyInitialized = true;
         }
-        else
+        finally
         {
-            _describeParametersService = node.CreateService<
-                DescribeParametersService,
-                DescribeParametersServiceRequest,
-                DescribeParametersServiceResponse>($"{node.Name}/describe_parameters", this, new(qos: QosProfile.Parameters));
+            if (!completelyInitialized)
+            {
+                _describeParametersService?.Dispose();
+                _listParametersService?.Dispose();
+                _getParametersService?.Dispose();
+                _getParameterTypesService?.Dispose();
+                _setParametersService?.Dispose();
+                _setParametersAtomicallyService?.Dispose();
+                _parameterEvents?.Dispose();
+            }
         }
 
-        _listParametersService = node.CreateService<
-                ListParametersService,
-                ListParametersServiceRequest,
-                ListParametersServiceResponse>($"{node.Name}/list_parameters", this, new(qos: QosProfile.Parameters));
-        _getParametersService = node.CreateService<
-                GetParametersService,
-                GetParametersServiceRequest,
-                GetParametersServiceResponse>($"{node.Name}/get_parameters", this, new(qos: QosProfile.Parameters));
-        _getParameterTypesService = node.CreateService<
-                GetParameterTypesService,
-                GetParameterTypesServiceRequest,
-                GetParameterTypesServiceResponse>($"{node.Name}/get_parameter_types", this, new(qos: QosProfile.Parameters));
-        _setParametersService = node.CreateService<
-                SetParametersService,
-                SetParametersServiceRequest,
-                SetParametersServiceResponse>($"{node.Name}/set_parameters", this, new(qos: QosProfile.Parameters));
-        _setParametersAtomicallyService = node.CreateService<
-                SetParametersAtomicallyService,
-                SetParametersAtomicallyServiceRequest,
-                SetParametersAtomicallyServiceResponse>($"{node.Name}/set_parameters_atomically", this, new(qos: QosProfile.Parameters));
-
-        _parameterEvents = node.CreatePublisher<ParameterEvent>("/parameter_events", new(qos: QosProfile.ParameterEvents));
     }
 
     private unsafe static rcl_arguments_t* GetNodeArguments(SafeNodeHandle node)
@@ -105,7 +124,7 @@ partial class ParameterService : IParameterService, IDisposable
         };
     }
 
-    public IDisposable RegisterParameterChangingCallback(OnParameterChangingDelegate callback, object? state = null)
+    public IDisposable RegisterParameterChangingEvent(ParameterChangingEventHandler callback, object? state = null)
     {
         using (ScopedLock.Lock(ref _lock))
         {
@@ -403,7 +422,7 @@ partial class ParameterService : IParameterService, IDisposable
         ShutdownComms();
     }
 
-    private record ParameterChangingCallback(ParameterService Provider, OnParameterChangingDelegate Callback, object? State) : IDisposable
+    private record ParameterChangingCallback(ParameterService Provider, ParameterChangingEventHandler Callback, object? State) : IDisposable
     {
         public void Dispose()
         {

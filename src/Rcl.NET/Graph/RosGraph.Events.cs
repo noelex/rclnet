@@ -1,5 +1,9 @@
 namespace Rcl.Graph;
 
+/// <summary>
+/// Delegate for handling <see cref="RosGraphEvent"/>s.
+/// </summary>
+/// <param name="args"></param>
 public delegate void GraphChangedEventHandler(RosGraphEvent args);
 
 public partial class RosGraph

@@ -9,7 +9,7 @@ namespace Rcl;
 /// A context that runs an event loop to provide asynchronous programming support for the rclnet library.
 /// </summary>
 /// <remarks>
-/// <see cref="RclContext"/> servers as a host for other rcl concepts such as <see cref="IRclNode"/>s,
+/// <see cref="RclContext"/> serves as a host for other rcl concepts such as <see cref="IRclNode"/>s,
 /// <see cref="IRclTimer"/>s and <see cref="IRclGuardCondition"/>s.
 /// Applications can initiate as many <see cref="RclContext"/> as they want, but having a single context will
 /// usually suffice.
@@ -45,6 +45,9 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     /// Initialize an <see cref="RclContext"/> and start the underlying event loop immediately.
     /// </summary>
     /// <param name="args">Command line arguments to be passed to the context.</param>
+    /// <param name="loggerFactory">
+    /// A custom <see cref="IRclLoggerFactory"/> for creating loggers in the <see cref="RclContext"/>.
+    /// </param>
     public RclContext(string[] args, IRclLoggerFactory? loggerFactory = null)
     {
         if (!RosEnvironment.IsFoxy && !RosEnvironment.IsHumble)
@@ -79,6 +82,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
 
     internal IRclLogger DefaultLogger { get; }
 
+    /// <inheritdoc/>
     public IRclLogger CreateLogger(string loggerName)
         => _loggerFactory.CreateLogger(loggerName);
 
@@ -287,27 +291,8 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
 
                 RclException.ThrowIfNonSuccess(rcl_wait(&ws, -1));
 
-                // TODO: Possible race condition
-                //
-                // Consider the following situation. Another thread queues a callback and trigger
-                // interrupt signal immediately after ExecuteCallbacks(), but before rcl_wait start
-                // waiting on the wait set.
-                //
-                // If there's no other wait handle in the wait set is triggered, rcl_wait will block
-                // indefinitely, causing the registered callback never being executed.
-                ExecuteCallbacks(callbacks);
-
-                // Check for guard conditions, skipping the first element
-                // since it's the interrupt signal.
-                for (var i = 1; i < guardConditionIndices.Count; i++)
-                {
-                    idx = guardConditionIndices[i];
-                    var target = guardConditions[i].DangerousGetHandle();
-                    if (target == new nint(ws.guard_conditions[idx]))
-                    {
-                        completedHandles.Add(target);
-                    }
-                }
+                // The order of the following checks matters,
+                // higher priority wait objects should be checked first.
 
                 // Check for timers.
                 for (var i = 0; i < timerIndices.Count; i++)
@@ -364,22 +349,48 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                     }
                 }
 
-                // Call register callbacks for triggered signals.
-                foreach (var wh in waitHandles)
+                // Check for guard conditions, skipping the first element
+                // since it's the interrupt signal.
+                for (var i = 1; i < guardConditionIndices.Count; i++)
                 {
-                    if (completedHandles.Contains(wh.WaitHandle.DangerousGetHandle()))
+                    idx = guardConditionIndices[i];
+                    var target = guardConditions[i].DangerousGetHandle();
+                    if (target == new nint(ws.guard_conditions[idx]))
                     {
-                        try
+                        completedHandles.Add(target);
+                    }
+                }
+
+                // Invocation of callbacks MUST happen after the call to rcl_wait,
+                // because callbacks may dispose wait object synchronously,
+                // causing segmentation fault in rcl_wait.
+
+                // Call registered callbacks for wait objects
+                // in the order they were added into completedHandles.
+                foreach (var completed in completedHandles)
+                {
+                    foreach (var wh in waitHandles)
+                    {
+                        // TODO: Handles may be diposed by previously invoked callbacks.
+                        // Should we ignore disposed handles here?
+                        // Or make sure handle disposable always happens asynchronously?
+                        if (wh.WaitHandle.DangerousGetHandle() == completed)
                         {
-                            wh.Callback(wh.State);
-                        }
-                        catch (Exception ex)
-                        {
-                            DefaultLogger.LogWarning($"Unhandled exception thrown by wait handle callback: {ex.Message}");
-                            DefaultLogger.LogWarning(ex.StackTrace);
+                            try
+                            {
+                                wh.Callback(wh.State);
+                            }
+                            catch (Exception ex)
+                            {
+                                DefaultLogger.LogWarning($"Unhandled exception thrown by wait handle callback: {ex.Message}");
+                                DefaultLogger.LogWarning(ex.StackTrace);
+                            }
+                            break;
                         }
                     }
                 }
+
+                ExecuteCallbacks(callbacks);
             }
             finally
             {

@@ -1,18 +1,18 @@
-﻿@output(FloatSequence.g.cs, StructName=FloatSequence, ElementType=float, NativeStructName=float)@
-@output(DoubleSequence.g.cs, StructName=DoubleSequence, ElementType=double, NativeStructName=double)@
+﻿@output(FloatSequence.g.cs, StructName=FloatSequence, ElementType=Single, NativeStructName=float)@
+@output(DoubleSequence.g.cs, StructName=DoubleSequence, ElementType=Double, NativeStructName=double)@
 @output(LongDoubleSequence.g.cs, StructName=LongDoubleSequence, ElementType=Bit128, NativeStructName=long_double)@
-@output(CharSequence.g.cs, StructName=CharSequence, ElementType=sbyte, NativeStructName=char)@
-@output(WCharSequence.g.cs, StructName=WCharSequence, ElementType=char, NativeStructName=wchar)@
-@output(BooleanSequence.g.cs, StructName=BooleanSequence, ElementType=bool, NativeStructName=boolean)@
-@output(OctetSequence.g.cs, StructName=OctetSequence, ElementType=byte, NativeStructName=octet)@
-@output(UInt8Sequence.g.cs, StructName=UInt8Sequence, ElementType=byte, NativeStructName=uint8)@
-@output(Int8Sequence.g.cs, StructName=Int8Sequence, ElementType=sbyte, NativeStructName=int8)@
-@output(UInt16Sequence.g.cs, StructName=UInt16Sequence, ElementType=ushort, NativeStructName=uint16)@
-@output(Int16Sequence.g.cs, StructName=Int16Sequence, ElementType=short, NativeStructName=int16)@
-@output(UInt32Sequence.g.cs, StructName=UInt32Sequence, ElementType=uint, NativeStructName=uint32)@
-@output(Int32Sequence.g.cs, StructName=Int32Sequence, ElementType=int, NativeStructName=int32)@
-@output(UInt64Sequence.g.cs, StructName=UInt64Sequence, ElementType=ulong, NativeStructName=uint64)@
-@output(Int64Sequence.g.cs, StructName=Int64Sequence, ElementType=long, NativeStructName=int64)@
+@output(CharSequence.g.cs, StructName=CharSequence, ElementType=SByte, NativeStructName=char)@
+@output(WCharSequence.g.cs, StructName=WCharSequence, ElementType=Char, NativeStructName=wchar)@
+@output(BooleanSequence.g.cs, StructName=BooleanSequence, ElementType=Boolean, NativeStructName=boolean)@
+@output(OctetSequence.g.cs, StructName=OctetSequence, ElementType=Byte, NativeStructName=octet)@
+@output(UInt8Sequence.g.cs, StructName=UInt8Sequence, ElementType=Byte, NativeStructName=uint8)@
+@output(Int8Sequence.g.cs, StructName=Int8Sequence, ElementType=SByte, NativeStructName=int8)@
+@output(UInt16Sequence.g.cs, StructName=UInt16Sequence, ElementType=UInt16, NativeStructName=uint16)@
+@output(Int16Sequence.g.cs, StructName=Int16Sequence, ElementType=Int16, NativeStructName=int16)@
+@output(UInt32Sequence.g.cs, StructName=UInt32Sequence, ElementType=UInt32, NativeStructName=uint32)@
+@output(Int32Sequence.g.cs, StructName=Int32Sequence, ElementType=Int32, NativeStructName=int32)@
+@output(UInt64Sequence.g.cs, StructName=UInt64Sequence, ElementType=UInt64, NativeStructName=uint64)@
+@output(Int64Sequence.g.cs, StructName=Int64Sequence, ElementType=Int64, NativeStructName=int64)@
 @output(CStringSequence.g.cs, StructName=CStringSequence, ElementType=CString, NativeStructName=String)@
 @output(U16StringSequence.g.cs, StructName=U16StringSequence, ElementType=U16String, NativeStructName=U16String)@
 
@@ -81,18 +81,22 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     {
         src.CopyTo(AsSpan());
     }
-
+    
+    /// <inheritdoc/>
     public override bool Equals(object obj) => obj is @StructName@ s ? Equals(s) : false;
     
+    /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine((nint)_data, _size, _capacity);
 
+    /// <inheritdoc/>
     public static bool operator ==(@StructName@ lhs, @StructName@ rhs) => lhs.Equals(rhs);
 
+    /// <inheritdoc/>
     public static bool operator !=(@StructName@ lhs, @StructName@ rhs) => !(lhs == rhs);
     
     /// <summary>
     /// Check for <see cref="@StructName@"/> structure equality.
-    /// </remarks>
+    /// </summary>
     /// <returns>
     /// <see langword="true"/> if <see cref="@StructName@"/> structures are equal in size and content, otherwise <see langword="false"/>.
     /// </returns>
@@ -135,7 +139,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     }
 
     /// <summary>
-    /// Copy the content of the <see cref="@StructName@"/> structure from <paramref name="src"/>.
+    /// Copy the content of the <see cref="@StructName@"/> structure from <paramref name="value"/>.
     /// </summary>
     /// <param name="value">A pointer to the <see cref="@StructName@"/> structure to copy from.</param>
     public void CopyFrom(@StructName@* value)

@@ -34,6 +34,7 @@ public record RosTopicEndPoint(
     QosProfile QosProfile
 )
 {
+    /// <inheritdoc/>
     public override string ToString()
     {
         return $"{Enum.GetName(EndPointType)}(Topic = {Topic}, Type = {Type})";

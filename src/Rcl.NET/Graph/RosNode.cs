@@ -22,6 +22,7 @@ public class RosNode
         Enclave = enclave;
     }
 
+    /// <inheritdoc/>
     public override string ToString()
     {
         return Name.ToString();
@@ -57,8 +58,14 @@ public class RosNode
     /// </summary>
     public IReadOnlyCollection<RosTopicEndPoint> Publishers => _publishers;
 
+    /// <summary>
+    /// Gets a list of <see cref="RosAction"/> servers registered by current <see cref="RosNode"/>.
+    /// </summary>
     public IReadOnlyCollection<RosActionEndPoint> ActionServers => (IReadOnlyCollection<RosActionEndPoint>)_actionServers.Values;
 
+    /// <summary>
+    /// Gets a list of <see cref="RosAction"/> clients registered by current <see cref="RosNode"/>.
+    /// </summary>
     public IReadOnlyCollection<RosActionEndPoint> ActionClients => (IReadOnlyCollection<RosActionEndPoint>)_actionClients.Values;
 
     internal void UpdateServers(
