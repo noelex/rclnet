@@ -128,25 +128,29 @@ await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
 
 ## How to Generate Messages
 1. Create a new .NET library project targeting .NET 7.
+
 2. Add the following lines to the `.csproj` file:
    ```xml
    <PropertyGroup>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-      <RootNamespace>Rosidl.Messages</RootNamespace>
    </PropertyGroup>
-
-   <ItemGroup>
-      <PackageReference Include="Rosidl.Runtime" Version="1.0.0-preview.6" />
-   </ItemGroup>
    ```
-3. Add a `ros2cs.spec` file to the root of the project.
+
+3. Add NuGet package `Rcl.NET` to the project.
+   If the library doesn't need to depend on `Rcl.NET`
+   (e.g. contains only message definitions), you can install just `Rosidl.Runtime` package.
+
+4. Add a `ros2cs.spec` file to the root of the project.
     See [here](https://github.com/noelex/rclnet/blob/main/src/ros2cs/ros2cs.spec) for detailed explanations on how to write a `ros2cs.spec` file.
-4. Add a `_AssemblyAttributes.cs` to the root of the project with the following contents:
+
+5. Add a `_AssemblyAttributes.cs` to the root of the project with the following contents:
     ```csharp
     [assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]
     ```
-4. Install `ros2cs` with the following command:
+
+6. Install `ros2cs` with the following command:
    ```
    dotnet tool install -g ros2cs
    ```
-5. Run `ros2cs /path/to/ros2cs.spec` to generate message classes / structs.
+
+7. Run `ros2cs /path/to/ros2cs.spec` to generate message classes / structs.
