@@ -83,16 +83,16 @@ namespace Rosidl.Messages.Sensor
         
             this.Points = new global::Rosidl.Messages.Geometry.Point32[priv.Points.Size];
             var Points_span = priv.Points.AsSpan();
-            for (int i = 0; i < this.Points.Length; i++)
+            for (int __i = 0; __i < this.Points.Length; __i++)
             {
-                this.Points[i] = new global::Rosidl.Messages.Geometry.Point32(in Points_span[i], textEncoding);
+                this.Points[__i] = new global::Rosidl.Messages.Geometry.Point32(in Points_span[__i], textEncoding);
             }
         
             this.Channels = new global::Rosidl.Messages.Sensor.ChannelFloat32[priv.Channels.Size];
             var Channels_span = priv.Channels.AsSpan();
-            for (int i = 0; i < this.Channels.Length; i++)
+            for (int __i = 0; __i < this.Channels.Length; __i++)
             {
-                this.Channels[i] = new global::Rosidl.Messages.Sensor.ChannelFloat32(in Channels_span[i], textEncoding);
+                this.Channels[__i] = new global::Rosidl.Messages.Sensor.ChannelFloat32(in Channels_span[__i], textEncoding);
             }
         }
         
@@ -145,16 +145,16 @@ namespace Rosidl.Messages.Sensor
             
             priv.Points = new global::Rosidl.Messages.Geometry.Point32.PrivSequence(this.Points.Length);
             var Points_span = priv.Points.AsSpan();
-            for (int i = 0; i < this.Points.Length; i++)
+            for (int __i = 0; __i < this.Points.Length; __i++)
             {
-                this.Points[i].WriteTo(ref Points_span[i], textEncoding);
+                this.Points[__i].WriteTo(ref Points_span[__i], textEncoding);
             }
             
             priv.Channels = new global::Rosidl.Messages.Sensor.ChannelFloat32.PrivSequence(this.Channels.Length);
             var Channels_span = priv.Channels.AsSpan();
-            for (int i = 0; i < this.Channels.Length; i++)
+            for (int __i = 0; __i < this.Channels.Length; __i++)
             {
-                this.Channels[i].WriteTo(ref Channels_span[i], textEncoding);
+                this.Channels[__i].WriteTo(ref Channels_span[__i], textEncoding);
             }
         }
         

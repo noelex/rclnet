@@ -10,3 +10,4 @@ wstring[3] f
 wstring[] g
 string<=3 h
 wstring<=3 i
+wstring[<=3] j

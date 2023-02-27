@@ -169,16 +169,16 @@ public class MessageClassBuilder
 
                         if (arrType.ElementType is PrimitiveTypeMetadata prim && prim.ValueType is PrimitiveTypes.String or PrimitiveTypes.WString)
                         {
-                            builder.AppendLine($"        for (int i = 0; i < {arraySize}; i++)");
+                            builder.AppendLine($"        for (int __i = 0; __i < {arraySize}; __i++)");
                             builder.AppendLine("        {");
-                            builder.AppendLine($"            {_variables[i].PropertyName}[i] = \"\";");
+                            builder.AppendLine($"            {_variables[i].PropertyName}[__i] = \"\";");
                             builder.AppendLine("        }");
                         }
                         else if (arrType.ElementType is ComplexTypeMetadata ct)
                         {
-                            builder.AppendLine($"        for (int i = 0; i < {arraySize}; i++)");
+                            builder.AppendLine($"        for (int __i = 0; __i < {arraySize}; __i++)");
                             builder.AppendLine("        {");
-                            builder.AppendLine($"           {_variables[i].PropertyName}[i] = new {GetTypeName(arrType.ElementType)}();");
+                            builder.AppendLine($"           {_variables[i].PropertyName}[__i] = new {GetTypeName(arrType.ElementType)}();");
                             builder.AppendLine("        }");
                         }
 
@@ -263,15 +263,15 @@ public class MessageClassBuilder
                             case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String or PrimitiveTypes.WString:
                                 if (!previousLineIsBlank) writer.AppendLine();
                                 writer.AppendLine($"    this.{fieldName} = new string[{arraySize}];");
-                                writer.AppendLine($"    for (int i = 0; i < this.{fieldName}.Length; i++)");
+                                writer.AppendLine($"    for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.AppendLine("    {");
                                 if(prim.ValueType is PrimitiveTypes.String)
                                 {
-                                    writer.AppendLine($"        this.{fieldName}[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}[i].AsSpan(), textEncoding);");
+                                    writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}[__i].AsSpan(), textEncoding);");
                                 }
                                 else
                                 {
-                                    writer.AppendLine($"        this.{fieldName}[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}[i].AsSpan());");
+                                    writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}[__i].AsSpan());");
                                 }
                                 writer.AppendLine("    }");
                                 if (!isLast)
@@ -289,9 +289,9 @@ public class MessageClassBuilder
                             case ComplexTypeMetadata complex:
                                 if (!previousLineIsBlank) writer.AppendLine();
                                 writer.AppendLine($"    this.{fieldName} = new {_context.GetMessageClassReferenceName(complex)}[{arraySize}];");
-                                writer.AppendLine($"    for (int i = 0; i < this.{fieldName}.Length; i++)");
+                                writer.AppendLine($"    for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.AppendLine("    {");
-                                writer.AppendLine($"        this.{fieldName}[i] = new {_context.GetMessageClassReferenceName(complex)}(in priv.{fieldName}[i], textEncoding);");
+                                writer.AppendLine($"        this.{fieldName}[__i] = new {_context.GetMessageClassReferenceName(complex)}(in priv.{fieldName}[__i], textEncoding);");
                                 writer.AppendLine("    }");
                                 if (!isLast)
                                 {
@@ -310,15 +310,15 @@ public class MessageClassBuilder
                                 if (!previousLineIsBlank) writer.AppendLine();
                                 writer.AppendLine($"    this.{fieldName} = new string[priv.{fieldName}.Size];");
                                 writer.AppendLine($"    var {fieldName}_span = priv.{fieldName}.AsSpan();");
-                                writer.AppendLine($"    for (int i = 0; i < this.{fieldName}.Length; i++)");
+                                writer.AppendLine($"    for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.AppendLine("    {");
                                 if (prim.ValueType is PrimitiveTypes.String)
                                 {
-                                    writer.AppendLine($"        this.{fieldName}[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString({fieldName}_span[i].AsSpan(), textEncoding);");
+                                    writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString({fieldName}_span[__i].AsSpan(), textEncoding);");
                                 }
                                 else
                                 {
-                                    writer.AppendLine($"        this.{fieldName}[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString({fieldName}_span[i].AsSpan());");
+                                    writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString({fieldName}_span[__i].AsSpan());");
                                 }
                                 writer.AppendLine("    }");
                                 if (!isLast)
@@ -335,9 +335,9 @@ public class MessageClassBuilder
                                 if (!previousLineIsBlank) writer.AppendLine();
                                 writer.AppendLine($"    this.{fieldName} = new {_context.GetMessageClassReferenceName(complex)}[priv.{fieldName}.Size];");
                                 writer.AppendLine($"    var {fieldName}_span = priv.{fieldName}.AsSpan();");
-                                writer.AppendLine($"    for (int i = 0; i < this.{fieldName}.Length; i++)");
+                                writer.AppendLine($"    for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.AppendLine("    {");
-                                writer.AppendLine($"        this.{fieldName}[i] = new {_context.GetMessageClassReferenceName(complex)}(in {fieldName}_span[i], textEncoding);");
+                                writer.AppendLine($"        this.{fieldName}[__i] = new {_context.GetMessageClassReferenceName(complex)}(in {fieldName}_span[__i], textEncoding);");
                                 writer.AppendLine("    }");
                                 if (!isLast)
                                 {
@@ -706,15 +706,15 @@ public class MessageClassBuilder
                         {
                             case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String or PrimitiveTypes.WString:
                                 if (!previousLineIsBlank) writer.WriteLine();
-                                writer.WriteLine($"for (int i = 0; i < {arraySize}; i++)");
+                                writer.WriteLine($"for (int __i = 0; __i < {arraySize}; __i++)");
                                 writer.WriteLine("{");
                                 if(prim.ValueType is PrimitiveTypes.String)
                                 {
-                                    writer.WriteLine($"    priv.{fieldName}[i].CopyFrom(this.{fieldName}[i], textEncoding);");
+                                    writer.WriteLine($"    priv.{fieldName}[__i].CopyFrom(this.{fieldName}[__i], textEncoding);");
                                 }
                                 else
                                 {
-                                    writer.WriteLine($"    priv.{fieldName}[i].CopyFrom(this.{fieldName}[i]);");
+                                    writer.WriteLine($"    priv.{fieldName}[__i].CopyFrom(this.{fieldName}[__i]);");
                                 }
                                 writer.WriteLine("}");
                                 if (!isLast)
@@ -732,9 +732,9 @@ public class MessageClassBuilder
                                 if (!previousLineIsBlank) writer.WriteLine();
 
                                 var ct = _context.GetMessagePrivStructReferenceName(complex);
-                                writer.WriteLine($"for (int i = 0; i < {arraySize}; i++)");
+                                writer.WriteLine($"for (int __i = 0; __i < {arraySize}; __i++)");
                                 writer.WriteLine("{");
-                                writer.WriteLine($"    this.{fieldName}[i].WriteTo(ref priv.{fieldName}[i], textEncoding);");
+                                writer.WriteLine($"    this.{fieldName}[__i].WriteTo(ref priv.{fieldName}[__i], textEncoding);");
                                 writer.WriteLine("}");
                                 if (!isLast)
                                 {
@@ -753,9 +753,9 @@ public class MessageClassBuilder
                                 if (!previousLineIsBlank) writer.WriteLine();
                                 writer.WriteLine($"priv.{fieldName} = new global::Rosidl.Runtime.Interop.CStringSequence(this.{fieldName}.Length);");
                                 writer.WriteLine($"var {fieldName}_span = priv.{fieldName}.AsSpan();");
-                                writer.WriteLine($"for (int i = 0; i < this.{fieldName}.Length; i++)");
+                                writer.WriteLine($"for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.WriteLine("{");
-                                writer.WriteLine($"    {fieldName}_span[i].CopyFrom(this.{fieldName}[i], textEncoding);");
+                                writer.WriteLine($"    {fieldName}_span[__i].CopyFrom(this.{fieldName}[__i], textEncoding);");
                                 writer.WriteLine("}");
                                 if (!isLast)
                                 {
@@ -767,9 +767,9 @@ public class MessageClassBuilder
                                 if (!previousLineIsBlank) writer.WriteLine();
                                 writer.WriteLine($"priv.{fieldName} = new global::Rosidl.Runtime.Interop.U16StringSequence(this.{fieldName}.Length);");
                                 writer.WriteLine($"var {fieldName}_span = priv.{fieldName}.AsSpan();");
-                                writer.WriteLine($"for (int i = 0; i < this.{fieldName}.Length; i++)");
+                                writer.WriteLine($"for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.WriteLine("{");
-                                writer.WriteLine($"    {fieldName}_span[i].CopyFrom(this.{fieldName}[i]);");
+                                writer.WriteLine($"    {fieldName}_span[__i].CopyFrom(this.{fieldName}[__i]);");
                                 writer.WriteLine("}");
                                 if (!isLast)
                                 {
@@ -785,9 +785,9 @@ public class MessageClassBuilder
                                 if (!previousLineIsBlank) writer.WriteLine();
                                 writer.WriteLine($"priv.{fieldName} = new {_context.GetMessagePrivStructSequenceReferenceName(complex)}(this.{fieldName}.Length);");
                                 writer.WriteLine($"var {fieldName}_span = priv.{fieldName}.AsSpan();");
-                                writer.WriteLine($"for (int i = 0; i < this.{fieldName}.Length; i++)");
+                                writer.WriteLine($"for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.WriteLine("{");
-                                writer.WriteLine($"    this.{fieldName}[i].WriteTo(ref {fieldName}_span[i], textEncoding);");
+                                writer.WriteLine($"    this.{fieldName}[__i].WriteTo(ref {fieldName}_span[__i], textEncoding);");
                                 writer.WriteLine("}");
                                 if (!isLast)
                                 {

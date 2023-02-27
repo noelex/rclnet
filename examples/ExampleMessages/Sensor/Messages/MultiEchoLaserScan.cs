@@ -132,16 +132,16 @@ namespace Rosidl.Messages.Sensor
         
             this.Ranges = new global::Rosidl.Messages.Sensor.LaserEcho[priv.Ranges.Size];
             var Ranges_span = priv.Ranges.AsSpan();
-            for (int i = 0; i < this.Ranges.Length; i++)
+            for (int __i = 0; __i < this.Ranges.Length; __i++)
             {
-                this.Ranges[i] = new global::Rosidl.Messages.Sensor.LaserEcho(in Ranges_span[i], textEncoding);
+                this.Ranges[__i] = new global::Rosidl.Messages.Sensor.LaserEcho(in Ranges_span[__i], textEncoding);
             }
         
             this.Intensities = new global::Rosidl.Messages.Sensor.LaserEcho[priv.Intensities.Size];
             var Intensities_span = priv.Intensities.AsSpan();
-            for (int i = 0; i < this.Intensities.Length; i++)
+            for (int __i = 0; __i < this.Intensities.Length; __i++)
             {
-                this.Intensities[i] = new global::Rosidl.Messages.Sensor.LaserEcho(in Intensities_span[i], textEncoding);
+                this.Intensities[__i] = new global::Rosidl.Messages.Sensor.LaserEcho(in Intensities_span[__i], textEncoding);
             }
         }
         
@@ -268,16 +268,16 @@ namespace Rosidl.Messages.Sensor
             
             priv.Ranges = new global::Rosidl.Messages.Sensor.LaserEcho.PrivSequence(this.Ranges.Length);
             var Ranges_span = priv.Ranges.AsSpan();
-            for (int i = 0; i < this.Ranges.Length; i++)
+            for (int __i = 0; __i < this.Ranges.Length; __i++)
             {
-                this.Ranges[i].WriteTo(ref Ranges_span[i], textEncoding);
+                this.Ranges[__i].WriteTo(ref Ranges_span[__i], textEncoding);
             }
             
             priv.Intensities = new global::Rosidl.Messages.Sensor.LaserEcho.PrivSequence(this.Intensities.Length);
             var Intensities_span = priv.Intensities.AsSpan();
-            for (int i = 0; i < this.Intensities.Length; i++)
+            for (int __i = 0; __i < this.Intensities.Length; __i++)
             {
-                this.Intensities[i].WriteTo(ref Intensities_span[i], textEncoding);
+                this.Intensities[__i].WriteTo(ref Intensities_span[__i], textEncoding);
             }
         }
         

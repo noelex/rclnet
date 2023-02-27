@@ -74,9 +74,9 @@ namespace Rosidl.Messages.Std
         {
             this.Dim = new global::Rosidl.Messages.Std.MultiArrayDimension[priv.Dim.Size];
             var Dim_span = priv.Dim.AsSpan();
-            for (int i = 0; i < this.Dim.Length; i++)
+            for (int __i = 0; __i < this.Dim.Length; __i++)
             {
-                this.Dim[i] = new global::Rosidl.Messages.Std.MultiArrayDimension(in Dim_span[i], textEncoding);
+                this.Dim[__i] = new global::Rosidl.Messages.Std.MultiArrayDimension(in Dim_span[__i], textEncoding);
             }
         
             this.DataOffset = priv.DataOffset;
@@ -116,9 +116,9 @@ namespace Rosidl.Messages.Std
         {
             priv.Dim = new global::Rosidl.Messages.Std.MultiArrayDimension.PrivSequence(this.Dim.Length);
             var Dim_span = priv.Dim.AsSpan();
-            for (int i = 0; i < this.Dim.Length; i++)
+            for (int __i = 0; __i < this.Dim.Length; __i++)
             {
-                this.Dim[i].WriteTo(ref Dim_span[i], textEncoding);
+                this.Dim[__i].WriteTo(ref Dim_span[__i], textEncoding);
             }
             
             priv.DataOffset = this.DataOffset;

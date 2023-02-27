@@ -61,9 +61,9 @@ namespace Rosidl.Messages.Tf2
         {
             this.Transforms = new global::Rosidl.Messages.Geometry.TransformStamped[priv.Transforms.Size];
             var Transforms_span = priv.Transforms.AsSpan();
-            for (int i = 0; i < this.Transforms.Length; i++)
+            for (int __i = 0; __i < this.Transforms.Length; __i++)
             {
-                this.Transforms[i] = new global::Rosidl.Messages.Geometry.TransformStamped(in Transforms_span[i], textEncoding);
+                this.Transforms[__i] = new global::Rosidl.Messages.Geometry.TransformStamped(in Transforms_span[__i], textEncoding);
             }
         }
         
@@ -88,9 +88,9 @@ namespace Rosidl.Messages.Tf2
         {
             priv.Transforms = new global::Rosidl.Messages.Geometry.TransformStamped.PrivSequence(this.Transforms.Length);
             var Transforms_span = priv.Transforms.AsSpan();
-            for (int i = 0; i < this.Transforms.Length; i++)
+            for (int __i = 0; __i < this.Transforms.Length; __i++)
             {
-                this.Transforms[i].WriteTo(ref Transforms_span[i], textEncoding);
+                this.Transforms[__i].WriteTo(ref Transforms_span[__i], textEncoding);
             }
         }
         

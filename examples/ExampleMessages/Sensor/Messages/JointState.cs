@@ -103,9 +103,9 @@ namespace Rosidl.Messages.Sensor
         
             this.Name = new string[priv.Name.Size];
             var Name_span = priv.Name.AsSpan();
-            for (int i = 0; i < this.Name.Length; i++)
+            for (int __i = 0; __i < this.Name.Length; __i++)
             {
-                this.Name[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(Name_span[i].AsSpan(), textEncoding);
+                this.Name[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(Name_span[__i].AsSpan(), textEncoding);
             }
         
             this.Position = priv.Position.AsSpan().ToArray();
@@ -164,9 +164,9 @@ namespace Rosidl.Messages.Sensor
             
             priv.Name = new global::Rosidl.Runtime.Interop.CStringSequence(this.Name.Length);
             var Name_span = priv.Name.AsSpan();
-            for (int i = 0; i < this.Name.Length; i++)
+            for (int __i = 0; __i < this.Name.Length; __i++)
             {
-                Name_span[i].CopyFrom(this.Name[i], textEncoding);
+                Name_span[__i].CopyFrom(this.Name[__i], textEncoding);
             }
             
             priv.Position.CopyFrom(this.Position);

@@ -104,30 +104,30 @@ namespace Rosidl.Messages.Sensor
         
             this.JointNames = new string[priv.JointNames.Size];
             var JointNames_span = priv.JointNames.AsSpan();
-            for (int i = 0; i < this.JointNames.Length; i++)
+            for (int __i = 0; __i < this.JointNames.Length; __i++)
             {
-                this.JointNames[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(JointNames_span[i].AsSpan(), textEncoding);
+                this.JointNames[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(JointNames_span[__i].AsSpan(), textEncoding);
             }
         
             this.Transforms = new global::Rosidl.Messages.Geometry.Transform[priv.Transforms.Size];
             var Transforms_span = priv.Transforms.AsSpan();
-            for (int i = 0; i < this.Transforms.Length; i++)
+            for (int __i = 0; __i < this.Transforms.Length; __i++)
             {
-                this.Transforms[i] = new global::Rosidl.Messages.Geometry.Transform(in Transforms_span[i], textEncoding);
+                this.Transforms[__i] = new global::Rosidl.Messages.Geometry.Transform(in Transforms_span[__i], textEncoding);
             }
         
             this.Twist = new global::Rosidl.Messages.Geometry.Twist[priv.Twist.Size];
             var Twist_span = priv.Twist.AsSpan();
-            for (int i = 0; i < this.Twist.Length; i++)
+            for (int __i = 0; __i < this.Twist.Length; __i++)
             {
-                this.Twist[i] = new global::Rosidl.Messages.Geometry.Twist(in Twist_span[i], textEncoding);
+                this.Twist[__i] = new global::Rosidl.Messages.Geometry.Twist(in Twist_span[__i], textEncoding);
             }
         
             this.Wrench = new global::Rosidl.Messages.Geometry.Wrench[priv.Wrench.Size];
             var Wrench_span = priv.Wrench.AsSpan();
-            for (int i = 0; i < this.Wrench.Length; i++)
+            for (int __i = 0; __i < this.Wrench.Length; __i++)
             {
-                this.Wrench[i] = new global::Rosidl.Messages.Geometry.Wrench(in Wrench_span[i], textEncoding);
+                this.Wrench[__i] = new global::Rosidl.Messages.Geometry.Wrench(in Wrench_span[__i], textEncoding);
             }
         }
         
@@ -182,30 +182,30 @@ namespace Rosidl.Messages.Sensor
             
             priv.JointNames = new global::Rosidl.Runtime.Interop.CStringSequence(this.JointNames.Length);
             var JointNames_span = priv.JointNames.AsSpan();
-            for (int i = 0; i < this.JointNames.Length; i++)
+            for (int __i = 0; __i < this.JointNames.Length; __i++)
             {
-                JointNames_span[i].CopyFrom(this.JointNames[i], textEncoding);
+                JointNames_span[__i].CopyFrom(this.JointNames[__i], textEncoding);
             }
             
             priv.Transforms = new global::Rosidl.Messages.Geometry.Transform.PrivSequence(this.Transforms.Length);
             var Transforms_span = priv.Transforms.AsSpan();
-            for (int i = 0; i < this.Transforms.Length; i++)
+            for (int __i = 0; __i < this.Transforms.Length; __i++)
             {
-                this.Transforms[i].WriteTo(ref Transforms_span[i], textEncoding);
+                this.Transforms[__i].WriteTo(ref Transforms_span[__i], textEncoding);
             }
             
             priv.Twist = new global::Rosidl.Messages.Geometry.Twist.PrivSequence(this.Twist.Length);
             var Twist_span = priv.Twist.AsSpan();
-            for (int i = 0; i < this.Twist.Length; i++)
+            for (int __i = 0; __i < this.Twist.Length; __i++)
             {
-                this.Twist[i].WriteTo(ref Twist_span[i], textEncoding);
+                this.Twist[__i].WriteTo(ref Twist_span[__i], textEncoding);
             }
             
             priv.Wrench = new global::Rosidl.Messages.Geometry.Wrench.PrivSequence(this.Wrench.Length);
             var Wrench_span = priv.Wrench.AsSpan();
-            for (int i = 0; i < this.Wrench.Length; i++)
+            for (int __i = 0; __i < this.Wrench.Length; __i++)
             {
-                this.Wrench[i].WriteTo(ref Wrench_span[i], textEncoding);
+                this.Wrench[__i].WriteTo(ref Wrench_span[__i], textEncoding);
             }
         }
         

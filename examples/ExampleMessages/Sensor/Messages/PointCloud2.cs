@@ -124,9 +124,9 @@ namespace Rosidl.Messages.Sensor
         
             this.Fields = new global::Rosidl.Messages.Sensor.PointField[priv.Fields.Size];
             var Fields_span = priv.Fields.AsSpan();
-            for (int i = 0; i < this.Fields.Length; i++)
+            for (int __i = 0; __i < this.Fields.Length; __i++)
             {
-                this.Fields[i] = new global::Rosidl.Messages.Sensor.PointField(in Fields_span[i], textEncoding);
+                this.Fields[__i] = new global::Rosidl.Messages.Sensor.PointField(in Fields_span[__i], textEncoding);
             }
         
             this.IsBigendian = priv.IsBigendian;
@@ -242,9 +242,9 @@ namespace Rosidl.Messages.Sensor
             
             priv.Fields = new global::Rosidl.Messages.Sensor.PointField.PrivSequence(this.Fields.Length);
             var Fields_span = priv.Fields.AsSpan();
-            for (int i = 0; i < this.Fields.Length; i++)
+            for (int __i = 0; __i < this.Fields.Length; __i++)
             {
-                this.Fields[i].WriteTo(ref Fields_span[i], textEncoding);
+                this.Fields[__i].WriteTo(ref Fields_span[__i], textEncoding);
             }
             
             priv.IsBigendian = this.IsBigendian;

@@ -65,9 +65,9 @@ namespace Rosidl.Messages.Sensor
         {
             this.Array = new global::Rosidl.Messages.Sensor.JoyFeedback[priv.Array.Size];
             var Array_span = priv.Array.AsSpan();
-            for (int i = 0; i < this.Array.Length; i++)
+            for (int __i = 0; __i < this.Array.Length; __i++)
             {
-                this.Array[i] = new global::Rosidl.Messages.Sensor.JoyFeedback(in Array_span[i], textEncoding);
+                this.Array[__i] = new global::Rosidl.Messages.Sensor.JoyFeedback(in Array_span[__i], textEncoding);
             }
         }
         
@@ -95,9 +95,9 @@ namespace Rosidl.Messages.Sensor
         {
             priv.Array = new global::Rosidl.Messages.Sensor.JoyFeedback.PrivSequence(this.Array.Length);
             var Array_span = priv.Array.AsSpan();
-            for (int i = 0; i < this.Array.Length; i++)
+            for (int __i = 0; __i < this.Array.Length; __i++)
             {
-                this.Array[i].WriteTo(ref Array_span[i], textEncoding);
+                this.Array[__i].WriteTo(ref Array_span[__i], textEncoding);
             }
         }
         

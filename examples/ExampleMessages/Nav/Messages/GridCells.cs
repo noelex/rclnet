@@ -86,9 +86,9 @@ namespace Rosidl.Messages.Nav
         
             this.Cells = new global::Rosidl.Messages.Geometry.Point[priv.Cells.Size];
             var Cells_span = priv.Cells.AsSpan();
-            for (int i = 0; i < this.Cells.Length; i++)
+            for (int __i = 0; __i < this.Cells.Length; __i++)
             {
-                this.Cells[i] = new global::Rosidl.Messages.Geometry.Point(in Cells_span[i], textEncoding);
+                this.Cells[__i] = new global::Rosidl.Messages.Geometry.Point(in Cells_span[__i], textEncoding);
             }
         }
         
@@ -147,9 +147,9 @@ namespace Rosidl.Messages.Nav
             
             priv.Cells = new global::Rosidl.Messages.Geometry.Point.PrivSequence(this.Cells.Length);
             var Cells_span = priv.Cells.AsSpan();
-            for (int i = 0; i < this.Cells.Length; i++)
+            for (int __i = 0; __i < this.Cells.Length; __i++)
             {
-                this.Cells[i].WriteTo(ref Cells_span[i], textEncoding);
+                this.Cells[__i].WriteTo(ref Cells_span[__i], textEncoding);
             }
         }
         

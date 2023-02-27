@@ -64,9 +64,9 @@ namespace Rosidl.Messages.Geometry
         {
             this.Points = new global::Rosidl.Messages.Geometry.Point32[priv.Points.Size];
             var Points_span = priv.Points.AsSpan();
-            for (int i = 0; i < this.Points.Length; i++)
+            for (int __i = 0; __i < this.Points.Length; __i++)
             {
-                this.Points[i] = new global::Rosidl.Messages.Geometry.Point32(in Points_span[i], textEncoding);
+                this.Points[__i] = new global::Rosidl.Messages.Geometry.Point32(in Points_span[__i], textEncoding);
             }
         }
         
@@ -91,9 +91,9 @@ namespace Rosidl.Messages.Geometry
         {
             priv.Points = new global::Rosidl.Messages.Geometry.Point32.PrivSequence(this.Points.Length);
             var Points_span = priv.Points.AsSpan();
-            for (int i = 0; i < this.Points.Length; i++)
+            for (int __i = 0; __i < this.Points.Length; __i++)
             {
-                this.Points[i].WriteTo(ref Points_span[i], textEncoding);
+                this.Points[__i].WriteTo(ref Points_span[__i], textEncoding);
             }
         }
         

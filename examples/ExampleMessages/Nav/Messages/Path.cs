@@ -73,9 +73,9 @@ namespace Rosidl.Messages.Nav
         
             this.Poses = new global::Rosidl.Messages.Geometry.PoseStamped[priv.Poses.Size];
             var Poses_span = priv.Poses.AsSpan();
-            for (int i = 0; i < this.Poses.Length; i++)
+            for (int __i = 0; __i < this.Poses.Length; __i++)
             {
-                this.Poses[i] = new global::Rosidl.Messages.Geometry.PoseStamped(in Poses_span[i], textEncoding);
+                this.Poses[__i] = new global::Rosidl.Messages.Geometry.PoseStamped(in Poses_span[__i], textEncoding);
             }
         }
         
@@ -115,9 +115,9 @@ namespace Rosidl.Messages.Nav
             
             priv.Poses = new global::Rosidl.Messages.Geometry.PoseStamped.PrivSequence(this.Poses.Length);
             var Poses_span = priv.Poses.AsSpan();
-            for (int i = 0; i < this.Poses.Length; i++)
+            for (int __i = 0; __i < this.Poses.Length; __i++)
             {
-                this.Poses[i].WriteTo(ref Poses_span[i], textEncoding);
+                this.Poses[__i].WriteTo(ref Poses_span[__i], textEncoding);
             }
         }
         
