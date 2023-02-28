@@ -15,7 +15,7 @@ using var cts = new CancellationTokenSource();
 var t = Task.Run(async () =>
 {
     var current = 0L;
-    using var periodicTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(resolution / 100_000));
+    using var periodicTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(resolution / 1_000_000));
     using var buffer = RosMessageBuffer.Create<Clock>();
 
     while (!cts.IsCancellationRequested)
@@ -29,8 +29,8 @@ var t = Task.Run(async () =>
     static void UpdateClock(RosMessageBuffer buffer, long time)
     {
         ref var clock = ref buffer.AsRef<Clock.Priv>();
-        clock.Clock_.Sec = (int)(time / 100_000_000);
-        clock.Clock_.Nanosec = (uint)(time % 100_000_000);
+        clock.Clock_.Sec = (int)(time / 1_000_000_000);
+        clock.Clock_.Nanosec = (uint)(time % 1_000_000_000);
     }
 });
 

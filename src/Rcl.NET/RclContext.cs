@@ -2,6 +2,7 @@
 using Rcl.Logging.Impl;
 using Rcl.SafeHandles;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Rcl;
 
@@ -30,7 +31,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     private readonly Dictionary<long, WaitSetWorkItem> _waitHandles = new();
     private readonly Queue<CallbackWorkItem> _callbacks = new();
 
-    private readonly SafeGuardConditionHandle _interruptSignal;
+    private readonly SafeGuardConditionHandle _interruptSignal, _shutdownSignal;
     private readonly SafeContextHandle _context;
     private readonly Thread _mainLoopRunner;
 
@@ -42,7 +43,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     private long _waitHandleToken;
 
     /// <summary>
-    /// Initialize an <see cref="RclContext"/> and start the underlying event loop immediately.
+    /// Creates a new <see cref="RclContext"/> with specified arguments and logger factory.
     /// </summary>
     /// <param name="args">Command line arguments to be passed to the context.</param>
     /// <param name="loggerFactory">
@@ -82,12 +83,34 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
         DefaultLogger = CreateLogger("rclnet");
 
         _interruptSignal = new SafeGuardConditionHandle(_context);
+        _shutdownSignal = new SafeGuardConditionHandle(_context);
 
         _mainLoopRunner = new(Run)
         {
             Name = "RCL Event Loop"
         };
         _mainLoopRunner.Start();
+    }
+
+    /// <summary>
+    /// Create a new <see cref="RclContext"/> with specified logger factory.
+    /// </summary>
+    /// <param name="loggerFactory">
+    /// A custom <see cref="IRclLoggerFactory"/> for creating loggers in the <see cref="RclContext"/>.
+    /// </param>
+    public RclContext(IRclLoggerFactory loggerFactory)
+        : this(Array.Empty<string>(), loggerFactory)
+    {
+
+    }
+
+    /// <summary>
+    /// Create a new <see cref="RclContext"/>.
+    /// </summary>
+    public RclContext()
+        : this(Array.Empty<string>())
+    {
+
     }
 
     internal SafeContextHandle Handle => _context;
@@ -137,7 +160,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
             }
             _features.Clear();
 
-            Interrupt();
+            rcl_trigger_guard_condition(_shutdownSignal.Object);
         }
     }
 
@@ -222,11 +245,14 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
         servicesIndices = new(),
         eventIndices = new();
 
-        while (Volatile.Read(ref _disposed) == 0)
+        var isShutdownRequested = false;
+
+        while (!isShutdownRequested)
         {
             try
             {
                 guardConditions.Add(_interruptSignal);
+                guardConditions.Add(_shutdownSignal);
 
                 using (ScopedLock.Lock(ref _handleLock))
                 {
@@ -361,21 +387,24 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                     }
                 }
 
-                // Check for guard conditions, skipping the first element
-                // since it's the interrupt signal.
+                // Check for guard conditions.
+                // Skip interrupt signal @ 0, but check shutdown signal @ 1.
                 for (var i = 1; i < guardConditionIndices.Count; i++)
                 {
                     idx = guardConditionIndices[i];
                     var target = guardConditions[i].DangerousGetHandle();
                     if (target == new nint(ws.guard_conditions[idx]))
                     {
-                        completedHandles.Add(target);
+                        if (target == _shutdownSignal.DangerousGetHandle())
+                        {
+                            isShutdownRequested = true;
+                        }
+                        else
+                        {
+                            completedHandles.Add(target);
+                        }
                     }
                 }
-
-                // Invocation of callbacks MUST happen after the call to rcl_wait,
-                // because callbacks may dispose wait object synchronously,
-                // causing segmentation fault in rcl_wait.
 
                 // Call registered callbacks for wait objects
                 // in the order they were added into completedHandles.
@@ -402,6 +431,9 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                     }
                 }
 
+                // Invocation of callbacks MUST happen after the call to rcl_wait,
+                // because callbacks may dispose wait object synchronously,
+                // causing segmentation fault in rcl_wait.
                 ExecuteCallbacks(callbacks);
             }
             finally
@@ -424,9 +456,6 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                 eventIndices.Clear();
             }
         }
-
-        // Ensure all callbacks are executed before we quit.
-        ExecuteCallbacks(callbacks);
 
         rcl_wait_set_fini(&ws);
         _interruptSignal.Dispose();
@@ -507,7 +536,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
 
         private ValueTask SendAsync(SendOrPostCallback callback, object? state)
         {
-            if (Current == this)
+            if (_context.IsCurrent)
             {
                 callback(state);
                 return ValueTask.CompletedTask;

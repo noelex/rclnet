@@ -304,7 +304,7 @@ namespace Rosidl.Messages.Geometry
             {
                 var __hashCode = new global::System.HashCode();
                 __hashCode.Add(this.Accel);
-                for (int __i = 0; __i < 36; i++)
+                for (int __i = 0; __i < 36; __i++)
                 {
                     __hashCode.Add(this.Covariance[__i]);
                 }

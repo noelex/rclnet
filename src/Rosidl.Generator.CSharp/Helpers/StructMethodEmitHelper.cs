@@ -133,7 +133,7 @@ internal static class StructMethodEmitHelper
         {
             if (f.Type.TryGetArraySize(out var sz))
             {
-                body.AppendLine($"    for (int __i = 0; __i < {sz}; i++)");
+                body.AppendLine($"    for (int __i = 0; __i < {sz}; __i++)");
                 body.AppendLine("    {");
                 body.AppendLine($"        __hashCode.Add(this.{context.MessageContext.GetNormalizedFieldName(f)}[__i]);");
                 body.AppendLine("    }");

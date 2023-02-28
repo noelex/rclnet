@@ -343,7 +343,7 @@ namespace Rosidl.Messages.Sensor
                 var __hashCode = new global::System.HashCode();
                 __hashCode.Add(this.Header);
                 __hashCode.Add(this.MagneticField_);
-                for (int __i = 0; __i < 9; i++)
+                for (int __i = 0; __i < 9; __i++)
                 {
                     __hashCode.Add(this.MagneticFieldCovariance[__i]);
                 }

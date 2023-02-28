@@ -493,17 +493,17 @@ namespace Rosidl.Messages.Sensor
                 var __hashCode = new global::System.HashCode();
                 __hashCode.Add(this.Header);
                 __hashCode.Add(this.Orientation);
-                for (int __i = 0; __i < 9; i++)
+                for (int __i = 0; __i < 9; __i++)
                 {
                     __hashCode.Add(this.OrientationCovariance[__i]);
                 }
                 __hashCode.Add(this.AngularVelocity);
-                for (int __i = 0; __i < 9; i++)
+                for (int __i = 0; __i < 9; __i++)
                 {
                     __hashCode.Add(this.AngularVelocityCovariance[__i]);
                 }
                 __hashCode.Add(this.LinearAcceleration);
-                for (int __i = 0; __i < 9; i++)
+                for (int __i = 0; __i < 9; __i++)
                 {
                     __hashCode.Add(this.LinearAccelerationCovariance[__i]);
                 }

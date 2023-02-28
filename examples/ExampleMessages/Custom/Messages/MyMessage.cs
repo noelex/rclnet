@@ -877,14 +877,14 @@ namespace Rosidl.Messages.Custom
                 var __hashCode = new global::System.HashCode();
                 __hashCode.Add(this.Number);
                 __hashCode.Add(this.Numbers);
-                for (int __i = 0; __i < 3; i++)
+                for (int __i = 0; __i < 3; __i++)
                 {
                     __hashCode.Add(this.NumbersFixed[__i]);
                 }
                 __hashCode.Add(this.NumbersBounded);
                 __hashCode.Add(this.Vector);
                 __hashCode.Add(this.Vectors);
-                for (int __i = 0; __i < 3; i++)
+                for (int __i = 0; __i < 3; __i++)
                 {
                     __hashCode.Add(this.VectorsFixed[__i]);
                 }
@@ -892,7 +892,7 @@ namespace Rosidl.Messages.Custom
                 __hashCode.Add(this.Str);
                 __hashCode.Add(this.StrBounded);
                 __hashCode.Add(this.Strings);
-                for (int __i = 0; __i < 3; i++)
+                for (int __i = 0; __i < 3; __i++)
                 {
                     __hashCode.Add(this.StringsFixed[__i]);
                 }
@@ -900,7 +900,7 @@ namespace Rosidl.Messages.Custom
                 __hashCode.Add(this.Wstring);
                 __hashCode.Add(this.WstringBounded);
                 __hashCode.Add(this.Wstrings);
-                for (int __i = 0; __i < 3; i++)
+                for (int __i = 0; __i < 3; __i++)
                 {
                     __hashCode.Add(this.WstringsFixed[__i]);
                 }
