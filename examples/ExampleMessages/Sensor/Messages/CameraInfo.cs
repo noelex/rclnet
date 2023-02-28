@@ -675,17 +675,17 @@ namespace Rosidl.Messages.Sensor
                 __hashCode.Add(this.Width);
                 __hashCode.Add(this.DistortionModel);
                 __hashCode.Add(this.D);
-                for (int i = 0; i < 9; i++)
+                for (int __i = 0; __i < 9; i++)
                 {
-                    __hashCode.Add(this.K[i]);
+                    __hashCode.Add(this.K[__i]);
                 }
-                for (int i = 0; i < 9; i++)
+                for (int __i = 0; __i < 9; i++)
                 {
-                    __hashCode.Add(this.R[i]);
+                    __hashCode.Add(this.R[__i]);
                 }
-                for (int i = 0; i < 12; i++)
+                for (int __i = 0; __i < 12; i++)
                 {
-                    __hashCode.Add(this.P[i]);
+                    __hashCode.Add(this.P[__i]);
                 }
                 __hashCode.Add(this.BinningX);
                 __hashCode.Add(this.BinningY);

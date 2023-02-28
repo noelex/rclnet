@@ -344,11 +344,11 @@ public class MsgParser
         TypeMetadata metadata;
 
         // Special case for string with upper boundary
-        if (declaration.IsUpperBounded && declaration.Type == "string")
+        if (declaration.IsUpperBounded && declaration.Type == "string" && !declaration.IsArray)
         {
             return new PrimitiveTypeMetadata(PrimitiveTypes.String, declaration.ArrayLength);
         }
-        else if (declaration.IsUpperBounded && declaration.Type == "wstring")
+        else if (declaration.IsUpperBounded && declaration.Type == "wstring" && !declaration.IsArray)
         {
             return new PrimitiveTypeMetadata(PrimitiveTypes.WString, declaration.ArrayLength);
         }

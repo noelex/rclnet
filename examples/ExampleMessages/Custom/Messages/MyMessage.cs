@@ -37,123 +37,149 @@ namespace Rosidl.Messages.Custom
         /// <summary>
         /// Create a new instance of <see cref="MyMessage"/> with fields initialized to specified values.
         /// </summary>
-        /// <param name='a'>
-        /// Originally defined as: <c><![CDATA[uint8 a]]></c>
-        /// </param>
-        /// <param name='strings'>
-        /// Originally defined as: <c><![CDATA[string[3] strings]]></c>
-        /// </param>
-        /// <param name='b'>
-        /// Originally defined as: <c><![CDATA[uint8 b]]></c>
-        /// </param>
-        /// <param name='vectors'>
-        /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[3] vectors]]></c>
+        /// <param name='number'>
+        /// Originally defined as: <c><![CDATA[int64 number]]></c>
         /// </param>
         /// <param name='numbers'>
-        /// Originally defined as: <c><![CDATA[int64[3] numbers]]></c>
+        /// Originally defined as: <c><![CDATA[int64[] numbers]]></c>
         /// </param>
-        /// <param name='c'>
-        /// Originally defined as: <c><![CDATA[string[] c]]></c>
+        /// <param name='numbersFixed'>
+        /// Originally defined as: <c><![CDATA[int64[3] numbers_fixed]]></c>
         /// </param>
-        /// <param name='d'>
-        /// Originally defined as: <c><![CDATA[bool d]]></c>
+        /// <param name='numbersBounded'>
+        /// Originally defined as: <c><![CDATA[int64[<=3] numbers_bounded]]></c>
         /// </param>
-        /// <param name='e'>
-        /// Originally defined as: <c><![CDATA[wstring e]]></c>
+        /// <param name='vector'>
+        /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3 vector]]></c>
         /// </param>
-        /// <param name='f'>
-        /// Originally defined as: <c><![CDATA[wstring[3] f]]></c>
+        /// <param name='vectors'>
+        /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[] vectors]]></c>
         /// </param>
-        /// <param name='g'>
-        /// Originally defined as: <c><![CDATA[wstring[] g]]></c>
+        /// <param name='vectorsFixed'>
+        /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[3] vectors_fixed]]></c>
         /// </param>
-        /// <param name='h'>
-        /// Originally defined as: <c><![CDATA[string<=3 h]]></c>
+        /// <param name='vectorsBounded'>
+        /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[<=3] vectors_bounded]]></c>
         /// </param>
-        /// <param name='i'>
-        /// Originally defined as: <c><![CDATA[wstring<=3 i]]></c>
+        /// <param name='str'>
+        /// Originally defined as: <c><![CDATA[string str]]></c>
         /// </param>
-        /// <param name='j'>
-        /// Originally defined as: <c><![CDATA[wstring<=3 j]]></c>
+        /// <param name='strBounded'>
+        /// Originally defined as: <c><![CDATA[string<=3 str_bounded]]></c>
+        /// </param>
+        /// <param name='strings'>
+        /// Originally defined as: <c><![CDATA[string[] strings]]></c>
+        /// </param>
+        /// <param name='stringsFixed'>
+        /// Originally defined as: <c><![CDATA[string[3] strings_fixed]]></c>
+        /// </param>
+        /// <param name='stringsBounded'>
+        /// Originally defined as: <c><![CDATA[string[<=3] strings_bounded]]></c>
+        /// </param>
+        /// <param name='wstring'>
+        /// Originally defined as: <c><![CDATA[wstring wstring]]></c>
+        /// </param>
+        /// <param name='wstringBounded'>
+        /// Originally defined as: <c><![CDATA[wstring<=3 wstring_bounded]]></c>
+        /// </param>
+        /// <param name='wstrings'>
+        /// Originally defined as: <c><![CDATA[wstring[] wstrings]]></c>
+        /// </param>
+        /// <param name='wstringsFixed'>
+        /// Originally defined as: <c><![CDATA[wstring[3] wstrings_fixed]]></c>
+        /// </param>
+        /// <param name='wstringsBounded'>
+        /// Originally defined as: <c><![CDATA[wstring[<=3] wstrings_bounded]]></c>
         /// </param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public MyMessage(
-            byte @a = 0,
-            string[]? @strings = null,
-            byte @b = 0,
-            global::Rosidl.Messages.Geometry.Vector3[]? @vectors = null,
+            long @number = 0,
             long[]? @numbers = null,
-            string[]? @c = null,
-            bool @d = false,
-            string @e = "",
-            string[]? @f = null,
-            string[]? @g = null,
-            string @h = "",
-            string @i = "",
-            string @j = ""
+            long[]? @numbersFixed = null,
+            long[]? @numbersBounded = null,
+            global::Rosidl.Messages.Geometry.Vector3? @vector = null,
+            global::Rosidl.Messages.Geometry.Vector3[]? @vectors = null,
+            global::Rosidl.Messages.Geometry.Vector3[]? @vectorsFixed = null,
+            global::Rosidl.Messages.Geometry.Vector3[]? @vectorsBounded = null,
+            string @str = "",
+            string @strBounded = "",
+            string[]? @strings = null,
+            string[]? @stringsFixed = null,
+            string[]? @stringsBounded = null,
+            string @wstring = "",
+            string @wstringBounded = "",
+            string[]? @wstrings = null,
+            string[]? @wstringsFixed = null,
+            string[]? @wstringsBounded = null
         )
         {
-            A = @a;
+            Number = @number;
+            Numbers = @numbers ?? global::System.Array.Empty<long>();
         
-            if (@strings != null)
+            if (@numbersFixed != null)
             {
-                Strings = @strings;
+                NumbersFixed = @numbersFixed;
             }
             else
             {
-                Strings = new string[3];
+                NumbersFixed = new long[3];
+            }
+        
+            NumbersBounded = @numbersBounded ?? global::System.Array.Empty<long>();
+            Vector = @vector ?? new global::Rosidl.Messages.Geometry.Vector3();
+            Vectors = @vectors ?? global::System.Array.Empty<global::Rosidl.Messages.Geometry.Vector3>();
+        
+            if (@vectorsFixed != null)
+            {
+                VectorsFixed = @vectorsFixed;
+            }
+            else
+            {
+                VectorsFixed = new global::Rosidl.Messages.Geometry.Vector3[3];
                 for (int __i = 0; __i < 3; __i++)
                 {
-                    Strings[__i] = "";
+                   VectorsFixed[__i] = new global::Rosidl.Messages.Geometry.Vector3();
                 }
             }
         
-            B = @b;
+            VectorsBounded = @vectorsBounded ?? global::System.Array.Empty<global::Rosidl.Messages.Geometry.Vector3>();
+            Str = @str;
+            StrBounded = @strBounded;
+            Strings = @strings ?? global::System.Array.Empty<string>();
         
-            if (@vectors != null)
+            if (@stringsFixed != null)
             {
-                Vectors = @vectors;
+                StringsFixed = @stringsFixed;
             }
             else
             {
-                Vectors = new global::Rosidl.Messages.Geometry.Vector3[3];
+                StringsFixed = new string[3];
                 for (int __i = 0; __i < 3; __i++)
                 {
-                   Vectors[__i] = new global::Rosidl.Messages.Geometry.Vector3();
+                    StringsFixed[__i] = "";
                 }
             }
         
-            if (@numbers != null)
+            StringsBounded = @stringsBounded ?? global::System.Array.Empty<string>();
+            Wstring = @wstring;
+            WstringBounded = @wstringBounded;
+            Wstrings = @wstrings ?? global::System.Array.Empty<string>();
+        
+            if (@wstringsFixed != null)
             {
-                Numbers = @numbers;
+                WstringsFixed = @wstringsFixed;
             }
             else
             {
-                Numbers = new long[3];
-            }
-        
-            C = @c ?? global::System.Array.Empty<string>();
-            D = @d;
-            E = @e;
-        
-            if (@f != null)
-            {
-                F = @f;
-            }
-            else
-            {
-                F = new string[3];
+                WstringsFixed = new string[3];
                 for (int __i = 0; __i < 3; __i++)
                 {
-                    F[__i] = "";
+                    WstringsFixed[__i] = "";
                 }
             }
         
-            G = @g ?? global::System.Array.Empty<string>();
-            H = @h;
-            I = @i;
-            J = @j;
+            WstringsBounded = @wstringsBounded ?? global::System.Array.Empty<string>();
         }
         
         
@@ -166,232 +192,333 @@ namespace Rosidl.Messages.Custom
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public MyMessage(in Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.A = priv.A;
+            this.Number = priv.Number;
+            this.Numbers = priv.Numbers.AsSpan().ToArray();
+            this.NumbersFixed = priv.NumbersFixed.ToArray();
+            this.NumbersBounded = priv.NumbersBounded.AsSpan().ToArray();
+            this.Vector = new global::Rosidl.Messages.Geometry.Vector3(in priv.Vector, textEncoding);
         
-            this.Strings = new string[3];
-            for (int __i = 0; __i < this.Strings.Length; __i++)
-            {
-                this.Strings[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Strings[__i].AsSpan(), textEncoding);
-            }
-        
-            this.B = priv.B;
-        
-            this.Vectors = new global::Rosidl.Messages.Geometry.Vector3[3];
+            this.Vectors = new global::Rosidl.Messages.Geometry.Vector3[priv.Vectors.Size];
+            var Vectors_span = priv.Vectors.AsSpan();
             for (int __i = 0; __i < this.Vectors.Length; __i++)
             {
-                this.Vectors[__i] = new global::Rosidl.Messages.Geometry.Vector3(in priv.Vectors[__i], textEncoding);
+                this.Vectors[__i] = new global::Rosidl.Messages.Geometry.Vector3(in Vectors_span[__i], textEncoding);
             }
         
-            this.Numbers = priv.Numbers.ToArray();
-        
-            this.C = new string[priv.C.Size];
-            var C_span = priv.C.AsSpan();
-            for (int __i = 0; __i < this.C.Length; __i++)
+            this.VectorsFixed = new global::Rosidl.Messages.Geometry.Vector3[3];
+            for (int __i = 0; __i < this.VectorsFixed.Length; __i++)
             {
-                this.C[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(C_span[__i].AsSpan(), textEncoding);
+                this.VectorsFixed[__i] = new global::Rosidl.Messages.Geometry.Vector3(in priv.VectorsFixed[__i], textEncoding);
             }
         
-            this.D = priv.D;
-            this.E = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.E.AsSpan());
-        
-            this.F = new string[3];
-            for (int __i = 0; __i < this.F.Length; __i++)
+            this.VectorsBounded = new global::Rosidl.Messages.Geometry.Vector3[priv.VectorsBounded.Size];
+            var VectorsBounded_span = priv.VectorsBounded.AsSpan();
+            for (int __i = 0; __i < this.VectorsBounded.Length; __i++)
             {
-                this.F[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.F[__i].AsSpan());
+                this.VectorsBounded[__i] = new global::Rosidl.Messages.Geometry.Vector3(in VectorsBounded_span[__i], textEncoding);
             }
         
-            this.G = new string[priv.G.Size];
-            var G_span = priv.G.AsSpan();
-            for (int __i = 0; __i < this.G.Length; __i++)
+            this.Str = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Str.AsSpan(), textEncoding);
+            this.StrBounded = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.StrBounded.AsSpan(), textEncoding);
+        
+            this.Strings = new string[priv.Strings.Size];
+            var Strings_span = priv.Strings.AsSpan();
+            for (int __i = 0; __i < this.Strings.Length; __i++)
             {
-                this.G[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(G_span[__i].AsSpan());
+                this.Strings[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(Strings_span[__i].AsSpan(), textEncoding);
             }
         
-            this.H = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.H.AsSpan(), textEncoding);
-            this.I = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.I.AsSpan());
-            this.J = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.J.AsSpan());
-        }
-        
-        
-        /// <summary>
-        /// Originally defined as: <c><![CDATA[uint8 a]]></c>
-        /// </summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public byte A { get; set; }
-        
-        private string[] __backingField__Strings;
-        
-        /// <summary>
-        /// Originally defined as: <c><![CDATA[string[3] strings]]></c>
-        /// </summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public string[] Strings
-        {
-            get
+            this.StringsFixed = new string[3];
+            for (int __i = 0; __i < this.StringsFixed.Length; __i++)
             {
-                return __backingField__Strings;
+                this.StringsFixed[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.StringsFixed[__i].AsSpan(), textEncoding);
             }
-            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__Strings))]
-            set
+        
+            this.StringsBounded = new string[priv.StringsBounded.Size];
+            var StringsBounded_span = priv.StringsBounded.AsSpan();
+            for (int __i = 0; __i < this.StringsBounded.Length; __i++)
             {
-                __backingField__Strings = value.Length == 3 ? value : throw new global::System.ArgumentException("Size of the array 'Strings' must be 3.");
+                this.StringsBounded[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(StringsBounded_span[__i].AsSpan(), textEncoding);
             }
-        }
         
-        /// <summary>
-        /// Originally defined as: <c><![CDATA[uint8 b]]></c>
-        /// </summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public byte B { get; set; }
+            this.Wstring = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Wstring.AsSpan());
+            this.WstringBounded = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.WstringBounded.AsSpan());
         
-        private global::Rosidl.Messages.Geometry.Vector3[] __backingField__Vectors;
-        
-        /// <summary>
-        /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[3] vectors]]></c>
-        /// </summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public global::Rosidl.Messages.Geometry.Vector3[] Vectors
-        {
-            get
+            this.Wstrings = new string[priv.Wstrings.Size];
+            var Wstrings_span = priv.Wstrings.AsSpan();
+            for (int __i = 0; __i < this.Wstrings.Length; __i++)
             {
-                return __backingField__Vectors;
+                this.Wstrings[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(Wstrings_span[__i].AsSpan());
             }
-            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__Vectors))]
-            set
+        
+            this.WstringsFixed = new string[3];
+            for (int __i = 0; __i < this.WstringsFixed.Length; __i++)
             {
-                __backingField__Vectors = value.Length == 3 ? value : throw new global::System.ArgumentException("Size of the array 'Vectors' must be 3.");
+                this.WstringsFixed[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.WstringsFixed[__i].AsSpan());
+            }
+        
+            this.WstringsBounded = new string[priv.WstringsBounded.Size];
+            var WstringsBounded_span = priv.WstringsBounded.AsSpan();
+            for (int __i = 0; __i < this.WstringsBounded.Length; __i++)
+            {
+                this.WstringsBounded[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(WstringsBounded_span[__i].AsSpan());
             }
         }
         
-        private long[] __backingField__Numbers;
         
         /// <summary>
-        /// Originally defined as: <c><![CDATA[int64[3] numbers]]></c>
+        /// Originally defined as: <c><![CDATA[int64 number]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public long[] Numbers
+        public long Number { get; set; }
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[int64[] numbers]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public long[] Numbers { get; set; }
+        
+        private long[] __backingField__NumbersFixed;
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[int64[3] numbers_fixed]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public long[] NumbersFixed
         {
             get
             {
-                return __backingField__Numbers;
+                return __backingField__NumbersFixed;
             }
-            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__Numbers))]
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__NumbersFixed))]
             set
             {
-                __backingField__Numbers = value.Length == 3 ? value : throw new global::System.ArgumentException("Size of the array 'Numbers' must be 3.");
+                __backingField__NumbersFixed = value.Length == 3 ? value : throw new global::System.ArgumentException("Size of the array 'NumbersFixed' must be 3.");
             }
         }
         
+        private long[] __backingField__NumbersBounded;
+        
         /// <summary>
-        /// Originally defined as: <c><![CDATA[string[] c]]></c>
+        /// Originally defined as: <c><![CDATA[int64[<=3] numbers_bounded]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public string[] C { get; set; }
-        
-        /// <summary>
-        /// Originally defined as: <c><![CDATA[bool d]]></c>
-        /// </summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public bool D { get; set; }
-        
-        /// <summary>
-        /// Originally defined as: <c><![CDATA[wstring e]]></c>
-        /// </summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public string E { get; set; }
-        
-        private string[] __backingField__F;
-        
-        /// <summary>
-        /// Originally defined as: <c><![CDATA[wstring[3] f]]></c>
-        /// </summary>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public string[] F
+        public long[] NumbersBounded
         {
             get
             {
-                return __backingField__F;
+                return __backingField__NumbersBounded;
             }
-            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__F))]
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__NumbersBounded))]
             set
             {
-                __backingField__F = value.Length == 3 ? value : throw new global::System.ArgumentException("Size of the array 'F' must be 3.");
+                __backingField__NumbersBounded = value.Length <= 3 ? value : throw new global::System.ArgumentException("Size of the array or string 'NumbersBounded' must be less or equal than 3.");
             }
         }
         
         /// <summary>
-        /// Originally defined as: <c><![CDATA[wstring[] g]]></c>
+        /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3 vector]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public string[] G { get; set; }
-        
-        private string __backingField__H;
+        public global::Rosidl.Messages.Geometry.Vector3 Vector { get; set; }
         
         /// <summary>
-        /// Originally defined as: <c><![CDATA[string<=3 h]]></c>
+        /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[] vectors]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public string H
+        public global::Rosidl.Messages.Geometry.Vector3[] Vectors { get; set; }
+        
+        private global::Rosidl.Messages.Geometry.Vector3[] __backingField__VectorsFixed;
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[3] vectors_fixed]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public global::Rosidl.Messages.Geometry.Vector3[] VectorsFixed
         {
             get
             {
-                return __backingField__H;
+                return __backingField__VectorsFixed;
             }
-            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__H))]
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__VectorsFixed))]
             set
             {
-                __backingField__H = value.Length <= 3 ? value : throw new global::System.ArgumentException("Size of the array or string 'H' must be less or equal than 3.");
+                __backingField__VectorsFixed = value.Length == 3 ? value : throw new global::System.ArgumentException("Size of the array 'VectorsFixed' must be 3.");
             }
         }
         
-        private string __backingField__I;
+        private global::Rosidl.Messages.Geometry.Vector3[] __backingField__VectorsBounded;
         
         /// <summary>
-        /// Originally defined as: <c><![CDATA[wstring<=3 i]]></c>
+        /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[<=3] vectors_bounded]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public string I
+        public global::Rosidl.Messages.Geometry.Vector3[] VectorsBounded
         {
             get
             {
-                return __backingField__I;
+                return __backingField__VectorsBounded;
             }
-            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__I))]
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__VectorsBounded))]
             set
             {
-                __backingField__I = value.Length <= 3 ? value : throw new global::System.ArgumentException("Size of the array or string 'I' must be less or equal than 3.");
+                __backingField__VectorsBounded = value.Length <= 3 ? value : throw new global::System.ArgumentException("Size of the array or string 'VectorsBounded' must be less or equal than 3.");
             }
         }
         
-        private string __backingField__J;
-        
         /// <summary>
-        /// Originally defined as: <c><![CDATA[wstring<=3 j]]></c>
+        /// Originally defined as: <c><![CDATA[string str]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-        public string J
+        public string Str { get; set; }
+        
+        private string __backingField__StrBounded;
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[string<=3 str_bounded]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string StrBounded
         {
             get
             {
-                return __backingField__J;
+                return __backingField__StrBounded;
             }
-            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__J))]
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__StrBounded))]
             set
             {
-                __backingField__J = value.Length <= 3 ? value : throw new global::System.ArgumentException("Size of the array or string 'J' must be less or equal than 3.");
+                __backingField__StrBounded = value.Length <= 3 ? value : throw new global::System.ArgumentException("Size of the array or string 'StrBounded' must be less or equal than 3.");
+            }
+        }
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[string[] strings]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string[] Strings { get; set; }
+        
+        private string[] __backingField__StringsFixed;
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[string[3] strings_fixed]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string[] StringsFixed
+        {
+            get
+            {
+                return __backingField__StringsFixed;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__StringsFixed))]
+            set
+            {
+                __backingField__StringsFixed = value.Length == 3 ? value : throw new global::System.ArgumentException("Size of the array 'StringsFixed' must be 3.");
+            }
+        }
+        
+        private string[] __backingField__StringsBounded;
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[string[<=3] strings_bounded]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string[] StringsBounded
+        {
+            get
+            {
+                return __backingField__StringsBounded;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__StringsBounded))]
+            set
+            {
+                __backingField__StringsBounded = value.Length <= 3 ? value : throw new global::System.ArgumentException("Size of the array or string 'StringsBounded' must be less or equal than 3.");
+            }
+        }
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[wstring wstring]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string Wstring { get; set; }
+        
+        private string __backingField__WstringBounded;
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[wstring<=3 wstring_bounded]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string WstringBounded
+        {
+            get
+            {
+                return __backingField__WstringBounded;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__WstringBounded))]
+            set
+            {
+                __backingField__WstringBounded = value.Length <= 3 ? value : throw new global::System.ArgumentException("Size of the array or string 'WstringBounded' must be less or equal than 3.");
+            }
+        }
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[wstring[] wstrings]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string[] Wstrings { get; set; }
+        
+        private string[] __backingField__WstringsFixed;
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[wstring[3] wstrings_fixed]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string[] WstringsFixed
+        {
+            get
+            {
+                return __backingField__WstringsFixed;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__WstringsFixed))]
+            set
+            {
+                __backingField__WstringsFixed = value.Length == 3 ? value : throw new global::System.ArgumentException("Size of the array 'WstringsFixed' must be 3.");
+            }
+        }
+        
+        private string[] __backingField__WstringsBounded;
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[wstring[<=3] wstrings_bounded]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        public string[] WstringsBounded
+        {
+            get
+            {
+                return __backingField__WstringsBounded;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__WstringsBounded))]
+            set
+            {
+                __backingField__WstringsBounded = value.Length <= 3 ? value : throw new global::System.ArgumentException("Size of the array or string 'WstringsBounded' must be less or equal than 3.");
             }
         }
         
@@ -406,47 +533,74 @@ namespace Rosidl.Messages.Custom
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
-            priv.A = this.A;
+            priv.Number = this.Number;
+            priv.Numbers.CopyFrom(this.Numbers);
+            this.NumbersFixed.CopyTo(priv.NumbersFixed);
+            priv.NumbersBounded.CopyFrom(this.NumbersBounded);
+            this.Vector.WriteTo(ref priv.Vector, textEncoding);
+            
+            priv.Vectors = new global::Rosidl.Messages.Geometry.Vector3.PrivSequence(this.Vectors.Length);
+            var Vectors_span = priv.Vectors.AsSpan();
+            for (int __i = 0; __i < this.Vectors.Length; __i++)
+            {
+                this.Vectors[__i].WriteTo(ref Vectors_span[__i], textEncoding);
+            }
             
             for (int __i = 0; __i < 3; __i++)
             {
-                priv.Strings[__i].CopyFrom(this.Strings[__i], textEncoding);
+                this.VectorsFixed[__i].WriteTo(ref priv.VectorsFixed[__i], textEncoding);
             }
             
-            priv.B = this.B;
+            priv.VectorsBounded = new global::Rosidl.Messages.Geometry.Vector3.PrivSequence(this.VectorsBounded.Length);
+            var VectorsBounded_span = priv.VectorsBounded.AsSpan();
+            for (int __i = 0; __i < this.VectorsBounded.Length; __i++)
+            {
+                this.VectorsBounded[__i].WriteTo(ref VectorsBounded_span[__i], textEncoding);
+            }
+            
+            priv.Str.CopyFrom(this.Str, textEncoding);
+            priv.StrBounded.CopyFrom(this.StrBounded, textEncoding);
+            
+            priv.Strings = new global::Rosidl.Runtime.Interop.CStringSequence(this.Strings.Length);
+            var Strings_span = priv.Strings.AsSpan();
+            for (int __i = 0; __i < this.Strings.Length; __i++)
+            {
+                Strings_span[__i].CopyFrom(this.Strings[__i], textEncoding);
+            }
             
             for (int __i = 0; __i < 3; __i++)
             {
-                this.Vectors[__i].WriteTo(ref priv.Vectors[__i], textEncoding);
+                priv.StringsFixed[__i].CopyFrom(this.StringsFixed[__i], textEncoding);
             }
             
-            this.Numbers.CopyTo(priv.Numbers);
-            
-            priv.C = new global::Rosidl.Runtime.Interop.CStringSequence(this.C.Length);
-            var C_span = priv.C.AsSpan();
-            for (int __i = 0; __i < this.C.Length; __i++)
+            priv.StringsBounded = new global::Rosidl.Runtime.Interop.CStringSequence(this.StringsBounded.Length);
+            var StringsBounded_span = priv.StringsBounded.AsSpan();
+            for (int __i = 0; __i < this.StringsBounded.Length; __i++)
             {
-                C_span[__i].CopyFrom(this.C[__i], textEncoding);
+                StringsBounded_span[__i].CopyFrom(this.StringsBounded[__i], textEncoding);
             }
             
-            priv.D = this.D;
-            priv.E.CopyFrom(this.E);
+            priv.Wstring.CopyFrom(this.Wstring);
+            priv.WstringBounded.CopyFrom(this.WstringBounded);
+            
+            priv.Wstrings = new global::Rosidl.Runtime.Interop.U16StringSequence(this.Wstrings.Length);
+            var Wstrings_span = priv.Wstrings.AsSpan();
+            for (int __i = 0; __i < this.Wstrings.Length; __i++)
+            {
+                Wstrings_span[__i].CopyFrom(this.Wstrings[__i]);
+            }
             
             for (int __i = 0; __i < 3; __i++)
             {
-                priv.F[__i].CopyFrom(this.F[__i]);
+                priv.WstringsFixed[__i].CopyFrom(this.WstringsFixed[__i]);
             }
             
-            priv.G = new global::Rosidl.Runtime.Interop.U16StringSequence(this.G.Length);
-            var G_span = priv.G.AsSpan();
-            for (int __i = 0; __i < this.G.Length; __i++)
+            priv.WstringsBounded = new global::Rosidl.Runtime.Interop.U16StringSequence(this.WstringsBounded.Length);
+            var WstringsBounded_span = priv.WstringsBounded.AsSpan();
+            for (int __i = 0; __i < this.WstringsBounded.Length; __i++)
             {
-                G_span[__i].CopyFrom(this.G[__i]);
+                WstringsBounded_span[__i].CopyFrom(this.WstringsBounded[__i]);
             }
-            
-            priv.H.CopyFrom(this.H, textEncoding);
-            priv.I.CopyFrom(this.I);
-            priv.J.CopyFrom(this.J);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -505,109 +659,134 @@ namespace Rosidl.Messages.Custom
         public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
         {
             /// <summary>
-            /// Originally defined as: <c><![CDATA[uint8 a]]></c>
+            /// Originally defined as: <c><![CDATA[int64 number]]></c>
             /// </summary>
-            public byte A;
-            
-            private global::Rosidl.Runtime.Interop.CString __Strings_0, __Strings_1, __Strings_2;
+            public long Number;
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[string[3] strings]]></c>
+            /// Originally defined as: <c><![CDATA[int64[] numbers]]></c>
+            /// </summary>
+            public global::Rosidl.Runtime.Interop.Int64Sequence Numbers;
+            
+            private fixed long __NumbersFixed[3];
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[int64[3] numbers_fixed]]></c>
             /// </summary>
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-            public global::System.Span<global::Rosidl.Runtime.Interop.CString> Strings
+            public global::System.Span<long> NumbersFixed
             {
                 get
                 {
-                    fixed (global::Rosidl.Runtime.Interop.CString* __p = &__Strings_0) return new (__p, 3);
+                    fixed (global::Rosidl.Messages.Custom.MyMessage.Priv* __p = &this) return new (__p->__NumbersFixed, 3);
                 }
             }
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[uint8 b]]></c>
+            /// Originally defined as: <c><![CDATA[int64[<=3] numbers_bounded]]></c>
             /// </summary>
-            public byte B;
-            
-            private global::Rosidl.Messages.Geometry.Vector3.Priv __Vectors_0, __Vectors_1, __Vectors_2;
+            public global::Rosidl.Runtime.Interop.Int64Sequence NumbersBounded;
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[3] vectors]]></c>
+            /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3 vector]]></c>
+            /// </summary>
+            public global::Rosidl.Messages.Geometry.Vector3.Priv Vector;
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[] vectors]]></c>
+            /// </summary>
+            public global::Rosidl.Messages.Geometry.Vector3.PrivSequence Vectors;
+            
+            private global::Rosidl.Messages.Geometry.Vector3.Priv __VectorsFixed_0, __VectorsFixed_1, __VectorsFixed_2;
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[3] vectors_fixed]]></c>
             /// </summary>
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-            public global::System.Span<global::Rosidl.Messages.Geometry.Vector3.Priv> Vectors
+            public global::System.Span<global::Rosidl.Messages.Geometry.Vector3.Priv> VectorsFixed
             {
                 get
                 {
-                    fixed (global::Rosidl.Messages.Geometry.Vector3.Priv* __p = &__Vectors_0) return new (__p, 3);
-                }
-            }
-            
-            private fixed long __Numbers[3];
-            
-            /// <summary>
-            /// Originally defined as: <c><![CDATA[int64[3] numbers]]></c>
-            /// </summary>
-            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-            public global::System.Span<long> Numbers
-            {
-                get
-                {
-                    fixed (global::Rosidl.Messages.Custom.MyMessage.Priv* __p = &this) return new (__p->__Numbers, 3);
+                    fixed (global::Rosidl.Messages.Geometry.Vector3.Priv* __p = &__VectorsFixed_0) return new (__p, 3);
                 }
             }
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[string[] c]]></c>
+            /// Originally defined as: <c><![CDATA[geometry_msgs/Vector3[<=3] vectors_bounded]]></c>
             /// </summary>
-            public global::Rosidl.Runtime.Interop.CStringSequence C;
+            public global::Rosidl.Messages.Geometry.Vector3.PrivSequence VectorsBounded;
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[bool d]]></c>
+            /// Originally defined as: <c><![CDATA[string str]]></c>
             /// </summary>
-            public bool D;
+            public global::Rosidl.Runtime.Interop.CString Str;
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[wstring e]]></c>
+            /// Originally defined as: <c><![CDATA[string<=3 str_bounded]]></c>
             /// </summary>
-            public global::Rosidl.Runtime.Interop.U16String E;
-            
-            private global::Rosidl.Runtime.Interop.U16String __F_0, __F_1, __F_2;
+            public global::Rosidl.Runtime.Interop.CString StrBounded;
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[wstring[3] f]]></c>
+            /// Originally defined as: <c><![CDATA[string[] strings]]></c>
+            /// </summary>
+            public global::Rosidl.Runtime.Interop.CStringSequence Strings;
+            
+            private global::Rosidl.Runtime.Interop.CString __StringsFixed_0, __StringsFixed_1, __StringsFixed_2;
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[string[3] strings_fixed]]></c>
             /// </summary>
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
-            public global::System.Span<global::Rosidl.Runtime.Interop.U16String> F
+            public global::System.Span<global::Rosidl.Runtime.Interop.CString> StringsFixed
             {
                 get
                 {
-                    fixed (global::Rosidl.Runtime.Interop.U16String* __p = &__F_0) return new (__p, 3);
+                    fixed (global::Rosidl.Runtime.Interop.CString* __p = &__StringsFixed_0) return new (__p, 3);
                 }
             }
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[wstring[] g]]></c>
+            /// Originally defined as: <c><![CDATA[string[<=3] strings_bounded]]></c>
             /// </summary>
-            public global::Rosidl.Runtime.Interop.U16StringSequence G;
+            public global::Rosidl.Runtime.Interop.CStringSequence StringsBounded;
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[string<=3 h]]></c>
+            /// Originally defined as: <c><![CDATA[wstring wstring]]></c>
             /// </summary>
-            public global::Rosidl.Runtime.Interop.CString H;
+            public global::Rosidl.Runtime.Interop.U16String Wstring;
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[wstring<=3 i]]></c>
+            /// Originally defined as: <c><![CDATA[wstring<=3 wstring_bounded]]></c>
             /// </summary>
-            public global::Rosidl.Runtime.Interop.U16String I;
+            public global::Rosidl.Runtime.Interop.U16String WstringBounded;
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[wstring<=3 j]]></c>
+            /// Originally defined as: <c><![CDATA[wstring[] wstrings]]></c>
             /// </summary>
-            public global::Rosidl.Runtime.Interop.U16String J;
+            public global::Rosidl.Runtime.Interop.U16StringSequence Wstrings;
+            
+            private global::Rosidl.Runtime.Interop.U16String __WstringsFixed_0, __WstringsFixed_1, __WstringsFixed_2;
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[wstring[3] wstrings_fixed]]></c>
+            /// </summary>
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            public global::System.Span<global::Rosidl.Runtime.Interop.U16String> WstringsFixed
+            {
+                get
+                {
+                    fixed (global::Rosidl.Runtime.Interop.U16String* __p = &__WstringsFixed_0) return new (__p, 3);
+                }
+            }
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[wstring[<=3] wstrings_bounded]]></c>
+            /// </summary>
+            public global::Rosidl.Runtime.Interop.U16StringSequence WstringsBounded;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
@@ -696,31 +875,36 @@ namespace Rosidl.Messages.Custom
             public override int GetHashCode()
             {
                 var __hashCode = new global::System.HashCode();
-                __hashCode.Add(this.A);
-                for (int i = 0; i < 3; i++)
+                __hashCode.Add(this.Number);
+                __hashCode.Add(this.Numbers);
+                for (int __i = 0; __i < 3; i++)
                 {
-                    __hashCode.Add(this.Strings[i]);
+                    __hashCode.Add(this.NumbersFixed[__i]);
                 }
-                __hashCode.Add(this.B);
-                for (int i = 0; i < 3; i++)
+                __hashCode.Add(this.NumbersBounded);
+                __hashCode.Add(this.Vector);
+                __hashCode.Add(this.Vectors);
+                for (int __i = 0; __i < 3; i++)
                 {
-                    __hashCode.Add(this.Vectors[i]);
+                    __hashCode.Add(this.VectorsFixed[__i]);
                 }
-                for (int i = 0; i < 3; i++)
+                __hashCode.Add(this.VectorsBounded);
+                __hashCode.Add(this.Str);
+                __hashCode.Add(this.StrBounded);
+                __hashCode.Add(this.Strings);
+                for (int __i = 0; __i < 3; i++)
                 {
-                    __hashCode.Add(this.Numbers[i]);
+                    __hashCode.Add(this.StringsFixed[__i]);
                 }
-                __hashCode.Add(this.C);
-                __hashCode.Add(this.D);
-                __hashCode.Add(this.E);
-                for (int i = 0; i < 3; i++)
+                __hashCode.Add(this.StringsBounded);
+                __hashCode.Add(this.Wstring);
+                __hashCode.Add(this.WstringBounded);
+                __hashCode.Add(this.Wstrings);
+                for (int __i = 0; __i < 3; i++)
                 {
-                    __hashCode.Add(this.F[i]);
+                    __hashCode.Add(this.WstringsFixed[__i]);
                 }
-                __hashCode.Add(this.G);
-                __hashCode.Add(this.H);
-                __hashCode.Add(this.I);
-                __hashCode.Add(this.J);
+                __hashCode.Add(this.WstringsBounded);
             
                 return __hashCode.ToHashCode();
             }

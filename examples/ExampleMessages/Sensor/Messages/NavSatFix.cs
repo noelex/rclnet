@@ -490,9 +490,9 @@ namespace Rosidl.Messages.Sensor
                 __hashCode.Add(this.Latitude);
                 __hashCode.Add(this.Longitude);
                 __hashCode.Add(this.Altitude);
-                for (int i = 0; i < 9; i++)
+                for (int __i = 0; __i < 9; i++)
                 {
-                    __hashCode.Add(this.PositionCovariance[i]);
+                    __hashCode.Add(this.PositionCovariance[__i]);
                 }
                 __hashCode.Add(this.PositionCovarianceType);
             
