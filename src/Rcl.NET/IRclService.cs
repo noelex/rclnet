@@ -26,8 +26,14 @@ public interface IRclService : IRclObject
 /// <summary>
 /// Represents a handler which is handles service requests on the <see cref="RclContext"/> event loop.
 /// </summary>
-/// <typeparam name="TRequest"></typeparam>
-/// <typeparam name="TResponse"></typeparam>
+/// <remarks>
+/// The handler will be invoked on the <see cref="RclContext"/> event loop to process incoming requests.
+/// Performing blocking operations in the handler will affect the responsiveness of the event loop.
+/// If the handler issues blocking calls or performs CPU intensive calculations, it's recommended to
+/// use <see cref="IConcurrentServiceHandler{TRequest, TResponse}"/> instead.
+/// </remarks>
+/// <typeparam name="TRequest">Type of the request messages.</typeparam>
+/// <typeparam name="TResponse">Type of the response messages.</typeparam>
 public interface IServiceHandler<TRequest, TResponse>
     where TRequest : IServiceRequest
     where TResponse : IServiceResponse
@@ -35,7 +41,7 @@ public interface IServiceHandler<TRequest, TResponse>
     /// <summary>
     /// Process the incoming request.
     /// </summary>
-    /// <param name="request"></param>
+    /// <param name="request">The request message received from the client.</param>
     /// <returns>The response message to be sent to the client.</returns>
     TResponse ProcessRequest(TRequest request);
 }
@@ -49,6 +55,12 @@ public interface IServiceHandler<TRequest, TResponse>
 /// This is especially useful when dealing with complex messages or messages
 /// has large array fields. Operaing directly on native buffers would effectively
 /// lower the cost of copying and reduce managed heap allocation.
+/// <para>
+/// The handler will be invoked on the <see cref="RclContext"/> event loop to process incoming requests.
+/// Performing blocking operations in the handler will affect the responsiveness of the event loop.
+/// If the handler issues blocking calls or performs CPU intensive calculations, it's recommended to
+/// use <see cref="IConcurrentNativeServiceHandler"/> instead.
+/// </para>
 /// </remarks>
 public interface INativeServiceHandler
 {
@@ -73,6 +85,12 @@ public interface INativeServiceHandler
 /// <summary>
 /// Represents a handler which is able to handle multiple service requests concurrently.
 /// </summary>
+/// <remarks>
+/// The handler will start its execution on the <see cref="RclContext"/> event loop to process incoming requests.
+/// If the handler issues blocking calls or performs CPU intensive calculations, <see cref="Task.Yield"/> should
+/// be called before performing any blocking operation, or you can use <see cref="Task.Run(Action)"/> to perform the
+/// blocking task in a background thread.
+/// </remarks>
 /// <typeparam name="TRequest">Type of the request messages.</typeparam>
 /// <typeparam name="TResponse">Type of the response messages.</typeparam>
 public interface IConcurrentServiceHandler<TRequest, TResponse>
@@ -91,6 +109,12 @@ public interface IConcurrentServiceHandler<TRequest, TResponse>
 /// <summary>
 /// Same as <see cref="INativeServiceHandler"/>, but handles requests concurrently.
 /// </summary>
+/// <remarks>
+/// The handler will start its execution on the <see cref="RclContext"/> event loop to process incoming requests.
+/// If the handler issues blocking calls or performs CPU intensive calculations, <see cref="Task.Yield"/> should
+/// be called before performing any blocking operation, or you can use <see cref="Task.Run(Action)"/> to perform the
+/// blocking task in a background thread.
+/// </remarks>
 public interface IConcurrentNativeServiceHandler
 {
     /// <summary>

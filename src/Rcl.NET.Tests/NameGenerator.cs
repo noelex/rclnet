@@ -12,4 +12,6 @@ internal class NameGenerator
     public static string GenerateNodeName() => $"test_node_{Interlocked.Increment(ref _id)}";
 
     public static string GenerateTopicName() => $"test_topic_{Interlocked.Increment(ref _id)}";
+
+    public static string GenerateServiceName() => $"test_service_{Interlocked.Increment(ref _id)}";
 }

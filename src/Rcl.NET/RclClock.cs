@@ -36,7 +36,7 @@ public sealed class RclClock : IRclClock
     /// Get an <see cref="RclClock"/> representing an <see cref="RclClockType.Steady"/> clock.
     /// </summary>
     /// <remarks>
-    /// This is a shared clock, diposing it will cause an <see cref="InvalidOperationException"/>.
+    /// This is a shared clock, disposing it will cause an <see cref="InvalidOperationException"/>.
     /// </remarks>
     public static RclClock Steady { get; } = new RclClock(RclClockType.Steady, true);
 
@@ -44,7 +44,7 @@ public sealed class RclClock : IRclClock
     /// Get an <see cref="RclClock"/> representing an <see cref="RclClockType.System"/> clock.
     /// </summary>
     /// <remarks>
-    /// This is a shared clock, diposing it will cause an <see cref="InvalidOperationException"/>.
+    /// This is a shared clock, disposing it will cause an <see cref="InvalidOperationException"/>.
     /// </remarks>
     public static RclClock System { get; } = new RclClock(RclClockType.System, true);
 

@@ -9,7 +9,6 @@
   </PropertyGroup>
 
 	<PropertyGroup>
-		<VersionPrefix>1.0.0</VersionPrefix>
 		<PackageId>Rcl.NET</PackageId>
 		<Description>
 			<![CDATA[rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.]]>
