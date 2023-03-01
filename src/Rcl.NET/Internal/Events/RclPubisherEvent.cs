@@ -14,6 +14,7 @@ internal abstract class RclPubisherEvent : RclWaitObject<SafePublisherEventHandl
         : base(context, new(publisher, type))
     {
         _type = type;
+        RegisterWaitHandle();
     }
 
     protected override unsafe void OnWaitCompleted()

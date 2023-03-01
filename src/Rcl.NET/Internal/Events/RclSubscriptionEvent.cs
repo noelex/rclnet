@@ -14,6 +14,7 @@ internal abstract class RclSubscriptionEvent : RclWaitObject<SafeSubscriptionEve
         : base(context, new(subscription, type))
     {
         _type = type;
+        RegisterWaitHandle();
     }
 
     protected override unsafe void OnWaitCompleted()

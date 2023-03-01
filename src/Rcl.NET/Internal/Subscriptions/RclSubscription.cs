@@ -109,6 +109,8 @@ internal unsafe class RclSubscription<T> :
         {
             if (!completelyInitialized) Dispose();
         }
+
+        RegisterWaitHandle();
     }
 
     public QosProfile ActualQos => _actualQos;

@@ -18,8 +18,8 @@ public readonly struct TimeoutRegistration : IDisposable
 
     internal TimeoutRegistration(ObjectPool<ReusableTimer> pool, ReusableTimer timer)
     {
-        _pool= pool;
-        _timer= timer;
+        _pool = pool;
+        _timer = timer;
     }
 
     /// <summary>
@@ -35,11 +35,11 @@ public readonly struct TimeoutRegistration : IDisposable
             _timer.Reset();
             _pool.Return(_timer);
         }
-        
+
     }
 }
 
-unsafe class ReusableTimer:IDisposable
+unsafe class ReusableTimer : IDisposable
 {
     private RclContext? _context;
     private SafeTimerHandle? _handle;
@@ -63,9 +63,9 @@ unsafe class ReusableTimer:IDisposable
         {
             _registration.Dispose();
             _registration = WaitHandleRegistration.Empty;
-            _handle!.Dispose();
 
-            _context?.DefaultLogger.LogDebug($"Released ReusableTimer {_handle.DangerousGetHandle()}.");
+            _context!.DefaultLogger.LogDebug($"Released ReusableTimer {_handle!.DangerousGetHandle()}.");
+            _context.SynchronizationContext.Post(s => ((IDisposable)s!).Dispose(), _handle);
 
             _cts = null;
             _handle = null;

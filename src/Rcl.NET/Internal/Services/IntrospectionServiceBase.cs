@@ -1,6 +1,5 @@
 ﻿using Rcl.Interop;
 using Rcl.Introspection;
-using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
@@ -21,6 +20,7 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
         _typesupport = new ServiceIntrospection(typesupport);
 
         Name = StringMarshal.CreatePooledString(rcl_service_get_service_name(Handle.Object))!;
+        RegisterWaitHandle();
     }
 
     protected virtual RosMessageBuffer CreateRequestBuffer()

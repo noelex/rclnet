@@ -10,7 +10,7 @@ internal class RclTimer : RclWaitObject<SafeTimerHandle>, IRclTimer
         TimeSpan period)
         : base(context, new(context.Handle, clock.Handle, (long)period.TotalNanoseconds))
     {
-
+        RegisterWaitHandle();
     }
 
     protected override unsafe void OnWaitCompleted()

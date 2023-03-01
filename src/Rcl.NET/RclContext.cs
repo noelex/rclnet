@@ -161,6 +161,11 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
             _features.Clear();
 
             rcl_trigger_guard_condition(_shutdownSignal.Object);
+
+            if (!IsCurrent)
+            {
+                _mainLoopRunner.Join();
+            }
         }
     }
 
@@ -184,6 +189,12 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     private void RegisterWaitHandle(long token, RclObjectHandle handle, Action<object?> callback, object? state)
     {
         ThrowIfDisposed();
+
+        if (handle.IsInvalid || handle.IsClosed)
+        {
+            var name = handle.GetType().Name;
+            throw new ObjectDisposedException(name, $"Unable to register '{name}' as it's already disposed.");
+        }
 
         using (ScopedLock.Lock(ref _handleLock))
         {
@@ -329,6 +340,10 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
 
                 RclException.ThrowIfNonSuccess(rcl_wait(&ws, -1));
 
+                // Invocation of callbacks MUST happen after the call to rcl_wait,
+                // because callbacks may dispose wait object synchronously,
+                // causing segmentation fault in rcl_wait.
+
                 // The order of the following checks matters,
                 // higher priority wait objects should be checked first.
 
@@ -354,7 +369,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                     }
                 }
 
-                // Check for service calls.
+                // Check for incoming service calls.
                 for (var i = 0; i < servicesIndices.Count; i++)
                 {
                     idx = servicesIndices[i];
@@ -365,7 +380,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                     }
                 }
 
-                // Check for service calls.
+                // Check for outgoing service calls.
                 for (var i = 0; i < clientsIndices.Count; i++)
                 {
                     idx = clientsIndices[i];
@@ -412,9 +427,9 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                 {
                     foreach (var wh in waitHandles)
                     {
-                        // TODO: Handles may be diposed by previously invoked callbacks.
+                        // TODO: Handles may have been diposed by previously invoked callbacks.
                         // Should we ignore disposed handles here?
-                        // Or make sure handle disposable always happens asynchronously?
+                        // Or make sure handle disposal always happens asynchronously?
                         if (wh.WaitHandle.DangerousGetHandle() == completed)
                         {
                             try
@@ -431,9 +446,6 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
                     }
                 }
 
-                // Invocation of callbacks MUST happen after the call to rcl_wait,
-                // because callbacks may dispose wait object synchronously,
-                // causing segmentation fault in rcl_wait.
                 ExecuteCallbacks(callbacks);
             }
             finally
@@ -459,6 +471,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
 
         rcl_wait_set_fini(&ws);
         _interruptSignal.Dispose();
+        _shutdownSignal.Dispose();
         _context.Dispose();
 
         if (Interlocked.Decrement(ref _contextRefCount) == 0)

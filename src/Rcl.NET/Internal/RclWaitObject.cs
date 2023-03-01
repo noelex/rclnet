@@ -5,17 +5,30 @@ namespace Rcl.Internal;
 internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObject where T : RclObjectHandle
 {
     private SpinLock _syncRoot = new();
-    private readonly WaitHandleRegistration _registration;
+    private WaitHandleRegistration _registration;
+
     private readonly Dictionary<int, ManualResetValueTaskSource<bool>> _awaiters = new();
     private readonly List<ManualResetValueTaskSource<bool>> _awaiterSnapshot = new();
     private readonly CancellationTokenSource _shutdownSignal = new();
 
     private int _id, _disposed;
+
     protected bool IsDisposed => _disposed != 0;
 
     protected RclWaitObject(RclContext context, T handle) : base(context, handle)
     {
-        _registration = context.Register(this, OnSignalReceived, this);
+        
+    }
+
+    /// <summary>
+    /// Register the wait handle in RclContext.
+    /// </summary>
+    /// <remarks>
+    /// This method must be called AFTER the implementation is ready to receive events.
+    /// </remarks>
+    protected void RegisterWaitHandle()
+    {
+        _registration = Context.Register(this, OnSignalReceived, this);
     }
 
     protected virtual void OnWaitCompleted()

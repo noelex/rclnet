@@ -7,11 +7,13 @@ internal class RclGuardConditionImpl : RclWaitObject<SafeGuardConditionHandle>, 
     public RclGuardConditionImpl(RclContext context)
         : base(context, new(context.Handle))
     {
+        RegisterWaitHandle();
     }
 
     public RclGuardConditionImpl(RclContext context, SafeGuardConditionHandle handle)
         : base(context, handle)
     {
+        RegisterWaitHandle();
     }
 
     /// <summary>

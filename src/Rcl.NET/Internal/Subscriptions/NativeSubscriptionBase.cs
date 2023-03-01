@@ -101,8 +101,10 @@ internal unsafe abstract class NativeSubscriptionBase :
         }
         finally
         {
-           if(!completelyInitialized) Dispose();
+            if (!completelyInitialized) Dispose();
         }
+
+        RegisterWaitHandle();
     }
 
     private void OnLivelinessChanged(LivelinessChangedEvent info)

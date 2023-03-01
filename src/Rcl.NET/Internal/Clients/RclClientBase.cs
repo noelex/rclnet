@@ -22,6 +22,8 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         _node = node;
 
         Name = StringMarshal.CreatePooledString(rcl_client_get_service_name(Handle.Object))!;
+
+        RegisterWaitHandle();
     }
 
     public unsafe bool IsServerAvailable

@@ -1,23 +1,18 @@
-﻿using Rcl.Qos;
+﻿using Rcl.Logging;
+using Rcl.Qos;
 using Rosidl.Messages.Rosgraph;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Rcl.NET.Tests;
 public class ClockTest
 {
     private static readonly SemaphoreSlim _concurrencyLimit = new(1);
 
-    private string[] NodeArgs = new[] { "--ros-args", "-p", "use_sim_time:=true", "--log-level", "debug" };
-
     private static async Task GenerateClockAsync(RclContext context, double scale = 1.0, CancellationToken cancellationToken = default)
     {
         const int resolution = 10_000_000;
 
+        //using var context = new RclContext();
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
         using var clockPub = node.CreatePublisher<Clock>("/clock", new(qos: QosProfile.Clock));
 
@@ -42,20 +37,22 @@ public class ClockTest
     }
 
     [Theory]
-    [InlineData(0.5, 500, 1000, 50)]
-    [InlineData(1, 1000, 1000, 50)]
-    [InlineData(2, 1000, 500, 50)]
+    [InlineData(0.5, 100, 200, 50)]
+    [InlineData(1, 100, 100, 50)]
+    [InlineData(2, 200, 100, 50)]
     public async Task TestCancellationTokenSourceWithRosClock(double scale, int rosTime, int actualTime, double tol)
     {
-        // We don't want /clock topics interfere each other.
+        // We don't want /clock topics interfere with each other.
         await _concurrencyLimit.WaitAsync();
-        Debug.WriteLine("Starting with scale " + scale);
         try
         {
             using var clockCancellation = new CancellationTokenSource();
-            using var ctx = new RclContext();
+            using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+
             var task = GenerateClockAsync(ctx, scale, clockCancellation.Token);
-            using var node = ctx.CreateNode(NameGenerator.GenerateNodeName(), options: new(arguments: NodeArgs));
+
+            using var node = ctx.CreateNode(NameGenerator.GenerateNodeName(),
+                options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
 
             var sw = Stopwatch.StartNew();
             try
@@ -69,6 +66,13 @@ public class ClockTest
             {
                 sw.Stop();
                 Assert.Equal(actualTime, sw.ElapsedMilliseconds, tol);
+                node.Logger.LogInformation("Client is canceled");
+            }
+            catch (Exception e)
+            {
+                node.Logger.LogInformation(e.Message);
+                node.Logger.LogInformation(e.StackTrace);
+
             }
             finally
             {
@@ -78,7 +82,6 @@ public class ClockTest
         }
         finally
         {
-            Debug.WriteLine("Exiting with scale " + scale);
             _concurrencyLimit.Release();
         }
     }

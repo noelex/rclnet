@@ -38,6 +38,11 @@ public interface IRclPublisher : IRclObject
     /// <para>
     /// This method does not take the ownership of the <see cref="RosMessageBuffer"/>.
     /// </para>
+    /// <para>
+    /// This method may block when <see cref="QosProfile.Reliability"/> is set to <see cref="ReliabilityPolicy.Reliable"/> and
+    /// <see cref="QosProfile.Depth"/> is set to a relatively small value.
+    /// See <a href="https://github.com/ros2/ros2/issues/255"/> for more information.
+    /// </para>
     /// </remarks>
     /// <param name="message">An <see cref="RosMessageBuffer"/> containing the message to be published.</param>
     void Publish(RosMessageBuffer message);
@@ -64,6 +69,11 @@ public interface IRclPublisher<T> : IRclPublisher
     /// <summary>
     /// Publish a message.
     /// </summary>
+    /// <remarks>
+    /// This method may block when <see cref="QosProfile.Reliability"/> is set to <see cref="ReliabilityPolicy.Reliable"/> and
+    /// <see cref="QosProfile.Depth"/> is set to a relatively small value.
+    /// See <a href="https://github.com/ros2/ros2/issues/255"/> for more information.
+    /// </remarks>
     /// <param name="message">The message to be published.</param>
     void Publish(T message);
 }
