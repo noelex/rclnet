@@ -41,14 +41,6 @@ public sealed class RclClock : IRclClock
     public static RclClock Steady { get; } = new RclClock(RclClockType.Steady, true);
 
     /// <summary>
-    /// Get an <see cref="RclClock"/> representing an <see cref="RclClockType.Ros"/> clock.
-    /// </summary>
-    /// <remarks>
-    /// This is a shared clock, diposing it will cause an <see cref="InvalidOperationException"/>.
-    /// </remarks>
-    public static RclClock Ros { get; } = new RclClock(RclClockType.Ros, true);
-
-    /// <summary>
     /// Get an <see cref="RclClock"/> representing an <see cref="RclClockType.System"/> clock.
     /// </summary>
     /// <remarks>
@@ -60,6 +52,11 @@ public sealed class RclClock : IRclClock
     /// Gets the type of the clock.
     /// </summary>
     public RclClockType Type => _impl.Type;
+
+    /// <summary>
+    /// Checks whether current <see cref="RclClock"/> is a shared instance.
+    /// </summary>
+    public bool IsShared => _shared;
 
     /// <inheritdoc/>
     public void Dispose()

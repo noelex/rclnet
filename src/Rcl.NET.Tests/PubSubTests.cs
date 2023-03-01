@@ -80,7 +80,7 @@ public class PubSubTests
 
         // Request a large queue size to prevent messages being dropped,
         // because we'll be publishing messages really fast.
-        var qos = new QosProfile(Depth: 2000);
+        var qos = new QosProfile(Reliability: ReliabilityPolicy.Reliable,Å@Depth: 2000);
 
         Task<int[]> aggregateTask;
         using var pub = node1.CreatePublisher<Time>(topic, new(qos: qos));       

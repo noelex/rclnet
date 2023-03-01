@@ -23,7 +23,13 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         : base(context, new(context.Handle, name, @namespace, options ?? NodeOptions.Default))
     {
         Options = options ?? NodeOptions.Default;
-        Clock = Options.Clock;
+        Clock = Options.Clock switch
+        {
+            RclClockType.Ros => new(Options.Clock),
+            RclClockType.Steady => RclClock.Steady,
+            RclClockType.System => RclClock.System,
+            _ => throw new RclException($"Unsupported clock type '{Options.Clock}'.")
+        };
 
         Name = StringMarshal.CreatePooledString(rcl_node_get_name(Handle.Object))!;
         Namespace = StringMarshal.CreatePooledString(rcl_node_get_namespace(Handle.Object))!;
@@ -108,5 +114,6 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         _cts.Cancel();
         _cts.Dispose();
         base.Dispose();
+        if (!Clock.IsShared) Clock.Dispose();
     }
 }

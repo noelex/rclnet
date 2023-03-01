@@ -17,30 +17,20 @@ public class ClockTest
     private static async Task GenerateClockAsync(RclContext context, double scale = 1.0, CancellationToken cancellationToken = default)
     {
         const int resolution = 10_000_000;
-        try
-        {
-            using var node = context.CreateNode(NameGenerator.GenerateNodeName());
-            using var clockPub = node.CreatePublisher<Clock>("/clock", new(qos: QosProfile.Clock));
 
-            var current = 0L;
-            using var periodicTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(resolution / 1_000_000.0));
-            using var buffer = RosMessageBuffer.Create<Clock>();
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var clockPub = node.CreatePublisher<Clock>("/clock", new(qos: QosProfile.Clock));
 
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                UpdateClock(buffer, current);
-                clockPub.Publish(buffer);
-                await periodicTimer.WaitForNextTickAsync(cancellationToken);
-                current += (long)(resolution * scale);
-            }
-        }
-        catch
-        {
+        var current = 0L;
+        using var periodicTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(resolution / 1_000_000.0));
+        using var buffer = RosMessageBuffer.Create<Clock>();
 
-        }
-        finally
+        while (!cancellationToken.IsCancellationRequested)
         {
-            Debug.WriteLine("Clock shutdown.");
+            UpdateClock(buffer, current);
+            clockPub.Publish(buffer);
+            await periodicTimer.WaitForNextTickAsync(cancellationToken);
+            current += (long)(resolution * scale);
         }
 
         static void UpdateClock(RosMessageBuffer buffer, long time)
@@ -59,7 +49,7 @@ public class ClockTest
     {
         // We don't want /clock topics interfere each other.
         await _concurrencyLimit.WaitAsync();
-
+        Debug.WriteLine("Starting with scale " + scale);
         try
         {
             using var clockCancellation = new CancellationTokenSource();
@@ -88,6 +78,7 @@ public class ClockTest
         }
         finally
         {
+            Debug.WriteLine("Exiting with scale " + scale);
             _concurrencyLimit.Release();
         }
     }

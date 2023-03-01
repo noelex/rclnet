@@ -43,7 +43,7 @@ public interface IRclContext : IDisposable
     IRclTimer CreateTimer(RclClock clock, TimeSpan period);
 
     /// <summary>
-    /// Creates a timer with specified period using <see cref="RclClock.Ros"/>.
+    /// Creates a timer with specified period using <see cref="RclClock.Steady"/>.
     /// </summary>
     /// <param name="period">Period of the timer.</param>
     /// <returns>An <see cref="IRclTimer"/> object can be used for listening and controlling the timer.</returns>

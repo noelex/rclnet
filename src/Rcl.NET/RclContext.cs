@@ -134,7 +134,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     public IRclTimer CreateTimer(RclClock clock, TimeSpan period) => new RclTimer(this, clock.Impl, period);
 
     /// <inheritdoc/>
-    public IRclTimer CreateTimer(TimeSpan period) => CreateTimer(RclClock.Ros, period);
+    public IRclTimer CreateTimer(TimeSpan period) => CreateTimer(RclClock.Steady, period);
 
     /// <inheritdoc/>
     public IRclNode CreateNode(string name, string @namespace = "/", NodeOptions? options = null)

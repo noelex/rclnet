@@ -44,9 +44,9 @@ public record NodeOptions
     /// </para>
     /// </param>
     /// <param name="clock">
-    /// <see cref="RclClock"/> to be used by the node.
+    /// Type of the <see cref="RclClock"/> to be used by the node.
     /// <para>
-    /// Defaults to <see cref="RclClock.Ros"/>.
+    /// Defaults to <see cref="RclClockType.Ros"/>.
     /// </para>
     /// </param>
     /// <param name="clockQos">
@@ -70,7 +70,7 @@ public record NodeOptions
         nuint? domaindId = null,
         bool useGlobalArguments = true,
         bool enableRosOut = true,
-        RclClock? clock = null,
+        RclClockType clock = RclClockType.Ros,
         QosProfile? clockQos = null,
         [SupportedSinceDistribution(RosEnvironment.Humble)]
         QosProfile? rosOutQos = null)
@@ -89,7 +89,7 @@ public record NodeOptions
         DomaindId = domaindId;
         UseGlobalArguments = useGlobalArguments;
         EnableRosOut = enableRosOut;
-        Clock = clock ?? RclClock.Ros;
+        Clock = clock;
         ClockQos = clockQos ?? QosProfile.Clock;
         RosOutQos = rosOutQos ?? QosProfile.RosOut;
     }
@@ -146,12 +146,12 @@ public record NodeOptions
     public QosProfile RosOutQos { get; }
 
     /// <summary>
-    /// <see cref="RclClock"/> to be used by the node.
+    /// Type of the <see cref="RclClock"/> to be used by the node.
     /// <para>
-    /// Defaults to <see cref="RclClock.Ros"/>.
+    /// Defaults to <see cref="RclClockType.Ros"/>.
     /// </para>
     /// </summary>
-    public RclClock Clock { get; }
+    public RclClockType Clock { get; }
 
     /// <summary>
     /// The QoS settings to be used for the subscriber on /clock topic, if enabled.
