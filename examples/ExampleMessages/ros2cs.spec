@@ -2,7 +2,7 @@
 namespace Rosidl.Messages
 
 from-ament-index
-from-directory ./interfaces
+from-directory ../
 
 include builtin_interfaces
 include std_msgs
