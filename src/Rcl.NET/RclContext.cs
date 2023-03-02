@@ -462,7 +462,7 @@ public sealed class RclContext : IDisposable, IRclContext
                             }
                             catch (Exception ex)
                             {
-                                DefaultLogger.LogWarning($"Unhandled exception thrown by wait handle callback: {ex.Message}");
+                                DefaultLogger.LogWarning($"Unhandled exception was thrown by wait handle callback: {ex.Message}");
                                 DefaultLogger.LogWarning(ex.StackTrace);
                             }
                             break;
@@ -527,7 +527,7 @@ public sealed class RclContext : IDisposable, IRclContext
                 {
                     if (cb.CompletionSource is null)
                     {
-                        DefaultLogger.LogWarning("Unhandled exception thrown by scheduled callback: " + ex.Message);
+                        DefaultLogger.LogWarning("Unhandled exception was thrown by scheduled callback: " + ex.Message);
                         DefaultLogger.LogWarning(ex.StackTrace);
                     }
                     else
@@ -559,6 +559,11 @@ public sealed class RclContext : IDisposable, IRclContext
         public RclSynchronizationContext(RclContext context)
         {
             _context = context;
+        }
+
+        public override SynchronizationContext CreateCopy()
+        {
+            return new RclSynchronizationContext(_context);
         }
 
         public override void Post(SendOrPostCallback d, object? state)
