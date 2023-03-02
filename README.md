@@ -46,6 +46,37 @@ To try out latest features being developed, you can install the preview packages
 ```
 dotnet add package Rcl.NET --prerelease
 ```
+
+## Building and Running Examples
+### Install dependencies
+The following instructions assume that you've already installed ROS 2 foxy or humble in your system.
+
+You'll need .NET 7.0 SDK to build and run the examples, see instructions 
+[here](https://learn.microsoft.com/dotnet/core/install/linux-ubuntu).
+
+Make sure you have all dependencies installed by running:
+```
+rosdep install -i --from-paths examples
+```
+
+### Run with `dotnet run`
+Now you can run example projects using `dotnet run`, e.g.
+```
+dotnet run examples/turtle_rotate
+```
+
+### Run with `ros2 run`
+Or you can build and install examples as colcon packages:
+```
+colcon build --executor sequential --merge-install --paths examples/*
+source install/setup.bash
+```
+
+Now you can run example projects using `ros2 run`, e.g.
+```
+ros2 run graph_monitor graph_monitor
+```
+
 ## Showcase
 ### Subscribing
 ```csharp
