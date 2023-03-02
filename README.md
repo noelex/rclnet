@@ -1,5 +1,6 @@
 # rclnet
 rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.
+
 ## Supported Platforms
 Supported .NET Versions:
 - .NET 7
@@ -7,6 +8,22 @@ Supported .NET Versions:
 Supported ROS 2 Distributions:
 - Humble Hawksbill
 - Foxy Fitzroy
+
+## Installing
+Stable releases of rclnet are hosted on NuGet. You can install them using the following command:
+```
+dotnet add package Rcl.NET
+```
+
+For message only projects, you can install only `Rosidl.Runtime` without `Rcl.NET`:
+```
+dotnet add package Rosidl.Runtime
+```
+
+To generate message classes, you'll also need to install `ros2cs` utility:
+```
+dotnet tool install -g ros2cs
+```
 
 ## Features
 - Completely asynchronous and `async`/`await` friendly.
@@ -36,6 +53,35 @@ Supported ROS 2 Distributions:
 |  Content Filtered Topics | ❌      | Available since humble.       |
 
 ✅Supported ⚠️Partial support ❌Not supported ⏳In development
+
+## Generating Messages
+`rclnet` does not ship with message definitions. In order to communicate with other ROS 2 nodes,
+you need to generate messages first.
+
+Message definitions are .NET classes / structs, you can either include messages in a console app
+which runs as an ROS 2 node, or compile separately in another library.
+
+Projects containing messages will have to meet the following requirements:
+- `Rcl.NET` or `Rosidl.Runtime` NuGet package is installed.
+- `AllowUnsafeBlocks` is set to `true`. This can be done by adding the following lines to the `.csproj` file:
+    ```xml
+    <PropertyGroup>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    ```
+- Runtime marshalling for the assembly is disabled. You can the following line to somewhere in the source code of the project:
+    ```csharp
+    [assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]
+    ```
+
+To generate messages, you also need to add a `ros2cs.spec` file to somewhere in the project (usually the project root).
+A `ros2cs.spec` file contains configurations such as output directory and where to find packages,
+see [here](https://github.com/noelex/rclnet/blob/main/src/ros2cs/ros2cs.spec) for detailed explanations.
+
+Assuming you've already installed the `ros2cs` utility, simply run the following command to generate messages:
+```
+ros2cs /path/to/ros2cs.spec
+```
 
 ## Execution Model
 Unlike `rclcpp` an `rclpy`, `rclnet` doesn't have the concept of executors. Each `RclContext` runs its
@@ -130,16 +176,6 @@ await foreach (var msg in sub.ReadAllAsync())
     await context.Yield();
     // On event loop.
 }
-```
-
-## Installing
-Stable releases of rclnet are hosted on NuGet. You can install them using the following command:
-```
-dotnet add package Rcl.NET
-```
-To try out latest features being developed, you can install the preview packages with the following command:
-```
-dotnet add package Rcl.NET --prerelease
 ```
 
 ## Building and Running Examples
@@ -251,32 +287,3 @@ await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
     }
 }
 ```
-
-## How to Generate Messages
-1. Create a new .NET library project targeting .NET 7.
-
-2. Add the following lines to the `.csproj` file:
-   ```xml
-   <PropertyGroup>
-      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-   </PropertyGroup>
-   ```
-
-3. Add NuGet package `Rcl.NET` to the project.
-   If the library doesn't need to depend on `Rcl.NET`
-   (e.g. contains only message definitions), you can install just `Rosidl.Runtime` package.
-
-4. Add a `ros2cs.spec` file to the root of the project.
-    See [here](https://github.com/noelex/rclnet/blob/main/src/ros2cs/ros2cs.spec) for detailed explanations on how to write a `ros2cs.spec` file.
-
-5. Add a `_AssemblyAttributes.cs` to the root of the project with the following contents:
-    ```csharp
-    [assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]
-    ```
-
-6. Install `ros2cs` with the following command:
-   ```
-   dotnet tool install -g ros2cs
-   ```
-
-7. Run `ros2cs /path/to/ros2cs.spec` to generate message classes / structs.

@@ -14,12 +14,13 @@ from-ament-index
 
 # Read packages from specified root package directory containing one or more packages.
 # A path relative to this file or an absolute path can be used.
-from-directory ../../../../../
+# from-directory .
 
 # Generate codes for specified packages only.
+# If no include directive is specified, ros2cs will generate codes for all discovered packages.
 # include [package]...
 
-# Ignore specified packages.
+# Explicitly exclude packages from code generation.
 # exclude [package]...
 
 # Set the root namespace of a specific package,

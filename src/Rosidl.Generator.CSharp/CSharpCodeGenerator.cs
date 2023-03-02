@@ -127,11 +127,35 @@ public class CSharpCodeGenerator
             foreach (var pkg in LoadPackages(path)) packages[pkg.Name] = pkg;
         }
 
-        if (spec.Includes.Count > 0) packages = packages.Where(x => spec.Includes.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+        if (spec.Includes.Count == 0) spec.Includes.AddRange(packages.Keys);
+
+        var includedPackages = packages.Where(x => spec.Includes.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+        var resolved = new List<string>();
+        var unresolved = new List<string>();
+        while (true)
+        {
+            var deps = ResolveDependencies(includedPackages);
+            if (deps.Count == 0 || deps.All(unresolved.Contains)) break;
+
+            foreach (var dep in deps)
+            {
+                if (packages.TryGetValue(dep, out var pkg))
+                {
+                    includedPackages[dep] = pkg;
+                    resolved.Add(dep);
+                }
+                else
+                {
+                    unresolved.Add(dep);
+                }
+            }
+        }
+
+        packages = includedPackages;
+
         if (spec.Excludes.Count > 0) packages = packages.Where(x => !spec.Excludes.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
 
-        Console.WriteLine($"Found {packages.Count} package(s), " +
-            $"{packages.SelectMany(x => x.Value.Messages).Count()} message definition(s) total.");
+        
 
         var parser = new MsgParser();
         foreach (var cand in packages.Values)
@@ -180,8 +204,39 @@ public class CSharpCodeGenerator
                 var cw = new CodeWriter(new CodeWriterOptions(fs));
                 cw.Options[CSharpGeneratedFile.FileGeneratedByKey] = "ros2cs";
                 file.DumpTo(cw);
-                var w = fs.ReadAllText("/" + file.FilePath);
-                File.WriteAllText(pth, w);
+                var w = fs.ReadAllLines("/" + file.FilePath);
+
+                if (File.Exists(pth) && File.ReadAllLines(pth).SequenceEqual(w))
+                {
+                    // Don't touch the file if unchanged.
+                    continue;
+                }
+
+                File.WriteAllLines(pth, w);
+            }
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"Processed {packages.Count} package(s), " +
+            $"{packages.SelectMany(x => x.Value.Messages).Count()} message definition(s) total.");
+
+        if (resolved.Count > 0)
+        {
+            Console.WriteLine();
+            Console.WriteLine("The following package(s) were automatically included as dependencies:");
+            foreach (var dep in resolved)
+            {
+                Console.WriteLine(dep);
+            }
+        }
+
+        if (unresolved.Count > 0)
+        {
+            Console.WriteLine();
+            Console.WriteLine("The following package(s) were not found in configured package sources:");
+            foreach (var dep in unresolved)
+            {
+                Console.WriteLine(dep);
             }
         }
 
@@ -275,6 +330,50 @@ public class CSharpCodeGenerator
             {
                 var msgName = Path.GetFileNameWithoutExtension(file);
                 yield return new(packageName, subFolder, msgName, file);
+            }
+        }
+    }
+
+    private static List<string> ResolveDependencies(Dictionary<string, Package> packages)
+    {
+        var missing = new List<string>();
+
+        var parser = new MsgParser();
+        foreach (var cand in packages.Values)
+        {
+            foreach (var msg in cand.Messages)
+            {
+                var metadata = parser.Parse(cand.Name, msg.Name, File.ReadAllText(msg.Path), msg.SubFolder);
+                if (metadata is MessageMetadata m)
+                {
+                    ResolveFields(packages, m.Fields, missing);
+                }
+                else if (metadata is ServiceMetadata s)
+                {
+                    ResolveFields(packages, s.RequestFields, missing);
+                    ResolveFields(packages, s.ResponseFields, missing);
+                }
+                else if (metadata is ActionMetadata a)
+                {
+                    ResolveFields(packages, a.GoalFields, missing);
+                    ResolveFields(packages, a.ResultFields, missing);
+                    ResolveFields(packages, a.FeedbackFields, missing);
+                }
+            }
+        }
+
+        return missing;
+    }
+
+    private static void ResolveFields(Dictionary<string, Package> packages, IEnumerable<FieldMetadata> fields, List<string> missingDependencies)
+    {
+        foreach (var f in fields)
+        {
+            if (f.Type is ComplexTypeMetadata cm &&
+                !packages.ContainsKey(cm.Package) &&
+                !missingDependencies.Contains(cm.Package))
+            {
+                missingDependencies.Add(cm.Package);
             }
         }
     }
