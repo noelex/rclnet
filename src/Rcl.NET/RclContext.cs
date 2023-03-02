@@ -19,7 +19,7 @@ namespace Rcl;
 /// arguments used for creating the first <see cref="RclContext"/> instance.
 /// </para>
 /// </remarks>
-public sealed unsafe class RclContext : IDisposable, IRclContext
+public sealed class RclContext : IDisposable, IRclContext
 {
     private static int _contextRefCount = 0;
 
@@ -38,6 +38,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     private readonly ConcurrentDictionary<string, object> _features = new();
 
     private readonly IRclLoggerFactory _loggerFactory;
+    private readonly bool _useSyncContext;
 
     private int _disposed;
     private long _waitHandleToken;
@@ -49,7 +50,11 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     /// <param name="loggerFactory">
     /// A custom <see cref="IRclLoggerFactory"/> for creating loggers in the <see cref="RclContext"/>.
     /// </param>
-    public RclContext(string[] args, IRclLoggerFactory? loggerFactory = null)
+    /// <param name="useSynchronizationContext">
+    /// Whether to setup <see cref="SynchronizationContext"/> on the event loop, causing asynchronous continuations
+    /// to always resume on the event loop by default.
+    /// </param>
+    public unsafe RclContext(string[] args, IRclLoggerFactory? loggerFactory = null, bool useSynchronizationContext = false)
     {
         if (!RosEnvironment.IsFoxy && !RosEnvironment.IsHumble)
         {
@@ -84,6 +89,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
 
         _interruptSignal = new SafeGuardConditionHandle(_context);
         _shutdownSignal = new SafeGuardConditionHandle(_context);
+        _useSyncContext = useSynchronizationContext;
 
         _mainLoopRunner = new(Run)
         {
@@ -100,6 +106,19 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     /// </param>
     public RclContext(IRclLoggerFactory loggerFactory)
         : this(Array.Empty<string>(), loggerFactory)
+    {
+
+    }
+
+    /// <summary>
+    /// Create a new <see cref="RclContext"/> with specified synchronization mode.
+    /// </summary>
+    /// <param name="useSynchronizationContext">
+    /// Whether to setup <see cref="SynchronizationContext"/> on the event loop, causing asynchronous continuations
+    /// to always resume on the event loop by default.
+    /// </param>
+    public RclContext(bool useSynchronizationContext)
+        : this(Array.Empty<string>(), useSynchronizationContext: useSynchronizationContext)
     {
 
     }
@@ -147,7 +166,7 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
     private unsafe void Interrupt() => rcl_trigger_guard_condition(_interruptSignal.Object);
 
     /// <inheritdoc/>
-    public void Dispose()
+    public unsafe void Dispose()
     {
         if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
         {
@@ -235,6 +254,11 @@ public sealed unsafe class RclContext : IDisposable, IRclContext
 
     private unsafe void Run()
     {
+        if (_useSyncContext)
+        {
+            SynchronizationContext.SetSynchronizationContext(SynchronizationContext);
+        }
+
         var ws = rcl_get_zero_initialized_wait_set();
         rcl_wait_set_init(&ws, 0, 0, 0, 0, 0, 0, _context.Object, RclAllocator.Default.Object);
 

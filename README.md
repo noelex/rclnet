@@ -75,11 +75,13 @@ await foreach (var msg in sub.ReadAllAsync())
 ```
 
 You can use `RclContext.SynchronizationContext`, `RclContext.Yield()`, `Task.Yield()` and
-`ConfigureAwait(false)` to control asynchronous execution flow more precisely:
+`ConfigureAwait(false)` to control the asynchronous execution flow more precisely:
 
 ```csharp
-SynchronizationContext
-    .SetSynchronizationContext(rclContext.SynchronizationContext);
+using var context = new RclContext(useSynchronizationContext: true);
+
+...
+
 await foreach (var msg in sub.ReadAllAsync())
 {
     // On event loop.
@@ -87,18 +89,45 @@ await foreach (var msg in sub.ReadAllAsync())
     // On event loop.
     await Task.Run(() => SomeOffloadedSyncOperation(msg));
     // On event loop.
+    await Task.Yield();
+    // On event loop.
+
+    ...
+
+    // The execution of current async method will stay on the event
+    // loop unless we break out of the SynchronizationContext using
+    // ConfigureAwait(false).
+
     await AnotherAsyncOperation(msg).ConfigureAwait(false);
     // On thread pool.
+
+    // We can still transition back to the event loop with context.Yield().
+
+    await context.Yield();
+    // On event loop.
 }
 ```
-
+Without enabling `SynchronizationContext` on the event loop (which is the default), asynchronous continuations are not enforced
+to resume on the event loop. The execution flow will leave the event loop as soon as an async point other
+than `RclContext.Yield()` is encountered.
 ```csharp
+using var context = new RclContext();
+
+...
+
 await foreach (var msg in sub.ReadAllAsync())
 {
     // On event loop.
+    await SomeAsyncOperation(msg);
+    // On thread pool.
+    await Task.Run(() => SomeOffloadedSyncOperation(msg));
+    // On thread pool.
     await Task.Yield();
     // On thread pool.
-    await rclContext.Yield();
+
+    ...
+
+    await context.Yield();
     // On event loop.
 }
 ```
