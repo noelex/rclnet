@@ -37,6 +37,72 @@ Supported ROS 2 Distributions:
 
 ✅Supported ⚠️Partial support ❌Not supported ⏳In development
 
+## Execution Model
+Unlike `rclcpp` an `rclpy`, `rclnet` doesn't have the concept of executors. Each `RclContext` runs its
+own event loop for waiting on signals and dispatching callbacks, which is essentialy a single-threaded
+executor.
+
+Although `rclnet` does not provide multi-threaded executors, it doesn't mean that you can't process messages or handle
+service requests using multiple threads. All communication primitives in `rclnet` provide both synchronous
+and asynchronous APIs for different needs and scenarios. Synchronous APIs are simpler and faster if the work need to be done is simple enough, e.g. neither CPU-intensive nor needs to issue blocking calls. Asynchronous APIs, in contrast, are for scenarios where you need to perform asynchronous calls or
+offload blocking operations into background threads.
+
+Take subscriptions for example, you can receive messages synchronously using `IRclSubscription<T>.Subscribe`,
+or asynchronously using `IRclSubscription<T>.ReadAllAsync`. To process messages asynchronously, one 
+would typically write:
+```csharp
+await foreach (var msg in sub.ReadAllAsync())
+{
+    // Perform asynchronous operation.
+    await SomeAsyncOperation(msg);
+
+    // Perform synchronous operation and wait for its completion without blocking the event loop.
+    await Task.Run(() => SomeOffloadedSyncOperation(msg));
+}
+```
+
+`RclContext` always executes user codes on its event loop. Take the above code for example:
+
+```csharp
+await foreach (var msg in sub.ReadAllAsync())
+{
+    // On event loop.
+    await SomeAsyncOperation(msg);
+    // On thread pool.
+    await Task.Run(() => SomeOffloadedSyncOperation(msg));
+    // On thread pool.
+}
+```
+
+You can use `RclContext.SynchronizationContext`, `RclContext.Yield()`, `Task.Yield()` and
+`ConfigureAwait(false)` to control asynchronous execution flow more precisely:
+
+```csharp
+SynchronizationContext
+    .SetSynchronizationContext(rclContext.SynchronizationContext);
+await foreach (var msg in sub.ReadAllAsync())
+{
+    // On event loop.
+    await SomeAsyncOperation(msg);
+    // On event loop.
+    await Task.Run(() => SomeOffloadedSyncOperation(msg));
+    // On event loop.
+    await AnotherAsyncOperation(msg).ConfigureAwait(false);
+    // On thread pool.
+}
+```
+
+```csharp
+await foreach (var msg in sub.ReadAllAsync())
+{
+    // On event loop.
+    await Task.Yield();
+    // On thread pool.
+    await rclContext.Yield();
+    // On event loop.
+}
+```
+
 ## Installing
 Stable releases of rclnet are hosted on NuGet. You can install them using the following command:
 ```
@@ -49,7 +115,7 @@ dotnet add package Rcl.NET --prerelease
 
 ## Building and Running Examples
 ### Install dependencies
-The following instructions assume that you've already installed ROS 2 foxy or humble in your system.
+The following instruction assumes that you've already installed ROS 2 foxy or humble in your system.
 
 You'll need .NET 7.0 SDK to build and run the examples, see instructions 
 [here](https://learn.microsoft.com/dotnet/core/install/linux-ubuntu).
@@ -72,7 +138,7 @@ colcon build --executor sequential --merge-install --paths examples/*
 source install/setup.bash
 ```
 
-Now you can run example projects using `ros2 run`, e.g.
+To run an example node, use `ros2 run`, e.g.
 ```
 ros2 run graph_monitor graph_monitor
 ```
