@@ -107,21 +107,21 @@ await foreach (var msg in sub.ReadAllAsync())
 }
 ```
 
-`RclContext` always executes user codes on its event loop. Take the above code for example:
+`RclContext` always gives control to user code on its event loop. Take the above code for example:
 
 ```csharp
 await foreach (var msg in sub.ReadAllAsync())
 {
     // On event loop.
     await SomeAsyncOperation(msg);
-    // On thread pool.
+    // On thread pool thread.
     await Task.Run(() => SomeOffloadedSyncOperation(msg));
-    // On thread pool.
+    // On thread pool thread.
 }
 ```
 
 You can use `RclContext.SynchronizationContext`, `RclContext.Yield()`, `Task.Yield()` and
-`ConfigureAwait(false)` to control the asynchronous execution flow more precisely:
+`ConfigureAwait(false)` to perform fine-grained control over the asynchronous execution flow:
 
 ```csharp
 using var context = new RclContext(useSynchronizationContext: true);
@@ -145,7 +145,7 @@ await foreach (var msg in sub.ReadAllAsync())
     // ConfigureAwait(false).
 
     await AnotherAsyncOperation(msg).ConfigureAwait(false);
-    // On thread pool.
+    // On thread pool thread.
 
     // We can still transition back to the event loop with context.Yield().
 
@@ -155,7 +155,7 @@ await foreach (var msg in sub.ReadAllAsync())
 ```
 Without enabling `SynchronizationContext` on the event loop (which is the default), asynchronous continuations are not enforced
 to resume on the event loop. The execution flow will leave the event loop as soon as an async point other
-than `RclContext.Yield()` is encountered.
+than `RclContext.Yield()` (or `IRclWaitObject.WaitOneAsync()`, see the following section) is encountered.
 ```csharp
 using var context = new RclContext();
 
@@ -165,11 +165,11 @@ await foreach (var msg in sub.ReadAllAsync())
 {
     // On event loop.
     await SomeAsyncOperation(msg);
-    // On thread pool.
+    // On thread pool thread.
     await Task.Run(() => SomeOffloadedSyncOperation(msg));
-    // On thread pool.
+    // On thread pool thread.
     await Task.Yield();
-    // On thread pool.
+    // On thread pool thread.
 
     ...
 
@@ -177,6 +177,36 @@ await foreach (var msg in sub.ReadAllAsync())
     // On event loop.
 }
 ```
+
+### Additional Notes about `IRclWaitObject.WaitOneAsync`
+Timers and guard conditions created by `RclContext` implements `IRclWaitObject` interface,
+which allow the caller to asynchronously wait for the signal.
+
+`IRclWaitObject` interface exposes the following two overloads of `WaitOneAsync`:
+```csharp
+ValueTask WaitOneAsync(bool runContinuationAsynchronously, CancellationToken cancellationToken = default);
+ValueTask WaitOneAsync(CancellationToken cancellationToken = default);
+```
+The latter overload simply calls another one with `runContinuationAsynchronously` set to `false`.
+
+`WaitOneAsync` allows the caller to explicitly control the execution of the continuation via `runContinuationAsynchronously`
+parameter. Assuming there's no captured `SynchronizationContext` or `TaskScheduler`, when `runContinuationAsynchronously`
+is set to `true`, the continuation will be scheduled to execute in thread pool. And if `runContinuationAsynchronously`
+is set to `false`, the continuation is guaranteed to execute on the event loop.
+
+However, when a `SynchronizationContext` or `TaskScheduler` is captured, the continuation of the call to `WaitOneAsync`
+will always execute in the captured context, regardless of the value of `runContinuationAsynchronously`.
+
+Since context capture can be suppressed by calling `ConfigureAwait` with `continueOnCapturedContext` set to `false`,
+execution of the continuation can be precisely controlled using `runContinuationAsynchronously` in conjunction with
+`continueOnCapturedContext`. See the following table:
+
+|  `runContinuationAsynchronously` | `continueOnCapturedContext` |  Continuation Execution                              |
+|--------------------------------- |---------------------------- |----------------------------------------------------- | 
+|  `true`                          | `true`                      | Captured `SynchronizationContext` or `TaskScheduler` if any, thread pool otherwise |
+|  `true`                          | `false`                     | Thread pool                                          | 
+|  `false`                         | `true`                      | Captured `SynchronizationContext` or `TaskScheduler` if any, event loop otherwise |
+|  `false`                         | `false`                     | Event loop                                           | 
 
 ## Building and Running Examples
 ### Install dependencies
