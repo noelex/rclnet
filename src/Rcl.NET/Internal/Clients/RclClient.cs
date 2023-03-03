@@ -25,6 +25,21 @@ internal class RclClient<TService, TRequest, TResponse> : RclClientBase, IRclCli
         return RosMessageBuffer.Create<TResponse>();
     }
 
+    //public Task<TResponse> InvokeAsync(TRequest request, TimeSpan timeout, CancellationToken cancellationToken = default)
+    //{
+    //    var requestBuffer = RosMessageBuffer.Create<TRequest>();
+    //    request.WriteTo(requestBuffer.Data, _textEncoding);
+
+    //    return InvokeAsync(requestBuffer, timeout, cancellationToken).ContinueWith((t, state) =>
+    //    {
+    //        using (requestBuffer)
+    //        using (t.Result)
+    //        {
+    //            return (TResponse)TResponse.CreateFrom(t.Result.Data, (Encoding)state!);
+    //        }
+    //    }, _textEncoding, TaskContinuationOptions.ExecuteSynchronously);
+    //}
+
     public async Task<TResponse> InvokeAsync(TRequest request, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
         using var requestBuffer = RosMessageBuffer.Create<TRequest>();

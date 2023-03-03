@@ -48,7 +48,7 @@ public interface IRclSubscription<T> : IRclSubscription, IObservable<T>
     /// <returns>
     /// An <see cref="IAsyncEnumerable{RosMessageBuffer}"/> for receiving the messages asynchronously.
     /// <para>
-    /// The asynchrnous enumeration will complete when the <see cref="IRclNativeSubscription"/> instance
+    /// The asynchronous enumeration will complete when the <see cref="IRclNativeSubscription"/> instance
     /// is disposed.
     /// </para>
     /// </returns>
@@ -76,7 +76,7 @@ public interface IRclNativeSubscription : IRclSubscription
     /// <returns>
     /// An <see cref="IAsyncEnumerable{RosMessageBuffer}"/> for receiving the messages asynchronously.
     /// <para>
-    /// The asynchrnous enumeration will complete when the <see cref="IRclNativeSubscription"/> instance
+    /// The asynchronous enumeration will complete when the <see cref="IRclNativeSubscription"/> instance
     /// is disposed.
     /// </para>
     /// </returns>

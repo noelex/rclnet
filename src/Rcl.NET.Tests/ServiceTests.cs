@@ -48,10 +48,12 @@ public class ServiceTests
     }
 
     [Fact]
-    public Task ContinuationOfInvokeAsyncShouldExecuteOnEventLoop()
+    public Task ContinuationOfInvokeAsyncShouldNotExecuteOnEventLoopWhenContextIsCaptured()
     {
         return Task.Run(async () =>
         {
+            using var anotherContext = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: true);
+
             using var context = new RclContext(TestConfig.DefaultContextArguments);
             using var node = context.CreateNode(NameGenerator.GenerateNodeName());
 
@@ -72,42 +74,26 @@ public class ServiceTests
                 ListParametersServiceRequest,
                 ListParametersServiceResponse>(service);
 
+            await anotherContext.Yield();
+            // Now we are on the event loop of anotherContext.
+
+            // Captured the sync context of the anotherContext, we should be on the event loop of anotherContext.
+            await client.InvokeAsync(new ListParametersServiceRequest());
+            Assert.True(anotherContext.IsCurrent);
+
+            // Suppressing the sync context.
+            await client.InvokeAsync(new ListParametersServiceRequest()).ConfigureAwait(false);
+
+            // This is not guaranteed as the execution of the continuation is determined
+            // by the TaskAwaiter, we have no control over it.
+            // Assert.True(context.IsCurrent);
+
             // No captured sync context, we should return to event loop.
             await client.InvokeAsync(new ListParametersServiceRequest());
             Assert.True(context.IsCurrent);
+
+            await client.InvokeAsync(new ListParametersServiceRequest()).ConfigureAwait(false);
+            Assert.True(context.IsCurrent);
         });
-    }
-
-    [Fact]
-    public async Task ContinuationOfInvokeAsyncShouldNotExecuteOnEventLoopWhenContextIsCaptured()
-    {
-        using var anotherContext = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: true);
-        await anotherContext.Yield();
-        // Now we are on the event loop of anotherContext.
-
-        using var context = new RclContext(TestConfig.DefaultContextArguments);
-        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
-
-        var response = new ListParametersServiceResponse();
-        var service = NameGenerator.GenerateServiceName();
-
-        using var server = node.CreateService<
-            ListParametersService,
-            ListParametersServiceRequest,
-            ListParametersServiceResponse>(service, (request, state) =>
-            {
-                return response;
-            });
-
-        using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
-        using var client = clientNode.CreateClient<
-            ListParametersService,
-            ListParametersServiceRequest,
-            ListParametersServiceResponse>(service);
-
-        // Captured the sync context of the anotherContext, we should be on the event loop of anotherContext.
-        await client.InvokeAsync(new ListParametersServiceRequest());
-        Assert.True(anotherContext.IsCurrent);
-
     }
 }

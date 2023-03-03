@@ -68,6 +68,8 @@ public partial class RosGraph
         }
     }
 
+    #region WaitForServiceServer
+
     /// <summary>
     /// Try wait for a service server with specific name become available, or until timeout.
     /// </summary>
@@ -137,6 +139,10 @@ public partial class RosGraph
     public Task WaitForServiceServerAsync(string serviceName, CancellationToken cancellationToken = default)
         => WaitForServiceServerAsync(serviceName, -1, cancellationToken);
 
+    #endregion WaitForServiceServer
+
+    #region WaitForActionServer
+
     /// <summary>
     /// Try wait for a action server with specific name become available, or until timeout.
     /// </summary>
@@ -205,6 +211,84 @@ public partial class RosGraph
     /// <returns></returns>
     public Task WaitForActionServerAsync(string actionName, CancellationToken cancellationToken = default)
         => WaitForServiceServerAsync(actionName, -1, cancellationToken);
+
+    #endregion WaitForActionServer
+
+    #region WaitForNode
+
+    /// <summary>
+    /// Try wait for a node with specific name become available, or until timeout.
+    /// </summary>
+    /// <param name="nodeName">Fully qualified name of the node.</param>
+    /// <param name="timeoutMilliseconds">Timeout in milliseconds. Specify <see cref="Timeout.Infinite"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns><see langword="true"/> if the node is available, <see langword="false"/> if timed out.</returns>
+    public async Task<bool> TryWaitForNodeAsync(string nodeName, int timeoutMilliseconds, CancellationToken cancellationToken = default)
+    {
+        // Yield back to event loop to make sure we have
+        // consistent view on the graph during query.
+        if (!_node.Context.IsCurrent) await _node.Context.Yield();
+
+        foreach (var node in _nodes)
+        {
+            if (node.Value.Name.FullyQualifiedName == nodeName)
+            {
+                return true;
+            }
+        }
+
+        return await TryWaitForEventAsync(
+             static (e, s) => e is NodeAppearedEvent nae && nae.Node.Name.FullyQualifiedName == (string)s!,
+             nodeName, timeoutMilliseconds, cancellationToken);
+    }
+
+    /// <summary>
+    /// Try wait for a node with specific name become available, or until timeout.
+    /// </summary>
+    /// <param name="nodeName">Fully qualified name of the node.</param>
+    /// <param name="timeout">Timeout of this operation. Specify <see cref="Timeout.InfiniteTimeSpan"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns><see langword="true"/> if the node is available, <see langword="false"/> if timed out.</returns>
+    public Task<bool> TryWaitForNodeAsync(string nodeName, TimeSpan timeout, CancellationToken cancellationToken = default)
+        => TryWaitForNodeAsync(nodeName, (int)timeout.TotalMilliseconds, cancellationToken);
+
+    /// <summary>
+    /// Wait until a node with specific name become available.
+    /// </summary>
+    /// <param name="nodeName">Fully qualified name of the node.</param>
+    /// <param name="timeoutMilliseconds">Timeout in milliseconds. Specify <see cref="Timeout.Infinite"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    /// <exception cref="TimeoutException">The node didn't become available during the wait.</exception>
+    public async Task WaitForNodeAsync(string nodeName, int timeoutMilliseconds, CancellationToken cancellationToken = default)
+    {
+        if (!await TryWaitForNodeAsync(nodeName, timeoutMilliseconds, cancellationToken))
+        {
+            throw new TimeoutException();
+        }
+    }
+
+    /// <summary>
+    /// Wait until a node with specific name become available.
+    /// </summary>
+    /// <param name="nodeName">Fully qualified name of the node.</param>
+    /// <param name="timeout">Timeout of the operation. Specify <see cref="Timeout.InfiniteTimeSpan"/> to wait indefinitely.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    /// <exception cref="TimeoutException">The node didn't become available during the wait.</exception>
+    public Task WaitForNodeAsync(string nodeName, TimeSpan timeout, CancellationToken cancellationToken = default)
+        => WaitForNodeAsync(nodeName, (int)timeout.TotalMilliseconds, cancellationToken);
+
+    /// <summary>
+    /// Wait until a node with specific name become available.
+    /// </summary>
+    /// <param name="nodeName">Fully qualified name of the node.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for canceling the operation.</param>
+    /// <returns></returns>
+    public Task WaitForNodeAsync(string nodeName, CancellationToken cancellationToken = default)
+        => WaitForNodeAsync(nodeName, -1, cancellationToken);
+
+    #endregion
 
     private class Observer : IObserver<RosGraphEvent>
     {

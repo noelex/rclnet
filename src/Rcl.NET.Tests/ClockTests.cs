@@ -4,7 +4,8 @@ using Rosidl.Messages.Rosgraph;
 using System.Diagnostics;
 
 namespace Rcl.NET.Tests;
-public class ClockTest
+
+public class ClockTests
 {
     private static readonly SemaphoreSlim _concurrencyLimit = new(1);
 
@@ -66,7 +67,6 @@ public class ClockTest
             {
                 sw.Stop();
                 Assert.Equal(actualTime, sw.ElapsedMilliseconds, tol);
-                node.Logger.LogInformation("Client is canceled");
             }
             catch (Exception e)
             {

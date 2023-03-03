@@ -232,11 +232,16 @@ execution of the continuation can be precisely controlled using `runContinuation
 |  `false`                         | `true`                      | Captured `SynchronizationContext` or `TaskScheduler` if any, event loop otherwise |
 |  `false`                         | `false`                     | Event loop                                           | 
 
-Awaiting all other asynchronous APIs in rclnet, including `IAsyncEnumerable<T>` returning methods, behave exactly the same as `IRclWaitObject.WaitOneAsync`,
+Awaiting `ValueTask<T>` and `IAsyncEnumerable<T>` returning APIs in rclnet behave exactly the same as `IRclWaitObject.WaitOneAsync`,
 except that these methods do not have a `runContinuationAsynchronously` parameter, they always execute with `runContinuationAsynchronously` set to `false`.
 
 A special case is `RclContext.Yield`, awaiting `RclContext.Yield` never captures scheduling context, and will always resume execution
 on the event loop of the `RclContext`.
+
+The behavior of `Task<T>` returning APIs is however undefined. The continuation may stay on the event loop
+or end up on a thread pool thread.
+To check whether current execution is on the event loop, use `RclContext.IsCurrent`.
+To enforce execution on the event loop, use `RclContext.Yield`.
 
 ## Building and Running Examples
 ### Install dependencies
