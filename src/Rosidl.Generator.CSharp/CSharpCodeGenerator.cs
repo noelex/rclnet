@@ -153,9 +153,10 @@ public class CSharpCodeGenerator
 
         packages = includedPackages;
 
-        if (spec.Excludes.Count > 0) packages = packages.Where(x => !spec.Excludes.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
-
-        
+        if (spec.Excludes.Count > 0)
+        {
+            packages = packages.Where(x => !spec.Excludes.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+        }
 
         var parser = new MsgParser();
         foreach (var cand in packages.Values)
@@ -226,7 +227,7 @@ public class CSharpCodeGenerator
             Console.WriteLine("The following package(s) were automatically included as dependencies:");
             foreach (var dep in resolved)
             {
-                Console.WriteLine(dep);
+                if (!spec.Excludes.Contains(dep)) Console.WriteLine(dep);
             }
         }
 
@@ -236,7 +237,7 @@ public class CSharpCodeGenerator
             Console.WriteLine("The following package(s) were not found in configured package sources:");
             foreach (var dep in unresolved)
             {
-                Console.WriteLine(dep);
+                if (!spec.Excludes.Contains(dep)) Console.WriteLine(dep);
             }
         }
 
