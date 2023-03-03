@@ -9,6 +9,29 @@ Supported ROS 2 Distributions:
 - Humble Hawksbill
 - Foxy Fitzroy
 
+## Getting Started
+rclnet provides project templates to help you getting started quickly. You can install the templates using the following command:
+```
+dotnet new install Rcl.NET.Templates
+```
+
+Then, to create a node application:
+```
+mkdir MyNode
+cd MyNode
+dotnet new ros2-node
+```
+
+To create a message only library:
+```
+mkdir MyMessageLibrary
+cd MyMessageLibrary
+dotnet new ros2-msg
+```
+
+If you prefer creating the projects by yourself, or want to use rclnet in existing projects,
+refer the [Installing](#Installing) and [Generating Messages](#Generating-Messages) section.
+
 ## Installing
 Stable releases of rclnet are hosted on NuGet. You can install them using the following command:
 ```
@@ -23,6 +46,35 @@ dotnet add package Rosidl.Runtime
 To generate message classes, you'll also need to install `ros2cs` utility:
 ```
 dotnet tool install -g ros2cs
+```
+
+## Generating Messages
+rclnet does not ship with message definitions. In order to communicate with other ROS 2 nodes,
+you need to generate messages first.
+
+Message definitions are .NET classes / structs, you can either include messages in a console app
+which runs as an ROS 2 node, or compile separately in another library.
+
+Projects containing messages will have to meet the following requirements:
+- `Rcl.NET` or `Rosidl.Runtime` NuGet package is installed.
+- `AllowUnsafeBlocks` is set to `true`. This can be done by adding the following lines to the `.csproj` file:
+    ```xml
+    <PropertyGroup>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    ```
+- Runtime marshalling for the assembly is disabled. You can the following line to somewhere in the source code of the project:
+    ```csharp
+    [assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]
+    ```
+
+To generate messages, you also need to add a `ros2cs.spec` file to somewhere in the project (usually the project root).
+A `ros2cs.spec` file contains configurations such as output directory and where to find packages,
+see [here](https://github.com/noelex/rclnet/blob/main/src/ros2cs/ros2cs.spec) for detailed explanations.
+
+Assuming you've already installed the `ros2cs` utility, simply run the following command to generate messages:
+```
+ros2cs /path/to/ros2cs.spec
 ```
 
 ## Features
@@ -54,42 +106,13 @@ dotnet tool install -g ros2cs
 
 ✅Supported ⚠️Partial support ❌Not supported ⏳In development
 
-## Generating Messages
-`rclnet` does not ship with message definitions. In order to communicate with other ROS 2 nodes,
-you need to generate messages first.
-
-Message definitions are .NET classes / structs, you can either include messages in a console app
-which runs as an ROS 2 node, or compile separately in another library.
-
-Projects containing messages will have to meet the following requirements:
-- `Rcl.NET` or `Rosidl.Runtime` NuGet package is installed.
-- `AllowUnsafeBlocks` is set to `true`. This can be done by adding the following lines to the `.csproj` file:
-    ```xml
-    <PropertyGroup>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-    ```
-- Runtime marshalling for the assembly is disabled. You can the following line to somewhere in the source code of the project:
-    ```csharp
-    [assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]
-    ```
-
-To generate messages, you also need to add a `ros2cs.spec` file to somewhere in the project (usually the project root).
-A `ros2cs.spec` file contains configurations such as output directory and where to find packages,
-see [here](https://github.com/noelex/rclnet/blob/main/src/ros2cs/ros2cs.spec) for detailed explanations.
-
-Assuming you've already installed the `ros2cs` utility, simply run the following command to generate messages:
-```
-ros2cs /path/to/ros2cs.spec
-```
-
-## Execution Model
-Unlike `rclcpp` an `rclpy`, `rclnet` doesn't have the concept of executors. Each `RclContext` runs its
+## Asynchronous Execution Model
+Unlike rclcpp and rclpy, rclnet doesn't have the concept of executors. Each `RclContext` runs its
 own event loop for waiting on signals and dispatching callbacks, which is essentialy a single-threaded
 executor.
 
-Although `rclnet` does not provide multi-threaded executors, it doesn't mean that you can't process messages or handle
-service requests using multiple threads. All communication primitives in `rclnet` provide both synchronous
+Although rclnet does not provide multi-threaded executors, it doesn't mean that you can't process messages or handle
+service requests using multiple threads. All communication primitives in rclnet provide both synchronous
 and asynchronous APIs for different needs and scenarios. Synchronous APIs are simpler and faster if the work need to be done is simple enough, e.g. neither CPU-intensive nor needs to issue blocking calls. Asynchronous APIs, in contrast, are for scenarios where you need to perform asynchronous calls or
 offload blocking operations into background threads.
 
@@ -107,7 +130,8 @@ await foreach (var msg in sub.ReadAllAsync())
 }
 ```
 
-`RclContext` always gives control to user code on its event loop. Take the above code for example:
+`RclContext` always gives control to user code on its event loop if no `SynchronizationContext` or `TaskScheduler` is captured.
+Take the above code for example:
 
 ```csharp
 await foreach (var msg in sub.ReadAllAsync())
@@ -155,7 +179,7 @@ await foreach (var msg in sub.ReadAllAsync())
 ```
 Without enabling `SynchronizationContext` on the event loop (which is the default), asynchronous continuations are not enforced
 to resume on the event loop. The execution flow will leave the event loop as soon as an async point other
-than `RclContext.Yield()` (or `IRclWaitObject.WaitOneAsync()`, see the following section) is encountered.
+than `RclContext.Yield` (or other asynchronous APIs in rclnet, see the following section) is encountered.
 ```csharp
 using var context = new RclContext();
 
@@ -178,7 +202,7 @@ await foreach (var msg in sub.ReadAllAsync())
 }
 ```
 
-### Additional Notes about `IRclWaitObject.WaitOneAsync`
+### Controlling Execution of Continuations
 Timers and guard conditions created by `RclContext` implements `IRclWaitObject` interface,
 which allow the caller to asynchronously wait for the signal.
 
@@ -207,6 +231,12 @@ execution of the continuation can be precisely controlled using `runContinuation
 |  `true`                          | `false`                     | Thread pool                                          | 
 |  `false`                         | `true`                      | Captured `SynchronizationContext` or `TaskScheduler` if any, event loop otherwise |
 |  `false`                         | `false`                     | Event loop                                           | 
+
+Awaiting all other asynchronous APIs in rclnet, including `IAsyncEnumerable<T>` returning methods, behave exactly the same as `IRclWaitObject.WaitOneAsync`,
+except that these methods do not have a `runContinuationAsynchronously` parameter, they always execute with `runContinuationAsynchronously` set to `false`.
+
+A special case is `RclContext.Yield`, awaiting `RclContext.Yield` never captures scheduling context, and will always resume execution
+on the event loop of the `RclContext`.
 
 ## Building and Running Examples
 ### Install dependencies

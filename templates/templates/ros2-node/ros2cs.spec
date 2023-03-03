@@ -1,12 +1,12 @@
 ﻿# Specifiy the output directory.
 # A path relative to this file or an absolute path can be used.
-output ./
+output ./Interfaces
 
 # Generate classes with internal visibility rather than public.
-# internal
+internal
 
 # Set the default root namespace.
-namespace Rosidl.Messages
+namespace Company.Node1
 
 # Read packages from ament prefix directories as specified by AMENT_PREFIX_PATH.
 # If this flag specified, it will always load before all other from-directory directives.
@@ -19,7 +19,7 @@ from-ament-index
 # Generate codes for specified packages only.
 # Dependencies of the specified packages will also be included recursively.
 # If no include directive is specified, ros2cs will generate codes for all discovered packages.
-# include [package]...
+# include geometry_msgs
 
 # Explicitly exclude packages from code generation.
 # exclude [package]...

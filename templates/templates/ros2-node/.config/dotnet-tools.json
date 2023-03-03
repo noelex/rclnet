@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "ros2cs": {
+      "version": "1.0.12",
+      "commands": [
+        "ros2cs"
+      ]
+    }
+  }
+}
