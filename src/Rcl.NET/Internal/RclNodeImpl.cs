@@ -79,7 +79,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
 
     private async Task GraphBuilder(RclGuardConditionImpl graphSignal, CancellationToken cancellationToken)
     {
-        await Context.Yield();
+        await Context.YieldIfNotCurrent();
 
         using (graphSignal)
         {

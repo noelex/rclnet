@@ -62,8 +62,9 @@ public class RosGraphTests
             await node.Graph.TryWaitForNodeAsync(nodeName, 0);
             Assert.True(context1.IsCurrent);
 
-            await node.Graph.TryWaitForNodeAsync(nodeName, 0).ConfigureAwait(false);
-            Assert.True(ctx.IsCurrent);
+            // The following is not guaranteed.
+            //await node.Graph.TryWaitForNodeAsync(nodeName, 0).ConfigureAwait(false);
+            //Assert.True(ctx.IsCurrent);
         });
     }
 }

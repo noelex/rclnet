@@ -81,7 +81,7 @@ public partial class RosGraph
     {
         // Yield back to event loop to make sure we have
         // consistent view on the graph during query.
-        if (!_node.Context.IsCurrent) await _node.Context.Yield();
+        await _node.Context.YieldIfNotCurrent();
 
         if (IsServiceServerAvailable(serviceName))
         {
@@ -154,7 +154,7 @@ public partial class RosGraph
     {
         // Yield back to event loop to make sure we have
         // consistent view on the graph during query.
-        if (!_node.Context.IsCurrent) await _node.Context.Yield();
+        await _node.Context.YieldIfNotCurrent();
 
         if (IsActionServerAvailable(actionName))
         {
@@ -227,7 +227,7 @@ public partial class RosGraph
     {
         // Yield back to event loop to make sure we have
         // consistent view on the graph during query.
-        if (!_node.Context.IsCurrent) await _node.Context.Yield();
+        await _node.Context.YieldIfNotCurrent();
 
         foreach (var node in _nodes)
         {

@@ -32,6 +32,7 @@ public class ServiceTests
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service, (request, state) =>
             {
+                Assert.True(context.IsCurrent);
                 return response;
             });
 
@@ -95,5 +96,32 @@ public class ServiceTests
             await client.InvokeAsync(new ListParametersServiceRequest()).ConfigureAwait(false);
             Assert.True(context.IsCurrent);
         });
+    }
+
+    [Fact]
+    public async Task ConcurrentServiceCallHandlerShouldStartOnEventLoop()
+    {
+        using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+
+        var response = new ListParametersServiceResponse(new(new[] { "n1", "n2" }, new[] { "p1", "p2" }));
+        var service = NameGenerator.GenerateServiceName();
+
+        using var server = node.CreateConcurrentService<
+            ListParametersService,
+            ListParametersServiceRequest,
+            ListParametersServiceResponse>(service, (request, state, ct) =>
+            {
+                Assert.True(context.IsCurrent);
+                return Task.FromResult(response);
+            }, null);
+
+        using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = clientNode.CreateClient<
+            ListParametersService,
+            ListParametersServiceRequest,
+            ListParametersServiceResponse>(service);
+
+        var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest());
     }
 }

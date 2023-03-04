@@ -8,7 +8,7 @@ public class PubSubTests
     [Fact]
     public async Task PubSubStronglyTypedMessages()
     {
-        using var ctx=new RclContext(TestConfig.DefaultContextArguments);
+        using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
         using var node2 = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
@@ -80,10 +80,10 @@ public class PubSubTests
 
         // Request a large queue size to prevent messages being dropped,
         // because we'll be publishing messages really fast.
-        var qos = new QosProfile(Reliability: ReliabilityPolicy.Reliable,Å@Depth: 2000);
+        var qos = new QosProfile(Reliability: ReliabilityPolicy.Reliable, Depth: 2000);
 
         Task<int[]> aggregateTask;
-        using var pub = node1.CreatePublisher<Time>(topic, new(qos: qos));       
+        using var pub = node1.CreatePublisher<Time>(topic, new(qos: qos));
         using (var sub = node2.CreateSubscription<Time>(topic, new(qos: qos)))
         {
             aggregateTask = Task.WhenAll(
@@ -132,7 +132,7 @@ public class PubSubTests
 
         var topic = NameGenerator.GenerateTopicName();
         TaskCompletionSource<QosPolicyKind> offeredQosIncompatible = new(), requestQosIncompatible = new();
-        
+
         // Pub = BestEffort and Sub = Reliable is incompatible.
         using var pub = node1.CreatePublisher<Time>(topic, new(
             qos: new(Reliability: ReliabilityPolicy.BestEffort),

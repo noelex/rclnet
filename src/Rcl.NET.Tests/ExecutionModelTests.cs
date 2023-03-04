@@ -169,4 +169,25 @@ public class ExecutionModelTests
         Assert.False(context1.IsCurrent);
         Assert.False(context2.IsCurrent);
     }
+
+    [Fact]
+    public async Task ContinuationOfYieldIfNotCurrent()
+    {
+        using var ctx1 = new RclContext(
+            TestConfig.DefaultContextArguments, useSynchronizationContext: true);
+        using var ctx2 = new RclContext(
+            TestConfig.DefaultContextArguments);
+
+        await ctx2.YieldIfNotCurrent();
+        Assert.True(ctx2.IsCurrent);
+
+        await ctx1.Yield();
+        Assert.True(ctx1.IsCurrent);
+
+        await ctx2.YieldIfNotCurrent();
+        Assert.True(ctx2.IsCurrent);
+
+        await ctx2.YieldIfNotCurrent();
+        Assert.True(ctx2.IsCurrent);
+    }
 }

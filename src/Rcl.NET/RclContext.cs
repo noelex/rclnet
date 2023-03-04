@@ -23,9 +23,19 @@ public sealed class RclContext : IDisposable, IRclContext
 {
     private static int _contextRefCount = 0;
 
+    // Creating nodes with /rosout logging enabled requires access
+    // to a static logger map, which is not thread-safe application wide.
+    //
+    // Creation of other rcl objects is also not thread-safe, but limited to
+    // the scope of a specific RclContext or RclNode, which can be resolved
+    // by yielding to the owner RclContext before calling.
+    //
+    // Thus we only need a lock for node creation here.
+    private static SpinLock  _nodeCreationLock = new();
+
     private static readonly ObjectPool<ManualResetValueTaskSource<bool>> TcsPool = ObjectPool<ManualResetValueTaskSource<bool>>.Shared;
 
-    private readonly SynchronizationContext _rclSyncContext;
+    private readonly RclSynchronizationContext _rclSyncContext;
 
     private SpinLock _handleLock = new(), _callbackLock = new();
     private readonly Dictionary<long, WaitSetWorkItem> _waitHandles = new();
@@ -157,11 +167,32 @@ public sealed class RclContext : IDisposable, IRclContext
 
     /// <inheritdoc/>
     public IRclNode CreateNode(string name, string @namespace = "/", NodeOptions? options = null)
-        => new RclNodeImpl(this, name, @namespace, options);
+    {
+        using (ScopedLock.Lock(ref _nodeCreationLock))
+        {
+            return new RclNodeImpl(this, name, @namespace, options);
+        }   
+    }
 
     /// <inheritdoc/>
     public YieldAwaiter Yield()
-        => new(_rclSyncContext);
+        => new(_rclSyncContext, false);
+
+    /// <summary>
+    /// Creates an awaitable that, when awaited, yield back to current <see cref="RclContext"/>
+    /// if not executing on event loop.
+    /// </summary>
+    /// <returns></returns>
+    internal YieldAwaiter YieldIfNotCurrent()
+    {
+        if (IsCurrent)
+        {
+            // Suppress yielding if already on the event loop.
+            return new(_rclSyncContext, true);
+        }
+
+        return Yield();
+    }
 
     private unsafe void Interrupt() => rcl_trigger_guard_condition(_interruptSignal.Object);
 
@@ -576,7 +607,7 @@ public sealed class RclContext : IDisposable, IRclContext
             SendAsync(d, state).AsTask().Wait();
         }
 
-        private ValueTask SendAsync(SendOrPostCallback callback, object? state)
+        public ValueTask SendAsync(SendOrPostCallback callback, object? state)
         {
             if (_context.IsCurrent)
             {

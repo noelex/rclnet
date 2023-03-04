@@ -125,7 +125,7 @@ public interface IConcurrentNativeServiceHandler
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> which will be canceled when the corresponding <see cref="IRclService"/> is being disposed.</param>
     /// <remarks>
     /// <para>
-    /// /// The <paramref name="request"/> and <paramref name="response"/> buffers are only valid during the call to <see cref="ProcessRequestAsync"/>. 
+    /// The <paramref name="request"/> and <paramref name="response"/> buffers are only valid during the call to <see cref="ProcessRequestAsync"/>. 
     /// Do not store reference or try to access these buffers from outside of the method scope.
     /// </para>
     /// <para>

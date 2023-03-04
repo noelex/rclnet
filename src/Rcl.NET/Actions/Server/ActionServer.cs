@@ -211,10 +211,7 @@ internal class ActionServer : IActionServer
             context.Status = status;
             context.CompletionTime = _clock.Elapsed;
 
-            if (!_node.Context.IsCurrent)
-            {
-                await _node.Context.Yield();
-            }
+            await _node.Context.YieldIfNotCurrent();
 
             NotifyStatusChange();
             _handler.OnCompleted(context);
@@ -246,9 +243,8 @@ internal class ActionServer : IActionServer
             // then goal results are discarded immediately (after responding to any pending result requests).
             if (_resultTimeout == TimeSpan.Zero)
             {
-                if (!_node.Context.IsCurrent) await _node.Context.Yield();
-                _goals.Remove(ctx.GoalId);
-                ctx.Dispose();
+                await _node.Context.YieldIfNotCurrent();
+                using (ctx) _goals.Remove(ctx.GoalId);
             }
         }
         else

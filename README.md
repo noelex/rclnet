@@ -88,21 +88,21 @@ ros2cs /path/to/ros2cs.spec
 - Builtin support for querying topic messages and ROS graph events with [Reactive Extensions](https://github.com/dotnet/reactive).
 
 ### Supported ROS Features
-|  Feature                 |  Status |  Additional Information       |
-|------------------------- |-------- |------------------------------ | 
-|  Topics                  | ✅      | N/A                           |
-|  Services                | ✅      | N/A                           | 
-|  Actions                 | ✅      | Managed implementation.       | 
-|  Clocks                  | ✅      | Supports external time source by setting `use_sim_time` to `true`.<br/>`CancellationTokenSource`s can also be configured to cancel with timeout measured by external clock.  |
-|  Timers                  | ✅      | N/A                           | 
-|  Guard Conditions        | ✅      | N/A                           |
-|  Events                  | ✅      | Event handlers can be registered via `SubscriptionOptions` or `PublisherOptions` when creating the subscirption or publisher.  | 
-|  ROS Graph               | ✅      | Managed implementation.       | 
-|  Logging                 | ✅      | Supports logging to stdout, /rosout and log files. Configurable with `--ros-args`.| 
-|  Parameter Service       | ⚠️      | Supports loading parameters from command-line arguments and parameter files.<br/>Locally declared parameters are exposed via [Parameter API](https://design.ros2.org/articles/ros_parameters.html).<br/>Parameter client is not implemented.                          | 
-|  Lifecycle               | ❌      | N/A                           | 
-|  Network Flow Endpoints  | ❌      | Available since galactic.     |
-|  Content Filtered Topics | ❌      | Available since humble.       |
+| Feature                 | Status | Additional Information                                                                                                                                                                                                                       |
+| ----------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Topics                  | ✅      | N/A                                                                                                                                                                                                                                          |
+| Services                | ✅      | N/A                                                                                                                                                                                                                                          |
+| Actions                 | ✅      | Managed implementation.                                                                                                                                                                                                                      |
+| Clocks                  | ✅      | Supports external time source by setting `use_sim_time` to `true`.<br/>`CancellationTokenSource`s can also be configured to cancel with timeout measured by external clock.                                                                  |
+| Timers                  | ✅      | N/A                                                                                                                                                                                                                                          |
+| Guard Conditions        | ✅      | N/A                                                                                                                                                                                                                                          |
+| Events                  | ✅      | Event handlers can be registered via `SubscriptionOptions` or `PublisherOptions` when creating the subscirption or publisher.                                                                                                                |
+| ROS Graph               | ✅      | Managed implementation.                                                                                                                                                                                                                      |
+| Logging                 | ✅      | Supports logging to stdout, /rosout and log files. Configurable with `--ros-args`.                                                                                                                                                           |
+| Parameter Service       | ⚠️      | Supports loading parameters from command-line arguments and parameter files.<br/>Locally declared parameters are exposed via [Parameter API](https://design.ros2.org/articles/ros_parameters.html).<br/>Parameter client is not implemented. |
+| Lifecycle               | ❌      | N/A                                                                                                                                                                                                                                          |
+| Network Flow Endpoints  | ❌      | Available since galactic.                                                                                                                                                                                                                    |
+| Content Filtered Topics | ❌      | Available since humble.                                                                                                                                                                                                                      |
 
 ✅Supported ⚠️Partial support ❌Not supported ⏳In development
 
@@ -113,7 +113,9 @@ executor.
 
 Although rclnet does not provide multi-threaded executors, it doesn't mean that you can't process messages or handle
 service requests using multiple threads. All communication primitives in rclnet provide both synchronous
-and asynchronous APIs for different needs and scenarios. Synchronous APIs are simpler and faster if the work need to be done is simple enough, e.g. neither CPU-intensive nor needs to issue blocking calls. Asynchronous APIs, in contrast, are for scenarios where you need to perform asynchronous calls or
+and asynchronous APIs for different needs and scenarios.
+
+Synchronous APIs are simpler and faster if the work need to be done is simple enough, e.g. neither CPU-intensive nor needs to issue blocking calls. Asynchronous APIs, in contrast, are for scenarios where you need to perform asynchronous calls or
 offload blocking operations into background threads.
 
 Take subscriptions for example, you can receive messages synchronously using `IRclSubscription<T>.Subscribe`,
@@ -130,34 +132,31 @@ await foreach (var msg in sub.ReadAllAsync())
 }
 ```
 
-`RclContext` always gives control to user code on its event loop if no `SynchronizationContext` or `TaskScheduler` is captured.
-Take the above code for example:
+When creating `RclContext`s, you can specify `useSynchronizationContext` parameter to control whether
+to setup a `SynchronizationContext` for the event loop. The `SynchronizationContext` can then be used
+for controlling the asynchronous execution flow on the event loop.
 
-```csharp
-await foreach (var msg in sub.ReadAllAsync())
-{
-    // On event loop.
-    await SomeAsyncOperation(msg);
-    // On thread pool thread.
-    await Task.Run(() => SomeOffloadedSyncOperation(msg));
-    // On thread pool thread.
-}
-```
-
-You can use `RclContext.SynchronizationContext`, `RclContext.Yield()`, `Task.Yield()` and
-`ConfigureAwait(false)` to perform fine-grained control over the asynchronous execution flow:
+See the following example:
 
 ```csharp
 using var context = new RclContext(useSynchronizationContext: true);
 
 ...
 
+// Enforce execution on the event loop.
+await context.Yield();
+
+// Since we setup the RclContext with useSynchronizationContext = true,
+// all following awaits will resume on the event loop by default.
 await foreach (var msg in sub.ReadAllAsync())
 {
     // On event loop.
     await SomeAsyncOperation(msg);
     // On event loop.
-    await Task.Run(() => SomeOffloadedSyncOperation(msg));
+    await Task.Run(() => {
+        // On thread pool.
+        SomeOffloadedSyncOperation(msg);
+    });
     // On event loop.
     await Task.Yield();
     // On event loop.
@@ -177,32 +176,12 @@ await foreach (var msg in sub.ReadAllAsync())
     // On event loop.
 }
 ```
-Without enabling `SynchronizationContext` on the event loop (which is the default), asynchronous continuations are not enforced
-to resume on the event loop. The execution flow will leave the event loop as soon as an async point other
-than `RclContext.Yield` (or other asynchronous APIs in rclnet, see the following section) is encountered.
-```csharp
-using var context = new RclContext();
+Without enabling `useSynchronizationContext` when creating the `RclContext` (which is the default),
+asynchronous continuations are not enforced to resume on the event loop. However, you can use
+`RclContext.Yield()`, `Task.Yield()` and `ConfigureAwait(false)` to perform fine-grained control
+where the code should be executed.
 
-...
-
-await foreach (var msg in sub.ReadAllAsync())
-{
-    // On event loop.
-    await SomeAsyncOperation(msg);
-    // On thread pool thread.
-    await Task.Run(() => SomeOffloadedSyncOperation(msg));
-    // On thread pool thread.
-    await Task.Yield();
-    // On thread pool thread.
-
-    ...
-
-    await context.Yield();
-    // On event loop.
-}
-```
-
-### Controlling Execution of Continuations
+### Additional Notes about `IRclWaitObject.WaitOneAsync`
 Timers and guard conditions created by `RclContext` implements `IRclWaitObject` interface,
 which allow the caller to asynchronously wait for the signal.
 
@@ -223,25 +202,15 @@ will always execute in the captured context, regardless of the value of `runCont
 
 Since context capture can be suppressed by calling `ConfigureAwait` with `continueOnCapturedContext` set to `false`,
 execution of the continuation can be precisely controlled using `runContinuationAsynchronously` in conjunction with
-`continueOnCapturedContext`. See the following table:
+`continueOnCapturedContext`.
 
-|  `runContinuationAsynchronously` | `continueOnCapturedContext` |  Continuation Execution                              |
-|--------------------------------- |---------------------------- |----------------------------------------------------- | 
-|  `true`                          | `true`                      | Captured `SynchronizationContext` or `TaskScheduler` if any, thread pool otherwise |
-|  `true`                          | `false`                     | Thread pool                                          | 
-|  `false`                         | `true`                      | Captured `SynchronizationContext` or `TaskScheduler` if any, event loop otherwise |
-|  `false`                         | `false`                     | Event loop                                           | 
 
-Awaiting `ValueTask<T>` and `IAsyncEnumerable<T>` returning APIs in rclnet behave exactly the same as `IRclWaitObject.WaitOneAsync`,
-except that these methods do not have a `runContinuationAsynchronously` parameter, they always execute with `runContinuationAsynchronously` set to `false`.
-
-A special case is `RclContext.Yield`, awaiting `RclContext.Yield` never captures scheduling context, and will always resume execution
-on the event loop of the `RclContext`.
-
-The behavior of `Task<T>` returning APIs is however undefined. The continuation may stay on the event loop
-or end up on a thread pool thread.
-To check whether current execution is on the event loop, use `RclContext.IsCurrent`.
-To enforce execution on the event loop, use `RclContext.Yield`.
+| `runContinuationAsynchronously` | `continueOnCapturedContext` | Continuation Execution                                                             |
+| ------------------------------- | --------------------------- | ---------------------------------------------------------------------------------- |
+| `true`                          | `true`                      | Captured `SynchronizationContext` or `TaskScheduler` if any, thread pool otherwise |
+| `true`                          | `false`                     | Thread pool                                                                        |
+| `false`                         | `true`                      | Captured `SynchronizationContext` or `TaskScheduler` if any, event loop otherwise  |
+| `false`                         | `false`                     | Event loop                                                                         |
 
 ## Building and Running Examples
 ### Install dependencies

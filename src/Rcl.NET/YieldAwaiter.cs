@@ -9,15 +9,17 @@ namespace Rcl;
 public readonly struct YieldAwaiter : ICriticalNotifyCompletion
 {
     private readonly SynchronizationContext? _preferredContext;
+    private readonly bool _isCompleted;
 
-    internal YieldAwaiter(SynchronizationContext? preferredContext)
+    internal YieldAwaiter(SynchronizationContext? preferredContext, bool isCompleted)
     {
         _preferredContext = preferredContext;
+        _isCompleted = isCompleted;
     }
 
     /// <summary>Gets whether a yield is not required.</summary>
     /// <remarks>This property is intended for compiler user rather than use directly in code.</remarks>
-    public bool IsCompleted => false;  // yielding is always required for YieldAwaiter, hence false
+    public bool IsCompleted => _isCompleted;  // yielding is always required for YieldAwaiter, hence false
 
     /// <summary>Posts the <paramref name="continuation"/> back to the current context.</summary>
     /// <param name="continuation">The action to invoke asynchronously.</param>

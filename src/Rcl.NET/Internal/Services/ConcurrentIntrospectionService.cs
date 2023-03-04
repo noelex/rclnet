@@ -51,7 +51,7 @@ internal class ConcurrentIntrospectionService : IntrospectionServiceBase
             if (ret != rcl_ret_t.RCL_RET_OK)
             {
                 // Yield here since we want to propagate the error to the event loop.
-                await _node.Context.Yield();
+                await _node.Context.YieldIfNotCurrent();
                 RclException.ThrowIfNonSuccess(ret);
             }
         }

@@ -123,7 +123,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         // If rcl_send_request allow us to indicate the sequence number, then we could have
         // the ValueTaskSource registered before calling rcl_send_request, then no yielding is
         // needed andthis method can just return a plain ValueTask to save some allocations.
-        if (!_node.Context.IsCurrent) await _node.Context.Yield();
+        await _node.Context.YieldIfNotCurrent();
 
         long sequence;
         unsafe
