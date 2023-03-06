@@ -5,7 +5,7 @@ public class RosGraphTests
     [Fact]
     public async Task TestWaitForNode()
     {
-        using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var nodeNameToBeWaited = NameGenerator.GenerateNodeName();
@@ -34,7 +34,7 @@ public class RosGraphTests
         {
             await Task.Delay(10, cancellationToken);
 
-            using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+            await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
             using var node = ctx.CreateNode(nodeName);
 
             await Task.Delay(-1, cancellationToken);
@@ -46,7 +46,7 @@ public class RosGraphTests
     {
         return Task.Run(async () =>
         {
-            using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+            await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
             using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
             var nodeName = "non_existent_node";
 
@@ -56,15 +56,24 @@ public class RosGraphTests
             await node.Graph.TryWaitForNodeAsync(nodeName, 0).ConfigureAwait(false);
             Assert.True(ctx.IsCurrent);
 
-            using var context1 = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: true);
-            await context1.Yield();
+            await using (var context1 = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: true))
+            {
+                await context1.Yield();
 
-            await node.Graph.TryWaitForNodeAsync(nodeName, 0);
-            Assert.True(context1.IsCurrent);
+                await node.Graph.TryWaitForNodeAsync(nodeName, 0);
+                Assert.True(context1.IsCurrent);
+            }
+
+            // Awaiting DisposeAsync should bring us on to a thread pool thread as context1 is no longer available.
+            Assert.Null(SynchronizationContext.Current);
 
             // The following is not guaranteed.
             //await node.Graph.TryWaitForNodeAsync(nodeName, 0).ConfigureAwait(false);
             //Assert.True(ctx.IsCurrent);
+
+            // Get rid of SynchronizationContext of context1 to prevent any synchronous coninutation of Task.Run
+            // tries to capture the disposed context.
+            // await ctx.Yield();
         });
     }
 }

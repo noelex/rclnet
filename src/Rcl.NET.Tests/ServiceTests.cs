@@ -7,7 +7,7 @@ public class ServiceTests
     [Fact]
     public async Task ClientRequestTimeout()
     {
-        using var context = new RclContext(TestConfig.DefaultContextArguments);
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
         using var client = node.CreateClient<
             ListParametersService,
@@ -21,7 +21,7 @@ public class ServiceTests
     [Fact]
     public async Task NormalServiceCall()
     {
-        using var context = new RclContext(TestConfig.DefaultContextArguments);
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
 
         var response = new ListParametersServiceResponse(new(new[] { "n1", "n2" }, new[] { "p1", "p2" }));
@@ -53,9 +53,9 @@ public class ServiceTests
     {
         return Task.Run(async () =>
         {
-            using var anotherContext = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: true);
+            await using var anotherContext = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: true);
 
-            using var context = new RclContext(TestConfig.DefaultContextArguments);
+            await using var context = new RclContext(TestConfig.DefaultContextArguments);
             using var node = context.CreateNode(NameGenerator.GenerateNodeName());
 
             var response = new ListParametersServiceResponse();
@@ -101,7 +101,7 @@ public class ServiceTests
     [Fact]
     public async Task ConcurrentServiceCallHandlerShouldStartOnEventLoop()
     {
-        using var context = new RclContext(TestConfig.DefaultContextArguments);
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
 
         var response = new ListParametersServiceResponse(new(new[] { "n1", "n2" }, new[] { "p1", "p2" }));

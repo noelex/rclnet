@@ -48,7 +48,7 @@ public class ClockTests
         try
         {
             using var clockCancellation = new CancellationTokenSource();
-            using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+            await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
 
             var task = GenerateClockAsync(ctx, scale, clockCancellation.Token);
 

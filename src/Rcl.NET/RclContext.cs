@@ -19,7 +19,7 @@ namespace Rcl;
 /// arguments used for creating the first <see cref="RclContext"/> instance.
 /// </para>
 /// </remarks>
-public sealed class RclContext : IDisposable, IRclContext
+public sealed class RclContext :  IRclContext
 {
     private static int _contextRefCount = 0;
 
@@ -49,6 +49,8 @@ public sealed class RclContext : IDisposable, IRclContext
 
     private readonly IRclLoggerFactory _loggerFactory;
     private readonly bool _useSyncContext;
+
+    private readonly TaskCompletionSource _shutdownComplete = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     private int _disposed;
     private long _waitHandleToken;
@@ -196,8 +198,7 @@ public sealed class RclContext : IDisposable, IRclContext
 
     private unsafe void Interrupt() => rcl_trigger_guard_condition(_interruptSignal.Object);
 
-    /// <inheritdoc/>
-    public unsafe void Dispose()
+    private unsafe void DisposeCore(bool blocking)
     {
         if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
         {
@@ -212,11 +213,33 @@ public sealed class RclContext : IDisposable, IRclContext
 
             rcl_trigger_guard_condition(_shutdownSignal.Object);
 
-            if (!IsCurrent)
+            if (blocking && !IsCurrent)
             {
                 _mainLoopRunner.Join();
             }
         }
+    }
+
+    /// <summary>
+    /// Prevents further jobs to be added into current <see cref="RclContext"/>, and signals the event loop to exit after finishing ongoing jobs.
+    /// </summary>
+    /// <remarks>
+    /// When called from a thread other than the event loop of current <see cref="RclContext"/>, this method will block until the event loop is completely shutdown.
+    /// Otherwise, this method is returned immediately.
+    /// <para>
+    /// To ensure shutdown of the event loop under all circumstances, use <see cref="DisposeAsync"/> instead.
+    /// </para>
+    /// </remarks>
+    public void Dispose() => DisposeCore(true);
+
+    /// <summary>
+    /// Prevents further jobs to be added into current <see cref="RclContext"/>, and asynchronously wait until the event loop is shutdown.
+    /// </summary>
+    /// <returns></returns>
+    public ValueTask DisposeAsync()
+    {
+        DisposeCore(false);
+        return new ValueTask(_shutdownComplete.Task);
     }
 
     private void ThrowIfDisposed()
@@ -533,6 +556,8 @@ public sealed class RclContext : IDisposable, IRclContext
         {
             rcl_logging_fini();
         }
+
+        _shutdownComplete.SetResult();
     }
 
     private void ExecuteCallbacks(List<CallbackWorkItem> storage)
@@ -599,12 +624,27 @@ public sealed class RclContext : IDisposable, IRclContext
 
         public override void Post(SendOrPostCallback d, object? state)
         {
-            _context.RegisterCallback(d, state, null);
+            // Fallback to default sync context if the underlying RclContext is already disposed.
+            if (Volatile.Read(ref _context._disposed) == 1)
+            {
+                base.Post(d, state);
+            }
+            else
+            {
+                _context.RegisterCallback(d, state, null);
+            }
         }
 
         public override void Send(SendOrPostCallback d, object? state)
         {
-            SendAsync(d, state).AsTask().Wait();
+            if (Volatile.Read(ref _context._disposed) == 1)
+            {
+                base.Send(d, state);
+            }
+            else
+            {
+                SendAsync(d, state).AsTask().Wait();
+            }
         }
 
         public ValueTask SendAsync(SendOrPostCallback callback, object? state)

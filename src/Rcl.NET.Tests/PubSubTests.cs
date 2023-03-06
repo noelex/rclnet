@@ -8,7 +8,7 @@ public class PubSubTests
     [Fact]
     public async Task PubSubStronglyTypedMessages()
     {
-        using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
         using var node2 = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
@@ -38,7 +38,7 @@ public class PubSubTests
     [Fact]
     public async Task PubSubNativeMessages()
     {
-        using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
         using var node2 = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
@@ -72,7 +72,7 @@ public class PubSubTests
     [Fact]
     public async Task ConcurrentCallsToReadAllAsync()
     {
-        using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
         using var node2 = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
@@ -126,7 +126,7 @@ public class PubSubTests
     [Fact]
     public async Task IncompatibleQosEvents()
     {
-        using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
         using var node2 = ctx.CreateNode(NameGenerator.GenerateNodeName());
 

@@ -29,7 +29,11 @@ internal abstract class RclContextualObject<T> : RclObject<T> where T : RclObjec
 
     public override void Dispose()
     {
-        Context.SynchronizationContext.Post(state => ((RclObjectHandle)state!).Dispose(), Handle);
+        Context.SynchronizationContext.Post(state =>
+        {
+            var self = (RclContextualObject<T>)state!;
+            self.Handle.Dispose();
+        }, this);
     }
 }
 

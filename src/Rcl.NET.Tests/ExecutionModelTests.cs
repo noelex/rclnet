@@ -10,7 +10,7 @@ public class ExecutionModelTests
     [Fact]
     public async Task WithSynchronizationContextEnabled()
     {
-        using var context = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: true);
+        await using var context = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: true);
         Assert.False(context.IsCurrent);
 
         await context.Yield();
@@ -41,7 +41,7 @@ public class ExecutionModelTests
     [Fact]
     public async Task WithSynchronizationContextDisabled()
     {
-        using var context = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: false);
+        await using var context = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: false);
         Assert.False(context.IsCurrent);
 
         await context.Yield();
@@ -75,7 +75,7 @@ public class ExecutionModelTests
         // Run the test in a thread pool thread so that we won't have any SynchronizationContext.
         return Task.Run(async () =>
         {
-            using var context = new RclContext(TestConfig.DefaultContextArguments);
+            await using var context = new RclContext(TestConfig.DefaultContextArguments);
             using var gc = context.CreateGuardCondition();
 
             // This will resume execution on the event loop.
@@ -100,7 +100,7 @@ public class ExecutionModelTests
         // Run the test in a thread pool thread so that we won't have any SynchronizationContext.
         return Task.Run(async () =>
         {
-            using var context = new RclContext(TestConfig.DefaultContextArguments);
+            await using var context = new RclContext(TestConfig.DefaultContextArguments);
             using var gc = context.CreateGuardCondition();
 
             // This prevents us from resuming on the event loop.
@@ -122,13 +122,13 @@ public class ExecutionModelTests
     [Fact]
     public async Task WaitOneWithSynchronizationContext()
     {
-        using var context1 = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: true);
+        await using var context1 = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: true);
 
         await context1.Yield();
 
         // Now we're on the event loop of context1, with SynchronizationContext.Current set to its SynchronizationContext.
 
-        using var context2 = new RclContext(TestConfig.DefaultContextArguments);
+        await using var context2 = new RclContext(TestConfig.DefaultContextArguments);
         using var gc = context2.CreateGuardCondition();
 
         // This will keep us on the event loop of context1 due to the captured sync context.
@@ -173,9 +173,9 @@ public class ExecutionModelTests
     [Fact]
     public async Task ContinuationOfYieldIfNotCurrent()
     {
-        using var ctx1 = new RclContext(
+        await using var ctx1 = new RclContext(
             TestConfig.DefaultContextArguments, useSynchronizationContext: true);
-        using var ctx2 = new RclContext(
+        await using var ctx2 = new RclContext(
             TestConfig.DefaultContextArguments);
 
         await ctx2.YieldIfNotCurrent();
