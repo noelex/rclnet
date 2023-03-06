@@ -139,7 +139,7 @@ for controlling the asynchronous execution flow on the event loop.
 See the following example:
 
 ```csharp
-using var context = new RclContext(useSynchronizationContext: true);
+await using var context = new RclContext(useSynchronizationContext: true);
 
 ...
 
@@ -245,7 +245,7 @@ ros2 run graph_monitor graph_monitor
 ## Showcase
 ### Subscribing
 ```csharp
-using var ctx = new RclContext(args);
+await using var ctx = new RclContext(args);
 using var node = ctx.CreateNode("hellow_world");
 using var sub = node.CreateSubscription<Twist>("/cmd_vel");
 await foreach (Twist msg in sub.ReadAllAsync())

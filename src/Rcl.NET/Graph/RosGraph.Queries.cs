@@ -292,7 +292,7 @@ public partial class RosGraph
 
     private class Observer : IObserver<RosGraphEvent>
     {
-        private readonly TaskCompletionSource _tcs = new();
+        private readonly TaskCompletionSource _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly Func<RosGraphEvent, object?, bool> _predicate;
         private readonly object? _state;
 

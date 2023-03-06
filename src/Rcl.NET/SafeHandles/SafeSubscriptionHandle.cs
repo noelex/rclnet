@@ -16,7 +16,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
     private readonly SafeNodeHandle _node;
 
     public SafeSubscriptionHandle(
-        SafeNodeHandle node, TypeSupportHandle typeSupportHandle, string topicName, QosProfile qos)
+        SafeNodeHandle node, TypeSupportHandle typeSupportHandle, string topicName, SubscriptionOptions options)
     {
         _node = node;
         * Object = rcl_get_zero_initialized_subscription();
@@ -25,7 +25,8 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
         // rmw_subscription_options.require_unique_network_flow_endpoints and
         // rmw_subscription_options.content_filter_options
         var opts = RclHumble.rcl_subscription_get_default_options();
-        opts.qos = qos.ToRmwQosProfile();
+        opts.qos = options.Qos.ToRmwQosProfile();
+        opts.rmw_subscription_options.ignore_local_publications = options.IgnoreLocalPublications;
 
         var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);
         Span<byte> nameBuffer = stackalloc byte[nameSize];
@@ -41,7 +42,6 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
                     pname,
                     &opts));
         }
-
     }
 
     protected override void ReleaseHandleCore(rcl_subscription_t* ptr)

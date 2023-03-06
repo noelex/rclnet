@@ -12,12 +12,12 @@ internal class NativeActionGoalContext : ActionGoalContextBase, INativeActionGoa
     public NativeActionGoalContext(Guid goalId, IActionClientImpl actionClient)
         : base(goalId, actionClient)
     {
-        var opts = new BoundedChannelOptions(1)
+        var opts = new BoundedChannelOptions(actionClient.Options.QueueSize)
         {
-            AllowSynchronousContinuations = true,
+            AllowSynchronousContinuations = actionClient.Options.AllowSynchronousContinuations,
             SingleReader = false,
             SingleWriter = true,
-            FullMode = BoundedChannelFullMode.DropOldest
+            FullMode = actionClient.Options.FullMode
         };
         _feedbackChannel = Channel
             .CreateBounded<RosMessageBuffer>(opts, x => x.Dispose());
@@ -27,7 +27,11 @@ internal class NativeActionGoalContext : ActionGoalContextBase, INativeActionGoa
 
     public override void OnFeedbackReceived(RosMessageBuffer feedback)
     {
-        _feedbackChannel.Writer.TryWrite(feedback);
+        // Should never return false as FullMode cannot be set to Wait, but just in case.
+        if (!_feedbackChannel.Writer.TryWrite(feedback))
+        {
+            feedback.Dispose();
+        }
     }
 
     public async IAsyncEnumerable<RosMessageBuffer> ReadFeedbacksAsync([EnumeratorCancellation] CancellationToken cancellationToken)

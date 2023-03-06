@@ -35,6 +35,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
     {
         _node = node;
         _textEncoding = options.TextEncoding;
+        Options = options;
 
         var statusTopicName = actionName + Constants.StatusTopic;
         var feedbackTopicName = actionName + Constants.FeedbackTopic;
@@ -84,6 +85,8 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
     }
 
     public string Name { get; }
+
+    public ActionClientOptions Options { get; }
 
     public bool IsServerAvailable =>
         _sendGoalClient.IsServerAvailable && _getResultClient.IsServerAvailable && _cancelGoalClient.IsServerAvailable &&

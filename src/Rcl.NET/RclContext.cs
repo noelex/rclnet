@@ -657,6 +657,7 @@ public sealed class RclContext :  IRclContext
 
             var tcs = TcsPool.Rent();
 
+            tcs.RunContinuationsAsynchronously = true;
             tcs.OnFinally(static state =>
             {
                 var t = (ManualResetValueTaskSource<bool>)state!;

@@ -142,6 +142,8 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         var completionArgs =
             ObjectPool.Rent<CompletionArgs>()
             .Reset(sequence, this, completion, outerReg, disposeReg, timeoutReg, timeoutCts, cancelArgs);
+
+        completion.RunContinuationsAsynchronously = true;
         completion.OnFinally(state => ((CompletionArgs)state!).Return(), completionArgs);
 
         // var added = _pendingRequests.GetOrAdd(sequence, completion);

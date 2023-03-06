@@ -21,12 +21,12 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
     {
         _textEncoding = textEncoding;
 
-        var opts = new BoundedChannelOptions(1)
+        var opts = new BoundedChannelOptions(actionClient.Options.QueueSize)
         {
-            AllowSynchronousContinuations = true,
+            AllowSynchronousContinuations = actionClient.Options.AllowSynchronousContinuations,
             SingleReader = true,
             SingleWriter = false,
-            FullMode = BoundedChannelFullMode.DropOldest
+            FullMode = actionClient.Options.FullMode
         };
         _feedbackChannel = Channel
             .CreateBounded<TFeedback>(opts);

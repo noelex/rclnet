@@ -85,16 +85,12 @@ public class ServiceTests
             // Suppressing the sync context.
             await client.InvokeAsync(new ListParametersServiceRequest()).ConfigureAwait(false);
 
-            // This is not guaranteed as the execution of the continuation is determined
-            // by the TaskAwaiter, we have no control over it.
-            // Assert.True(context.IsCurrent);
-
-            // No captured sync context, we should return to event loop.
+            // No captured sync context, we should be on thread pool thread.
             await client.InvokeAsync(new ListParametersServiceRequest());
-            Assert.True(context.IsCurrent);
+            Assert.False(context.IsCurrent);
 
             await client.InvokeAsync(new ListParametersServiceRequest()).ConfigureAwait(false);
-            Assert.True(context.IsCurrent);
+            Assert.False(context.IsCurrent);
         });
     }
 

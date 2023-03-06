@@ -24,7 +24,7 @@ internal unsafe abstract class NativeSubscriptionBase :
         string topicName,
         TypeSupportHandle typeSupport,
         SubscriptionOptions options)
-        : base(node.Context, new(node.Handle, typeSupport, topicName, options.Qos))
+        : base(node.Context, new(node.Handle, typeSupport, topicName, options))
     {
         _node = node;
         TypeSupport = typeSupport;
@@ -34,7 +34,7 @@ internal unsafe abstract class NativeSubscriptionBase :
             SingleWriter = true,
             SingleReader = false,
             FullMode = options.FullMode,
-            AllowSynchronousContinuations = true
+            AllowSynchronousContinuations = options.AllowSynchronousContinuations
         };
 
         _messageChannel = Channel.CreateBounded<RosMessageBuffer>(opts, static x => x.Dispose());
@@ -156,7 +156,11 @@ internal unsafe abstract class NativeSubscriptionBase :
         var msg = TakeMessage();
         if (!msg.IsEmpty)
         {
-            _messageChannel.Writer.TryWrite(msg);
+            // Just in case FullMode is set to Wait, simply drop the incoming message.
+            if (!_messageChannel.Writer.TryWrite(msg))
+            {
+                msg.Dispose();
+            }
         }
     }
 

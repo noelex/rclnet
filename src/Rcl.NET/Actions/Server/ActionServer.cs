@@ -389,7 +389,7 @@ internal class ActionServer : IActionServer
         private readonly RosMessageBuffer _feedbackMessageBuffer, _resultBuffer;
 
         private readonly CancellationTokenSource _abort = new(), _cancel = new();
-        private readonly TaskCompletionSource _completion = new();
+        private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public GoalContext(Guid id, ActionServer server, TimeSpan accepted)
         {

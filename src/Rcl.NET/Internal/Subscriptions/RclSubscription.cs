@@ -32,7 +32,7 @@ internal unsafe class RclSubscription<T> :
         RclNodeImpl node,
         string topicName,
         SubscriptionOptions options)
-        : base(node.Context, new(node.Handle, T.GetTypeSupportHandle(), topicName, options.Qos))
+        : base(node.Context, new(node.Handle, T.GetTypeSupportHandle(), topicName, options))
     {
         _node = node;
         var opts = new BoundedChannelOptions(options.QueueSize)
@@ -40,7 +40,7 @@ internal unsafe class RclSubscription<T> :
             SingleWriter = true,
             SingleReader = false,
             FullMode = options.FullMode,
-            AllowSynchronousContinuations = true
+            AllowSynchronousContinuations = options.AllowSynchronousContinuations
         };
 
         _messageChannel = Channel.CreateBounded<T>(opts);

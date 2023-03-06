@@ -187,11 +187,18 @@ public record SubscriptionOptions
     /// </param>
     /// <param name="queueSize">
     /// Capacity of the message delivery queue.
-    /// This parameter is used for setting up the queue for devilering messages via <see cref="IAsyncEnumerable{T}"/>s,
+    /// This parameter is used for setting up the queue for devilering messages via <see cref="IAsyncEnumerable{T}"/>s returned by <c>ReadAllAsync</c>,
     /// and is irrelevant to <see cref="QosProfile.Depth"/>.
+    /// <para>
+    /// Setting to a small queue size may cause significant message drop under very high publishing rate,
+    /// especially when <paramref name="allowSynchronousContinuation"/> is set to <see langword="false"/>.
+    /// </para>
     /// </param>
     /// <param name="fullMode">
     /// Behavior to use when the delivery queue is full.
+    /// <para>
+    /// <see cref="BoundedChannelFullMode.Wait"/> is not supported as it will cause the event loop to be blocked when the message delivery queue is full.
+    /// </para>
     /// </param>
     /// <param name="livelinessChangedHandler">
     /// Handler for receiving <see cref="LivelinessChangedEvent"/>s.
@@ -214,6 +221,18 @@ public record SubscriptionOptions
     /// depending on whether the underlying RMW implementation supports <see cref="IncompatibleQosEvent"/>.
     /// </para>
     /// </param>
+    /// <param name="allowSynchronousContinuation">
+    /// <see langword="true"/> if the <see cref="IAsyncEnumerable{T}"/> returned by <c>ReadAllAsync</c> may synchronously invoke continuations
+    /// subscribed to notifications of pending async operations; <see langword="false"/> if all continuations
+    /// should be invoked asynchronously.
+    /// </param>
+    /// <param name="ignoreLocalPublications">
+    /// Whether to ignore messages sent by local publishers which live in the same node of the subscription.
+    /// <para>
+    /// This option may not be supported by some RMW implementations (e.g. rmw_fastrtps_cpp on foxy), and no error will be generated under such circumstances.
+    /// If unsure, review the documentation of the RMW implementation you're using.
+    /// </para>
+    /// </param>
     public SubscriptionOptions(
         QosProfile? qos = null,
         Encoding? textEncoding = null,
@@ -221,8 +240,18 @@ public record SubscriptionOptions
         BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest,
         Action<LivelinessChangedEvent>? livelinessChangedHandler = null,
         Action<RequestedDeadlineMissedEvent>? requestedDeadlineMissedHandler = null,
-        Action<IncompatibleQosEvent>? requestedQosIncompatibleHandler = null)
+        Action<IncompatibleQosEvent>? requestedQosIncompatibleHandler = null,
+        bool allowSynchronousContinuation = false,
+        bool ignoreLocalPublications = false)
     {
+        if (fullMode == BoundedChannelFullMode.Wait)
+        {
+            throw new ArgumentException(
+                "Setting fullMode to BoundedChannelFullMode.Wait is not supported " +
+                "as it will cause the event loop to be blocked when the message delivery queue is full.",
+                nameof(fullMode));
+        }
+
         Qos = qos ?? QosProfile.Default;
         TextEncoding = textEncoding ?? Encoding.UTF8;
         QueueSize = queueSize;
@@ -230,6 +259,8 @@ public record SubscriptionOptions
         LivelinessChangedHandler = livelinessChangedHandler;
         RequestedDeadlineMissedHandler = requestedDeadlineMissedHandler;
         RequestedQosIncompatibleHandler = requestedQosIncompatibleHandler;
+        AllowSynchronousContinuations = allowSynchronousContinuation;
+        IgnoreLocalPublications = ignoreLocalPublications;
     }
 
     /// <summary>
@@ -253,14 +284,21 @@ public record SubscriptionOptions
 
     /// <summary>
     /// Capacity of the message delivery queue.
-    /// This parameter is used for setting up the queue for devilering messages via <see cref="IAsyncEnumerable{T}"/>s,
+    /// This parameter is used for setting up the queue for devilering messages via <see cref="IAsyncEnumerable{T}"/>s returned by <c>ReadAllAsync</c>,
     /// and is irrelevant to <see cref="QosProfile.Depth"/>.
     /// </summary>
+    /// <remarks>
+    /// Setting to a small queue size may cause significant message drop under very high publishing rate,
+    /// especially when <paramref name="allowSynchronousContinuation"/> is set to <see langword="false"/>.
+    /// </remarks>
     public int QueueSize { get; }
 
     /// <summary>
     /// Behavior to use when the delivery queue is full.
     /// </summary>
+    /// <remarks>
+    /// <see cref="BoundedChannelFullMode.Wait"/> is not supported as it will cause the event loop to be blocked when the message delivery queue is full.
+    /// </remarks>
     public BoundedChannelFullMode FullMode { get; }
 
     /// <summary>
@@ -289,6 +327,22 @@ public record SubscriptionOptions
     /// depending on whether the underlying RMW implementation supports <see cref="IncompatibleQosEvent"/>.
     /// </remarks>
     public Action<IncompatibleQosEvent>? RequestedQosIncompatibleHandler { get; }
+
+    /// <summary>
+    /// <see langword="true"/> if the <see cref="IAsyncEnumerable{T}"/> returned by <c>ReadAllAsync</c> may synchronously invoke continuations
+    /// subscribed to notifications of pending async operations; <see langword="false"/> if all continuations
+    /// should be invoked asynchronously.
+    /// </summary>
+    public bool AllowSynchronousContinuations { get; }
+
+    /// <summary>
+    /// Whether to ignore messages sent by local publishers which live in the same node of the subscription.
+    /// </summary>
+    /// <remarks>
+    /// This option may not be supported by some RMW implementations (e.g. rmw_fastrtps_cpp on foxy), and no error will be generated under such circumstances.
+    /// If unsure, review the documentation of the RMW implementation you're using.
+    /// </remarks>
+    public bool IgnoreLocalPublications { get; }
 }
 
 /// <summary>

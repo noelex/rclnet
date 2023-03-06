@@ -84,7 +84,7 @@ public class PubSubTests
 
         Task<int[]> aggregateTask;
         using var pub = node1.CreatePublisher<Time>(topic, new(qos: qos));
-        using (var sub = node2.CreateSubscription<Time>(topic, new(qos: qos)))
+        using (var sub = node2.CreateSubscription<Time>(topic, new(qos: qos, queueSize: 128)))
         {
             aggregateTask = Task.WhenAll(
                 CountAsync(sub.ReadAllAsync()),
@@ -156,6 +156,39 @@ public class PubSubTests
         void OnRequestedQosIncompatible(IncompatibleQosEvent e)
         {
             requestQosIncompatible.TrySetResult(e.LastPolicyKind);
+        }
+    }
+
+    [Fact] 
+    public async Task IgnoreLocalPublications()
+    {
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+
+        var topic = NameGenerator.GenerateTopicName();
+        using var pub = node.CreatePublisher<Time>(topic);
+
+        Task<bool> t;
+        using (var sub = node.CreateSubscription<Time>(topic, new(ignoreLocalPublications: true)))
+        {
+
+            t = ReadOneAsync(sub.ReadAllAsync());
+            pub.Publish(new Time());
+
+            await Task.Delay(100);
+        }
+
+        var result = await t;
+        Assert.False(result);
+
+        static async Task<bool> ReadOneAsync<T>(IAsyncEnumerable<T> subscription)
+        {
+            await foreach (var m in subscription)
+            {
+                return true ;
+            }
+
+            return false;
         }
     }
 }

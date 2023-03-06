@@ -6,6 +6,8 @@ namespace Rcl.Actions.Client;
 
 interface IActionClientImpl
 {
+    ActionClientOptions Options { get; }
+
     bool TryRemoveGoal(Guid goalId);
 
     ActionIntrospection Introspection { get; }
