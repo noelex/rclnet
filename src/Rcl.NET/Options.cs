@@ -191,7 +191,7 @@ public record SubscriptionOptions
     /// and is irrelevant to <see cref="QosProfile.Depth"/>.
     /// <para>
     /// Setting to a small queue size may cause significant message drop under very high publishing rate,
-    /// especially when <paramref name="allowSynchronousContinuation"/> is set to <see langword="false"/>.
+    /// especially when <paramref name="allowSynchronousContinuations"/> is set to <see langword="false"/>.
     /// </para>
     /// </param>
     /// <param name="fullMode">
@@ -221,7 +221,7 @@ public record SubscriptionOptions
     /// depending on whether the underlying RMW implementation supports <see cref="IncompatibleQosEvent"/>.
     /// </para>
     /// </param>
-    /// <param name="allowSynchronousContinuation">
+    /// <param name="allowSynchronousContinuations">
     /// <see langword="true"/> if the <see cref="IAsyncEnumerable{T}"/> returned by <c>ReadAllAsync</c> may synchronously invoke continuations
     /// subscribed to notifications of pending async operations; <see langword="false"/> if all continuations
     /// should be invoked asynchronously.
@@ -241,7 +241,7 @@ public record SubscriptionOptions
         Action<LivelinessChangedEvent>? livelinessChangedHandler = null,
         Action<RequestedDeadlineMissedEvent>? requestedDeadlineMissedHandler = null,
         Action<IncompatibleQosEvent>? requestedQosIncompatibleHandler = null,
-        bool allowSynchronousContinuation = false,
+        bool allowSynchronousContinuations = false,
         bool ignoreLocalPublications = false)
     {
         if (fullMode == BoundedChannelFullMode.Wait)
@@ -259,7 +259,7 @@ public record SubscriptionOptions
         LivelinessChangedHandler = livelinessChangedHandler;
         RequestedDeadlineMissedHandler = requestedDeadlineMissedHandler;
         RequestedQosIncompatibleHandler = requestedQosIncompatibleHandler;
-        AllowSynchronousContinuations = allowSynchronousContinuation;
+        AllowSynchronousContinuations = allowSynchronousContinuations;
         IgnoreLocalPublications = ignoreLocalPublications;
     }
 
@@ -289,7 +289,7 @@ public record SubscriptionOptions
     /// </summary>
     /// <remarks>
     /// Setting to a small queue size may cause significant message drop under very high publishing rate,
-    /// especially when <paramref name="allowSynchronousContinuation"/> is set to <see langword="false"/>.
+    /// especially when <see cref="AllowSynchronousContinuations"/> is set to <see langword="false"/>.
     /// </remarks>
     public int QueueSize { get; }
 

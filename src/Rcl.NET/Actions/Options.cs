@@ -53,7 +53,7 @@ public record ActionClientOptions
     /// and is irrelevant to <see cref="QosProfile.Depth"/>.
     /// <para>
     /// Setting to a small queue size may cause significant message drop under very high publishing rate,
-    /// especially when <paramref name="allowSynchronousContinuation"/> is set to <see langword="false"/>.
+    /// especially when <paramref name="allowSynchronousContinuations"/> is set to <see langword="false"/>.
     /// </para>
     /// </param>
     /// <param name="fullMode">
@@ -62,7 +62,7 @@ public record ActionClientOptions
     /// <see cref="BoundedChannelFullMode.Wait"/> is not supported as it will cause the event loop to be blocked when the message delivery queue is full.
     /// </para>
     /// </param>
-    /// <param name="allowSynchronousContinuation">
+    /// <param name="allowSynchronousContinuations">
     /// <see langword="true"/> if the <see cref="IAsyncEnumerable{T}"/> returned by <c>ReadFeedbacksAsync</c> may synchronously invoke continuations
     /// subscribed to notifications of pending async operations; <see langword="false"/> if all continuations
     /// should be invoked asynchronously.
@@ -76,7 +76,7 @@ public record ActionClientOptions
         Encoding? textEncoding = null,
         int queueSize = 1,
         BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest,
-        bool allowSynchronousContinuation = false)
+        bool allowSynchronousContinuations = false)
     {
         if (fullMode == BoundedChannelFullMode.Wait)
         {
@@ -96,7 +96,7 @@ public record ActionClientOptions
         TextEncoding = textEncoding ?? Encoding.UTF8;
         FullMode = fullMode;
         QueueSize = queueSize;
-        AllowSynchronousContinuations = allowSynchronousContinuation;
+        AllowSynchronousContinuations = allowSynchronousContinuations;
     }
 
     /// <summary>
@@ -160,7 +160,7 @@ public record ActionClientOptions
     /// </summary>
     /// <remarks>
     /// Setting to a small queue size may cause significant message drop under very high publishing rate,
-    /// especially when <paramref name="allowSynchronousContinuation"/> is set to <see langword="false"/>.
+    /// especially when <see cref="AllowSynchronousContinuations"/> is set to <see langword="false"/>.
     /// </remarks>
     public int QueueSize { get; }
 
