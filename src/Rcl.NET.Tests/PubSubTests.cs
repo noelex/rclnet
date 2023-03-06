@@ -2,9 +2,19 @@ namespace Rcl.NET.Tests;
 
 using Rcl.Qos;
 using Rosidl.Messages.Builtin;
+using Rosidl.Messages.Sensor;
+using System.Diagnostics;
+using Xunit.Abstractions;
 
 public class PubSubTests
 {
+    private readonly ITestOutputHelper _output;
+
+    public PubSubTests(ITestOutputHelper output)
+    {
+        _output = output;
+    }
+
     [Fact]
     public async Task PubSubStronglyTypedMessages()
     {
@@ -159,7 +169,7 @@ public class PubSubTests
         }
     }
 
-    [Fact] 
+    [Fact]
     public async Task IgnoreLocalPublications()
     {
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
@@ -185,10 +195,81 @@ public class PubSubTests
         {
             await foreach (var m in subscription)
             {
-                return true ;
+                return true;
             }
 
             return false;
+        }
+    }
+
+    [Fact]
+    public async Task VeryLargeMessages()
+    {
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        await using var ctx2 = new RclContext(TestConfig.DefaultContextArguments);
+        using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var node2 = ctx2.CreateNode(NameGenerator.GenerateNodeName());
+
+        var topic = NameGenerator.GenerateTopicName();
+        var qos = new QosProfile(Depth: 2000);
+
+        using var pub = node1.CreatePublisher<Image>(topic, new(qos: qos));
+
+        Task<List<TimeSpan>> task;
+        using (var sub = node2.CreateNativeSubscription<Image>(topic, new(qos: qos, queueSize: 128)))
+        {
+            task = CountAverageLatency(node2.Clock, sub.ReadAllAsync());
+
+            // limit to 100 fps.
+            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(10));
+            var body = new byte[3 * 1920 * 1080];
+
+            var nativeMsg = RosMessageBuffer.Create<Image>();
+            nativeMsg.AsRef<Image.Priv>().Data.CopyFrom(body);
+            for (var i = 0; i < 100; i++)
+            {
+                var now = (long)node1.Clock.Elapsed.TotalNanoseconds;
+                nativeMsg.AsRef<Image.Priv>().Header.Stamp.Sec = (int)(now / 1_000_000_000);
+                nativeMsg.AsRef<Image.Priv>().Header.Stamp.Nanosec = (uint)(now % 1_000_000_000);
+
+                pub.Publish(nativeMsg);
+                await timer.WaitForNextTickAsync();
+            }
+
+            await Task.Delay(100);
+        }
+
+        var results = (await task).Select(x => x.TotalMilliseconds).ToArray();
+        Assert.Equal(100, results.Length);
+
+        var mean = results.Average();
+
+        _output.WriteLine("Max: " + results.Max());
+        _output.WriteLine("Min: " + results.Min());
+        _output.WriteLine("Avg: " + mean);
+
+        var histogram = results.GroupBy(v => (int)Math.Round(v) / 10).OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Count());
+        _output.WriteLine("Histogram: ");
+        foreach (var item in histogram)
+        {
+            _output.WriteLine($"~ {item.Key * 10 + 10} ms: {item.Value}");
+        }
+
+        Assert.True(mean < 100);
+
+        static async Task<List<TimeSpan>> CountAverageLatency(RclClock clock, IAsyncEnumerable<RosMessageBuffer> messages)
+        {
+            var timings = new List<TimeSpan>();
+            await foreach (var message in messages)
+            {
+                var received = clock.Elapsed;
+                var stamp = message.AsRef<Image.Priv>().Header.Stamp;
+                var sent = TimeSpan.FromSeconds(stamp.Sec + stamp.Nanosec / 1_000_000_000.0);
+
+                timings.Add(received - sent);
+            }
+
+            return timings;
         }
     }
 }

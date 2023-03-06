@@ -8,7 +8,7 @@ public partial class RosGraph
     {
         SingleWriter = true,
         SingleReader = false,
-        AllowSynchronousContinuations = true,
+        AllowSynchronousContinuations = false,
         FullMode = BoundedChannelFullMode.DropOldest
     });
 
