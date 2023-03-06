@@ -2,7 +2,7 @@
 using Rcl.Logging;
 using Rosidl.Messages.Std;
 
-using var ctx = new RclContext(args);
+await using var ctx = new RclContext(args);
 using var node = ctx.CreateNode("example_svc");
 
 var resp = new EmptyServiceResponse();

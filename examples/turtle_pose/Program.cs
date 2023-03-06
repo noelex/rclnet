@@ -2,7 +2,7 @@
 using Rcl.Logging;
 using Rosidl.Messages.Turtlesim;
 
-using var ctx = new RclContext(args);
+await using var ctx = new RclContext(args);
 using var node = ctx.CreateNode("turtle_pose");
 using var sub = node.CreateNativeSubscription<Pose>("/turtle1/pose");
 

@@ -4,7 +4,7 @@ using Rcl.Actions;
 using Rcl.Logging;
 using Rosidl.Messages.Turtlesim;
 
-using var ctx = new RclContext(args);
+await using var ctx = new RclContext(args);
 using var node = ctx.CreateNode("example_action_server");
 
 using var server = node.CreateActionServer<RotateAbsoluteAction>(

@@ -7,7 +7,7 @@ if(args.Length > 0 && float.TryParse(args[0], out var input))
     r = input;
 }
 
-using var ctx = new RclContext(args);
+await using var ctx = new RclContext(args);
 using var node = ctx.CreateNode("turtle_circling");
 using var pub = node.CreatePublisher<Twist>("/turtle1/cmd_vel");
 

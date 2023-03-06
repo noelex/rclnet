@@ -6,7 +6,7 @@ const int resolution = 10_000_000; // ns
 
 var scale = args.Length > 0 && double.TryParse(args[0], out var r) ? r : 1.0;
 
-using var ctx = new RclContext(args);
+await using var ctx = new RclContext(args);
 using var node = ctx.CreateNode("fake_clock");
 
 using var clockPub = node.CreatePublisher<Clock>("/clock", new(qos: QosProfile.Clock));

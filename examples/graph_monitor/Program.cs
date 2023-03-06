@@ -2,7 +2,7 @@
 using Rcl.Graph;
 using Rcl.Logging;
 
-using var ctx = new RclContext(args);
+await using var ctx = new RclContext(args);
 using var node = ctx.CreateNode("graph_monitor");
 
 _ = Task.Run(async () =>
