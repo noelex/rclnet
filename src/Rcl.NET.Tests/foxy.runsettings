@@ -8,7 +8,6 @@
       <ROS_VERSION>2</ROS_VERSION>
       <LD_LIBRARY_PATH>/opt/ros/foxy/opt/yaml_cpp_vendor/lib:/opt/ros/foxy/lib/x86_64-linux-gnu:/opt/ros/foxy/lib</LD_LIBRARY_PATH>
       <AMENT_PREFIX_PATH>/opt/ros/foxy</AMENT_PREFIX_PATH>
-      <RMW_IMPLEMENTATION>rmw_cyclonedds_cpp</RMW_IMPLEMENTATION>
     </EnvironmentVariables>
   </RunConfiguration>
 </RunSettings>

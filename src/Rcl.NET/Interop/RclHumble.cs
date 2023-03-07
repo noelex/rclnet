@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Rcl.Interop;
 
@@ -78,6 +79,28 @@ internal unsafe static class RclHumble
     }
 
     /// <summary>
+    /// 
+    /// </summary>
+    public struct rmw_subscription_content_filter_options_t
+    {
+        /// <summary>
+        /// Specify the criteria to select the data samples of interest.
+        ///
+        /// It is similar to the WHERE part of an SQL clause.
+        /// </summary>
+        public byte* filter_expression;
+
+        /// <summary>
+        /// Give values to the tokens placeholder ‘parameters’ (i.e., "%n" tokens begin from 0) in the
+        /// filter_expression.The number of supplied parameters must fit with the requested values.
+        ///
+        /// It can be NULL if there is no "%n" tokens placeholder in filter_expression.
+        /// The maximum index number must be smaller than 100.
+        /// </summary>
+        public rcutils_string_array_t expression_parameters;
+    }
+
+    /// <summary>
     /// Options that can be used to configure the creation of a subscription in rmw.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
@@ -108,7 +131,10 @@ internal unsafe static class RclHumble
 
         public rmw_unique_network_flow_endpoints_requirement_t require_unique_network_flow_endpoints;
 
-        public void* content_filter_options;
+        /// <summary>
+        /// Used to create a content filter options during subscription creation.
+        /// </summary>
+        public rmw_subscription_content_filter_options_t* content_filter_options;
     }
 
     /// <summary>
@@ -214,4 +240,15 @@ internal unsafe static class RclHumble
     /// </remarks>
     [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
     public static extern rcl_publisher_options_t rcl_publisher_get_default_options();
+
+
+    [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern rcl_ret_t rcl_subscription_options_set_content_filter_options(
+          byte* filter_expression,
+          size_t expression_parameters_argc,
+          byte** expression_parameter_argv,
+          rcl_subscription_options_t* options);
+
+    [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern bool rcl_subscription_is_cft_enabled(rcl_subscription_t* subscription);
 }

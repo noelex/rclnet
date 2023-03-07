@@ -168,6 +168,68 @@ public record NodeOptions
 }
 
 /// <summary>
+/// Represents options to setup a content filter on subscription to receive topic messages selectively.
+/// </summary>
+/// <remarks>
+/// Refer to <a href="https://www.omg.org/spec/DDS/1.4/PDF">DDS specification</a> <b>Annex B - Syntax for Queries and Filters</b> for details.
+/// </remarks>
+public record ContentFilterOptions
+{
+    /// <summary>
+    /// Creates a new <see cref="ContentFilterOptions"/> with specified expression and arguments.
+    /// </summary>
+    /// <param name="expression">
+    /// Specify the criteria to select the data samples of interest.
+    /// 
+    /// It is similar to the WHERE part of an SQL clause.
+    /// </param>
+    /// <param name="arguments">
+    /// Give values to the tokens placeholder ‘parameters’ (i.e., "%n" tokens begin from 0) in the
+    /// <paramref name="expression"/>.The number of supplied parameters must fit with the requested values.
+    ///
+    /// It can be an empty array if there is no "%n" tokens placeholder in <paramref name="expression"/>.
+    /// Support up to 100 arguments.
+    /// <para>
+    /// Defaults to an empty array.
+    /// </para>
+    /// </param>
+    public ContentFilterOptions(string expression, params string[] arguments)
+    {
+        if (string.IsNullOrWhiteSpace(expression))
+        {
+            throw new ArgumentException("Content filter expression cannot be empty.", nameof(expression));
+        }
+
+        if (arguments != null && arguments.Length > 100)
+        {
+            throw new ArgumentException("Content filter supports up to 100 arguments.", nameof(arguments));
+        }
+
+        Expression = expression;
+        Arguments = arguments ?? Array.Empty<string>();
+    }
+
+    /// <summary>
+    /// Specify the criteria to select the data samples of interest.
+    /// 
+    /// It is similar to the WHERE part of an SQL clause.
+    /// </summary>
+    public string Expression { get; }
+
+    /// <summary>
+    /// Give values to the tokens placeholder ‘parameters’ (i.e., "%n" tokens begin from 0) in the
+    /// <see cref="Expression"/>.The number of supplied parameters must fit with the requested values.
+    ///
+    /// It can be an empty array if there is no "%n" tokens placeholder in <see cref="Expression"/>.
+    /// Support up to 100 arguments.
+    /// </summary>
+    /// <remarks>
+    /// Defaults to an empty array.
+    /// </remarks>
+    public string[] Arguments { get; }
+}
+
+/// <summary>
 /// Extra options for creating subscriptions.
 /// </summary>
 public record SubscriptionOptions
@@ -233,6 +295,15 @@ public record SubscriptionOptions
     /// If unsure, review the documentation of the RMW implementation you're using.
     /// </para>
     /// </param>
+    /// <param name="contentFilter">
+    /// The content filter to use when creating the subscription.
+    /// <para>
+    /// This option may not be supported by some RMW implementations.
+    /// </para>
+    /// <para>
+    /// Supported distro(s): >=humble
+    /// </para>
+    /// </param>
     public SubscriptionOptions(
         QosProfile? qos = null,
         Encoding? textEncoding = null,
@@ -242,7 +313,9 @@ public record SubscriptionOptions
         Action<RequestedDeadlineMissedEvent>? requestedDeadlineMissedHandler = null,
         Action<IncompatibleQosEvent>? requestedQosIncompatibleHandler = null,
         bool allowSynchronousContinuations = false,
-        bool ignoreLocalPublications = false)
+        bool ignoreLocalPublications = false,
+        [SupportedSinceDistribution(RosEnvironment.Humble)]
+        ContentFilterOptions? contentFilter = null)
     {
         if (fullMode == BoundedChannelFullMode.Wait)
         {
@@ -250,6 +323,11 @@ public record SubscriptionOptions
                 "Setting fullMode to BoundedChannelFullMode.Wait is not supported " +
                 "as it will cause the event loop to be blocked when the message delivery queue is full.",
                 nameof(fullMode));
+        }
+
+        if (contentFilter != null)
+        {
+            RosEnvironment.Require(RosEnvironment.Humble, feature: "Content Filtered Topic");
         }
 
         Qos = qos ?? QosProfile.Default;
@@ -261,6 +339,7 @@ public record SubscriptionOptions
         RequestedQosIncompatibleHandler = requestedQosIncompatibleHandler;
         AllowSynchronousContinuations = allowSynchronousContinuations;
         IgnoreLocalPublications = ignoreLocalPublications;
+        ContentFilter = contentFilter;
     }
 
     /// <summary>
@@ -343,6 +422,18 @@ public record SubscriptionOptions
     /// If unsure, review the documentation of the RMW implementation you're using.
     /// </remarks>
     public bool IgnoreLocalPublications { get; }
+
+    /// <summary>
+    /// The content filter to use when creating the subscription.
+    /// </summary>
+    /// <remarks>
+    /// This option may not be supported by some RMW implementations.
+    /// <para>
+    /// Supported distro(s): >=humble
+    /// </para>
+    /// </remarks>
+    [SupportedSinceDistribution(RosEnvironment.Humble)] 
+    public ContentFilterOptions? ContentFilter { get; }
 }
 
 /// <summary>

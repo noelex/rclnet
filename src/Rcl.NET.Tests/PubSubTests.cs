@@ -4,6 +4,7 @@ using Rcl.Qos;
 using Rosidl.Messages.Builtin;
 using Rosidl.Messages.Sensor;
 using System.Diagnostics;
+using Xunit;
 using Xunit.Abstractions;
 
 public class PubSubTests
@@ -202,74 +203,102 @@ public class PubSubTests
         }
     }
 
-    [Fact]
-    public async Task VeryLargeMessages()
+    [SkippableFact]
+    public async Task ContentFilteredSubscriptionsNoArguments()
     {
+        Skip.If(RosEnvironment.IsFoxy, "Content filtered topic is only supported on humble or later.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp", "Content filtered topic is not supported by rmw_cyclonedds_cpp.");
+
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-        await using var ctx2 = new RclContext(TestConfig.DefaultContextArguments);
-        using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
-        using var node2 = ctx2.CreateNode(NameGenerator.GenerateNodeName());
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var topic = NameGenerator.GenerateTopicName();
-        var qos = new QosProfile(Depth: 2000);
+        using var pub = node.CreatePublisher<Time>(topic);
 
-        using var pub = node1.CreatePublisher<Image>(topic, new(qos: qos));
-
-        Task<List<TimeSpan>> task;
-        using (var sub = node2.CreateNativeSubscription<Image>(topic, new(qos: qos, queueSize: 128)))
+        Task<int> t;
+        using (var sub = node.CreateSubscription<Time>(topic,
+            new(contentFilter: new("sec < 5"))))
         {
-            task = CountAverageLatency(node2.Clock, sub.ReadAllAsync());
+            Assert.True(sub.IsContentFilterEnabled);
 
-            // limit to 100 fps.
-            using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(10));
-            var body = new byte[3 * 1920 * 1080];
-
-            var nativeMsg = RosMessageBuffer.Create<Image>();
-            nativeMsg.AsRef<Image.Priv>().Data.CopyFrom(body);
-            for (var i = 0; i < 100; i++)
+            t = CountMessagesAsync(sub.ReadAllAsync());
+            for (var i = 0; i < 10; i++)
             {
-                var now = (long)node1.Clock.Elapsed.TotalNanoseconds;
-                nativeMsg.AsRef<Image.Priv>().Header.Stamp.Sec = (int)(now / 1_000_000_000);
-                nativeMsg.AsRef<Image.Priv>().Header.Stamp.Nanosec = (uint)(now % 1_000_000_000);
+                pub.Publish(new Time { Sec = i });
+                await Task.Delay(10);
+            }
+        }
 
-                pub.Publish(nativeMsg);
-                await timer.WaitForNextTickAsync();
+        var count = await t;
+        Assert.Equal(5, count);
+
+        static async Task<int> CountMessagesAsync(IAsyncEnumerable<Time> subscription)
+        {
+            var count = 0;
+            await foreach (var m in subscription)
+            {
+                count++;
             }
 
-            await Task.Delay(100);
+            return count;
         }
+    }
 
-        var results = (await task).Select(x => x.TotalMilliseconds).ToArray();
-        Assert.Equal(100, results.Length);
+    [SkippableFact]
+    public async Task ContentFilteredSubscriptions()
+    {
+        Skip.If(RosEnvironment.IsFoxy, "Content filtered topic is only supported on humble or later.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp", "Content filtered topic is not supported by rmw_cyclonedds_cpp.");
 
-        var mean = results.Average();
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
-        _output.WriteLine("Max: " + results.Max());
-        _output.WriteLine("Min: " + results.Min());
-        _output.WriteLine("Avg: " + mean);
+        var topic = NameGenerator.GenerateTopicName();
+        using var pub = node.CreatePublisher<Time>(topic);
 
-        var histogram = results.GroupBy(v => (int)Math.Round(v) / 10).OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Count());
-        _output.WriteLine("Histogram: ");
-        foreach (var item in histogram)
+        Task<int> t;
+        using (var sub = node.CreateSubscription<Time>(topic,
+            new(contentFilter: new("sec > %0 AND sec < %1", "3", "7"))))
         {
-            _output.WriteLine($"~ {item.Key * 10 + 10} ms: {item.Value}");
-        }
+            Assert.True(sub.IsContentFilterEnabled);
 
-        Assert.True(mean < 100);
-
-        static async Task<List<TimeSpan>> CountAverageLatency(RclClock clock, IAsyncEnumerable<RosMessageBuffer> messages)
-        {
-            var timings = new List<TimeSpan>();
-            await foreach (var message in messages)
+            t = CountMessagesAsync(sub.ReadAllAsync());
+            for (var i = 0; i < 10; i++)
             {
-                var received = clock.Elapsed;
-                var stamp = message.AsRef<Image.Priv>().Header.Stamp;
-                var sent = TimeSpan.FromSeconds(stamp.Sec + stamp.Nanosec / 1_000_000_000.0);
+                pub.Publish(new Time { Sec = i });
+                await Task.Delay(10);
+            }
+        }
 
-                timings.Add(received - sent);
+        var count = await t;
+        Assert.Equal(3, count);
+
+        static async Task<int> CountMessagesAsync(IAsyncEnumerable<Time> subscription)
+        {
+            var count = 0;
+            await foreach (var m in subscription)
+            {
+                count++;
             }
 
-            return timings;
+            return count;
         }
+    }
+
+    [Theory]
+    [InlineData("    ")]
+    [InlineData("")]
+    [InlineData("\t")]
+    [InlineData(null)]
+    public void ContentFilteredOptionsEmptyExpression(string expression)
+    {
+        Assert.Throws<ArgumentException>(() => new ContentFilterOptions(expression));
+    }
+
+    [Fact]
+    public void ContentFilteredOptionsTooManyArguments()
+    {
+        Assert.Throws<ArgumentException>(() => new ContentFilterOptions(
+            "test", Enumerable.Range(0, 101).Select(x=>string.Empty).ToArray()));
     }
 }

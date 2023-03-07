@@ -1,4 +1,5 @@
 ﻿using Rcl.Internal.Events;
+using Rcl.Interop;
 using Rcl.Logging;
 using Rcl.Qos;
 using Rcl.SafeHandles;
@@ -45,6 +46,11 @@ internal unsafe abstract class NativeSubscriptionBase :
 
         Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object))!;
         Options = options;
+
+        if (options.ContentFilter != null)
+        {
+            IsContentFilterEnabled = RclHumble.rcl_subscription_is_cft_enabled(Handle.Object);
+        }
 
         var completelyInitialized = false;
         try
@@ -150,6 +156,8 @@ internal unsafe abstract class NativeSubscriptionBase :
 
     public bool IsValid
          => rcl_subscription_is_valid(Handle.Object);
+
+    public bool IsContentFilterEnabled { get; }
 
     protected override void OnWaitCompleted()
     {

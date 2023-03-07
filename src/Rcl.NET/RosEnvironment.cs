@@ -59,7 +59,7 @@ public unsafe static class RosEnvironment
 
     internal static bool IsSupported(string targetDistro, VersionRequirement requirement = VersionRequirement.SinceInclusive)
     {
-        var v = Array.IndexOf(SupportedDistributions, targetDistro);
+        var v = Array.IndexOf(SupportedDistributions, Distribution);
         if (v < 0)
         {
             return false;

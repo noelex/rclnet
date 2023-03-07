@@ -51,6 +51,11 @@ internal unsafe class RclSubscription<T> :
 
         _textEncoding = options.TextEncoding;
         Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object))!;
+        
+        if (options.ContentFilter != null)
+        {
+            IsContentFilterEnabled = RclHumble.rcl_subscription_is_cft_enabled(Handle.Object);
+        }
 
         var completelyInitialized = false;
         try
@@ -130,6 +135,8 @@ internal unsafe class RclSubscription<T> :
 
     public bool IsValid
          => rcl_subscription_is_valid(Handle.Object);
+
+    public bool IsContentFilterEnabled { get; }
 
     protected override void OnWaitCompleted()
     {
