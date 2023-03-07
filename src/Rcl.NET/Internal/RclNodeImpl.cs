@@ -97,7 +97,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
                         Console.WriteLine(e.StackTrace);
                     }
 
-                    await graphSignal.WaitOneAsync(cancellationToken).ConfigureAwait(false);
+                    await graphSignal.WaitOneAsync(false, cancellationToken).ConfigureAwait(false);
                 }
             }
             finally

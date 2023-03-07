@@ -190,7 +190,7 @@ which allow the caller to asynchronously wait for the signal.
 ValueTask WaitOneAsync(bool runContinuationAsynchronously, CancellationToken cancellationToken = default);
 ValueTask WaitOneAsync(CancellationToken cancellationToken = default);
 ```
-The latter overload simply calls another one with `runContinuationAsynchronously` set to `false`.
+The latter overload simply calls another one with `runContinuationAsynchronously` set to `true`.
 
 `WaitOneAsync` allows the caller to explicitly control the execution of the continuation via `runContinuationAsynchronously`
 parameter. Assuming there's no captured `SynchronizationContext` or `TaskScheduler`, when `runContinuationAsynchronously`

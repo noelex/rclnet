@@ -115,7 +115,7 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
     }
 
     public ValueTask WaitOneAsync(CancellationToken cancellationToken = default)
-        => WaitOneAsync(false, cancellationToken);
+        => WaitOneAsync(true, cancellationToken);
 
     public override void Dispose()
     {

@@ -108,7 +108,7 @@ internal class ActionServer : IActionServer
         while (!cancellationToken.IsCancellationRequested)
         {
             // Ensure we wake up on the event loop.
-            await timer.WaitOneAsync(cancellationToken).ConfigureAwait(false);
+            await timer.WaitOneAsync(false, cancellationToken).ConfigureAwait(false);
 
             foreach (var goal in _goals.Values)
             {

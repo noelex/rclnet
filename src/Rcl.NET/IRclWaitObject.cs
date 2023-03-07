@@ -37,13 +37,7 @@ public interface IRclWaitObject : IRclObject
     /// Asynchronously wait for current <see cref="IRclWaitObject"/> instance to be triggered once, without forcing continuations to run asynchronously.
     /// </summary>
     /// <remarks>
-    /// Continuations may or may not run on the <see cref="RclContext"/> event loop which the <see cref="IRclWaitObject"/> belongs to, depdending on
-    /// the captured <see cref="SynchronizationContext"/>.
-    /// <para>
-    /// If there is no captured <see cref="SynchronizationContext"/>, 
-    /// continuations are guaranteed to run synchronously on the event loop.
-    /// Otherwise, the continuations will run asynchronously on the captured <see cref="SynchronizationContext"/>.
-    /// </para>
+    /// Calling this method has the same effect as calling <see cref="WaitOneAsync(bool, CancellationToken)"/> with <c>runContinuationAsynchronously</c> = <see langword="true"/>.
     /// </remarks>
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> to cancel the asynchronous wait.</param>
     /// <returns>
