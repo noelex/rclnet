@@ -177,7 +177,7 @@ await foreach (var msg in sub.ReadAllAsync())
 
     // The execution of current async method will stay on the event
     // loop unless we break out of the SynchronizationContext using
-    // ConfigureAwait(false).
+    // ConfigureAwait(false), or RclContext.YieldBackground().
 
     await AnotherAsyncOperation(msg).ConfigureAwait(false);
     // On thread pool thread.
@@ -186,10 +186,13 @@ await foreach (var msg in sub.ReadAllAsync())
 
     await context.Yield();
     // On event loop.
+
+    await RclContext.YieldBackground();
+    // On thread pool thread.
 }
 ```
 
-As shown in the above example, besides of `SynchronizationContext`, you can also use `RclContext.Yield()` and `ConfigureAwait(false)` perform fine-grained control
+As shown in the above example, besides of `SynchronizationContext`, you can also use `RclContext.Yield`, `RclContext.YieldBackground` and `ConfigureAwait(false)` perform fine-grained control
 over the asynchronous exection flow.
 
 ### Additional Notes about `IRclWaitObject.WaitOneAsync`

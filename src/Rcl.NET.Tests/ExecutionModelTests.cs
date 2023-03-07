@@ -190,4 +190,28 @@ public class ExecutionModelTests
         await ctx2.YieldIfNotCurrent();
         Assert.True(ctx2.IsCurrent);
     }
+
+    [Fact]
+    public async Task YieldAndYieldBackground()
+    {
+        await using var ctx1 = new RclContext(
+            TestConfig.DefaultContextArguments, useSynchronizationContext: true);
+        await using var ctx2 = new RclContext(
+            TestConfig.DefaultContextArguments);
+
+        await ctx1.Yield();
+        Assert.True(ctx1.IsCurrent);
+
+        // Yield ignores the sync context.
+        await ctx2.Yield();
+        Assert.True(ctx2.IsCurrent);
+
+        await ctx1.Yield();
+        Assert.True(ctx1.IsCurrent);
+
+        // YieldBackground also ignores the sync context.
+        await RclContext.YieldBackground();
+        Assert.False(ctx1.IsCurrent);
+        Assert.False(ctx2.IsCurrent);
+    }
 }

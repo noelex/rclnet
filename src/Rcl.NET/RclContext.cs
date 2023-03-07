@@ -181,6 +181,16 @@ public sealed class RclContext :  IRclContext
         => new(_rclSyncContext, false);
 
     /// <summary>
+    /// Creates an awaitable that asynchronously yields to a background thread when awaited.
+    /// </summary>
+    /// <returns>
+    /// A context that, when awaited, will asynchronously transition into a background thread at the
+    /// time of the await.
+    /// </returns>
+    public static YieldAwaiter YieldBackground()
+        => new(null, false);
+
+    /// <summary>
     /// Creates an awaitable that, when awaited, yield back to current <see cref="RclContext"/>
     /// if not executing on event loop.
     /// </summary>

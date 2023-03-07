@@ -110,8 +110,11 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     /// </summary>
     public IReadOnlyCollection<RosAction> Actions => (IReadOnlyCollection<RosAction>)_actions.Values;
 
-    internal unsafe void Build()
+    internal async Task BuildAsync()
     {
+        // Build the graph in background.
+        await RclContext.YieldBackground();
+
         try
         {
             BuildNodes();
@@ -119,6 +122,9 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
             RelationshipFixup();
             BuildActions();
+
+            // Fire events on event loop.
+            await _node.Context.Yield();
             FireEvents();
         }
         finally

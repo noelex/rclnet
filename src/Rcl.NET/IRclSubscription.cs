@@ -40,7 +40,7 @@ public interface IRclSubscription<T> : IRclSubscription, IObservable<T>
     /// Reads all messages from the subscription.
     /// </summary>
     /// <remarks>
-    /// Concurrent calls to the same <see cref="IRclNativeSubscription"/> instance are allowed.
+    /// Concurrent calls to the same <see cref="IRclSubscription{T}"/> instance are allowed.
     /// But note that each message will be delivered exactly once, regardless of how many ongoing calls
     /// to this method.
     /// </remarks>
@@ -48,7 +48,7 @@ public interface IRclSubscription<T> : IRclSubscription, IObservable<T>
     /// <returns>
     /// An <see cref="IAsyncEnumerable{RosMessageBuffer}"/> for receiving the messages asynchronously.
     /// <para>
-    /// The asynchronous enumeration will complete when the <see cref="IRclNativeSubscription"/> instance
+    /// The asynchronous enumeration will complete when the <see cref="IRclSubscription{T}"/> instance
     /// is disposed.
     /// </para>
     /// </returns>
