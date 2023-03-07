@@ -1,14 +1,13 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Rcl;
 using Rcl.Logging;
-using Rosidl.Messages.Rosgraph;
 using Rosidl.Messages.Sensor;
 using System.Collections.Concurrent;
 
 var poco = args.Any(x => x == "--use-poco");
 
 var topic = "/test_image";
-var opts = new SubscriptionOptions(queueSize: 128);
+var opts = new SubscriptionOptions();
 
 await using var ctx = new RclContext(args);
 using var node = ctx.CreateNode("perf_subscriber");
@@ -79,4 +78,4 @@ Console.ReadLine();
 cts.Cancel();
 
 await Task.WhenAll(subscriberTask, statPrinterTask)
-    .ContinueWith(t=> { });
+    .ContinueWith(t => { });

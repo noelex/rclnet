@@ -63,7 +63,7 @@ Projects containing messages will have to meet the following requirements:
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     ```
-- Runtime marshalling for the assembly is disabled. You can the following line to somewhere in the source code of the project:
+- Runtime marshalling for the assembly is disabled. You can add the following line to somewhere in the source code of the project:
     ```csharp
     [assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]
     ```
@@ -119,8 +119,10 @@ Synchronous APIs are simpler and faster if the work need to be done is simple en
 offload blocking operations into background threads.
 
 Take subscriptions for example, you can receive messages synchronously using `IRclSubscription<T>.Subscribe`,
-or asynchronously using `IRclSubscription<T>.ReadAllAsync`. To process messages asynchronously, one 
-would typically write:
+or asynchronously using `IRclSubscription<T>.ReadAllAsync`. Synchronous subscriptions always handle messages
+on the event loop. While for asynchronous subscriptions, you can choose where you'd like to process the received
+messages:
+
 ```csharp
 await foreach (var msg in sub.ReadAllAsync())
 {
@@ -132,22 +134,25 @@ await foreach (var msg in sub.ReadAllAsync())
 }
 ```
 
-When creating `RclContext`s, you can specify `useSynchronizationContext` parameter to control whether
-to setup a `SynchronizationContext` for the event loop. The `SynchronizationContext` can then be used
-for controlling the asynchronous execution flow on the event loop.
+In the above example, the event loop of the `RclContext` is used for listening to events only. Where are the messages
+handled depends on the `SynchronizationContext` currently captured.
 
-See the following example:
+If there's no `SynchronizationContext` in use, event handling happens in background threads by default. Otherwise, the
+events will be handled in the captured `SynchronizationContext`. If you are using rclnet inside a GUI application,
+this usually means that the events are handled on the UI thread.
+
+`RclContext`s can also have their own `SynchronizationContext`s, which always schedule asynchronous operations on the event loop.
+This is extremely helpful if you want to introduce single-threaded concurrency into your application:
 
 ```csharp
 await using var context = new RclContext(useSynchronizationContext: true);
 
 ...
 
-// Enforce execution on the event loop.
+// Enforce execution on the event loop so that we can capture its SynchronizationContext.
 await context.Yield();
 
-// Since we setup the RclContext with useSynchronizationContext = true,
-// all following awaits will resume on the event loop by default.
+// All following awaits will resume on the event loop by default.
 await foreach (var msg in sub.ReadAllAsync())
 {
     // On event loop.
@@ -160,6 +165,13 @@ await foreach (var msg in sub.ReadAllAsync())
     // On event loop.
     await Task.Yield();
     // On event loop.
+
+    // We can also spin up multiple coroutines to run concurrently on the event loop.
+    Task task1 = Coroutine1Async(msg),
+         task2 = Coroutine2Async(msg);
+
+    // Or asynchronously wait for all coroutines to complete.
+    await Task.WhenAll(task1, task2);
 
     ...
 
@@ -176,10 +188,9 @@ await foreach (var msg in sub.ReadAllAsync())
     // On event loop.
 }
 ```
-Without enabling `useSynchronizationContext` when creating the `RclContext` (which is the default),
-asynchronous continuations are not enforced to resume on the event loop. However, you can use
-`RclContext.Yield()`, `Task.Yield()` and `ConfigureAwait(false)` to perform fine-grained control
-where the code should be executed.
+
+As shown in the above example, besides of `SynchronizationContext`, you can also use `RclContext.Yield()` and `ConfigureAwait(false)` perform fine-grained control
+over the asynchronous exection flow.
 
 ### Additional Notes about `IRclWaitObject.WaitOneAsync`
 Timers and guard conditions created by `RclContext` implements `IRclWaitObject` interface,
