@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageType>Template</PackageType>
-    <PackageVersion>1.0.4</PackageVersion>
+    <PackageVersion>1.1.0</PackageVersion>
     <PackageId>Rcl.NET.Templates</PackageId>
     <Title>ROS 2 Client Library Templates</Title>
     <Authors>noelex@outlook.jp</Authors>
@@ -13,7 +13,7 @@
     <RepositoryUrl>https://github.com/noelex/rclnet.git</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Templates to use when creating an application or message library using rclnet.</Description>
-    <PackageTags>dotnet-new, templates, ros, ros2, rcl, rosidl</PackageTags>
+    <PackageTags>dotnet-new, templates, ros, ros2, rcl, rosidl, ros2cs, rclnet</PackageTags>
     <Product>rclnet</Product>
     <Copyright>Copyright (c) 2023, noelex@outlook.jp</Copyright>
      

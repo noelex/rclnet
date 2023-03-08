@@ -540,7 +540,7 @@ public sealed class RclContext : IRclContext
                         $"The application code is taking too much time ({stopwatch.ElapsedMilliseconds:F1} ms) to complete its work on the event loop. " +
                         "This may affect the precision of RCL timers and overall performance of ROS 2 communication. " +
                         "Either offload CPU-intensive computations or blocking calls into background threads with Task.Run or RclContext.YieldBackground, " +
-                        "or perform critical operations in a separate RclContext. This warning message is shown only once.");
+                        "or perform time consuming operations in a separate RclContext. This warning message is shown only once.");
                 }
             }
             finally

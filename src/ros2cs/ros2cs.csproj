@@ -11,7 +11,6 @@
 
   <PropertyGroup>
     <ToolCommandName>ros2cs</ToolCommandName>
-    <VersionPrefix>1.0.12</VersionPrefix>
     <PackageId>ros2cs</PackageId>
     <Description>
       <![CDATA[Generates C# source codes from ROS2 interface definitions for use with rclnet.]]>

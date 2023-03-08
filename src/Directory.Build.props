@@ -1,7 +1,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 <PropertyGroup>
 	<Product>rclnet</Product>
-  <VersionPrefix>1.0.4</VersionPrefix>
+  <VersionPrefix>1.1.0</VersionPrefix>
 	<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
 	<PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -11,7 +11,7 @@
 	<Authors>noelex@outlook.jp</Authors>
 	<Company />
 	<Copyright>Copyright (c) 2023, noelex@outlook.jp</Copyright>
-	<PackageTags>ros, ros2, rcl, rosidl</PackageTags>
+	<PackageTags>ros, ros2, rcl, rosidl, ros2cs, rclnet</PackageTags>
   <SignAssembly>true</SignAssembly>
   <AssemblyOriginatorKeyFile>$(ProjectDir)..\SigningKey.snk</AssemblyOriginatorKeyFile>
   <PublicSign>True</PublicSign>
