@@ -27,83 +27,38 @@ internal unsafe abstract class NativeSubscriptionBase :
         SubscriptionOptions options)
         : base(node.Context, new(node.Handle, typeSupport, topicName, options))
     {
-        _node = node;
-        TypeSupport = typeSupport;
-
-        var opts = new BoundedChannelOptions(options.QueueSize)
-        {
-            SingleWriter = true,
-            SingleReader = false,
-            FullMode = options.FullMode,
-            AllowSynchronousContinuations = options.AllowSynchronousContinuations
-        };
-
-        _messageChannel = Channel.CreateBounded<RosMessageBuffer>(opts, static x => x.Dispose());
-
-        ref var actualQos = ref Unsafe.AsRef<rmw_qos_profile_t>(
-            rcl_subscription_get_actual_qos(Handle.Object));
-        _actualQos = QosProfile.Create(in actualQos);
-
-        Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object))!;
-        Options = options;
-
         var completelyInitialized = false;
         try
         {
+            _node = node;
+            TypeSupport = typeSupport;
+
+            var opts = new BoundedChannelOptions(options.QueueSize)
+            {
+                SingleWriter = true,
+                SingleReader = false,
+                FullMode = options.FullMode,
+                AllowSynchronousContinuations = options.AllowSynchronousContinuations
+            };
+
+            _messageChannel = Channel.CreateBounded<RosMessageBuffer>(opts, static x => x.Dispose());
+
+            ref var actualQos = ref Unsafe.AsRef<rmw_qos_profile_t>(
+                rcl_subscription_get_actual_qos(Handle.Object));
+            _actualQos = QosProfile.Create(in actualQos);
+
+            Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object))!;
+            Options = options;
+            Endpoints = GetEndpoints();
+
             if (options.ContentFilter != null && !RclHumble.rcl_subscription_is_cft_enabled(Handle.Object))
             {
                 throw new NotSupportedException($"Content filter is configured but the feature is " +
                     $"not supported by current RMW implementation '{RosEnvironment.RmwImplementationIdentifier}'.");
             }
 
-            try
-            {
-                _livelinessEvent = new RclSubscriptionLivelinessChangedEvent(
-                    Context, Handle,
-                    options.LivelinessChangedHandler ?? OnLivelinessChanged);
-            }
-            catch (RclException ex)
-            {
-                if (options.LivelinessChangedHandler != null)
-                {
-                    throw;
-                }
-                _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessChangedEvent:");
-                _node.Context.DefaultLogger.LogDebug(ex.Message);
-            }
-
-            try
-            {
-                _deadlineMissedEvent = new RclSubscriptionRequestedDeadlineMissedEvent(
-                    Context, Handle,
-                    options.RequestedDeadlineMissedHandler ?? OnDeadlineMissed);
-            }
-            catch (RclException ex)
-            {
-                if (options.RequestedDeadlineMissedHandler != null)
-                {
-                    throw;
-                }
-                _node.Context.DefaultLogger.LogDebug("Unable to register RequestedDeadlineMissedEvent:");
-                _node.Context.DefaultLogger.LogDebug(ex.Message);
-            }
-
-            try
-            {
-                _qosEvent = new RclSubscriptionRequestedIncompatibleQosEvent(
-                    Context, Handle,
-                    options.RequestedQosIncompatibleHandler ?? OnIncompatibleQos);
-            }
-            catch (RclException ex)
-            {
-                if (options.RequestedQosIncompatibleHandler != null)
-                {
-                    throw;
-                }
-                _node.Context.DefaultLogger.LogDebug("Unable to register RequestedQosIncompatibleEvent:");
-                _node.Context.DefaultLogger.LogDebug(ex.Message);
-            }
-
+            InitializeEvents(options,
+                ref _livelinessEvent, ref _deadlineMissedEvent, ref _qosEvent);
             completelyInitialized = true;
         }
         finally
@@ -112,6 +67,83 @@ internal unsafe abstract class NativeSubscriptionBase :
         }
 
         RegisterWaitHandle();
+    }
+
+    private unsafe NetworkFlowEndpoint[] GetEndpoints()
+    {
+        if (!RosEnvironment.IsSupported(RosEnvironment.Humble))
+        {
+            return Array.Empty<NetworkFlowEndpoint>();
+        }
+
+        var allocator = RclAllocator.Default.Object;
+        var endpoints = RclHumble.rmw_get_zero_initialized_network_flow_endpoint_array();
+        RclException.ThrowIfNonSuccess(
+            RclHumble.rcl_subscription_get_network_flow_endpoints(Handle.Object, &allocator, &endpoints));
+
+        try
+        {
+            return InteropHelpers.ConvertNetworkFlowEndpoints(ref endpoints);
+        }
+        finally
+        {
+            RclHumble.rmw_network_flow_endpoint_array_fini(&endpoints);
+        }
+    }
+
+    private void InitializeEvents(
+        SubscriptionOptions options,
+        ref RclSubscriptionEvent? livelinessEvent,
+        ref RclSubscriptionEvent? deadlineMissedEvent,
+        ref RclSubscriptionEvent? qosEvent)
+    {
+        try
+        {
+            livelinessEvent = new RclSubscriptionLivelinessChangedEvent(
+                Context, Handle,
+                options.LivelinessChangedHandler ?? OnLivelinessChanged);
+        }
+        catch (RclException ex)
+        {
+            if (options.LivelinessChangedHandler != null)
+            {
+                throw;
+            }
+            _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessChangedEvent:");
+            _node.Context.DefaultLogger.LogDebug(ex.Message);
+        }
+
+        try
+        {
+            deadlineMissedEvent = new RclSubscriptionRequestedDeadlineMissedEvent(
+                Context, Handle,
+                options.RequestedDeadlineMissedHandler ?? OnDeadlineMissed);
+        }
+        catch (RclException ex)
+        {
+            if (options.RequestedDeadlineMissedHandler != null)
+            {
+                throw;
+            }
+            _node.Context.DefaultLogger.LogDebug("Unable to register RequestedDeadlineMissedEvent:");
+            _node.Context.DefaultLogger.LogDebug(ex.Message);
+        }
+
+        try
+        {
+            qosEvent = new RclSubscriptionRequestedIncompatibleQosEvent(
+                Context, Handle,
+                options.RequestedQosIncompatibleHandler ?? OnIncompatibleQos);
+        }
+        catch (RclException ex)
+        {
+            if (options.RequestedQosIncompatibleHandler != null)
+            {
+                throw;
+            }
+            _node.Context.DefaultLogger.LogDebug("Unable to register RequestedQosIncompatibleEvent:");
+            _node.Context.DefaultLogger.LogDebug(ex.Message);
+        }
     }
 
     private void OnLivelinessChanged(LivelinessChangedEvent info)
@@ -157,6 +189,8 @@ internal unsafe abstract class NativeSubscriptionBase :
 
     public bool IsValid
          => rcl_subscription_is_valid(Handle.Object);
+
+    public NetworkFlowEndpoint[] Endpoints { get; }
 
     protected override void OnWaitCompleted()
     {

@@ -297,4 +297,62 @@ public class PubSubTests
         Assert.Throws<ArgumentException>(() => new ContentFilterOptions(
             "test", Enumerable.Range(0, 101).Select(x=>string.Empty).ToArray()));
     }
+
+    [SkippableFact]
+    public async Task PublisherNetworkFlowEndpoints()
+    {
+        Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
+
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+
+        var topic = NameGenerator.GenerateTopicName();
+        using var pub = node.CreatePublisher<Time>(topic);
+
+        Assert.NotEmpty(pub.Endpoints);
+    }
+
+    [SkippableFact]
+    public async Task SubscriptionNetworkFlowEndpoints()
+    {
+        Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
+
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+
+        var topic = NameGenerator.GenerateTopicName();
+        using var sub = node.CreateSubscription<Time>(topic);
+
+        Assert.NotEmpty(sub.Endpoints);
+    }
+
+    [SkippableFact]
+    public async Task SubscriptionUniqueNetworkFlowEndpoints()
+    {
+        Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
+
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+
+        var topic = NameGenerator.GenerateTopicName();
+        using var sub1 = node.CreateSubscription<Time>(topic);
+        using var sub2 = node.CreateSubscription<Time>(topic, new(uniqueNetworkFlowEndpoints: UniquenessRequirement.StrictlyRequired));
+
+        Assert.Empty(sub1.Endpoints.Intersect(sub2.Endpoints));
+    }
+
+    [SkippableFact]
+    public async Task PublisherUniqueNetworkFlowEndpoints()
+    {
+        Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
+
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+
+        var topic = NameGenerator.GenerateTopicName();
+        using var pub1 = node.CreatePublisher<Time>(topic);
+        using var pub2 = node.CreatePublisher<Time>(topic, new(uniqueNetworkFlowEndpoints: UniquenessRequirement.StrictlyRequired));
+
+        Assert.Empty(pub1.Endpoints.Intersect(pub2.Endpoints));
+    }
 }

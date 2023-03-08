@@ -1,9 +1,38 @@
-﻿using Rcl.Qos;
+﻿using Rcl.Interop;
+using Rcl.Qos;
 using Rcl.Runtime;
 using System.Text;
 using System.Threading.Channels;
 
 namespace Rcl;
+
+/// <summary>
+/// Represents requirement on network flow endpoint uniqueness.
+/// </summary>
+public enum UniquenessRequirement
+{
+    /// <summary>
+    /// Network flow endpoint uniqueness is not required.
+    /// </summary>
+    NotRequired = RclHumble.rmw_unique_network_flow_endpoints_requirement_t.RMW_UNIQUE_NETWORK_FLOW_ENDPOINTS_NOT_REQUIRED,
+
+    /// <summary>
+    /// Network flow endpoint uniqueness is strictly required.
+    /// Error if not provided by RMW implementation.
+    /// </summary>
+    StrictlyRequired = RclHumble.rmw_unique_network_flow_endpoints_requirement_t.RMW_UNIQUE_NETWORK_FLOW_ENDPOINTS_STRICTLY_REQUIRED,
+
+    /// <summary>
+    /// Network flow endpoint uniqueness is optionally required.
+    /// No error if not provided RMW implementation.
+    /// </summary>
+    OptionallyRequired = RclHumble.rmw_unique_network_flow_endpoints_requirement_t.RMW_UNIQUE_NETWORK_FLOW_ENDPOINTS_OPTIONALLY_REQUIRED,
+
+    /// <summary>
+    /// Network flow endpoint uniqueness requirement is decided by system.
+    /// </summary>
+    SystemDefault = RclHumble.rmw_unique_network_flow_endpoints_requirement_t.RMW_UNIQUE_NETWORK_FLOW_ENDPOINTS_SYSTEM_DEFAULT,
+}
 
 /// <summary>
 /// Encapsulation of options for node initialization.
@@ -304,6 +333,12 @@ public record SubscriptionOptions
     /// Supported distro(s): >=humble
     /// </para>
     /// </param>
+    /// <param name="uniqueNetworkFlowEndpoints">
+    /// Specifies the requirement on unique network flow endpoints.
+    /// <para>
+    /// Supported by: >= humble
+    /// </para>
+    /// </param>
     public SubscriptionOptions(
         QosProfile? qos = null,
         Encoding? textEncoding = null,
@@ -315,7 +350,9 @@ public record SubscriptionOptions
         bool allowSynchronousContinuations = false,
         bool ignoreLocalPublications = false,
         [SupportedSinceDistribution(RosEnvironment.Humble)]
-        ContentFilterOptions? contentFilter = null)
+        ContentFilterOptions? contentFilter = null,
+        [SupportedSinceDistribution(RosEnvironment.Humble)]
+        UniquenessRequirement uniqueNetworkFlowEndpoints = UniquenessRequirement.NotRequired)
     {
         if (fullMode == BoundedChannelFullMode.Wait)
         {
@@ -327,7 +364,12 @@ public record SubscriptionOptions
 
         if (contentFilter != null)
         {
-            RosEnvironment.Require(RosEnvironment.Humble, feature: "Content Filtered Topic");
+            RosEnvironment.Require(RosEnvironment.Humble, feature: "Content Filtered Topics");
+        }
+
+        if (uniqueNetworkFlowEndpoints != UniquenessRequirement.NotRequired)
+        {
+            RosEnvironment.Require(RosEnvironment.Humble, feature: "Network Flow Endpoints");
         }
 
         Qos = qos ?? QosProfile.Default;
@@ -340,6 +382,7 @@ public record SubscriptionOptions
         AllowSynchronousContinuations = allowSynchronousContinuations;
         IgnoreLocalPublications = ignoreLocalPublications;
         ContentFilter = contentFilter;
+        UniqueNetworkFlowEndpoints = uniqueNetworkFlowEndpoints;
     }
 
     /// <summary>
@@ -432,8 +475,17 @@ public record SubscriptionOptions
     /// Supported distro(s): >=humble
     /// </para>
     /// </remarks>
-    [SupportedSinceDistribution(RosEnvironment.Humble)] 
+    [SupportedSinceDistribution(RosEnvironment.Humble)]
     public ContentFilterOptions? ContentFilter { get; }
+
+    /// <summary>
+    /// Specifies the requirement on unique network flow endpoints.
+    /// </summary>
+    /// <remarks>
+    /// Supported by: >= humble
+    /// </remarks>
+    [SupportedSinceDistribution(RosEnvironment.Humble)]
+    public UniquenessRequirement UniqueNetworkFlowEndpoints { get; }
 }
 
 /// <summary>
@@ -475,18 +527,32 @@ public record PublisherOptions
     /// depending on whether the underlying RMW implementation supports <see cref="IncompatibleQosEvent"/>.
     /// </para>
     /// </param>
+    /// <param name="uniqueNetworkFlowEndpoints">
+    /// Specifies the requirement on unique network flow endpoints.
+    /// <para>
+    /// Supported by: >= humble
+    /// </para>
+    /// </param>
     public PublisherOptions(
         QosProfile? qos = null,
         Encoding? textEncoding = null,
         Action<LivelinessLostEvent>? livelinessLostHandler = null,
         Action<OfferedDeadlineMissedEvent>? offeredDeadlineMissedHandler = null,
-        Action<IncompatibleQosEvent>? offeredQosIncompatibleHandler = null)
+        Action<IncompatibleQosEvent>? offeredQosIncompatibleHandler = null,
+        [SupportedSinceDistribution(RosEnvironment.Humble)]
+        UniquenessRequirement uniqueNetworkFlowEndpoints = UniquenessRequirement.NotRequired)
     {
+        if (uniqueNetworkFlowEndpoints != UniquenessRequirement.NotRequired)
+        {
+            RosEnvironment.Require(RosEnvironment.Humble, feature: "Network Flow Endpoints");
+        }
+
         Qos = qos ?? QosProfile.Default;
         TextEncoding = textEncoding ?? Encoding.UTF8;
         LivelinessLostHandler = livelinessLostHandler;
         OfferedDeadlineMissedHandler = offeredDeadlineMissedHandler;
         OfferedQosIncompatibleHandler = offeredQosIncompatibleHandler;
+        UniqueNetworkFlowEndpoints = uniqueNetworkFlowEndpoints;
     }
 
     /// <summary>
@@ -534,6 +600,15 @@ public record PublisherOptions
     /// depending on whether the underlying RMW implementation supports <see cref="IncompatibleQosEvent"/>.
     /// </remarks>
     public Action<IncompatibleQosEvent>? OfferedQosIncompatibleHandler { get; }
+
+    /// <summary>
+    /// Specifies the requirement on unique network flow endpoints.
+    /// </summary>
+    /// <remarks>
+    /// Supported by: >= humble
+    /// </remarks>
+    [SupportedSinceDistribution(RosEnvironment.Humble)]
+    public UniquenessRequirement UniqueNetworkFlowEndpoints { get; }
 }
 
 /// <summary>

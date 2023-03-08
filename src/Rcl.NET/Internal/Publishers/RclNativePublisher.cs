@@ -1,10 +1,13 @@
 ﻿using Rcl.Internal.Events;
+using Rcl.Interop;
 using Rcl.Introspection;
 using Rcl.Logging;
 using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
+using System.Net;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 
 namespace Rcl.Internal.Publishers;
@@ -22,73 +25,107 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
         string topicName,
         TypeSupportHandle typesupport,
         PublisherOptions options)
-        : base(node.Context, new(node.Handle, typesupport, topicName, options.Qos))
+        : base(node.Context, new(node.Handle, typesupport, topicName, options))
     {
-        _node = node;
-        ref var actualQos = ref Unsafe.AsRef<rmw_qos_profile_t>(
-            rcl_publisher_get_actual_qos(Handle.Object));
-        _actualQos = QosProfile.Create(in actualQos);
-
-        _introspection = MessageIntrospection.Create(typesupport);
-        Name = StringMarshal.CreatePooledString(rcl_publisher_get_topic_name(Handle.Object))!;
-        Options = options;
-
         bool completelyInitialized = false;
         try
         {
-            try
-            {
-                _livelinessEvent = new RclPublisherLivelinessLostEvent(
-                    node.Context, Handle,
-                    options.LivelinessLostHandler ?? OnLivelinessEvent);
-            }
-            catch (RclException ex)
-            {
-                if (options.LivelinessLostHandler != null)
-                {
-                    throw;
-                }
-                _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessLostEvent:");
-                _node.Context.DefaultLogger.LogDebug(ex.Message);
-            }
+            _node = node;
+            ref var actualQos = ref Unsafe.AsRef<rmw_qos_profile_t>(
+                rcl_publisher_get_actual_qos(Handle.Object));
+            _actualQos = QosProfile.Create(in actualQos);
 
-            try
-            {
-                _deadlineMissedEvent = new RclPublisherOfferedDeadlineMissedEvent(
-                    node.Context, Handle,
-                    options.OfferedDeadlineMissedHandler ?? OnDeadlineEvent);
-            }
-            catch (RclException ex)
-            {
-                if (options.OfferedDeadlineMissedHandler != null)
-                {
-                    throw;
-                }
-                _node.Context.DefaultLogger.LogDebug("Unable to register OfferedDeadlineMissedEvent:");
-                _node.Context.DefaultLogger.LogDebug(ex.Message);
-            }
+            _introspection = MessageIntrospection.Create(typesupport);
+            Name = StringMarshal.CreatePooledString(rcl_publisher_get_topic_name(Handle.Object))!;
+            Options = options;
 
-            try
-            {
-                _qosEvent = new RclPublisherIncompatibleQosEvent(
-                    node.Context, Handle,
-                    options.OfferedQosIncompatibleHandler ?? OnIncompatibleQosEvent);
-            }
-            catch (RclException ex)
-            {
-                if (options.OfferedQosIncompatibleHandler != null)
-                {
-                    throw;
-                }
-                _node.Context.DefaultLogger.LogDebug("Unable to register OfferedQosIncompatibleEvent:");
-                _node.Context.DefaultLogger.LogDebug(ex.Message);
-            }
+            Endpoints = GetEndpoints();
+
+            InitializePublisherEvents(options,
+                ref _livelinessEvent, ref _deadlineMissedEvent, ref _qosEvent);
 
             completelyInitialized = true;
         }
         finally
         {
             if (!completelyInitialized) Dispose();
+        }
+    }
+
+    private unsafe NetworkFlowEndpoint[] GetEndpoints()
+    {
+        if (!RosEnvironment.IsSupported(RosEnvironment.Humble))
+        {
+            return Array.Empty<NetworkFlowEndpoint>();
+        }
+
+        var allocator = RclAllocator.Default.Object;
+        var endpoints = RclHumble.rmw_get_zero_initialized_network_flow_endpoint_array();
+        RclException.ThrowIfNonSuccess(
+            RclHumble.rcl_publisher_get_network_flow_endpoints(Handle.Object, &allocator, &endpoints));
+
+        try
+        {
+            return InteropHelpers.ConvertNetworkFlowEndpoints(ref endpoints);
+        }
+        finally
+        {
+            RclHumble.rmw_network_flow_endpoint_array_fini(&endpoints);
+        }
+    }
+
+    private void InitializePublisherEvents(
+        PublisherOptions options,
+        ref RclPubisherEvent? livelinessEvent,
+        ref RclPubisherEvent? deadlineMissedEvent,
+        ref RclPubisherEvent? qosEvent)
+    {
+        try
+        {
+            livelinessEvent = new RclPublisherLivelinessLostEvent(
+                _node.Context, Handle,
+                options.LivelinessLostHandler ?? OnLivelinessEvent);
+        }
+        catch (RclException ex)
+        {
+            if (options.LivelinessLostHandler != null)
+            {
+                throw;
+            }
+            _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessLostEvent:");
+            _node.Context.DefaultLogger.LogDebug(ex.Message);
+        }
+
+        try
+        {
+            deadlineMissedEvent = new RclPublisherOfferedDeadlineMissedEvent(
+                _node.Context, Handle,
+                options.OfferedDeadlineMissedHandler ?? OnDeadlineEvent);
+        }
+        catch (RclException ex)
+        {
+            if (options.OfferedDeadlineMissedHandler != null)
+            {
+                throw;
+            }
+            _node.Context.DefaultLogger.LogDebug("Unable to register OfferedDeadlineMissedEvent:");
+            _node.Context.DefaultLogger.LogDebug(ex.Message);
+        }
+
+        try
+        {
+            qosEvent = new RclPublisherIncompatibleQosEvent(
+                _node.Context, Handle,
+                options.OfferedQosIncompatibleHandler ?? OnIncompatibleQosEvent);
+        }
+        catch (RclException ex)
+        {
+            if (options.OfferedQosIncompatibleHandler != null)
+            {
+                throw;
+            }
+            _node.Context.DefaultLogger.LogDebug("Unable to register OfferedQosIncompatibleEvent:");
+            _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
     }
 
@@ -132,6 +169,8 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
     public bool IsValid
          => rcl_publisher_is_valid(Handle.Object);
+
+    public NetworkFlowEndpoint[] Endpoints { get; }
 
     public void Publish(RosMessageBuffer message)
     {

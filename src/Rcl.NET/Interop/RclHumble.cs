@@ -1,10 +1,92 @@
 ﻿using System.Runtime.InteropServices;
+using static Rcl.Interop.RclHumble;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Rcl.Interop;
 
 internal unsafe static class RclHumble
 {
+    /// <summary>
+    /// Transport protocol types
+    /// </summary>
+    public enum rmw_transport_protocol_t
+    {
+        RMW_TRANSPORT_PROTOCOL_UNKNOWN = 0,
+        RMW_TRANSPORT_PROTOCOL_UDP,
+        RMW_TRANSPORT_PROTOCOL_TCP,
+        RMW_TRANSPORT_PROTOCOL_COUNT
+    }
+
+    /// <summary>
+    /// Internet protocol types
+    /// </summary>
+    public enum rmw_internet_protocol_t
+    {
+        RMW_INTERNET_PROTOCOL_UNKNOWN = 0,
+        RMW_INTERNET_PROTOCOL_IPV4,
+        RMW_INTERNET_PROTOCOL_IPV6,
+        RMW_INTERNET_PROTOCOL_COUNT
+    }
+
+    /// Structure that describes network flow endpoint of a publisher or subscription
+    public struct rmw_network_flow_endpoint_t
+    {
+        /// <summary>
+        /// Transport protocol
+        /// </summary>
+        public rmw_transport_protocol_t transport_protocol;
+
+        /// <summary>
+        /// Internet protocol
+        /// </summary>
+        public rmw_internet_protocol_t internet_protocol;
+
+        /// <summary>
+        /// Port
+        /// </summary>
+        public ushort transport_port;
+
+        /// <summary>
+        /// Flow label
+        /// TODO(anamud): Consider specializing since flow_label is set only at publisher
+        /// ... side.
+        /// </summary>
+        public uint flow_label;
+
+        /// <summary>
+        /// DSCP (Diff. Services Code Point)
+        /// TODO(anamud): Consider specializing since DSCP is set only at publisher
+        /// ... side.
+        /// </summary>
+        public byte dscp;
+
+        /// <summary>
+        /// Internet address, 48 bytes.
+        /// </summary>
+        public fixed byte internet_address[48];
+    }
+
+    /// <summary>
+    /// Structure to hold an arrary of network_flow_endpoint_t
+    /// </summary>
+    public struct rmw_network_flow_endpoint_array_t
+    {
+        /// <summary>
+        /// Size of the array
+        /// </summary>
+        public size_t size;
+
+        /// <summary>
+        /// Array of rmw_network_flow_endpoint_t
+        /// </summary>
+        public rmw_network_flow_endpoint_t* network_flow_endpoint;
+
+        /// <summary>
+        /// Allocator
+        /// </summary>
+        public rcutils_allocator_t* allocator;
+    }
+
     public enum rmw_unique_network_flow_endpoints_requirement_t
     {
         /// Unique network flow endpoints not required
@@ -251,4 +333,22 @@ internal unsafe static class RclHumble
 
     [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
     public static extern bool rcl_subscription_is_cft_enabled(rcl_subscription_t* subscription);
+
+    [DllImport("rmw", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern rmw_network_flow_endpoint_array_t rmw_get_zero_initialized_network_flow_endpoint_array();
+
+    [DllImport("rmw", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern rcl_ret_t rmw_network_flow_endpoint_array_fini(rmw_network_flow_endpoint_array_t* network_flow_endpoint_array);
+
+    [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern rcl_ret_t rcl_publisher_get_network_flow_endpoints(
+      rcl_publisher_t* publisher,
+      rcl_allocator_t * allocator,
+      rmw_network_flow_endpoint_array_t* network_flow_endpoint_array);
+
+    [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern rcl_ret_t rcl_subscription_get_network_flow_endpoints(
+      rcl_subscription_t* subscription,
+      rcl_allocator_t * allocator,
+      rmw_network_flow_endpoint_array_t* network_flow_endpoint_array);
 }

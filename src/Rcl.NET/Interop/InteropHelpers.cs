@@ -1,4 +1,7 @@
 ﻿using Microsoft.Toolkit.HighPerformance.Buffers;
+using Rosidl.Runtime.Interop;
+using System.Net.Sockets;
+using System.Net;
 using System.Text;
 
 namespace Rcl.Interop;
@@ -87,6 +90,61 @@ static class InteropHelpers
                 offset += Encoding.UTF8.GetBytes(src[i], dest[offset..]) + terminator;
             }
         }
+    }
 
+    public static unsafe NetworkFlowEndpoint[] ConvertNetworkFlowEndpoints(ref RclHumble.rmw_network_flow_endpoint_array_t endpoints)
+    {
+        if (endpoints.size == 0)
+        {
+            return Array.Empty<NetworkFlowEndpoint>();
+        }
+
+        var results = new NetworkFlowEndpoint[endpoints.size];
+        for (var i = 0; i < results.Length; i++)
+        {
+            ref var ep = ref endpoints.network_flow_endpoint[i];
+            var addressFamily = ep.internet_protocol switch
+            {
+                RclHumble.rmw_internet_protocol_t.RMW_INTERNET_PROTOCOL_IPV4 => AddressFamily.InterNetwork,
+                RclHumble.rmw_internet_protocol_t.RMW_INTERNET_PROTOCOL_IPV6 => AddressFamily.InterNetworkV6,
+                RclHumble.rmw_internet_protocol_t.RMW_INTERNET_PROTOCOL_UNKNOWN => AddressFamily.Unknown,
+                _ => throw new NotSupportedException($"Unsupported address rmw_internet_protocol_t value '{ep.internet_protocol}'.")
+            };
+
+            var transportProtocol = ep.transport_protocol switch
+            {
+                RclHumble.rmw_transport_protocol_t.RMW_TRANSPORT_PROTOCOL_UDP => ProtocolType.Udp,
+                RclHumble.rmw_transport_protocol_t.RMW_TRANSPORT_PROTOCOL_TCP => ProtocolType.Tcp,
+                RclHumble.rmw_transport_protocol_t.RMW_TRANSPORT_PROTOCOL_UNKNOWN => ProtocolType.Unknown,
+                _ => throw new NotSupportedException($"Unsupported address rmw_transport_protocol_t value '{ep.internet_protocol}'.")
+            };
+
+            IPAddress address;
+            fixed (byte* addr = ep.internet_address)
+            {
+                var str = CreatePooledString(addr, 48)!;
+                if (string.IsNullOrEmpty(str))
+                {
+                    address = IPAddress.None;
+                }
+                else
+                {
+                    address = IPAddress.Parse(CreatePooledString(addr, 48)!);
+                }
+            }
+
+            results[i] = new NetworkFlowEndpoint(transportProtocol,
+                new IPEndPoint(address, ep.transport_port), ep.flow_label, ep.dscp);
+        }
+
+        return results;
+
+        static string CreatePooledString(byte* buffer, int maxLength)
+        {
+            var i = 0;
+            while (i < maxLength && buffer[i] != '\0') i++;
+
+            return StringMarshal.CreatePooledString(buffer, i)!;
+        }
     }
 }

@@ -14,7 +14,7 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
     private readonly SafeNodeHandle _node;
 
     public SafePublisherHandle(
-        SafeNodeHandle node, TypeSupportHandle typeSupportHandle, string topicName, QosProfile qos)
+        SafeNodeHandle node, TypeSupportHandle typeSupportHandle, string topicName, PublisherOptions options)
     {
         _node = node;
         *Object = rcl_get_zero_initialized_publisher();
@@ -22,7 +22,13 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
         // This is backward compatible as long as we don't access
         // rmw_publisher_options.require_unique_network_flow_endpoints
         var opts = RclHumble.rcl_publisher_get_default_options();
-        opts.qos = qos.ToRmwQosProfile();
+        opts.qos = options.Qos.ToRmwQosProfile();
+
+        if (RosEnvironment.IsSupported(RosEnvironment.Humble))
+        {
+            opts.rmw_publisher_options.require_unique_network_flow_endpoints =
+                (RclHumble.rmw_unique_network_flow_endpoints_requirement_t)options.UniqueNetworkFlowEndpoints;
+        }
 
         var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);
         Span<byte> nameBuffer = stackalloc byte[nameSize];

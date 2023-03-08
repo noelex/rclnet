@@ -1,4 +1,5 @@
 ﻿using Rcl.Qos;
+using Rcl.Runtime;
 using Rosidl.Runtime;
 
 namespace Rcl;
@@ -27,6 +28,15 @@ public interface IRclPublisher : IRclObject
     /// Name of the publishing topic.
     /// </summary>
     string Name { get; }
+
+    /// <summary>
+    /// Gets the network flow endpoints of current publisher.
+    /// </summary>
+    /// <remarks>
+    /// Supported by: >= humble
+    /// </remarks>
+    [SupportedSinceDistribution(RosEnvironment.Humble)]
+    NetworkFlowEndpoint[] Endpoints { get; }
 
     /// <summary>
     /// Publish a message.

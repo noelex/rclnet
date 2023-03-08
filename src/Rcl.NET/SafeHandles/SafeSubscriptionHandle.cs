@@ -61,6 +61,8 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
 
         opts.qos = options.Qos.ToRmwQosProfile();
         opts.rmw_subscription_options.ignore_local_publications = options.IgnoreLocalPublications;
+        opts.rmw_subscription_options.require_unique_network_flow_endpoints =
+            (RclHumble.rmw_unique_network_flow_endpoints_requirement_t)options.UniqueNetworkFlowEndpoints;
 
         if (options.ContentFilter != null)
         {

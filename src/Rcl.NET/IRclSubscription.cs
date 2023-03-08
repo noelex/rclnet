@@ -28,6 +28,15 @@ public interface IRclSubscription : IRclObject
     /// Name of the subscribed topic.
     /// </summary>
     string Name { get; }
+
+    /// <summary>
+    /// Gets the network flow endpoints of current subscription.
+    /// </summary>
+    /// <remarks>
+    /// Supported by: >= humble
+    /// </remarks>
+    [SupportedSinceDistribution(RosEnvironment.Humble)]
+    NetworkFlowEndpoint[] Endpoints { get; }
 }
 
 /// <summary>

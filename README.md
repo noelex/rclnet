@@ -100,9 +100,9 @@ ros2cs /path/to/ros2cs.spec
 | ROS Graph               | ✅      | Managed implementation.                                                                                                                                                                                                                      |
 | Logging                 | ✅      | Supports logging to stdout, /rosout and log files. Configurable with `--ros-args`.                                                                                                                                                           |
 | Content Filtered Topics | ✅      | Available since humble. 
+| Network Flow Endpoints  | ✅      | Available since galactic.<br/>Network flow endpoints of publishers and subscriptions can be retrieved via `IRclPublisher.Endpoints` and `IRclSubscription.Endpoints` property.<br/>Unique network flow endpoints requirement can be configured when creating `SubscriptionOptions` and `PublisherOptions`.|
 | Parameter Service       | ⚠️      | Supports loading parameters from command-line arguments and parameter files.<br/>Locally declared parameters are exposed via [Parameter API](https://design.ros2.org/articles/ros_parameters.html).<br/>Parameter client is not implemented. |
-| Lifecycle               | ❌      | N/A                                                                                                                                                                                                                                          |
-| Network Flow Endpoints  | ❌      | Available since galactic.                                                                                                                                                                                                                    |                                                                                                                                                                                                                     |
+| Lifecycle Nodes         | ❌      | N/A                                                                                                                                                                                                                                          |
 
 ✅Supported ⚠️Partial support ❌Not supported ⏳In development
 

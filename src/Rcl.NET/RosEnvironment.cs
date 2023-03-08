@@ -53,7 +53,7 @@ public unsafe static class RosEnvironment
 
     private static void ThrowUnsupportedDistribution(string? featureName = null)
     {
-        featureName = featureName == null ? "The specific feature" : $"'{featureName}'";
+        featureName = featureName == null ? "The specific feature" : $"'{featureName}' feature";
         throw new NotSupportedException($"{featureName} is not supported by ROS distribution '{Distribution}'.");
     }
 

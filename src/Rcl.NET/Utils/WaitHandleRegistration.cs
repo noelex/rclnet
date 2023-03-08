@@ -19,6 +19,6 @@ internal readonly struct WaitHandleRegistration : IDisposable
 
     public void Dispose()
     {
-        _unregisterCallback(_context, _token);
+        if (!IsEmpty) _unregisterCallback(_context, _token);
     }
 }
