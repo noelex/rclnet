@@ -61,12 +61,18 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
         var allocator = RclAllocator.Default.Object;
         var endpoints = RclHumble.rmw_get_zero_initialized_network_flow_endpoint_array();
-        RclException.ThrowIfNonSuccess(
-            RclHumble.rcl_publisher_get_network_flow_endpoints(Handle.Object, &allocator, &endpoints));
+        
 
         try
         {
+            RclException.ThrowIfNonSuccess(
+                RclHumble.rcl_publisher_get_network_flow_endpoints(Handle.Object, &allocator, &endpoints));
             return InteropHelpers.ConvertNetworkFlowEndpoints(ref endpoints);
+        }
+        catch(Exception e)
+        {
+            _node.Context.DefaultLogger.LogDebug("Unable to retrieve network flow endpoints from publisher: " + e.Message);
+            return Array.Empty<NetworkFlowEndpoint>();
         }
         finally
         {
