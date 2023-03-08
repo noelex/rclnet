@@ -28,12 +28,6 @@ public interface IRclSubscription : IRclObject
     /// Name of the subscribed topic.
     /// </summary>
     string Name { get; }
-
-    /// <summary>
-    /// Checks whether content filter is enabled on current <see cref="IRclSubscription"/>.
-    /// </summary>
-    [SupportedSinceDistribution(RosEnvironment.Humble)]
-    bool IsContentFilterEnabled { get; }
 }
 
 /// <summary>

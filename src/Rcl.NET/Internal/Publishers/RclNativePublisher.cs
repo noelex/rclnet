@@ -7,7 +7,7 @@ using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
 using System.Runtime.CompilerServices;
 
-namespace Rcl.Internal;
+namespace Rcl.Internal.Publishers;
 
 internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHandle>, IRclPublisher
 {
@@ -139,6 +139,49 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
             rcl_publish(Handle.Object, message.Data.ToPointer(), null));
     }
 
+    public ValueTask PublishAsync(RosMessageBuffer message) => PublishAsync(message, false);
+
+    protected ValueTask PublishAsync(RosMessageBuffer message, bool disposeBuffer)
+    {
+        var vts = ObjectPool.Rent<ManualResetValueTaskSource<bool>>();
+        var args = ObjectPool.Rent<PublishArgs>().Init(this, message, vts, disposeBuffer);
+
+        // Allow the continuation to run synchronously on the thread pool to reduce
+        // scheduling overhead, otherwise we will need 2 scheduling for 1 publish.
+        // May cause stack overflow in very rare but possible case.
+        vts.RunContinuationsAsynchronously = false;
+        vts.OnFinally(static state =>
+        {
+            var args = (PublishArgs)state!;
+
+            if (args.ShouldDisposeBuffer)
+            {
+                args.Buffer.Dispose();
+            }
+
+            args.TaskSource.Reset();
+            ObjectPool.Return(args.TaskSource);
+
+            args.Reset();
+            ObjectPool.Return(args);
+        }, args);
+
+        ThreadPool.UnsafeQueueUserWorkItem(static args =>
+        {
+            try
+            {
+                args.This.Publish(args.Buffer);
+                args.TaskSource.SetResult(true);
+            }
+            catch (Exception e)
+            {
+                args.TaskSource.SetException(e);
+            }
+        }, args, true);
+
+        return new(vts, vts.Version);
+    }
+
     public RosMessageBuffer CreateBuffer() => _introspection.CreateBuffer();
 
     public override void Dispose()
@@ -148,5 +191,35 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
         _livelinessEvent?.Dispose();
 
         base.Dispose();
+    }
+
+    private class PublishArgs
+    {
+        public RosMessageBuffer Buffer { get; private set; }
+
+        public RclNativePublisher This { get; private set; } = null!;
+
+        public ManualResetValueTaskSource<bool> TaskSource { get; private set; } = null!;
+
+        public bool ShouldDisposeBuffer { get; protected set; }
+
+        public void Reset()
+        {
+            Buffer = RosMessageBuffer.Empty;
+            This = null!;
+            TaskSource = null!;
+            ShouldDisposeBuffer = false;
+        }
+
+        public PublishArgs Init(RclNativePublisher self, RosMessageBuffer buffer,
+            ManualResetValueTaskSource<bool> taskSource, bool shouldDisposeBuffer)
+        {
+            Buffer = buffer;
+            This = self;
+            TaskSource = taskSource;
+            ShouldDisposeBuffer = shouldDisposeBuffer;
+
+            return this;
+        }
     }
 }

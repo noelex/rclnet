@@ -219,8 +219,6 @@ public class PubSubTests
         using (var sub = node.CreateSubscription<Time>(topic,
             new(contentFilter: new("sec < 5"))))
         {
-            Assert.True(sub.IsContentFilterEnabled);
-
             t = CountMessagesAsync(sub.ReadAllAsync());
             for (var i = 0; i < 10; i++)
             {
@@ -260,8 +258,6 @@ public class PubSubTests
         using (var sub = node.CreateSubscription<Time>(topic,
             new(contentFilter: new("sec > %0 AND sec < %1", "3", "7"))))
         {
-            Assert.True(sub.IsContentFilterEnabled);
-
             t = CountMessagesAsync(sub.ReadAllAsync());
             for (var i = 0; i < 10; i++)
             {

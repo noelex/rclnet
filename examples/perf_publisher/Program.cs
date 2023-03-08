@@ -18,7 +18,7 @@ node.Logger.LogInformation($"Frame Size: {frameSize} B");
 node.Logger.LogInformation("Publisher is running. Press ENTER to stop publishing.");
 
 var body = new byte[frameSize];
-var nativeMsg = RosMessageBuffer.Create<Image>();
+using var nativeMsg = pub.CreateBuffer();
 nativeMsg.AsRef<Image.Priv>().Data.CopyFrom(body);
 
 var t = Task.Run(async () =>
@@ -31,7 +31,10 @@ var t = Task.Run(async () =>
         nativeMsg.AsRef<Image.Priv>().Header.Stamp.Nanosec = (uint)(now % 1_000_000_000);
 
         pub.Publish(nativeMsg);
-        await timer.WaitOneAsync(cts.Token);
+
+        // Doesn't need asynchronous scheduling because the time spent here
+        // is near zero, the event loop should be happy with that.
+        await timer.WaitOneAsync(false, cts.Token);
     }
 });
 

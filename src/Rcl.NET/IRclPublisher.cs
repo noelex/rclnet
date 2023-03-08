@@ -39,13 +39,40 @@ public interface IRclPublisher : IRclObject
     /// This method does not take the ownership of the <see cref="RosMessageBuffer"/>.
     /// </para>
     /// <para>
-    /// This method may block when <see cref="QosProfile.Reliability"/> is set to <see cref="ReliabilityPolicy.Reliable"/> and
-    /// <see cref="QosProfile.Depth"/> is set to a relatively small value.
+    /// If the QoS setting may cause blocking in current RMW implementation, use <see cref="PublishAsync(RosMessageBuffer)"/> instead.
     /// See <a href="https://github.com/ros2/ros2/issues/255"/> for more information.
     /// </para>
     /// </remarks>
     /// <param name="message">An <see cref="RosMessageBuffer"/> containing the message to be published.</param>
     void Publish(RosMessageBuffer message);
+
+    /// <summary>
+    /// Publish the message in a background thread, and asynchronously wait for the operation to complete.
+    /// </summary>
+    /// <param name="message">An <see cref="RosMessageBuffer"/> containing the message to be published.</param>
+    /// <returns>A <see cref="ValueTask"/> object represent the asynchronous wait.</returns>
+    ///  <remarks>
+    /// The type of the message contained in the <see cref="RosMessageBuffer"/> is not checked by the runtime.
+    /// It's the caller's responsibility to ensure the <see cref="RosMessageBuffer"/> contains a message
+    /// with the same type when creating the publisher. Publishing a different type of message is undefined behavior.
+    /// <para>
+    /// This method does not take the ownership of the <see cref="RosMessageBuffer"/>.
+    /// </para>
+    /// <para>
+    /// Also, the <see cref="RosMessageBuffer"/> MUST NOT be disposed before the returned <see cref="ValueTask"/> completes.
+    /// </para>
+    /// <para>
+    /// This is a helper method which simply calls <see cref="Publish(RosMessageBuffer)"/> in a background thread.
+    /// Calling this method will incur asynchronous scheduling overhead,
+    /// which is slightly imperformant compared to the synchronous counterpart.
+    /// You should always use <see cref="Publish(RosMessageBuffer)"/>
+    /// instead, if the QoS setting does not cause blocking in current RMW implementation.
+    /// </para>
+    /// <para>
+    /// See <a href="https://github.com/ros2/ros2/issues/255"/> for more information.
+    /// </para>
+    /// </remarks>
+    ValueTask PublishAsync(RosMessageBuffer message);
 
     /// <summary>
     /// Create an <see cref="RosMessageBuffer"/> containing the message with the same type when creating the publisher.
@@ -62,7 +89,7 @@ public interface IRclPublisher : IRclObject
 /// <summary>
 /// An <see cref="IRclPublisher"/> which publishes strongly typed messages.
 /// </summary>
-/// <typeparam name="T"></typeparam>
+/// <typeparam name="T">Type of the message.</typeparam>
 public interface IRclPublisher<T> : IRclPublisher
     where T : IMessage
 {
@@ -70,10 +97,26 @@ public interface IRclPublisher<T> : IRclPublisher
     /// Publish a message.
     /// </summary>
     /// <remarks>
-    /// This method may block when <see cref="QosProfile.Reliability"/> is set to <see cref="ReliabilityPolicy.Reliable"/> and
-    /// <see cref="QosProfile.Depth"/> is set to a relatively small value.
+    /// If the QoS setting may cause blocking in current RMW implementation, use <see cref="PublishAsync(T)"/> instead.
     /// See <a href="https://github.com/ros2/ros2/issues/255"/> for more information.
     /// </remarks>
     /// <param name="message">The message to be published.</param>
     void Publish(T message);
+
+    /// <summary>
+    /// Publish the message in a background thread, and asynchronously wait for the operation to complete.
+    /// </summary>
+    /// <param name="message">The message to be published.</param>
+    /// <returns>A <see cref="ValueTask"/> object represent the asynchronous wait.</returns>
+    /// <remarks>
+    /// This is a helper method which simply calls <see cref="Publish(T)"/> in a background thread.
+    /// Calling this method will incur asynchronous scheduling overhead,
+    /// which is slightly imperformant compared to the synchronous counterpart.
+    /// You should always use <see cref="Publish(T)"/>
+    /// instead, if the QoS setting does not cause blocking in current RMW implementation.
+    /// <para>
+    /// See <a href="https://github.com/ros2/ros2/issues/255"/> for more information.
+    /// </para>
+    /// </remarks>
+    ValueTask PublishAsync(T message);
 }

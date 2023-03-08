@@ -192,7 +192,7 @@ await foreach (var msg in sub.ReadAllAsync())
 }
 ```
 
-As shown in the above example, besides of `SynchronizationContext`, you can also use `RclContext.Yield`, `RclContext.YieldBackground` and `ConfigureAwait(false)` perform fine-grained control
+As shown in the above example, besides of `SynchronizationContext`, you can also use `RclContext.Yield`, `RclContext.YieldBackground` and `ConfigureAwait(false)` to perform fine-grained control
 over the asynchronous exection flow.
 
 ### Additional Notes about `IRclWaitObject.WaitOneAsync`

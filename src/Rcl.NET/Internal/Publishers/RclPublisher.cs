@@ -1,11 +1,6 @@
-﻿using Rcl.Qos;
-using Rcl.SafeHandles;
-using Rosidl.Runtime;
-using Rosidl.Runtime.Interop;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿using Rosidl.Runtime;
 
-namespace Rcl.Internal;
+namespace Rcl.Internal.Publishers;
 
 internal unsafe class RclPublisher<T> : RclNativePublisher, IRclPublisher<T> where T : IMessage
 {
@@ -22,5 +17,12 @@ internal unsafe class RclPublisher<T> : RclNativePublisher, IRclPublisher<T> whe
         using var buffer = CreateBuffer();
         message.WriteTo(buffer.Data, Options.TextEncoding);
         Publish(buffer);
+    }
+
+    public ValueTask PublishAsync(T message)
+    {
+        var buffer = CreateBuffer();
+        message.WriteTo(buffer.Data, Options.TextEncoding);
+        return PublishAsync(buffer, true);
     }
 }

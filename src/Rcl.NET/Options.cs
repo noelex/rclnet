@@ -298,7 +298,7 @@ public record SubscriptionOptions
     /// <param name="contentFilter">
     /// The content filter to use when creating the subscription.
     /// <para>
-    /// This option may not be supported by some RMW implementations.
+    /// A <see cref="NotSupportedException"/> will be thrown when creating the subscription if the underlying RMW implementation does not support this feature.
     /// </para>
     /// <para>
     /// Supported distro(s): >=humble
@@ -427,7 +427,7 @@ public record SubscriptionOptions
     /// The content filter to use when creating the subscription.
     /// </summary>
     /// <remarks>
-    /// This option may not be supported by some RMW implementations.
+    /// A <see cref="NotSupportedException"/> will be thrown when creating the subscription if the underlying RMW implementation does not support this feature.
     /// <para>
     /// Supported distro(s): >=humble
     /// </para>

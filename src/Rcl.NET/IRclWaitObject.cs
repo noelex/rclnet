@@ -34,7 +34,7 @@ public interface IRclWaitObject : IRclObject
     ValueTask WaitOneAsync(bool runContinuationAsynchronously, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Asynchronously wait for current <see cref="IRclWaitObject"/> instance to be triggered once, without forcing continuations to run asynchronously.
+    /// Asynchronously wait for current <see cref="IRclWaitObject"/> instance to be triggered once, forcing continuations to run asynchronously.
     /// </summary>
     /// <remarks>
     /// Calling this method has the same effect as calling <see cref="WaitOneAsync(bool, CancellationToken)"/> with <c>runContinuationAsynchronously</c> = <see langword="true"/>.
