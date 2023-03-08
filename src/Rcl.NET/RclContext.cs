@@ -19,7 +19,7 @@ namespace Rcl;
 /// arguments used for creating the first <see cref="RclContext"/> instance.
 /// </para>
 /// </remarks>
-public sealed class RclContext :  IRclContext
+public sealed class RclContext : IRclContext
 {
     private static int _contextRefCount = 0;
 
@@ -31,7 +31,7 @@ public sealed class RclContext :  IRclContext
     // by yielding to the owner RclContext before calling.
     //
     // Thus we only need a lock for node creation here.
-    private static SpinLock  _nodeCreationLock = new();
+    private static SpinLock _nodeCreationLock = new();
 
     private static readonly ObjectPool<ManualResetValueTaskSource<bool>> TcsPool = ObjectPool<ManualResetValueTaskSource<bool>>.Shared;
 
@@ -173,7 +173,7 @@ public sealed class RclContext :  IRclContext
         using (ScopedLock.Lock(ref _nodeCreationLock))
         {
             return new RclNodeImpl(this, name, @namespace, options);
-        }   
+        }
     }
 
     /// <inheritdoc/>
@@ -344,7 +344,8 @@ public sealed class RclContext :  IRclContext
         servicesIndices = new(),
         eventIndices = new();
 
-        var isShutdownRequested = false;
+        var stopwatch = new Stopwatch();
+        bool isShutdownRequested = false, perfWarningShown = false;
 
         while (!isShutdownRequested)
         {
@@ -428,10 +429,6 @@ public sealed class RclContext :  IRclContext
 
                 RclException.ThrowIfNonSuccess(rcl_wait(&ws, -1));
 
-                // Invocation of callbacks MUST happen after the call to rcl_wait,
-                // because callbacks may dispose wait object synchronously,
-                // causing segmentation fault in rcl_wait.
-
                 // The order of the following checks matters,
                 // higher priority wait objects should be checked first.
 
@@ -509,15 +506,14 @@ public sealed class RclContext :  IRclContext
                     }
                 }
 
+                stopwatch.Restart();
+
                 // Call registered callbacks for wait objects
                 // in the order they were added into completedHandles.
                 foreach (var completed in completedHandles)
                 {
                     foreach (var wh in waitHandles)
                     {
-                        // TODO: Handles may have been diposed by previously invoked callbacks.
-                        // Should we ignore disposed handles here?
-                        // Or make sure handle disposal always happens asynchronously?
                         if (wh.WaitHandle.DangerousGetHandle() == completed)
                         {
                             try
@@ -535,6 +531,17 @@ public sealed class RclContext :  IRclContext
                 }
 
                 ExecuteCallbacks(callbacks);
+
+                stopwatch.Stop();
+                if (!perfWarningShown && stopwatch.ElapsedMilliseconds > 100)
+                {
+                    perfWarningShown = true;
+                    DefaultLogger.LogWarning(
+                        $"The application code is taking too much time ({stopwatch.ElapsedMilliseconds:F1} ms) to complete its work on the event loop. " +
+                        "This may affect the precision of RCL timers and overall performance of ROS 2 communication. " +
+                        "Either offload CPU-intensive computations or blocking calls into background threads with Task.Run or RclContext.YieldBackground, " +
+                        "or perform critical operations in a separate RclContext. This warning message is shown only once.");
+                }
             }
             finally
             {
