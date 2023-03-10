@@ -108,7 +108,7 @@ static class InteropHelpers
                 RclHumble.rmw_internet_protocol_t.RMW_INTERNET_PROTOCOL_IPV4 => AddressFamily.InterNetwork,
                 RclHumble.rmw_internet_protocol_t.RMW_INTERNET_PROTOCOL_IPV6 => AddressFamily.InterNetworkV6,
                 RclHumble.rmw_internet_protocol_t.RMW_INTERNET_PROTOCOL_UNKNOWN => AddressFamily.Unknown,
-                _ => throw new NotSupportedException($"Unsupported address rmw_internet_protocol_t value '{ep.internet_protocol}'.")
+                _ => throw new NotSupportedException($"Unsupported rmw_internet_protocol_t value '{ep.internet_protocol}'.")
             };
 
             var transportProtocol = ep.transport_protocol switch
@@ -116,7 +116,7 @@ static class InteropHelpers
                 RclHumble.rmw_transport_protocol_t.RMW_TRANSPORT_PROTOCOL_UDP => ProtocolType.Udp,
                 RclHumble.rmw_transport_protocol_t.RMW_TRANSPORT_PROTOCOL_TCP => ProtocolType.Tcp,
                 RclHumble.rmw_transport_protocol_t.RMW_TRANSPORT_PROTOCOL_UNKNOWN => ProtocolType.Unknown,
-                _ => throw new NotSupportedException($"Unsupported address rmw_transport_protocol_t value '{ep.internet_protocol}'.")
+                _ => throw new NotSupportedException($"Unsupported rmw_transport_protocol_t value '{ep.internet_protocol}'.")
             };
 
             IPAddress address;

@@ -1,0 +1,12 @@
+services:
+    node1:
+        build: 
+            context: .
+            target: final
+            dockerfile: node1/Dockerfile
+    node2:
+        build: 
+            context: .
+            target: final
+            dockerfile: node2/Dockerfile
+    
