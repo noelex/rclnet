@@ -21,6 +21,8 @@ namespace Rcl;
 /// </remarks>
 public sealed class RclContext : IRclContext
 {
+    private static readonly TimeSpan WarningThreshold = TimeSpan.FromMilliseconds(50);
+
     private static int _contextRefCount = 0;
 
     // Creating nodes with /rosout logging enabled requires access
@@ -326,9 +328,7 @@ public sealed class RclContext : IRclContext
         var ws = rcl_get_zero_initialized_wait_set();
         rcl_wait_set_init(&ws, 0, 0, 0, 0, 0, 0, _context.Object, RclAllocator.Default.Object);
 
-        var waitHandles = new List<WaitSetWorkItem>();
-        var callbacks = new List<CallbackWorkItem>();
-        var completedHandles = new List<nint>();
+        var waitHandles = new Dictionary<nint, WaitSetWorkItem>();
 
         var subscriptions = new List<SafeSubscriptionHandle>();
         var guardConditions = new List<SafeGuardConditionHandle>();
@@ -345,7 +345,7 @@ public sealed class RclContext : IRclContext
         eventIndices = new();
 
         var stopwatch = new Stopwatch();
-        bool isShutdownRequested = false, perfWarningShown = false;
+        bool isShutdownRequested = false;
 
         while (!isShutdownRequested)
         {
@@ -358,7 +358,7 @@ public sealed class RclContext : IRclContext
                 {
                     foreach (var (key, value) in _waitHandles)
                     {
-                        waitHandles.Add(value);
+                        waitHandles.Add(value.WaitHandle.DangerousGetHandle(), value);
 
                         switch (value.WaitHandle)
                         {
@@ -429,6 +429,8 @@ public sealed class RclContext : IRclContext
 
                 RclException.ThrowIfNonSuccess(rcl_wait(&ws, -1));
 
+                stopwatch.Restart();
+
                 // The order of the following checks matters,
                 // higher priority wait objects should be checked first.
 
@@ -439,7 +441,7 @@ public sealed class RclContext : IRclContext
                     var target = timers[i].DangerousGetHandle();
                     if (target == new nint(ws.timers[idx]))
                     {
-                        completedHandles.Add(target);
+                        CallWaitHandle(waitHandles, target);
                     }
                 }
 
@@ -450,7 +452,7 @@ public sealed class RclContext : IRclContext
                     var target = subscriptions[i].DangerousGetHandle();
                     if (target == new nint(ws.subscriptions[idx]))
                     {
-                        completedHandles.Add(target);
+                        CallWaitHandle(waitHandles, target);
                     }
                 }
 
@@ -461,7 +463,7 @@ public sealed class RclContext : IRclContext
                     var target = services[i].DangerousGetHandle();
                     if (target == new nint(ws.services[idx]))
                     {
-                        completedHandles.Add(target);
+                        CallWaitHandle(waitHandles, target);
                     }
                 }
 
@@ -472,7 +474,7 @@ public sealed class RclContext : IRclContext
                     var target = clients[i].DangerousGetHandle();
                     if (target == new nint(ws.clients[idx]))
                     {
-                        completedHandles.Add(target);
+                        CallWaitHandle(waitHandles, target);
                     }
                 }
 
@@ -483,12 +485,12 @@ public sealed class RclContext : IRclContext
                     var target = events[i].DangerousGetHandle();
                     if (target == new nint(ws.events[idx]))
                     {
-                        completedHandles.Add(target);
+                        CallWaitHandle(waitHandles, target);
                     }
                 }
 
                 // Check for guard conditions.
-                // Skip interrupt signal @ 0, but check shutdown signal @ 1.
+                // Skip interrupt signal but check shutdown signal.
                 for (var i = 1; i < guardConditionIndices.Count; i++)
                 {
                     idx = guardConditionIndices[i];
@@ -501,51 +503,30 @@ public sealed class RclContext : IRclContext
                         }
                         else
                         {
-                            completedHandles.Add(target);
+                            CallWaitHandle(waitHandles, target);
                         }
                     }
                 }
 
-                stopwatch.Restart();
-
-                // Call registered callbacks for wait objects
-                // in the order they were added into completedHandles.
-                foreach (var completed in completedHandles)
-                {
-                    foreach (var wh in waitHandles)
-                    {
-                        if (wh.WaitHandle.DangerousGetHandle() == completed)
-                        {
-                            try
-                            {
-                                wh.Callback(wh.State);
-                            }
-                            catch (Exception ex)
-                            {
-                                DefaultLogger.LogWarning($"Unhandled exception was thrown by wait handle callback: {ex.Message}");
-                                DefaultLogger.LogWarning(ex.StackTrace);
-                            }
-                            break;
-                        }
-                    }
-                }
-
-                ExecuteCallbacks(callbacks);
+                // TODO: Investigate performance impact.
+                //
+                // Here we pick up and execute a single callback from the queue for each iteration.
+                // Doing so adds extra cost to each callback because we need to prepare & check wait objects first.
+                // But this will reduce the latency of timers and other wait objects.
+                CallNext();
 
                 stopwatch.Stop();
-                if (!perfWarningShown && stopwatch.ElapsedMilliseconds > 100)
+                if (stopwatch.Elapsed > WarningThreshold)
                 {
-                    perfWarningShown = true;
                     DefaultLogger.LogWarning(
-                        $"The application code is taking too much time ({stopwatch.ElapsedMilliseconds:F1} ms) to complete its work on the event loop. " +
+                        $"The application is taking too much time ({stopwatch.Elapsed.TotalMilliseconds:F3} ms) to complete its work on the RclContext event loop. " +
                         "This may affect the precision of RCL timers and overall performance of ROS 2 communication. " +
-                        "Either offload CPU-intensive computations or blocking calls into background threads with Task.Run or RclContext.YieldBackground, " +
-                        "or perform time consuming operations in a separate RclContext. This warning message is shown only once.");
+                        "Consider offload CPU-intensive computations or blocking calls into background threads with Task.Run or RclContext.YieldBackground, " +
+                        "or perform time consuming operations in a separate RclContext.");
                 }
             }
             finally
             {
-                completedHandles.Clear();
                 waitHandles.Clear();
 
                 subscriptions.Clear();
@@ -577,42 +558,55 @@ public sealed class RclContext : IRclContext
         _shutdownComplete.SetResult();
     }
 
-    private void ExecuteCallbacks(List<CallbackWorkItem> storage)
+    private void CallWaitHandle(Dictionary<nint, WaitSetWorkItem> registry, nint completedHandle)
     {
         try
         {
-            using (ScopedLock.Lock(ref _callbackLock))
+            var wh = registry[completedHandle];
+            wh.Callback(wh.State);
+        }
+        catch (Exception ex)
+        {
+            DefaultLogger.LogWarning($"Unhandled exception was thrown by wait handle callback: {ex.Message}");
+            DefaultLogger.LogWarning(ex.StackTrace);
+        }
+    }
+
+    private void CallNext()
+    {
+        bool ok, more;
+        CallbackWorkItem cb;
+
+        using (ScopedLock.Lock(ref _callbackLock))
+        {
+            ok = _callbacks.TryDequeue(out cb);
+            more = _callbacks.Count > 0;
+        }
+
+        if (ok)
+        {
+            try
             {
-                while (_callbacks.TryDequeue(out var cb))
+                cb.Callback(cb.State);
+                cb.CompletionSource?.SetResult(true);
+            }
+            catch (Exception ex)
+            {
+                if (cb.CompletionSource is null)
                 {
-                    storage.Add(cb);
+                    DefaultLogger.LogWarning("Unhandled exception was thrown by scheduled callback: " + ex.Message);
+                    DefaultLogger.LogWarning(ex.StackTrace);
+                }
+                else
+                {
+                    cb.CompletionSource?.SetException(ex);
                 }
             }
 
-            foreach (var cb in storage)
+            if (more)
             {
-                try
-                {
-                    cb.Callback(cb.State);
-                    cb.CompletionSource?.SetResult(true);
-                }
-                catch (Exception ex)
-                {
-                    if (cb.CompletionSource is null)
-                    {
-                        DefaultLogger.LogWarning("Unhandled exception was thrown by scheduled callback: " + ex.Message);
-                        DefaultLogger.LogWarning(ex.StackTrace);
-                    }
-                    else
-                    {
-                        cb.CompletionSource?.SetException(ex);
-                    }
-                }
+                Interrupt();
             }
-        }
-        finally
-        {
-            storage.Clear();
         }
     }
 

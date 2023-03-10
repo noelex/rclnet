@@ -3129,7 +3129,8 @@ namespace Rcl.Interop
         /// Lock-Free          | Yes
         /// &lt;i&gt;[1] only if required when filling the message, avoided for fixed sizes&lt;/i&gt;
         /// </remarks>
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [SuppressGCTransition]
         public static extern rcl_ret_t rcl_take(RclCommon.rcl_subscription_t* subscription, void* ros_message, void* message_info, RclCommon.rmw_subscription_allocation_t* allocation);
 
         /// <summary>
@@ -3428,7 +3429,8 @@ namespace Rcl.Interop
         /// Lock-Free          | Yes
         /// &lt;i&gt;[1] only if required when filling the message, avoided for fixed sizes&lt;/i&gt;
         /// </remarks>
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [SuppressGCTransition]
         public static extern rcl_ret_t rcl_take_response_with_info(RclCommon.rcl_client_t* client, RclCommon.rmw_service_info_t* request_header, void* ros_response);
 
         /// <summary>
@@ -3563,7 +3565,8 @@ namespace Rcl.Interop
         /// Lock-Free          | Yes
         /// &lt;i&gt;[1] it can be called concurrently with itself, even on the same guard condition&lt;/i&gt;
         /// </remarks>
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [SuppressGCTransition]
         public static extern rcl_ret_t rcl_trigger_guard_condition(RclCommon.rcl_guard_condition_t* guard_condition);
 
         /// <summary>
@@ -3745,7 +3748,8 @@ namespace Rcl.Interop
         /// Lock-Free          | Yes
         /// &lt;i&gt;[1] only if required when filling the request, avoided for fixed sizes&lt;/i&gt;
         /// </remarks>
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [SuppressGCTransition]
         public static extern rcl_ret_t rcl_take_request_with_info(RclCommon.rcl_service_t* service, RclCommon.rmw_service_info_t* request_header, void* ros_request);
 
         /// <summary>
@@ -4178,7 +4182,8 @@ namespace Rcl.Interop
         /// <remarks>
         /// Take an event from the event handle.
         /// </remarks>
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [SuppressGCTransition]
         public static extern rcl_ret_t rcl_take_event(RclCommon.rcl_event_t* @event, void* event_info);
 
         /// <summary>
@@ -4300,7 +4305,8 @@ namespace Rcl.Interop
         /// Uses Atomics       | No
         /// Lock-Free          | Yes
         /// </remarks>
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [SuppressGCTransition]
         public static extern rcl_ret_t rcl_wait_set_add_subscription(RclCommon.rcl_wait_set_t* wait_set, RclCommon.rcl_subscription_t* subscription, RclCommon.size_t* index);
 
         /// <summary>
@@ -4329,7 +4335,8 @@ namespace Rcl.Interop
         /// Uses Atomics       | No
         /// Lock-Free          | Yes
         /// </remarks>
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [SuppressGCTransition]
         public static extern rcl_ret_t rcl_wait_set_resize(RclCommon.rcl_wait_set_t* wait_set, RclCommon.size_t subscriptions_size, RclCommon.size_t guard_conditions_size, RclCommon.size_t timers_size, RclCommon.size_t clients_size, RclCommon.size_t services_size, RclCommon.size_t events_size);
 
         /// <summary>
@@ -4339,7 +4346,8 @@ namespace Rcl.Interop
         /// This function behaves exactly the same as for subscriptions.
         /// </remarks>
         /// <seealso cref="rcl_wait_set_add_subscription"/>
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [SuppressGCTransition]
         public static extern rcl_ret_t rcl_wait_set_add_guard_condition(RclCommon.rcl_wait_set_t* wait_set, RclCommon.rcl_guard_condition_t* guard_condition, RclCommon.size_t* index);
 
         /// <summary>
@@ -4349,7 +4357,8 @@ namespace Rcl.Interop
         /// This function behaves exactly the same as for subscriptions.
         /// </remarks>
         /// <seealso cref="rcl_wait_set_add_subscription"/>
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [SuppressGCTransition]
         public static extern rcl_ret_t rcl_wait_set_add_timer(RclCommon.rcl_wait_set_t* wait_set, RclCommon.rcl_timer_t* timer, RclCommon.size_t* index);
 
         /// <summary>
@@ -4359,7 +4368,8 @@ namespace Rcl.Interop
         /// This function behaves exactly the same as for subscriptions.
         /// </remarks>
         /// <seealso cref="rcl_wait_set_add_subscription"/>
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [SuppressGCTransition]
         public static extern rcl_ret_t rcl_wait_set_add_client(RclCommon.rcl_wait_set_t* wait_set, RclCommon.rcl_client_t* client, RclCommon.size_t* index);
 
         /// <summary>
@@ -4369,7 +4379,8 @@ namespace Rcl.Interop
         /// This function behaves exactly the same as for subscriptions.
         /// </remarks>
         /// <seealso cref="rcl_wait_set_add_subscription"/>
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [SuppressGCTransition]
         public static extern rcl_ret_t rcl_wait_set_add_service(RclCommon.rcl_wait_set_t* wait_set, RclCommon.rcl_service_t* service, RclCommon.size_t* index);
 
         /// <summary>
@@ -4379,7 +4390,8 @@ namespace Rcl.Interop
         /// This function behaves exactly the same as for subscriptions.
         /// </remarks>
         /// <seealso cref="rcl_wait_set_add_subscription"/>
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        [SuppressGCTransition]
         public static extern rcl_ret_t rcl_wait_set_add_event(RclCommon.rcl_wait_set_t* wait_set, RclCommon.rcl_event_t* @event, RclCommon.size_t* index);
 
         /// <summary>

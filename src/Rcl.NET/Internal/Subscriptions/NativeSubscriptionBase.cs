@@ -92,7 +92,10 @@ internal unsafe abstract class NativeSubscriptionBase :
         }
         finally
         {
-            RclHumble.rmw_network_flow_endpoint_array_fini(&endpoints);
+            if (endpoints.allocator != null)
+            {
+                RclHumble.rmw_network_flow_endpoint_array_fini(&endpoints);
+            }
         }
     }
 

@@ -6,8 +6,6 @@ using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
-using System.Net;
-using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 
 namespace Rcl.Internal.Publishers;
@@ -76,7 +74,10 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
         }
         finally
         {
-            RclHumble.rmw_network_flow_endpoint_array_fini(&endpoints);
+            if (endpoints.allocator != null)
+            {
+                RclHumble.rmw_network_flow_endpoint_array_fini(&endpoints);
+            }
         }
     }
 
@@ -176,7 +177,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
     public bool IsValid
          => rcl_publisher_is_valid(Handle.Object);
 
-    public NetworkFlowEndpoint[] Endpoints { get; }
+    public NetworkFlowEndpoint[] Endpoints { get;}
 
     public void Publish(RosMessageBuffer message)
     {

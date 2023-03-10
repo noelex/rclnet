@@ -110,22 +110,26 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     /// </summary>
     public IReadOnlyCollection<RosAction> Actions => (IReadOnlyCollection<RosAction>)_actions.Values;
 
-    internal async Task BuildAsync()
+    internal void Build(bool dryRun)
     {
-        // Build the graph in background.
-        await RclContext.YieldBackground();
-
         try
         {
             BuildNodes();
             BuildTopics(disableTopicNameDemangling: false);
-
             RelationshipFixup();
             BuildActions();
 
-            // Fire events on event loop.
-            await _node.Context.Yield();
-            FireEvents();
+            if (!dryRun)
+            {
+                FireEvents();
+            }
+            else
+            {
+                _nodes.Clear();
+                _topics.Clear();
+                _services.Clear();
+                _actions.Clear();
+            }
         }
         finally
         {
@@ -144,11 +148,11 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             g.Key.ResetSubscribers(g);
         }
 
-        foreach(var svc in _services.Values)
-		{
-			svc.ResetClients(_totalClients.Where(x => x.Service == svc));
-			svc.ResetServers(_totalServers.Where(x => x.Service == svc));
-		}
+        foreach (var svc in _services.Values)
+        {
+            svc.ResetClients(_totalClients.Where(x => x.Service == svc));
+            svc.ResetServers(_totalServers.Where(x => x.Service == svc));
+        }
 
         foreach (var (k, v) in _services)
         {

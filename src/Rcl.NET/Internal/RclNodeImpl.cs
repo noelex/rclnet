@@ -5,11 +5,14 @@ using Rcl.Parameters;
 using Rcl.Parameters.Impl;
 using Rcl.SafeHandles;
 using Rosidl.Runtime.Interop;
+using System.Diagnostics;
 
 namespace Rcl.Internal;
 
 partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
 {
+    private static int _initialGrapBuild = 1;
+
     private readonly RosGraph _graph;
     private readonly ExternalTimeSource _timeSource;
     private readonly ParameterService _parameters;
@@ -79,15 +82,28 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
 
     private async Task GraphBuilder(RclGuardConditionImpl graphSignal, CancellationToken cancellationToken)
     {
+        // Build the graph once on the caller's thread to avoid
+        // blocking the event loop for too long due to JIT latency.
+        //
+        // May still produce warning if the first call to constructor is
+        // initiated from the event loop.
+        if (Interlocked.CompareExchange(ref _initialGrapBuild, 0, 1) == 1)
+        {
+            _graph.Build(dryRun: true);
+        }
+
+        await Context.YieldIfNotCurrent();
+
         using (graphSignal)
         {
             try
             {
+                var sw = new Stopwatch();
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     try
                     {
-                        await _graph.BuildAsync();
+                        _graph.Build(dryRun: false);
                     }
                     catch (Exception e)
                     {
@@ -95,7 +111,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
                         Console.WriteLine(e.StackTrace);
                     }
 
-                    await graphSignal.WaitOneAsync(cancellationToken);
+                    await graphSignal.WaitOneAsync(false, cancellationToken).ConfigureAwait(false);
                 }
             }
             finally

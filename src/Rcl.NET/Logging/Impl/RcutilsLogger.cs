@@ -16,7 +16,7 @@ internal class RcutilsLoggerFactory : IRclLoggerFactory
 
     public IRclLogger CreateLogger(string name)
     {
-        return new RcutilsLogger(name, _syncContext);
+        return new RcutilsLogger(name);
     }
 }
 
@@ -47,12 +47,10 @@ class LogEntry
 internal class RcutilsLogger : IRclLogger
 {
     private readonly string _name;
-    private readonly RclContext _syncContext;
 
-    public RcutilsLogger(string name, RclContext syncContext)
+    public RcutilsLogger(string name)
     {
         _name = name;
-        _syncContext = syncContext;
     }
 
     public string Name => _name;
@@ -68,14 +66,7 @@ internal class RcutilsLogger : IRclLogger
         entry.Category = _name;
         entry.MemberName = functionName;
 
-        if (!_syncContext.IsCurrent)
-        {
-            _syncContext.SynchronizationContext.Post(s => Log((LogEntry)s!), entry);
-        }
-        else
-        {
-            Log(entry);
-        }
+        ThreadPool.UnsafeQueueUserWorkItem(Log, entry, true);
     }
 
     private static void Log(LogEntry entry)

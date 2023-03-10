@@ -345,6 +345,7 @@ public class PubSubTests
     public async Task PublisherUniqueNetworkFlowEndpoints()
     {
         Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp", "Unique network flow endpoints on publishers is not supported by rmw_fastrtps_cpp.");
 
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());

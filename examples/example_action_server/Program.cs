@@ -55,7 +55,7 @@ class MyNativeActionServer : ActionGoalHandler
         var theta = goal.AsRef<RotateAbsoluteActionGoal.Priv>().Theta;
 
         _node.Logger.LogInformation("Received goal: " + theta);
-        using var timer = _node.Context.CreateTimer(TimeSpan.FromMilliseconds(10));
+        using var timer = _node.Context.CreateTimer(_node.Clock, TimeSpan.FromMilliseconds(10));
         var current = theta;
         while (current >= 0)
         {

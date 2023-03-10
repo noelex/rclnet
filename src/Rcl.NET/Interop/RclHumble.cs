@@ -84,7 +84,7 @@ internal unsafe static class RclHumble
         /// <summary>
         /// Allocator
         /// </summary>
-        public rcutils_allocator_t* allocator;
+        public rcl_allocator_t* allocator;
     }
 
     public enum rmw_unique_network_flow_endpoints_requirement_t
