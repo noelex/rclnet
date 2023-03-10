@@ -21,10 +21,6 @@ namespace Rcl;
 /// </remarks>
 public sealed class RclContext : IRclContext
 {
-    private static readonly TimeSpan WarningThreshold = TimeSpan.FromMilliseconds(50);
-
-    private static int _contextRefCount = 0;
-
     // Creating nodes with /rosout logging enabled requires access
     // to a static logger map, which is not thread-safe application wide.
     //
@@ -33,15 +29,16 @@ public sealed class RclContext : IRclContext
     // by yielding to the owner RclContext before calling.
     //
     // Thus we only need a lock for node creation here.
-    private static SpinLock _nodeCreationLock = new();
-
-    private static readonly ObjectPool<ManualResetValueTaskSource<bool>> TcsPool = ObjectPool<ManualResetValueTaskSource<bool>>.Shared;
+    private static SpinLock s_nodeCreationLock = new();
+    private static int s_contextRefCount = 0;
+    private static readonly ObjectPool<ManualResetValueTaskSource<bool>> s_tcsPool = ObjectPool<ManualResetValueTaskSource<bool>>.Shared;
 
     private readonly RclSynchronizationContext _rclSyncContext;
 
     private SpinLock _handleLock = new(), _callbackLock = new();
-    private readonly Dictionary<long, WaitSetWorkItem> _waitHandles = new();
     private readonly Queue<CallbackWorkItem> _callbacks = new();
+    private readonly Dictionary<long, WaitSetWorkItem> _waitHandles = new();
+    private uint _cGuardConditions, _cTimers, _cEvents, _cSubscriptions, _cServices, _cClients;
 
     private readonly SafeGuardConditionHandle _interruptSignal, _shutdownSignal;
     private readonly SafeContextHandle _context;
@@ -92,13 +89,13 @@ public sealed class RclContext : IRclContext
 
         var allocator = RclAllocator.Default.Object;
 
-        if (Interlocked.Increment(ref _contextRefCount) == 1)
+        if (Interlocked.Increment(ref s_contextRefCount) == 1)
         {
             RclException.ThrowIfNonSuccess(
                 rcl_logging_configure(&_context.Object->global_arguments, &allocator));
         }
 
-        _loggerFactory = loggerFactory ?? new RcutilsLoggerFactory(this);
+        _loggerFactory = loggerFactory ?? new RcutilsLoggerFactory();
         DefaultLogger = CreateLogger("rclnet");
 
         _interruptSignal = new SafeGuardConditionHandle(_context);
@@ -172,7 +169,7 @@ public sealed class RclContext : IRclContext
     /// <inheritdoc/>
     public IRclNode CreateNode(string name, string @namespace = "/", NodeOptions? options = null)
     {
-        using (ScopedLock.Lock(ref _nodeCreationLock))
+        using (ScopedLock.Lock(ref s_nodeCreationLock))
         {
             return new RclNodeImpl(this, name, @namespace, options);
         }
@@ -284,6 +281,28 @@ public sealed class RclContext : IRclContext
         using (ScopedLock.Lock(ref _handleLock))
         {
             _waitHandles[token] = new(handle, callback, state);
+            switch (handle)
+            {
+                case SafeGuardConditionHandle:
+                    _cGuardConditions++;
+                    break;
+                case SafeTimerHandle:
+                    _cTimers++;
+                    break;
+                case SafeSubscriptionHandle:
+                    _cSubscriptions++;
+                    break;
+                case SafeServiceHandle:
+                    _cServices++;
+                    break;
+                case SafeClientHandle:
+                    _cClients++;
+                    break;
+                case SafePublisherEventHandle:
+                case SafeSubscriptionEventHandle:
+                    _cEvents++;
+                    break;
+            }
         }
 
         Interrupt();
@@ -293,7 +312,31 @@ public sealed class RclContext : IRclContext
     {
         using (ScopedLock.Lock(ref _handleLock))
         {
-            _waitHandles.Remove(token);
+            if (_waitHandles.Remove(token, out var v))
+            {
+                switch (v.WaitHandle)
+                {
+                    case SafeGuardConditionHandle:
+                        _cGuardConditions--;
+                        break;
+                    case SafeTimerHandle:
+                        _cTimers--;
+                        break;
+                    case SafeSubscriptionHandle:
+                        _cSubscriptions--;
+                        break;
+                    case SafeServiceHandle:
+                        _cServices--;
+                        break;
+                    case SafeClientHandle:
+                        _cClients--;
+                        break;
+                    case SafePublisherEventHandle:
+                    case SafeSubscriptionEventHandle:
+                        _cEvents--;
+                        break;
+                }
+            }
         }
 
         Interrupt();
@@ -328,34 +371,29 @@ public sealed class RclContext : IRclContext
         var ws = rcl_get_zero_initialized_wait_set();
         rcl_wait_set_init(&ws, 0, 0, 0, 0, 0, 0, _context.Object, RclAllocator.Default.Object);
 
+        var callbacks = new List<CallbackWorkItem>();
         var waitHandles = new Dictionary<nint, WaitSetWorkItem>();
 
-        var subscriptions = new List<SafeSubscriptionHandle>();
-        var guardConditions = new List<SafeGuardConditionHandle>();
-        var timers = new List<SafeTimerHandle>();
-        var clients = new List<SafeClientHandle>();
-        var services = new List<SafeServiceHandle>();
-        var events = new List<RclObjectHandle>();
-
-        List<size_t> subscriptionIndices = new(),
-        guardConditionIndices = new(),
-        timerIndices = new(),
-        clientsIndices = new(),
-        servicesIndices = new(),
-        eventIndices = new();
-
-        var stopwatch = new Stopwatch();
         bool isShutdownRequested = false;
+        size_t idx;
 
         while (!isShutdownRequested)
         {
             try
             {
-                guardConditions.Add(_interruptSignal);
-                guardConditions.Add(_shutdownSignal);
-
                 using (ScopedLock.Lock(ref _handleLock))
                 {
+                    rcl_wait_set_resize(&ws,
+                        _cSubscriptions,
+                        _cGuardConditions + 2, // +2 For interrupt & shutdown guard conditions.
+                        _cTimers,
+                        _cClients,
+                        _cServices,
+                        _cEvents);
+
+                    rcl_wait_set_add_guard_condition(&ws, _interruptSignal.Object, &idx);
+                    rcl_wait_set_add_guard_condition(&ws, _shutdownSignal.Object, &idx);
+
                     foreach (var (key, value) in _waitHandles)
                     {
                         waitHandles.Add(value.WaitHandle.DangerousGetHandle(), value);
@@ -363,185 +401,113 @@ public sealed class RclContext : IRclContext
                         switch (value.WaitHandle)
                         {
                             case SafeGuardConditionHandle guardCondition:
-                                guardConditions.Add(guardCondition);
+                                rcl_wait_set_add_guard_condition(&ws, guardCondition.Object, &idx);
                                 break;
                             case SafeTimerHandle timer:
-                                timers.Add(timer);
+                                rcl_wait_set_add_timer(&ws, timer.Object, &idx);
                                 break;
-                            case SafeSubscriptionHandle sub:
-                                subscriptions.Add(sub);
+                            case SafeSubscriptionHandle subscription:
+                                rcl_wait_set_add_subscription(&ws, subscription.Object, &idx);
                                 break;
-                            case SafeServiceHandle server:
-                                services.Add(server);
+                            case SafeServiceHandle service:
+                                rcl_wait_set_add_service(&ws, service.Object, &idx);
                                 break;
                             case SafeClientHandle client:
-                                clients.Add(client);
+                                rcl_wait_set_add_client(&ws, client.Object, &idx);
                                 break;
                             case SafePublisherEventHandle pubEvent:
-                                events.Add(pubEvent);
+                                rcl_wait_set_add_event(&ws, (rcl_event_t*)pubEvent.DangerousGetHandle().ToPointer(), &idx);
                                 break;
                             case SafeSubscriptionEventHandle subEvent:
-                                events.Add(subEvent);
+                                rcl_wait_set_add_event(&ws, (rcl_event_t*)subEvent.DangerousGetHandle().ToPointer(), &idx);
                                 break;
                         }
                     }
                 }
 
-                rcl_wait_set_resize(&ws,
-                    (nuint)subscriptions.Count,
-                    (nuint)guardConditions.Count,
-                    (nuint)timers.Count,
-                    (nuint)clients.Count,
-                    (nuint)services.Count,
-                    (nuint)events.Count);
-
-                size_t idx;
-                foreach (var subscription in subscriptions)
-                {
-                    rcl_wait_set_add_subscription(&ws, subscription.Object, &idx);
-                    subscriptionIndices.Add(idx);
-                }
-                foreach (var guardCondition in guardConditions)
-                {
-                    rcl_wait_set_add_guard_condition(&ws, guardCondition.Object, &idx);
-                    guardConditionIndices.Add(idx);
-                }
-                foreach (var timer in timers)
-                {
-                    rcl_wait_set_add_timer(&ws, timer.Object, &idx);
-                    timerIndices.Add(idx);
-                }
-                foreach (var service in services)
-                {
-                    rcl_wait_set_add_service(&ws, service.Object, &idx);
-                    servicesIndices.Add(idx);
-                }
-                foreach (var client in clients)
-                {
-                    rcl_wait_set_add_client(&ws, client.Object, &idx);
-                    clientsIndices.Add(idx);
-                }
-                foreach (var @event in events)
-                {
-                    rcl_wait_set_add_event(&ws, (rcl_event_t*)@event.DangerousGetHandle().ToPointer(), &idx);
-                    eventIndices.Add(idx);
-                }
-
                 RclException.ThrowIfNonSuccess(rcl_wait(&ws, -1));
-
-                stopwatch.Restart();
 
                 // The order of the following checks matters,
                 // higher priority wait objects should be checked first.
 
                 // Check for timers.
-                for (var i = 0; i < timerIndices.Count; i++)
+                for (uint i = 0; i < ws.size_of_timers; i++)
                 {
-                    idx = timerIndices[i];
-                    var target = timers[i].DangerousGetHandle();
-                    if (target == new nint(ws.timers[idx]))
-                    {
-                        CallWaitHandle(waitHandles, target);
-                    }
+                    CallIfCompleted(waitHandles, new nint(ws.timers[i]));
                 }
 
                 // Check for subscriptions.
-                for (var i = 0; i < subscriptionIndices.Count; i++)
+                for (uint i = 0; i < ws.size_of_subscriptions; i++)
                 {
-                    idx = subscriptionIndices[i];
-                    var target = subscriptions[i].DangerousGetHandle();
-                    if (target == new nint(ws.subscriptions[idx]))
-                    {
-                        CallWaitHandle(waitHandles, target);
-                    }
+                    CallIfCompleted(waitHandles, new nint(ws.subscriptions[i]));
                 }
 
                 // Check for incoming service calls.
-                for (var i = 0; i < servicesIndices.Count; i++)
+                for (uint i = 0; i < ws.size_of_services; i++)
                 {
-                    idx = servicesIndices[i];
-                    var target = services[i].DangerousGetHandle();
-                    if (target == new nint(ws.services[idx]))
-                    {
-                        CallWaitHandle(waitHandles, target);
-                    }
+                    CallIfCompleted(waitHandles, new nint(ws.services[i]));
                 }
 
                 // Check for outgoing service calls.
-                for (var i = 0; i < clientsIndices.Count; i++)
+                for (uint i = 0; i < ws.size_of_clients; i++)
                 {
-                    idx = clientsIndices[i];
-                    var target = clients[i].DangerousGetHandle();
-                    if (target == new nint(ws.clients[idx]))
-                    {
-                        CallWaitHandle(waitHandles, target);
-                    }
+                    CallIfCompleted(waitHandles, new nint(ws.clients[i]));
                 }
 
                 // Check for events.
-                for (var i = 0; i < eventIndices.Count; i++)
+                for (uint i = 0; i < ws.size_of_events; i++)
                 {
-                    idx = eventIndices[i];
-                    var target = events[i].DangerousGetHandle();
-                    if (target == new nint(ws.events[idx]))
-                    {
-                        CallWaitHandle(waitHandles, target);
-                    }
+                    CallIfCompleted(waitHandles, new nint(ws.events[i]));
                 }
 
                 // Check for guard conditions.
-                // Skip interrupt signal but check shutdown signal.
-                for (var i = 1; i < guardConditionIndices.Count; i++)
+                // Skips interrupt & shutdown signal.
+                for (uint i = 2; i < ws.size_of_guard_conditions; i++)
                 {
-                    idx = guardConditionIndices[i];
-                    var target = guardConditions[i].DangerousGetHandle();
-                    if (target == new nint(ws.guard_conditions[idx]))
+                    CallIfCompleted(waitHandles, new nint(ws.guard_conditions[i]));
+                }
+
+                // Are we shutting down?
+                if (_shutdownSignal.DangerousGetHandle() == new nint(ws.guard_conditions[1]))
+                {
+                    isShutdownRequested = true;
+                }
+
+                // Snapshot callbacks.
+                using (ScopedLock.Lock(ref _callbackLock))
+                {
+                    while (_callbacks.TryDequeue(out var cb))
                     {
-                        if (target == _shutdownSignal.DangerousGetHandle())
-                        {
-                            isShutdownRequested = true;
-                        }
-                        else
-                        {
-                            CallWaitHandle(waitHandles, target);
-                        }
+                        callbacks.Add(cb);
                     }
                 }
 
-                // TODO: Investigate performance impact.
-                //
-                // Here we pick up and execute a single callback from the queue for each iteration.
-                // Doing so adds extra cost to each callback because we need to prepare & check wait objects first.
-                // But this will reduce the latency of timers and other wait objects.
-                CallNext();
-
-                stopwatch.Stop();
-                if (stopwatch.Elapsed > WarningThreshold)
+                // Invoke custom callbacks.
+                foreach (var cb in callbacks)
                 {
-                    DefaultLogger.LogWarning(
-                        $"The application is taking too much time ({stopwatch.Elapsed.TotalMilliseconds:F3} ms) to complete its work on the RclContext event loop. " +
-                        "This may affect the precision of RCL timers and overall performance of ROS 2 communication. " +
-                        "Consider offload CPU-intensive computations or blocking calls into background threads with Task.Run or RclContext.YieldBackground, " +
-                        "or perform time consuming operations in a separate RclContext.");
+                    try
+                    {
+                        cb.Callback(cb.State);
+                        cb.CompletionSource?.SetResult(true);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (cb.CompletionSource is null)
+                        {
+                            DefaultLogger.LogWarning("Unhandled exception was thrown by a user callback: " + ex.Message);
+                            DefaultLogger.LogWarning(ex.StackTrace);
+                        }
+                        else
+                        {
+                            cb.CompletionSource?.SetException(ex);
+                        }
+                    }
                 }
             }
             finally
             {
                 waitHandles.Clear();
-
-                subscriptions.Clear();
-                guardConditions.Clear();
-                timers.Clear();
-                clients.Clear();
-                services.Clear();
-                events.Clear();
-
-                subscriptionIndices.Clear();
-                guardConditionIndices.Clear();
-                timerIndices.Clear();
-                clientsIndices.Clear();
-                servicesIndices.Clear();
-                eventIndices.Clear();
+                callbacks.Clear();
             }
         }
 
@@ -550,7 +516,7 @@ public sealed class RclContext : IRclContext
         _shutdownSignal.Dispose();
         _context.Dispose();
 
-        if (Interlocked.Decrement(ref _contextRefCount) == 0)
+        if (Interlocked.Decrement(ref s_contextRefCount) == 0)
         {
             rcl_logging_fini();
         }
@@ -558,8 +524,10 @@ public sealed class RclContext : IRclContext
         _shutdownComplete.SetResult();
     }
 
-    private void CallWaitHandle(Dictionary<nint, WaitSetWorkItem> registry, nint completedHandle)
+    private void CallIfCompleted(Dictionary<nint, WaitSetWorkItem> registry, nint completedHandle)
     {
+        if (completedHandle == nint.Zero) return;
+
         try
         {
             var wh = registry[completedHandle];
@@ -569,44 +537,6 @@ public sealed class RclContext : IRclContext
         {
             DefaultLogger.LogWarning($"Unhandled exception was thrown by wait handle callback: {ex.Message}");
             DefaultLogger.LogWarning(ex.StackTrace);
-        }
-    }
-
-    private void CallNext()
-    {
-        bool ok, more;
-        CallbackWorkItem cb;
-
-        using (ScopedLock.Lock(ref _callbackLock))
-        {
-            ok = _callbacks.TryDequeue(out cb);
-            more = _callbacks.Count > 0;
-        }
-
-        if (ok)
-        {
-            try
-            {
-                cb.Callback(cb.State);
-                cb.CompletionSource?.SetResult(true);
-            }
-            catch (Exception ex)
-            {
-                if (cb.CompletionSource is null)
-                {
-                    DefaultLogger.LogWarning("Unhandled exception was thrown by scheduled callback: " + ex.Message);
-                    DefaultLogger.LogWarning(ex.StackTrace);
-                }
-                else
-                {
-                    cb.CompletionSource?.SetException(ex);
-                }
-            }
-
-            if (more)
-            {
-                Interrupt();
-            }
         }
     }
 
@@ -666,14 +596,14 @@ public sealed class RclContext : IRclContext
                 return ValueTask.CompletedTask;
             }
 
-            var tcs = TcsPool.Rent();
+            var tcs = s_tcsPool.Rent();
 
             tcs.RunContinuationsAsynchronously = true;
             tcs.OnFinally(static state =>
             {
                 var t = (ManualResetValueTaskSource<bool>)state!;
                 t.Reset();
-                TcsPool.Return(t);
+                s_tcsPool.Return(t);
             }, tcs);
 
             _context.RegisterCallback(callback, state, tcs);

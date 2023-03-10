@@ -4126,6 +4126,27 @@ namespace Rcl.Interop
         public static extern rcl_ret_t rcl_timer_reset(RclCommon.rcl_timer_t* timer);
 
         /// <summary>
+        /// Call the timer's callback and set the last call time.
+        /// 
+        /// This function will call the callback and change the last call time even if the timer's period has not yet elapsed.
+        /// It is up to the calling code to make sure the period has elapsed by first calling rcl_timer_is_ready().
+        /// If the callback pointer is NULL (either set in init or exchanged after initialized), no callback is fired.
+        /// However, this function should still be called by the client library to update the state of the timer.
+        /// 
+        /// The order of operations in this command are as follows:
+        /// Ensure the timer has not been canceled.
+        /// Get the current time into a temporary rcl_steady_time_point_t.
+        /// Exchange the current time with the last call time of the timer.
+        /// Call the callback, passing this timer and the time since the last call.
+        /// Return after the callback has completed.
+        /// During the callback the timer can be canceled or have its period and/or callback modified.
+        /// </summary>
+        /// <param name="timer"></param>
+        /// <returns></returns>
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        public static extern rcl_ret_t rcl_timer_call(RclCommon.rcl_timer_t* timer);
+
+        /// <summary>
         /// Return a rcl_event_t struct with members set to `NULL`.
         /// </summary>
         /// <remarks>

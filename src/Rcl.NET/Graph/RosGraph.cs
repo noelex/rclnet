@@ -110,7 +110,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     /// </summary>
     public IReadOnlyCollection<RosAction> Actions => (IReadOnlyCollection<RosAction>)_actions.Values;
 
-    internal void Build(bool dryRun)
+    internal void Build()
     {
         try
         {
@@ -119,17 +119,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             RelationshipFixup();
             BuildActions();
 
-            if (!dryRun)
-            {
-                FireEvents();
-            }
-            else
-            {
-                _nodes.Clear();
-                _topics.Clear();
-                _services.Clear();
-                _actions.Clear();
-            }
+            FireEvents();
         }
         finally
         {

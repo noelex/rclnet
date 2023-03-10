@@ -15,7 +15,7 @@ internal class RclTimer : RclWaitObject<SafeTimerHandle>, IRclTimer
 
     protected override unsafe void OnWaitCompleted()
     {
-        rcl_timer_reset(Handle.Object);
+        rcl_timer_call(Handle.Object);
     }
 
     public unsafe bool IsPaused
