@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.2" />
-    <PackageReference Include="Rcl.NET" Version="1.1.0" />
+    <PackageReference Include="Rcl.NET" Version="1.1.1" />
   </ItemGroup>
 
   <ItemGroup>

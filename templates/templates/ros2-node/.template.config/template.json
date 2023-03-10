@@ -37,24 +37,6 @@
       ],
       "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
       "continueOnError": true
-    },
-    {
-      "id": "tools-restore",
-      "condition": "(!skipRestore)",
-      "description": "Restore .NET tools required by this project.",
-      "manualInstructions": [
-        {
-          "text": "Run 'dotnet tool restore'"
-        }
-      ],
-      "actionId": "3A7C4B45-1F5D-4A30-959A-51B88E82B5D2",
-      "continueOnError": true,
-      "args": {
-        "executable": "dotnet",
-        "args": "tool restore",
-        "redirectStandardError": false,
-        "redirectStandardOutput": false
-      }
     }
   ]
 }

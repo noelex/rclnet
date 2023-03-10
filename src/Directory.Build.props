@@ -1,7 +1,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 <PropertyGroup>
 	<Product>rclnet</Product>
-  <VersionPrefix>1.1.0</VersionPrefix>
+      <VersionPrefix>1.1.1</VersionPrefix>
 	<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
 	<PackageLicenseFile>LICENSE</PackageLicenseFile>
