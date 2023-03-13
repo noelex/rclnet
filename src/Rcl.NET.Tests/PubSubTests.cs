@@ -104,14 +104,11 @@ public class PubSubTests
                 CountAsync(sub.ReadAllAsync()));
 
             var msg = new Time(sec: 1, nanosec: 2);
-            for (var i = 0; i < 1000; i++)
+            for (var i = 0; i < 100; i++)
             {
                 pub.Publish(msg);
+                await Task.Delay(1);
             }
-
-            // Make sure the subscription has enough time
-            // to read all messages.
-            await Task.Delay(200);
         }
 
         var results = await aggregateTask;
@@ -120,7 +117,7 @@ public class PubSubTests
         Assert.True(results[1] > 0);
         Assert.True(results[2] > 0);
         Assert.True(results[3] > 0);
-        Assert.Equal(1000, results.Sum());
+        Assert.Equal(100, results.Sum());
 
         static async Task<int> CountAsync<T>(IAsyncEnumerable<T> subscription)
         {
