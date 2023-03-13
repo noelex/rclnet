@@ -59,6 +59,7 @@ public class ClockTests
             try
             {
                 using var cts = new CancellationTokenSource();
+                cts.CancelAfter(10_000);
                 using var reg = cts.CancelAfter(rosTime, node);
 
                 await Task.Delay(-1, cts.Token);

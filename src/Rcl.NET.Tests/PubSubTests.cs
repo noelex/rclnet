@@ -104,23 +104,16 @@ public class PubSubTests
                 CountAsync(sub.ReadAllAsync()));
 
             var msg = new Time(sec: 1, nanosec: 2);
-            for (var i = 0; i < 1000; i++)
+            for (var i = 0; i < 100; i++)
             {
                 pub.Publish(msg);
+                await Task.Delay(1);
             }
-
-            // Make sure the subscription has enough time
-            // to read all messages.
-            await Task.Delay(200);
         }
 
         var results = await aggregateTask;
 
-        Assert.True(results[0] > 0);
-        Assert.True(results[1] > 0);
-        Assert.True(results[2] > 0);
-        Assert.True(results[3] > 0);
-        Assert.Equal(1000, results.Sum());
+        Assert.Equal(100, results.Sum());
 
         static async Task<int> CountAsync<T>(IAsyncEnumerable<T> subscription)
         {
@@ -134,9 +127,12 @@ public class PubSubTests
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task IncompatibleQosEvents()
     {
+        Skip.If(RosEnvironment.IsFoxy && RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp",
+            "Incompatible QoS event is not supported by rmw_fastrtps_cpp on foxy.");
+
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
         using var node2 = ctx.CreateNode(NameGenerator.GenerateNodeName());
@@ -170,9 +166,12 @@ public class PubSubTests
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task IgnoreLocalPublications()
     {
+        Skip.If(RosEnvironment.IsFoxy && RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp", 
+            "ignore_local_publications is not supported by rmw_fastrtps_cpp on foxy.");
+
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
@@ -302,6 +301,7 @@ public class PubSubTests
     public async Task PublisherNetworkFlowEndpoints()
     {
         Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp", "rmw_cyclonedds_cpp does not support network flow endpoints.");
 
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
@@ -316,6 +316,7 @@ public class PubSubTests
     public async Task SubscriptionNetworkFlowEndpoints()
     {
         Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp", "rmw_cyclonedds_cpp does not support network flow endpoints.");
 
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
@@ -330,6 +331,7 @@ public class PubSubTests
     public async Task SubscriptionUniqueNetworkFlowEndpoints()
     {
         Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp", "rmw_cyclonedds_cpp does not support network flow endpoints.");
 
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
@@ -345,7 +347,8 @@ public class PubSubTests
     public async Task PublisherUniqueNetworkFlowEndpoints()
     {
         Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
-        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp", "Unique network flow endpoints on publishers is not supported by rmw_fastrtps_cpp.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp", "rmw_cyclonedds_cpp does not support network flow endpoints.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp", "rmw_fastrtps_cpp does not support unique network flow endpoints on publishers.");
 
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());

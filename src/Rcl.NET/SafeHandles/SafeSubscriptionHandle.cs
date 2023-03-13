@@ -22,17 +22,25 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
         _node = node;
         *Object = rcl_get_zero_initialized_subscription();
 
-        var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);
-        byte* name = stackalloc byte[nameSize];
-        InteropHelpers.FillUtf8Buffer(topicName, new(name, nameSize));
+        try
+        {
+            var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);
+            byte* name = stackalloc byte[nameSize];
+            InteropHelpers.FillUtf8Buffer(topicName, new(name, nameSize));
 
-        if (RosEnvironment.IsFoxy)
-        {
-            InitFoxy(name, typeSupportHandle, options);
+            if (RosEnvironment.IsFoxy)
+            {
+                InitFoxy(name, typeSupportHandle, options);
+            }
+            else
+            {
+                InitHumbleOrLater(name, typeSupportHandle, options);
+            }
         }
-        else
+        catch
         {
-            InitHumbleOrLater(name, typeSupportHandle, options);
+            Dispose();
+            throw;
         }
     }
 
