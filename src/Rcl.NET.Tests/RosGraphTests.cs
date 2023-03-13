@@ -48,7 +48,7 @@ public class RosGraphTests
         {
             await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
             using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
-            var nodeName = "non_existent_node";
+            var nodeName = NameGenerator.GenerateNodeName();
 
             await node.Graph.TryWaitForNodeAsync(nodeName, 0);
             Assert.False(ctx.IsCurrent);
