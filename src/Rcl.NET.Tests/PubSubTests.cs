@@ -301,6 +301,7 @@ public class PubSubTests
     public async Task PublisherNetworkFlowEndpoints()
     {
         Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp", "rmw_cyclonedds_cpp does not support network flow endpoints.");
 
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
@@ -315,6 +316,7 @@ public class PubSubTests
     public async Task SubscriptionNetworkFlowEndpoints()
     {
         Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp", "rmw_cyclonedds_cpp does not support network flow endpoints.");
 
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
@@ -329,6 +331,7 @@ public class PubSubTests
     public async Task SubscriptionUniqueNetworkFlowEndpoints()
     {
         Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp", "rmw_cyclonedds_cpp does not support network flow endpoints.");
 
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
@@ -344,7 +347,8 @@ public class PubSubTests
     public async Task PublisherUniqueNetworkFlowEndpoints()
     {
         Skip.If(RosEnvironment.IsFoxy, "Network flow endpoints is only supported on humble or later.");
-        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp", "Unique network flow endpoints on publishers is not supported by rmw_fastrtps_cpp.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp", "rmw_cyclonedds_cpp does not support network flow endpoints.");
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp", "rmw_fastrtps_cpp does not support unique network flow endpoints on publishers.");
 
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
