@@ -1,5 +1,3 @@
-using static Rcl.Interop.RclCommon;
-
 namespace Rcl.SafeHandles;
 
 unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
@@ -8,10 +6,17 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
         SafeContextHandle context, SafeClockHandle clock, long period)
     {
         *Object = rcl_get_zero_initialized_timer();
-
-        RclException.ThrowIfNonSuccess(
-            rcl_timer_init(Object, clock.Object, context.Object,
-              period, null, RclAllocator.Default.Object));
+        try
+        {
+            RclException.ThrowIfNonSuccess(
+                rcl_timer_init(Object, clock.Object, context.Object,
+                  period, null, RclAllocator.Default.Object));
+        }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     protected override void ReleaseHandleCore(rcl_timer_t* ptr)
