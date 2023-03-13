@@ -79,6 +79,7 @@ jobs:
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
           rosdep update
+          apt update
           rosdep install -i -y --from-paths src/Rcl.NET.Tests
 
       - name: Setup .NET 7.0
