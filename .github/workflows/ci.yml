@@ -23,7 +23,9 @@ jobs:
       - name: Install additional ROS dependencies
         shell: cmd
         run: |
-          choco install --limit-output --no-progress --yes openssl
+          echo $PATH
+          echo $OPENSSL_CONF
+
       - name: Setup .NET 7.0
         uses: actions/setup-dotnet@v1
         with:
@@ -42,7 +44,7 @@ jobs:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
         run: |
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
-          dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
+          dotnet test -c Release --no-build --verbosity normal
 
       - name: Test (cyclonedds)
         shell: cmd
@@ -51,7 +53,7 @@ jobs:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
         run: |
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
-          dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
+          dotnet test -c Release --no-build --verbosity normal
 
   test_ubuntu:
     runs-on: ubuntu-latest
@@ -101,7 +103,7 @@ jobs:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-          dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
+          dotnet test -c Release --no-build --verbosity normal
 
       - name: Test (cyclonedds)
         working-directory: src/Rcl.NET.Tests
@@ -109,7 +111,7 @@ jobs:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-          dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
+          dotnet test -c Release --no-build --verbosity normal
 
   #test_macos:
   #  runs-on: macos-latest
