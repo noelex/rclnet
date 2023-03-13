@@ -26,14 +26,14 @@ jobs:
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
           rosdep update
-          rosdep install -i --from-paths src/Rcl.NET.Tests
+          rosdep install -i -y --from-paths src/Rcl.NET.Tests
 
       - name: Install additional ROS dependencies
         if: runner.os == 'Windows'
         run: |
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
           rosdep update
-          rosdep install -i --from-paths src/Rcl.NET.Tests
+          rosdep install -i -y --from-paths src/Rcl.NET.Tests
 
       - name: Setup .NET 7.0
         uses: actions/setup-dotnet@v1
@@ -67,7 +67,7 @@ jobs:
         env:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
         run: |
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
           dotnet test -c Release --no-build --verbosity normal
 
       - name: Test (cyclonedds)
@@ -85,7 +85,7 @@ jobs:
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
         run: |
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
           dotnet test -c Release --no-build --verbosity normal
 
   test_docker:
@@ -119,14 +119,14 @@ jobs:
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
           rosdep update
-          rosdep install -i --from-paths src/Rcl.NET.Tests
+          rosdep install -i -y --from-paths src/Rcl.NET.Tests
 
       - name: Install additional ROS dependencies
         if: runner.os == 'Windows'
         run: |
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
           rosdep update
-          rosdep install -i --from-paths src/Rcl.NET.Tests
+          rosdep install -i -y --from-paths src/Rcl.NET.Tests
 
       - name: Setup .NET 7.0
         uses: actions/setup-dotnet@v1
@@ -160,7 +160,7 @@ jobs:
         env:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
         run: |
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
           dotnet test -c Release --no-build --verbosity normal
 
       - name: Test (cyclonedds)
@@ -178,5 +178,5 @@ jobs:
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
         run: |
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
           dotnet test -c Release --no-build --verbosity normal
