@@ -51,10 +51,10 @@ public class RosGraphTests
             var nodeName = "non_existent_node";
 
             await node.Graph.TryWaitForNodeAsync(nodeName, 0);
-            Assert.True(ctx.IsCurrent);
+            Assert.False(ctx.IsCurrent);
 
             await node.Graph.TryWaitForNodeAsync(nodeName, 0).ConfigureAwait(false);
-            Assert.True(ctx.IsCurrent);
+            Assert.False(ctx.IsCurrent);
 
             await using (var context1 = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: true))
             {
