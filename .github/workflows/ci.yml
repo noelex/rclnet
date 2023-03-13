@@ -22,7 +22,18 @@ jobs:
           required-ros-distributions: ${{ matrix.ros_distribution }}
 
       - name: Install additional ROS dependencies
-        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && rosdep install -i --from-paths src/Rcl.NET.Tests"
+        if: runner.os != 'Windows'
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          rosdep update
+          rosdep install -i --from-paths src/Rcl.NET.Tests
+
+      - name: Install additional ROS dependencies
+        if: runner.os == 'Windows'
+        run: |
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          rosdep update
+          rosdep install -i --from-paths src/Rcl.NET.Tests
 
       - name: Setup .NET 7.0
         uses: actions/setup-dotnet@v1
@@ -42,16 +53,40 @@ jobs:
         run: dotnet build -c Release --no-restore
       
       - name: Test (fastrtps)
+        if: runner.os != 'Windows'
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && dotnet test -c Release --no-build --verbosity normal"
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          dotnet test -c Release --no-build --verbosity normal
+
+      - name: Test (fastrtps)
+        if: runner.os == 'Windows'
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+        run: |
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          dotnet test -c Release --no-build --verbosity normal
 
       - name: Test (cyclonedds)
+        if: runner.os != 'Windows'
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
-        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && dotnet test -c Release --no-build --verbosity normal"
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          dotnet test -c Release --no-build --verbosity normal
+
+      - name: Test (cyclonedds)
+        if: runner.os == 'Windows'
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+        run: |
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          dotnet test -c Release --no-build --verbosity normal
 
   test_docker:
     runs-on: ubuntu-latest
@@ -80,7 +115,18 @@ jobs:
           required-ros-distributions: ${{ matrix.ros_distribution }}
 
       - name: Install additional ROS dependencies
-        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && rosdep install -i --from-paths src/Rcl.NET.Tests"
+        if: runner.os != 'Windows'
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          rosdep update
+          rosdep install -i --from-paths src/Rcl.NET.Tests
+
+      - name: Install additional ROS dependencies
+        if: runner.os == 'Windows'
+        run: |
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          rosdep update
+          rosdep install -i --from-paths src/Rcl.NET.Tests
 
       - name: Setup .NET 7.0
         uses: actions/setup-dotnet@v1
@@ -100,13 +146,37 @@ jobs:
         run: dotnet build -c Release --no-restore
       
       - name: Test (fastrtps)
+        if: runner.os != 'Windows'
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && dotnet test -c Release --no-build --verbosity normal"
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          dotnet test -c Release --no-build --verbosity normal
+
+      - name: Test (fastrtps)
+        if: runner.os == 'Windows'
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+        run: |
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          dotnet test -c Release --no-build --verbosity normal
 
       - name: Test (cyclonedds)
+        if: runner.os != 'Windows'
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
-        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && dotnet test -c Release --no-build --verbosity normal"
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          dotnet test -c Release --no-build --verbosity normal
+
+      - name: Test (cyclonedds)
+        if: runner.os == 'Windows'
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+        run: |
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          dotnet test -c Release --no-build --verbosity normal
