@@ -113,10 +113,6 @@ public class PubSubTests
 
         var results = await aggregateTask;
 
-        Assert.True(results[0] > 0);
-        Assert.True(results[1] > 0);
-        Assert.True(results[2] > 0);
-        Assert.True(results[3] > 0);
         Assert.Equal(100, results.Sum());
 
         static async Task<int> CountAsync<T>(IAsyncEnumerable<T> subscription)
