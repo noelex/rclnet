@@ -36,7 +36,7 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         run: |
           dotnet nuget locals all --clear
-          dotnet build -c Release --no-restore
+          dotnet build -c Release
 
       - name: Test (fastrtps)
         shell: cmd
@@ -86,7 +86,7 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         run: |
           dotnet nuget locals all --clear
-          dotnet build -c Release --no-restore
+          dotnet build -c Release
 
       - name: Test (fastrtps)
         working-directory: src/Rcl.NET.Tests
@@ -145,7 +145,7 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         run: |
           dotnet nuget locals all --clear
-          dotnet build -c Release --no-restore      
+          dotnet build -c Release
       
       - name: Test (fastrtps)
         working-directory: src/Rcl.NET.Tests
