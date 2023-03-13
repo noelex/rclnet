@@ -21,6 +21,9 @@ jobs:
         with:
           required-ros-distributions: ${{ matrix.ros_distribution }}
 
+      - name: Install additional ROS dependencies
+        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && rosdep install -i --from-paths src/Rcl.NET.Tests"
+
       - name: Setup .NET 7.0
         uses: actions/setup-dotnet@v1
         with:
@@ -38,9 +41,17 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         run: dotnet build -c Release --no-restore
       
-      - name: Test
+      - name: Test (fastrtps)
         working-directory: src/Rcl.NET.Tests
-        run: "source /opt/ros/${{ matrix.ros_distribution }}/setup.bash && dotnet test -c Release --no-build --verbosity normal"
+        env:
+          RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && dotnet test -c Release --no-build --verbosity normal"
+
+      - name: Test (cyclonedds)
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && dotnet test -c Release --no-build --verbosity normal"
 
   test_docker:
     runs-on: ubuntu-latest
@@ -68,6 +79,9 @@ jobs:
         with:
           required-ros-distributions: ${{ matrix.ros_distribution }}
 
+      - name: Install additional ROS dependencies
+        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && rosdep install -i --from-paths src/Rcl.NET.Tests"
+
       - name: Setup .NET 7.0
         uses: actions/setup-dotnet@v1
         with:
@@ -85,6 +99,14 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         run: dotnet build -c Release --no-restore
       
-      - name: Test
+      - name: Test (fastrtps)
         working-directory: src/Rcl.NET.Tests
-        run: "source /opt/ros/${{ matrix.ros_distribution }}/setup.bash && dotnet test -c Release --no-build --verbosity normal"
+        env:
+          RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && dotnet test -c Release --no-build --verbosity normal"
+
+      - name: Test (cyclonedds)
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && dotnet test -c Release --no-build --verbosity normal"
