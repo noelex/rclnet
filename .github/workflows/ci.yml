@@ -78,8 +78,9 @@ jobs:
       - name: Install additional ROS dependencies
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-          rosdep update
           apt update
+          apt install curl
+          rosdep update
           rosdep install -i -y --from-paths src/Rcl.NET.Tests
 
       - name: Setup .NET 7.0
