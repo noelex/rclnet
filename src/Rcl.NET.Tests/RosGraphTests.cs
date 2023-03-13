@@ -50,17 +50,17 @@ public class RosGraphTests
             using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
             var nodeName = NameGenerator.GenerateNodeName();
 
-            await node.Graph.TryWaitForNodeAsync(nodeName, 0);
+            await node.Graph.TryWaitForNodeAsync(nodeName, 1);
             Assert.False(ctx.IsCurrent);
 
-            await node.Graph.TryWaitForNodeAsync(nodeName, 0).ConfigureAwait(false);
+            await node.Graph.TryWaitForNodeAsync(nodeName, 1).ConfigureAwait(false);
             Assert.False(ctx.IsCurrent);
 
             await using (var context1 = new RclContext(TestConfig.DefaultContextArguments, useSynchronizationContext: true))
             {
                 await context1.Yield();
 
-                await node.Graph.TryWaitForNodeAsync(nodeName, 0);
+                await node.Graph.TryWaitForNodeAsync(nodeName, 1);
                 Assert.True(context1.IsCurrent);
             }
 
