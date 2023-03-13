@@ -29,7 +29,7 @@ jobs:
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
           apt update
-          apt install -y curl
+          apt install -y curl ros-${{ matrix.ros_distribution }}-rmw-cyclonedds-cpp ros-${{ matrix.ros_distribution }}-rmw-fastrtps-cpp
           rosdep update
           rosdep install -i -y --from-paths src/Rcl.NET.Tests
 
