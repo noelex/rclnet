@@ -1,0 +1,112 @@
+name: ci
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macOS-latest, windows-latest]
+        ros_distribution:
+          - foxy
+          - humble
+    steps:
+      - uses: actions/checkout@v2
+  
+      - name: Setup ROS environment
+        uses: ros-tooling/setup-ros@v0.6
+        with:
+          required-ros-distributions: ${{ matrix.ros_distribution }}
+
+      - name: Install additional ROS dependencies
+        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && rosdep install -i --from-paths src/Rcl.NET.Tests"
+
+      - name: Setup .NET 7.0
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Clean
+        working-directory: src/Rcl.NET.Tests
+        run: dotnet nuget locals all --clear
+
+      - name: Restore dependencies
+        working-directory: src/Rcl.NET.Tests
+        run: dotnet restore
+      
+      - name: Build
+        working-directory: src/Rcl.NET.Tests
+        run: dotnet build -c Release --no-restore
+      
+      - name: Test (fastrtps)
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && dotnet test -c Release --no-build --verbosity normal"
+
+      - name: Test (cyclonedds)
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && dotnet test -c Release --no-build --verbosity normal"
+
+  test_docker:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ros_distribution:
+          - foxy
+          - humble
+
+        include:
+          - docker_image: ubuntu:focal
+            ros_distribution: foxy
+            ros_version: 2
+
+          - docker_image: ubuntu:jammy
+            ros_distribution: humble
+            ros_version: 2
+    container:
+      image: ${{ matrix.docker_image }}
+    steps:
+      - uses: actions/checkout@v2
+  
+      - name: Setup ROS environment
+        uses: ros-tooling/setup-ros@v0.6
+        with:
+          required-ros-distributions: ${{ matrix.ros_distribution }}
+
+      - name: Install additional ROS dependencies
+        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && rosdep install -i --from-paths src/Rcl.NET.Tests"
+
+      - name: Setup .NET 7.0
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Clean
+        working-directory: src/Rcl.NET.Tests
+        run: dotnet nuget locals all --clear
+
+      - name: Restore dependencies
+        working-directory: src/Rcl.NET.Tests
+        run: dotnet restore
+      
+      - name: Build
+        working-directory: src/Rcl.NET.Tests
+        run: dotnet build -c Release --no-restore
+      
+      - name: Test (fastrtps)
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && dotnet test -c Release --no-build --verbosity normal"
+
+      - name: Test (cyclonedds)
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+        run: ". /opt/ros/${{ matrix.ros_distribution }}/setup.sh && dotnet test -c Release --no-build --verbosity normal"

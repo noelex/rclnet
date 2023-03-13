@@ -134,9 +134,12 @@ public class PubSubTests
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task IncompatibleQosEvents()
     {
+        Skip.If(RosEnvironment.IsFoxy && RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp",
+            "Incompatible QoS event is not supported by rmw_fastrtps_cpp on foxy.");
+
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
         using var node2 = ctx.CreateNode(NameGenerator.GenerateNodeName());
@@ -170,9 +173,12 @@ public class PubSubTests
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task IgnoreLocalPublications()
     {
+        Skip.If(RosEnvironment.IsFoxy && RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp", 
+            "ignore_local_publications is not supported by rmw_fastrtps_cpp on foxy.");
+
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
