@@ -20,63 +20,10 @@ jobs:
         with:
           required-ros-distributions: ${{ matrix.ros_distribution }}
 
-      #- name: Install additional ROS dependencies
-      #  shell: cmd
-      #  run: |
-      #    call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
-      #    rosdep update
-      #    rosdep install -i -y --from-paths src/Rcl.NET.Tests
-
-      - name: Setup .NET 7.0
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 7.0.x
-
-      - name: Build
-        working-directory: src/Rcl.NET.Tests
-        run: |
-          dotnet nuget locals all --clear
-          dotnet build -c Release
-
-      - name: Test (fastrtps)
-        shell: cmd
-        working-directory: src/Rcl.NET.Tests
-        env:
-          RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-        run: |
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
-          dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
-
-      - name: Test (cyclonedds)
-        shell: cmd
-        working-directory: src/Rcl.NET.Tests
-        env:
-          RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
-        run: |
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
-          dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
-
-  test_macos:
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        ros_distribution:
-          - foxy
-          - humble
-    steps:
-      - uses: actions/checkout@v2
-  
-      - name: Setup ROS environment
-        uses: ros-tooling/setup-ros@v0.6
-        with:
-          required-ros-distributions: ${{ matrix.ros_distribution }}
-
       - name: Install additional ROS dependencies
+        shell: cmd
         run: |
-          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-          rosdep update
-          rosdep install -i -y --from-paths src/Rcl.NET.Tests
-
+          choco install --limit-output --no-progress --yes openssl
       - name: Setup .NET 7.0
         uses: actions/setup-dotnet@v1
         with:
@@ -89,19 +36,21 @@ jobs:
           dotnet build -c Release
 
       - name: Test (fastrtps)
+        shell: cmd
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
         run: |
-          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
           dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
 
       - name: Test (cyclonedds)
+        shell: cmd
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
         run: |
-          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
           dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
 
   test_ubuntu:
@@ -111,7 +60,6 @@ jobs:
         ros_distribution:
           - foxy
           - humble
-
         include:
           - docker_image: ubuntu:focal
             ros_distribution: foxy
@@ -162,3 +110,51 @@ jobs:
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
           dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
+
+  #test_macos:
+  #  runs-on: macos-latest
+  #  strategy:
+  #    matrix:
+  #      ros_distribution:
+  #        - foxy
+  #        - humble
+  #  steps:
+  #    - uses: actions/checkout@v2
+  
+  #    - name: Setup ROS environment
+  #      uses: ros-tooling/setup-ros@v0.6
+  #      with:
+  #        required-ros-distributions: ${{ matrix.ros_distribution }}
+
+  #    - name: Install additional ROS dependencies
+  #      run: |
+  #        . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+  #        rosdep update
+  #        rosdep install -i -y --from-paths src/Rcl.NET.Tests
+
+  #    - name: Setup .NET 7.0
+  #      uses: actions/setup-dotnet@v1
+  #      with:
+  #        dotnet-version: 7.0.x
+
+  #    - name: Build
+  #      working-directory: src/Rcl.NET.Tests
+  #      run: |
+  #        dotnet nuget locals all --clear
+  #        dotnet build -c Release
+
+  #    - name: Test (fastrtps)
+  #      working-directory: src/Rcl.NET.Tests
+  #      env:
+  #        RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+  #      run: |
+  #        . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+  #        dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
+
+  #    - name: Test (cyclonedds)
+  #      working-directory: src/Rcl.NET.Tests
+  #      env:
+  #        RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+  #      run: |
+  #        . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+  #        dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
