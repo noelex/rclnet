@@ -8,22 +8,30 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
     {
         *Object = rcl_get_zero_initialized_node();
 
-        var nameSize = InteropHelpers.GetUtf8BufferSize(name);
-        var nsSize = InteropHelpers.GetUtf8BufferSize(@namespace);
-        Span<byte> nameBuffer = stackalloc byte[nameSize];
-        Span<byte> nsBuffer = stackalloc byte[nsSize];
-        InteropHelpers.FillUtf8Buffer(name, nameBuffer);
-        InteropHelpers.FillUtf8Buffer(@namespace, nsBuffer);
-
-        fixed (byte* namePtr = nameBuffer)
-        fixed (byte* nsPtr = nsBuffer)
+        try
         {
-            switch (RosEnvironment.Distribution)
+            var nameSize = InteropHelpers.GetUtf8BufferSize(name);
+            var nsSize = InteropHelpers.GetUtf8BufferSize(@namespace);
+            Span<byte> nameBuffer = stackalloc byte[nameSize];
+            Span<byte> nsBuffer = stackalloc byte[nsSize];
+            InteropHelpers.FillUtf8Buffer(name, nameBuffer);
+            InteropHelpers.FillUtf8Buffer(@namespace, nsBuffer);
+
+            fixed (byte* namePtr = nameBuffer)
+            fixed (byte* nsPtr = nsBuffer)
             {
-                case RosEnvironment.Foxy: InitFoxy(namePtr, nsPtr, context, options); break;
-                case RosEnvironment.Humble: InitHumble(namePtr, nsPtr, context, options); break;
-                default: throw new NotImplementedException();
+                switch (RosEnvironment.Distribution)
+                {
+                    case RosEnvironment.Foxy: InitFoxy(namePtr, nsPtr, context, options); break;
+                    case RosEnvironment.Humble: InitHumble(namePtr, nsPtr, context, options); break;
+                    default: throw new NotImplementedException();
+                }
             }
+        }
+        catch
+        {
+            Dispose();
+            throw;
         }
     }
 
