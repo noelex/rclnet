@@ -61,7 +61,7 @@ jobs:
           dotnet test -c Release --no-build --verbosity normal
 
   windows:
-    runs-on: windows-2019
+    runs-on: windows-latest
     strategy:
       matrix:
         ros_distribution:
@@ -74,10 +74,6 @@ jobs:
         uses: ros-tooling/setup-ros@v0.6
         with:
           required-ros-distributions: ${{ matrix.ros_distribution }}
-
-      - name: Install additional ROS dependencies
-        shell: cmd
-        run: refreshenv && echo PATH=%PATH% && echo OPENSSL_CONF=%OPENSSL_CONF%
 
       - name: Setup .NET 7.0
         uses: actions/setup-dotnet@v1

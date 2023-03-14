@@ -133,7 +133,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         }
 
         var cancelArgs = ObjectPool.Rent<CancellationArgs>()
-        .Reset(sequence, this, TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
+            .Reset(sequence, this, TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
 
         var outerReg = cancellationToken.Register(static s => ((CancellationArgs)s!).CancelWithOuterToken(), cancelArgs);
         var disposeReg = _shutdownSignal.Token.Register(static s => ((CancellationArgs)s!).CancelAsDisposed(), cancelArgs);

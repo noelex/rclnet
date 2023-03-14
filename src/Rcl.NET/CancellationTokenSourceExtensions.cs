@@ -117,12 +117,6 @@ public static class CancellationTokenSourceExtensions
     public static TimeoutRegistration CancelAfter(
         this CancellationTokenSource source, TimeSpan timeout, RclClock clock, RclContext context)
     {
-        if (clock.Type == RclClockType.Steady)
-        {
-            source.CancelAfter(timeout);
-            return TimeoutRegistration.Empty;
-        }
-
         if (timeout < Timeout.InfiniteTimeSpan)
         {
             throw new ArgumentOutOfRangeException(nameof(timeout), "Specified timeout value is out of range.");

@@ -9,6 +9,12 @@ Supported ROS 2 Distributions:
 - Humble Hawksbill
 - Foxy Fitzroy
 
+Supported Operating Systems:
+- Ubuntu
+- Windows
+
+Should also work on Mac OS but untested.
+
 ## Getting Started
 rclnet provides project templates to help you getting started quickly. You can install the templates using the following command:
 ```
