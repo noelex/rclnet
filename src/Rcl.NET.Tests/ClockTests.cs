@@ -9,7 +9,7 @@ public class ClockTests
 {
     private static async Task GenerateClockAsync(double scale = 1.0, CancellationToken cancellationToken = default)
     {
-        const int resolution = 10_000_000;
+        const int resolution = 1_000_000;
 
         using var context = new RclContext();
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
@@ -23,7 +23,7 @@ public class ClockTests
         {
             UpdateClock(buffer, current);
             clockPub.Publish(buffer);
-            await periodicTimer.WaitOneAsync(cancellationToken);
+            await periodicTimer.WaitOneAsync(false, cancellationToken).ConfigureAwait(false);
             current += (long)(resolution * scale);
         }
 
@@ -36,9 +36,9 @@ public class ClockTests
     }
 
     [Theory]
-    [InlineData(0.5, 200, 400, 100)]
-    [InlineData(1, 200, 200, 100)]
-    [InlineData(2, 400, 200, 100)]
+    [InlineData(0.5, 100, 200, 100)]
+    [InlineData(1, 100, 100, 100)]
+    [InlineData(2, 200, 100, 100)]
     public async Task TestCancellationTokenSourceWithRosClock(double scale, int rosTime, int actualTime, double tol)
     {
         using var clockCancellation = new CancellationTokenSource();
