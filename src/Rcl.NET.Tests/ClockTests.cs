@@ -39,40 +39,43 @@ public class ClockTests
     [InlineData(0.5, 500, 1000, 200)]
     [InlineData(1, 500, 500, 200)]
     [InlineData(2, 1000, 500, 200)]
-    public async Task TestCancellationTokenSourceWithRosClock(double scale, int rosTime, int actualTime, double tol)
+    public Task TestCancellationTokenSourceWithRosClock(double scale, int rosTime, int actualTime, double tol)
     {
-        using var clockCancellation = new CancellationTokenSource();
-        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-
-        var task = GenerateClockAsync(scale, clockCancellation.Token);
-
-        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName(),
-            options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
-
-        var sw = Stopwatch.StartNew();
-        try
+        return Task.Run(async () =>
         {
-            using var cts = new CancellationTokenSource();
-            cts.CancelAfter(10_000);
-            using var reg = cts.CancelAfter(rosTime, node);
+            using var clockCancellation = new CancellationTokenSource();
+            await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
 
-            await Task.Delay(-1, cts.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            sw.Stop();
-            Assert.Equal(actualTime, sw.ElapsedMilliseconds, tol);
-        }
-        catch (Exception e)
-        {
-            node.Logger.LogInformation(e.Message);
-            node.Logger.LogInformation(e.StackTrace);
+            var task = GenerateClockAsync(scale, clockCancellation.Token);
 
-        }
-        finally
-        {
-            clockCancellation.Cancel();
-            await Task.WhenAny(task);
-        }
+            using var node = ctx.CreateNode(NameGenerator.GenerateNodeName(),
+                options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
+
+            var sw = Stopwatch.StartNew();
+            try
+            {
+                using var cts = new CancellationTokenSource();
+                cts.CancelAfter(10_000);
+                using var reg = cts.CancelAfter(rosTime, node);
+
+                await Task.Delay(-1, cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                sw.Stop();
+                Assert.Equal(actualTime, sw.ElapsedMilliseconds, tol);
+            }
+            catch (Exception e)
+            {
+                node.Logger.LogInformation(e.Message);
+                node.Logger.LogInformation(e.StackTrace);
+
+            }
+            finally
+            {
+                clockCancellation.Cancel();
+                await Task.WhenAny(task);
+            }
+        });
     }
 }
