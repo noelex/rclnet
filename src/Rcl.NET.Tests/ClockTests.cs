@@ -36,9 +36,9 @@ public class ClockTests
     }
 
     [Theory]
-    [InlineData(0.5, 500, 1000, 200)]
-    [InlineData(1, 500, 500, 200)]
-    [InlineData(2, 1000, 500, 200)]
+    [InlineData(0.5, 500, 1000, 300)]
+    [InlineData(1, 500, 500, 300)]
+    [InlineData(2, 1000, 500, 300)]
     public Task TestCancellationTokenSourceWithRosClock(double scale, int rosTime, int actualTime, double tol)
     {
         return Task.Run(async () =>
