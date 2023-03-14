@@ -16,14 +16,14 @@ public class ClockTests
         using var clockPub = node.CreatePublisher<Clock>("/clock", new(qos: QosProfile.Clock));
 
         var current = 0L;
-        using var periodicTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(resolution / 1_000_000.0));
+        using var periodicTimer = context.CreateTimer(TimeSpan.FromMilliseconds(resolution / 1_000_000.0));
         using var buffer = RosMessageBuffer.Create<Clock>();
 
         while (!cancellationToken.IsCancellationRequested)
         {
             UpdateClock(buffer, current);
             clockPub.Publish(buffer);
-            await periodicTimer.WaitForNextTickAsync(cancellationToken);
+            await periodicTimer.WaitOneAsync(cancellationToken);
             current += (long)(resolution * scale);
         }
 
@@ -36,9 +36,9 @@ public class ClockTests
     }
 
     [Theory]
-    [InlineData(0.5, 100, 200, 50)]
-    [InlineData(1, 100, 100, 50)]
-    [InlineData(2, 200, 100, 50)]
+    [InlineData(0.5, 200, 400, 100)]
+    [InlineData(1, 200, 200, 100)]
+    [InlineData(2, 400, 200, 100)]
     public async Task TestCancellationTokenSourceWithRosClock(double scale, int rosTime, int actualTime, double tol)
     {
         using var clockCancellation = new CancellationTokenSource();
