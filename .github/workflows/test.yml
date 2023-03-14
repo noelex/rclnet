@@ -1,9 +1,10 @@
-name: ci
-
+name: test
 on:
   workflow_dispatch:
   pull_request:
-
+    branches: [main, release/*]
+  push:
+    branches: [main, release/*]
 jobs:
   test_ubuntu:
     runs-on: ubuntu-latest
@@ -16,7 +17,6 @@ jobs:
           - docker_image: ros:foxy-ros-base
             ros_distribution: foxy
             ros_version: 2
-
           - docker_image: ros:humble-ros-base
             ros_distribution: humble
             ros_version: 2
