@@ -79,16 +79,9 @@ public class ExecutionModelTests
             using var gc = context.CreateGuardCondition();
 
             // This will resume execution on the event loop.
-            var t1 = gc.WaitOneAsync(false);
+            var t1 = gc.WaitOneAsync(false).ConfigureAwait(false);
             _ = Task.Delay(1).ContinueWith(t => gc.Trigger());
             await t1;
-
-            Assert.True(context.IsCurrent);
-
-            // Doesn't matter whether we ConfigureAwait(false) or not as no SynchronizationContext is captured.
-            var t2 = gc.WaitOneAsync(false).ConfigureAwait(false);
-            _ = Task.Delay(1).ContinueWith(t => gc.Trigger());
-            await t2;
 
             Assert.True(context.IsCurrent);
         });

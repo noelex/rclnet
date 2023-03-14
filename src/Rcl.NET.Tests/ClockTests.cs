@@ -7,13 +7,11 @@ namespace Rcl.NET.Tests;
 
 public class ClockTests
 {
-    private static readonly SemaphoreSlim _concurrencyLimit = new(1);
-
-    private static async Task GenerateClockAsync(RclContext context, double scale = 1.0, CancellationToken cancellationToken = default)
+    private static async Task GenerateClockAsync(double scale = 1.0, CancellationToken cancellationToken = default)
     {
         const int resolution = 10_000_000;
 
-        //using var context = new RclContext();
+        using var context = new RclContext();
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
         using var clockPub = node.CreatePublisher<Clock>("/clock", new(qos: QosProfile.Clock));
 
@@ -43,47 +41,38 @@ public class ClockTests
     [InlineData(2, 200, 100, 50)]
     public async Task TestCancellationTokenSourceWithRosClock(double scale, int rosTime, int actualTime, double tol)
     {
-        // We don't want /clock topics interfere with each other.
-        await _concurrencyLimit.WaitAsync();
+        using var clockCancellation = new CancellationTokenSource();
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+
+        var task = GenerateClockAsync(scale, clockCancellation.Token);
+
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName(),
+            options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
+
+        var sw = Stopwatch.StartNew();
         try
         {
-            using var clockCancellation = new CancellationTokenSource();
-            await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+            using var cts = new CancellationTokenSource();
+            cts.CancelAfter(10_000);
+            using var reg = cts.CancelAfter(rosTime, node);
 
-            var task = GenerateClockAsync(ctx, scale, clockCancellation.Token);
+            await Task.Delay(-1, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            sw.Stop();
+            Assert.Equal(actualTime, sw.ElapsedMilliseconds, tol);
+        }
+        catch (Exception e)
+        {
+            node.Logger.LogInformation(e.Message);
+            node.Logger.LogInformation(e.StackTrace);
 
-            using var node = ctx.CreateNode(NameGenerator.GenerateNodeName(),
-                options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
-
-            var sw = Stopwatch.StartNew();
-            try
-            {
-                using var cts = new CancellationTokenSource();
-                cts.CancelAfter(10_000);
-                using var reg = cts.CancelAfter(rosTime, node);
-
-                await Task.Delay(-1, cts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                sw.Stop();
-                Assert.Equal(actualTime, sw.ElapsedMilliseconds, tol);
-            }
-            catch (Exception e)
-            {
-                node.Logger.LogInformation(e.Message);
-                node.Logger.LogInformation(e.StackTrace);
-
-            }
-            finally
-            {
-                clockCancellation.Cancel();
-                await Task.WhenAny(task);
-            }
         }
         finally
         {
-            _concurrencyLimit.Release();
+            clockCancellation.Cancel();
+            await Task.WhenAny(task);
         }
     }
 }
