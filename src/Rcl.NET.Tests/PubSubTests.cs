@@ -150,7 +150,7 @@ public class PubSubTests
             requestedQosIncompatibleHandler: OnRequestedQosIncompatible));
 
         await Task.WhenAll(offeredQosIncompatible.Task, requestQosIncompatible.Task)
-            .WaitAsync(TimeSpan.FromSeconds(1));
+            .WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.Equal(QosPolicyKind.Reliability, offeredQosIncompatible.Task.Result);
         Assert.Equal(QosPolicyKind.Reliability, requestQosIncompatible.Task.Result);

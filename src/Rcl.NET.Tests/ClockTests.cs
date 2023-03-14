@@ -11,7 +11,7 @@ public class ClockTests
     {
         const int resolution = 1_000_000;
 
-        using var context = new RclContext();
+        await using var context = new RclContext();
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
         using var clockPub = node.CreatePublisher<Clock>("/clock", new(qos: QosProfile.Clock));
 
