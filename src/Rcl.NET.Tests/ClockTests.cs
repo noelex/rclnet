@@ -65,16 +65,10 @@ public class ClockTests
                 sw.Stop();
                 Assert.Equal(actualTime, sw.ElapsedMilliseconds, tol);
             }
-            catch (Exception e)
-            {
-                node.Logger.LogInformation(e.Message);
-                node.Logger.LogInformation(e.StackTrace);
-
-            }
             finally
             {
                 clockCancellation.Cancel();
-                await Task.WhenAny(task);
+                await Task.WhenAny(task).WaitAsync(TimeSpan.FromSeconds(5));
             }
         });
     }
