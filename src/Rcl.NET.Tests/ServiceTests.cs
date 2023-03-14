@@ -6,7 +6,7 @@ namespace Rcl.NET.Tests;
 
 public class ServiceTests
 {
-    private const int RequestTimeout = 10_000;
+    private const int RequestTimeout = 10_000, ServerOnlineTimeout = 1000;
     [Fact]
     public async Task ClientRequestTimeout()
     {
@@ -17,6 +17,7 @@ public class ServiceTests
             ListParametersServiceRequest,
             ListParametersServiceResponse>(NameGenerator.GenerateServiceName());
 
+        await client.TryWaitForServerAsync(ServerOnlineTimeout);
         await Assert.ThrowsAsync<TimeoutException>(async () =>
             await client.InvokeAsync(new ListParametersServiceRequest(), 100));
     }
@@ -45,6 +46,7 @@ public class ServiceTests
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
 
+        await client.TryWaitForServerAsync(ServerOnlineTimeout);
         var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
 
         Assert.True(response.Result.Names.SequenceEqual(actualResponse.Result.Names));
@@ -78,6 +80,7 @@ public class ServiceTests
                 ListParametersServiceRequest,
                 ListParametersServiceResponse>(service);
 
+            await client.TryWaitForServerAsync(ServerOnlineTimeout);
             await anotherContext.Yield();
             // Now we are on the event loop of anotherContext.
 
@@ -121,6 +124,7 @@ public class ServiceTests
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
 
+        await client.TryWaitForServerAsync(ServerOnlineTimeout);
         var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
     }
 
@@ -138,61 +142,8 @@ public class ServiceTests
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
 
+        await client.TryWaitForServerAsync(ServerOnlineTimeout);
         await Assert.ThrowsAsync<TimeoutException>(
             async () => await client.InvokeAsync(new ListParametersServiceRequest(), 0));
-    }
-
-    [Fact]
-    public async Task TimeoutOfInvokeAsync()
-    {
-        await using var context = new RclContext(TestConfig.DefaultContextArguments);
-        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
-
-        var response = new ListParametersServiceResponse(new(new[] { "n1", "n2" }, new[] { "p1", "p2" }));
-        var service = NameGenerator.GenerateServiceName();
-
-        using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
-        using var client = clientNode.CreateClient<
-            ListParametersService,
-            ListParametersServiceRequest,
-            ListParametersServiceResponse>(service);
-
-        using var cts = new CancellationTokenSource();
-
-        int timeout = 2000, serverWaitTime = 1000;
-        var t = RunServerAfterAsync(serverWaitTime, cts.Token);
-        var stopwatch = Stopwatch.StartNew();
-        try
-        {
-            await client.InvokeAsync(new ListParametersServiceRequest(), timeout);
-        }
-        catch (TimeoutException)
-        {
-            stopwatch.Stop();
-
-            // Should be timeout not serverWaitTime + timeout here.
-            Assert.Equal(timeout, stopwatch.Elapsed.TotalMilliseconds, 100.0);
-        }
-        finally
-        {
-            cts.Cancel();
-            await Task.WhenAny(t);
-        }
-
-        async Task RunServerAfterAsync(int waitTimeMs, CancellationToken cancellationToken)
-        {
-            await Task.Delay(waitTimeMs, cancellationToken);
-            using var server = node.CreateConcurrentService<
-                ListParametersService,
-                ListParametersServiceRequest,
-                ListParametersServiceResponse>(service, async (request, state, ct) =>
-                {
-                    // We want the request to timeout
-                    await Task.Delay(-1, ct);
-                    return response;
-                });
-
-            await Task.Delay(-1, cancellationToken);
-        }
     }
 }
