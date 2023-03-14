@@ -1,4 +1,6 @@
-﻿namespace Rcl.NET.Tests;
+﻿using Rcl.Graph;
+
+namespace Rcl.NET.Tests;
 
 public class RosGraphTests
 {
@@ -26,6 +28,11 @@ public class RosGraphTests
 
         cts.Cancel();
         await Task.WhenAny(t);
+
+        // Wait until node disappears
+        await node.Graph.TryWaitForEventAsync((x,state) =>
+            x is NodeDisappearedEvent nde &&
+            nde.Node.Name.FullyQualifiedName == nodeNameToBeWaited, null, 500);
 
         isOnline = await node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 0);
         Assert.False(isOnline);
