@@ -21,7 +21,7 @@ jobs:
     container:
       image: ${{ matrix.docker_image }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install additional ROS dependencies
         run: |
@@ -32,7 +32,7 @@ jobs:
           rosdep install -i -y --from-paths src/Rcl.NET.Tests
 
       - name: Setup .NET 7.0
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 7.0.x
 
@@ -73,7 +73,7 @@ jobs:
           - ros_distribution: foxy
             ros_archive: https://github.com/ros2/ros2/releases/download/release-foxy-20221021/ros2-foxy-20221021-windows-release-amd64.zip
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
   
       - name: Install dependencies
         run: |
@@ -96,7 +96,7 @@ jobs:
           Expand-Archive -Path ros2-release.zip c:/dev/${{ matrix.ros_distribution }}
 
       - name: Setup .NET 7.0
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 7.0.x
 
