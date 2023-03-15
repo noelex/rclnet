@@ -1,7 +1,9 @@
 ﻿using Rosidl.Runtime;
+using System;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Channels;
 
 namespace Rcl.Actions.Client;
@@ -108,6 +110,34 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
     {
         using var buffer = await GetResultAsync(timeout, cancellationToken);
         return (TResult)TResult.CreateFrom(buffer.Data, _textEncoding);
+    }
+
+    async Task<ActionResult<TResult>> IActionGoalContext<TResult, TFeedback>.GetResultWithStatusAsync(CancellationToken cancellationToken)
+    {
+        return CreateResultWithStatus(await GetResultWithStatusAsync(cancellationToken));
+    }
+
+    async Task<ActionResult<TResult>> IActionGoalContext<TResult, TFeedback>.GetResultWithStatusAsync(int timeoutMilliseconds, CancellationToken cancellationToken)
+    {
+        return CreateResultWithStatus(await GetResultWithStatusAsync(timeoutMilliseconds, cancellationToken));
+    }
+
+    async Task<ActionResult<TResult>> IActionGoalContext<TResult, TFeedback>.GetResultWithStatusAsync(TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        return CreateResultWithStatus(await GetResultWithStatusAsync(timeout, cancellationToken));
+    }
+
+    private ActionResult<TResult> CreateResultWithStatus(ActionResult result)
+    {
+        if (!result.IsSuccessful)
+        {
+            return new(result.Status, default);
+        }
+
+        using (result.Result)
+        {
+            return new(result.Status, (TResult)TResult.CreateFrom(result.Result.Data, _textEncoding));
+        }
     }
 
     private class Subscription : IDisposable

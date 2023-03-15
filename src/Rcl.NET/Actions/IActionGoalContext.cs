@@ -68,9 +68,9 @@ public interface INativeActionGoalContext : IActionGoalContext
     /// </summary>
     /// <remarks>
     /// If the goal didn't complete with <see cref="ActionGoalStatus.Succeeded"/> status, an exception will be thrown.
-    /// <para>To wait for completion without throwing, use <see cref="IActionGoalContext.Completion"/>.</para>
+    /// <para>To wait for completion without throwing, use <see cref="GetResultWithStatusAsync(CancellationToken)"/>.</para>
     /// <para>
-    /// Though calling this method after completion is allowed.
+    /// Calling this method after completion is allowed.
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
     /// <para>
@@ -86,9 +86,9 @@ public interface INativeActionGoalContext : IActionGoalContext
     /// </summary>
     /// <remarks>
     /// If the goal didn't complete with <see cref="ActionGoalStatus.Succeeded"/> status, an exception will be thrown.
-    /// <para>To wait for completion without throwing, use <see cref="IActionGoalContext.Completion"/>.</para>
+    /// <para>To wait for completion without throwing, use <see cref="GetResultWithStatusAsync(int, CancellationToken)"/>.</para>
     /// <para>
-    /// Though calling this method after completion is allowed.
+    /// Calling this method after completion is allowed.
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
     /// <para>
@@ -105,9 +105,9 @@ public interface INativeActionGoalContext : IActionGoalContext
     /// </summary>
     /// <remarks>
     /// If the goal didn't complete with <see cref="ActionGoalStatus.Succeeded"/> status, an exception will be thrown.
-    /// <para>To wait for completion without throwing, use <see cref="IActionGoalContext.Completion"/>.</para>
+    /// <para>To wait for completion without throwing, use <see cref="GetResultWithStatusAsync(TimeSpan, CancellationToken)"/>.</para>
     /// <para>
-    /// Though calling this method after completion is allowed.
+    /// Calling this method after completion is allowed.
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
     /// <para>
@@ -118,6 +118,56 @@ public interface INativeActionGoalContext : IActionGoalContext
     /// <param name="timeout">Request timeout.</param>
     /// <returns></returns>
     Task<RosMessageBuffer> GetResultAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the result and status of the goal.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Calling this method after completion is allowed.
+    /// Action servers may or may not return result according to their configured result caching policy.
+    /// </para>
+    /// <para>
+    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
+    /// </para>
+    /// </remarks>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<ActionResult> GetResultWithStatusAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the result and status of the goal.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Calling this method after completion is allowed.
+    /// Action servers may or may not return result according to their configured result caching policy.
+    /// </para>
+    /// <para>
+    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
+    /// </para>
+    /// </remarks>
+    /// <param name="cancellationToken"></param>
+    /// <param name="timeoutMilliseconds">Request timeout in milliseconds.</param>
+    /// <returns></returns>
+    Task<ActionResult> GetResultWithStatusAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the result and status of the goal.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Calling this method after completion is allowed.
+    /// Action servers may or may not return result according to their configured result caching policy.
+    /// </para>
+    /// <para>
+    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
+    /// </para>
+    /// </remarks>
+    /// <param name="cancellationToken"></param>
+    /// <param name="timeout">Request timeout.</param>
+    /// <returns></returns>
+    Task<ActionResult> GetResultWithStatusAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Asynchronously read all feedback messages.
@@ -153,9 +203,9 @@ public interface IActionGoalContext<TResult, TFeedback> : IActionGoalContext, IO
     /// </summary>
     /// <remarks>
     /// If the goal didn't complete with <see cref="ActionGoalStatus.Succeeded"/> status, an exception will be thrown.
-    /// <para>To wait for completion without throwing, use <see cref="IActionGoalContext.Completion"/>.</para>
+    /// <para>To wait for completion without throwing, use <see cref="GetResultWithStatusAsync(CancellationToken)"/>.</para>
     /// <para>
-    /// Though calling this method after completion is allowed.
+    /// Calling this method after completion is allowed.
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
     /// </remarks>
@@ -168,9 +218,9 @@ public interface IActionGoalContext<TResult, TFeedback> : IActionGoalContext, IO
     /// </summary>
     /// <remarks>
     /// If the goal didn't complete with <see cref="ActionGoalStatus.Succeeded"/> status, an exception will be thrown.
-    /// <para>To wait for completion without throwing, use <see cref="IActionGoalContext.Completion"/>.</para>
+    /// <para>To wait for completion without throwing, use <see cref="GetResultWithStatusAsync(int, CancellationToken)"/>.</para>
     /// <para>
-    /// Though calling this method after completion is allowed.
+    /// Calling this method after completion is allowed.
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
     /// </remarks>
@@ -184,9 +234,9 @@ public interface IActionGoalContext<TResult, TFeedback> : IActionGoalContext, IO
     /// </summary>
     /// <remarks>
     /// If the goal didn't complete with <see cref="ActionGoalStatus.Succeeded"/> status, an exception will be thrown.
-    /// <para>To wait for completion without throwing, use <see cref="IActionGoalContext.Completion"/>.</para>
+    /// <para>To wait for completion without throwing, use <see cref="GetResultWithStatusAsync(TimeSpan, CancellationToken)"/>.</para>
     /// <para>
-    /// Though calling this method after completion is allowed.
+    /// Calling this method after completion is allowed.
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
     /// <para>
@@ -194,9 +244,44 @@ public interface IActionGoalContext<TResult, TFeedback> : IActionGoalContext, IO
     /// </para>
     /// </remarks>
     /// <param name="cancellationToken"></param>
-    /// <param name="timeout">Request timeout in milliseconds.</param>
+    /// <param name="timeout">Request timeout.</param>
     /// <returns></returns>
     Task<TResult> GetResultAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the result and status of the goal.
+    /// </summary>
+    /// <remarks>
+    /// Calling this method after completion is allowed.
+    /// Action servers may or may not return result according to their configured result caching policy.
+    /// </remarks>
+    /// <param name="cancellationToken"></param>
+    /// <returns>An <see cref="ActionResult{TResult}"/> containing the status of the goal and action result.</returns>
+    Task<ActionResult<TResult>> GetResultWithStatusAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the result and status of the goal.
+    /// </summary>
+    /// <remarks>
+    /// Calling this method after completion is allowed.
+    /// Action servers may or may not return result according to their configured result caching policy.
+    /// </remarks>
+    /// <param name="cancellationToken"></param>
+    /// <returns>An <see cref="ActionResult{TResult}"/> containing the status of the goal and action result.</returns>
+    /// <param name="timeoutMilliseconds">Request timeout in milliseconds.</param>
+    Task<ActionResult<TResult>> GetResultWithStatusAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the result and status of the goal.
+    /// </summary>
+    /// <remarks>
+    /// Calling this method after completion is allowed.
+    /// Action servers may or may not return result according to their configured result caching policy.
+    /// </remarks>
+    /// <param name="cancellationToken"></param>
+    /// <returns>An <see cref="ActionResult{TResult}"/> containing the status of the goal and action result.</returns>
+    /// <param name="timeout">Request timeout.</param>
+    Task<ActionResult<TResult>> GetResultWithStatusAsync(TimeSpan timeout, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Asynchronously read all feedback messages.

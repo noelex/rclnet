@@ -82,14 +82,14 @@ jobs:
           choco install --limit-output --no-progress -y -s . tinyxml2
           choco install --limit-output --no-progress -y openssl
 
-      - name: Cache ROS Installation
+      - name: Restore cached ROS installation
         id: ros-cache
         uses: actions/cache@v3
         with:
           path: c:/dev/${{ matrix.ros_distribution }}/
           key: ${{ matrix.ros_archive }}
 
-      - name: Install ROS
+      - name: Download and install ROS
         if: ${{ steps.ros-cache.outputs.cache-hit != 'true' }}
         run: |
           Invoke-WebRequest -Uri ${{ matrix.ros_archive }} -OutFile ros2-release.zip

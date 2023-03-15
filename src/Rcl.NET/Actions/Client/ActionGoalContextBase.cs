@@ -57,12 +57,19 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
 
     public async Task<RosMessageBuffer> GetResultAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
+        var result = await GetResultWithStatusAsync(timeout, cancellationToken);
+        ThrowIfNonSuccess(result.Status);
+        return result.Result;
+    }
+
+    public async Task<ActionResult> GetResultWithStatusAsync(TimeSpan timeout, CancellationToken cancellationToken)
+    {
         using var requestBuffer = _client.GetResultClient.CreateRequestBuffer();
         BuildRequest(requestBuffer.Data);
 
         using var response = await _client.GetResultClient.InvokeAsync(requestBuffer, timeout, cancellationToken);
-        ThrowIfNonSuccess(ProcessResponse(response.Data, out var result));
-        return result;
+        var status = ProcessResponse(response.Data, out var result);
+        return new(status, result);
 
         void BuildRequest(nint requestBuffer)
         {
@@ -97,6 +104,12 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
             return state;
         }
     }
+
+    public async Task<ActionResult> GetResultWithStatusAsync(int timeoutMilliseconds, CancellationToken cancellationToken)
+        => await GetResultWithStatusAsync(TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
+
+    public async Task<ActionResult> GetResultWithStatusAsync(CancellationToken cancellationToken)
+        => await GetResultWithStatusAsync(Timeout.InfiniteTimeSpan, cancellationToken);
 
     public async Task CancelAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
