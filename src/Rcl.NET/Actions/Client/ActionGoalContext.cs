@@ -26,8 +26,8 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
         var opts = new BoundedChannelOptions(actionClient.Options.QueueSize)
         {
             AllowSynchronousContinuations = actionClient.Options.AllowSynchronousContinuations,
-            SingleReader = true,
-            SingleWriter = false,
+            SingleReader = false,
+            SingleWriter = true,
             FullMode = actionClient.Options.FullMode
         };
         _feedbackChannel = Channel

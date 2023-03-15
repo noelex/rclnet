@@ -211,12 +211,13 @@ public class PubSubTests
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
+        var qos = new QosProfile(Depth: 10, Reliability: ReliabilityPolicy.Reliable);
         var topic = NameGenerator.GenerateTopicName();
-        using var pub = node.CreatePublisher<Time>(topic);
+        using var pub = node.CreatePublisher<Time>(topic, new(qos: qos));
 
         Task<int> t;
         using (var sub = node.CreateSubscription<Time>(topic,
-            new(contentFilter: new("sec < 5"))))
+            new(qos: qos, contentFilter: new("sec < 5"))))
         {
             t = CountMessagesAsync(sub.ReadAllAsync());
             for (var i = 0; i < 10; i++)
@@ -250,12 +251,13 @@ public class PubSubTests
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
+        var qos = new QosProfile(Depth: 10, Reliability: ReliabilityPolicy.Reliable);
         var topic = NameGenerator.GenerateTopicName();
-        using var pub = node.CreatePublisher<Time>(topic);
+        using var pub = node.CreatePublisher<Time>(topic, options: new(qos: qos));
 
         Task<int> t;
         using (var sub = node.CreateSubscription<Time>(topic,
-            new(contentFilter: new("sec > %0 AND sec < %1", "3", "7"))))
+            new(qos: qos, contentFilter: new("sec > %0 AND sec < %1", "3", "7"))))
         {
             t = CountMessagesAsync(sub.ReadAllAsync());
             for (var i = 0; i < 10; i++)
