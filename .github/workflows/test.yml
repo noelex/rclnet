@@ -13,6 +13,11 @@ jobs:
         ros_distribution:
           - foxy
           - humble
+        include:
+          - ros_distribution: foxy
+            docker_image: ros:foxy-ros-base
+          - ros_distribution: humble
+            docker_image: ros:humble-ros-base
     container:
       image: ${{ matrix.docker_image }}
     steps:
@@ -74,15 +79,27 @@ jobs:
         run: |
           reg add HKCU\SOFTWARE\Kitware\CMake /f
           Invoke-WebRequest -Uri https://github.com/ros2/choco-packages/releases/download/2022-03-15/tinyxml2.6.0.0.nupkg -OutFile tinyxml2.6.0.0.nupkg
-          choco install -y -s . tinyxml2
-          choco install -y openssl
+          choco install --limit-output --no-progress -y -s . tinyxml2
+          choco install --limit-output --no-progress -y openssl
           refreshenv
           foreach ($item in (gci env:*)){ echo "$($item.Name)=$($item.Value)" >> $env.GITHUB_ENV }
 
-      - name: Setup ROS Environment
+      - name: Cache ROS Installation
+        id: ros-cache
+        uses: actions/cache@v3
+        with:
+          path: c:/dev/${{ matrix.ros_distribution }}/
+          key: ${{ matrix.ros_archive }}
+
+      - name: Install ROS
+        if: ${{ steps.ros-cache.outputs.cache-hit != 'true' }}
         run: |
           Invoke-WebRequest -Uri ${{ matrix.ros_archive }} -OutFile ros2-release.zip
           Expand-Archive -Path ros2-release.zip c:/dev/${{ matrix.ros_distribution }}
+      
+      - name: Configure ROS Environment
+        run: |
+          refreshenv
           c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
           foreach ($item in (gci env:*)){ echo "$($item.Name)=$($item.Value)" >> $env.GITHUB_ENV }
 
@@ -103,7 +120,7 @@ jobs:
         env:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
           ROS_LOCALHOST_ONLY: 1
-        run: refreshenv && call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
+        run: dotnet test -c Release --no-build
 
       - name: Test (cyclonedds)
         shell: cmd
@@ -111,7 +128,7 @@ jobs:
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
           ROS_LOCALHOST_ONLY: 1
-        run: refreshenv && call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
+        run: dotnet test -c Release --no-build
 
   #test_macos:
   #  runs-on: macos-latest

@@ -10,6 +10,7 @@ public sealed class RclClock : IRclClock
     /// <summary>
     /// Create a new <see cref="RclClock"/> with specific type.
     /// </summary>
+    /// <param name="context"><see cref="RclContext"/> to attach the clock.</param>
     /// <param name="type">Type of the clock to create.</param>
     internal RclClock(RclContext context, RclClockType type)
     {
