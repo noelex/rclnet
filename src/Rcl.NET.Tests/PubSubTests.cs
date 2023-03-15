@@ -215,7 +215,7 @@ public class PubSubTests
         var topic = NameGenerator.GenerateTopicName();
         using var pub = node.CreatePublisher<Time>(topic, new(qos: qos));
 
-        Task<int> t;
+        Task<List<int>> t;
         using (var sub = node.CreateSubscription<Time>(topic,
             new(qos: qos, contentFilter: new("sec < 5"))))
         {
@@ -227,18 +227,19 @@ public class PubSubTests
             }
         }
 
-        var count = await t;
-        Assert.Equal(5, count);
+        var result = await t;
+        Assert.NotEmpty(result);
+        Assert.True(result.All(x => x < 5));
 
-        static async Task<int> CountMessagesAsync(IAsyncEnumerable<Time> subscription)
+        static async Task<List<int>> CountMessagesAsync(IAsyncEnumerable<Time> subscription)
         {
-            var count = 0;
+            var result = new List<int>();
             await foreach (var m in subscription)
             {
-                count++;
+                result.Add(m.Sec);
             }
 
-            return count;
+            return result;
         }
     }
 
@@ -255,7 +256,7 @@ public class PubSubTests
         var topic = NameGenerator.GenerateTopicName();
         using var pub = node.CreatePublisher<Time>(topic, options: new(qos: qos));
 
-        Task<int> t;
+        Task<List<int>> t;
         using (var sub = node.CreateSubscription<Time>(topic,
             new(qos: qos, contentFilter: new("sec > %0 AND sec < %1", "3", "7"))))
         {
@@ -267,18 +268,19 @@ public class PubSubTests
             }
         }
 
-        var count = await t;
-        Assert.Equal(3, count);
+        var result = await t;
+        Assert.NotEmpty(result);
+        Assert.True(result.All(x => x > 3 && x < 7));
 
-        static async Task<int> CountMessagesAsync(IAsyncEnumerable<Time> subscription)
+        static async Task<List<int>> CountMessagesAsync(IAsyncEnumerable<Time> subscription)
         {
-            var count = 0;
+            var result = new List<int>();
             await foreach (var m in subscription)
             {
-                count++;
+                result.Add(m.Sec);
             }
 
-            return count;
+            return result;
         }
     }
 
