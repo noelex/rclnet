@@ -13,13 +13,6 @@ jobs:
         ros_distribution:
           - foxy
           - humble
-        include:
-          - docker_image: ros:foxy-ros-base
-            ros_distribution: foxy
-            ros_version: 2
-          - docker_image: ros:humble-ros-base
-            ros_distribution: humble
-            ros_version: 2
     container:
       image: ${{ matrix.docker_image }}
     steps:
@@ -48,6 +41,7 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+          ROS_LOCALHOST_ONLY: 1
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
           dotnet test -c Release --no-build
@@ -56,6 +50,7 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+          ROS_LOCALHOST_ONLY: 1
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
           dotnet test -c Release --no-build
@@ -67,13 +62,29 @@ jobs:
         ros_distribution:
           - foxy
           - humble
+        include:
+          - ros_distribution: humble
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-humble-20230308/ros2-humble-20230308-windows-release-amd64.zip
+          - ros_distribution: foxy
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-foxy-20221021/ros2-foxy-20221021-windows-release-amd64.zip
     steps:
       - uses: actions/checkout@v2
   
-      - name: Setup ROS environment
-        uses: ros-tooling/setup-ros@v0.6
-        with:
-          required-ros-distributions: ${{ matrix.ros_distribution }}
+      - name: Install dependencies
+        run: |
+          reg add HKCU\SOFTWARE\Kitware\CMake /f
+          Invoke-WebRequest -Uri https://github.com/ros2/choco-packages/releases/download/2022-03-15/tinyxml2.6.0.0.nupkg -OutFile tinyxml2.6.0.0.nupkg
+          choco install -y -s . tinyxml2
+          choco install -y openssl
+          refreshenv
+          foreach ($item in (gci env:*)){ echo "$($item.Name)=$($item.Value)" >> $env.GITHUB_ENV }
+
+      - name: Setup ROS Environment
+        run: |
+          Invoke-WebRequest -Uri ${{ matrix.ros_archive }} -OutFile ros2-release.zip
+          Expand-Archive -Path ros2-release.zip c:/dev/${{ matrix.ros_distribution }}
+          c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          foreach ($item in (gci env:*)){ echo "$($item.Name)=$($item.Value)" >> $env.GITHUB_ENV }
 
       - name: Setup .NET 7.0
         uses: actions/setup-dotnet@v1
@@ -91,6 +102,7 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+          ROS_LOCALHOST_ONLY: 1
         run: refreshenv && call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
 
       - name: Test (cyclonedds)
@@ -98,6 +110,7 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+          ROS_LOCALHOST_ONLY: 1
         run: refreshenv && call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
 
   #test_macos:
