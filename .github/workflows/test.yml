@@ -96,12 +96,6 @@ jobs:
         run: |
           Invoke-WebRequest -Uri ${{ matrix.ros_archive }} -OutFile ros2-release.zip
           Expand-Archive -Path ros2-release.zip c:/dev/${{ matrix.ros_distribution }}
-      
-      - name: Configure ROS Environment
-        run: |
-          refreshenv
-          c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
-          foreach ($item in (gci env:*)){ echo "$($item.Name)=$($item.Value)" >> $env.GITHUB_ENV }
 
       - name: Setup .NET 7.0
         uses: actions/setup-dotnet@v1
@@ -120,7 +114,7 @@ jobs:
         env:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
           ROS_LOCALHOST_ONLY: 1
-        run: dotnet test -c Release --no-build
+        run: c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
 
       - name: Test (cyclonedds)
         shell: cmd
@@ -128,7 +122,7 @@ jobs:
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
           ROS_LOCALHOST_ONLY: 1
-        run: dotnet test -c Release --no-build
+        run: c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
 
   #test_macos:
   #  runs-on: macos-latest

@@ -19,6 +19,7 @@ public sealed class RclClock : IRclClock
 
     internal RclClockImpl Impl => _impl;
 
+    /// <inheritdoc/>
     public RclContext Context => _impl.Context;
 
     /// <inheritdoc/>
