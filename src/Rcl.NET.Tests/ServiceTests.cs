@@ -7,6 +7,7 @@ namespace Rcl.NET.Tests;
 public class ServiceTests
 {
     private const int RequestTimeout = 10_000, ServerOnlineTimeout = 1000;
+
     [Fact]
     public async Task ClientRequestTimeout()
     {
@@ -17,9 +18,8 @@ public class ServiceTests
             ListParametersServiceRequest,
             ListParametersServiceResponse>(NameGenerator.GenerateServiceName());
 
-        await client.TryWaitForServerAsync(ServerOnlineTimeout);
-        await Assert.ThrowsAsync<TimeoutException>(async () =>
-            await client.InvokeAsync(new ListParametersServiceRequest(), 100));
+        await Assert.ThrowsAsync<TimeoutException>(() =>
+            client.InvokeAsync(new ListParametersServiceRequest(), 100));
     }
 
     [Fact]
@@ -133,17 +133,12 @@ public class ServiceTests
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
-
-        var service = NameGenerator.GenerateServiceName();
-
-        using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
-        using var client = clientNode.CreateClient<
+        using var client = node.CreateClient<
             ListParametersService,
             ListParametersServiceRequest,
-            ListParametersServiceResponse>(service);
+            ListParametersServiceResponse>(NameGenerator.GenerateServiceName());
 
-        await client.TryWaitForServerAsync(ServerOnlineTimeout);
-        await Assert.ThrowsAsync<TimeoutException>(
-            async () => await client.InvokeAsync(new ListParametersServiceRequest(), 0));
+        await Assert.ThrowsAsync<TimeoutException>(() =>
+            client.InvokeAsync(new ListParametersServiceRequest(), 0));
     }
 }

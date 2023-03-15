@@ -268,7 +268,7 @@ public sealed class RclContext : IRclContext
         Interrupt();
     }
 
-    private void RegisterWaitHandle(long token, RclObjectHandle handle, Action<object?> callback, object? state)
+    private void RegisterWaitHandle(long token, RclObjectHandle handle, Action<RclObjectHandle, object?> callback, object? state)
     {
         ThrowIfDisposed();
 
@@ -342,14 +342,14 @@ public sealed class RclContext : IRclContext
         Interrupt();
     }
 
-    internal WaitHandleRegistration Register(SafeTimerHandle handle, Action<object?> callback, object? state = null)
+    internal WaitHandleRegistration Register(SafeTimerHandle handle, Action<RclObjectHandle, object?> callback, object? state = null)
     {
         var token = Interlocked.Increment(ref _waitHandleToken);
         RegisterWaitHandle(token, handle, callback, state);
         return new WaitHandleRegistration(this, static (ctx, x) => ctx.UnregisterWaitHandle(x), token);
     }
 
-    private WaitHandleRegistration RegisterCore<T>(RclContextualObject<T> waitObject, Action<object?> callback, object? state = null)
+    private WaitHandleRegistration RegisterCore<T>(RclContextualObject<T> waitObject, Action<RclObjectHandle, object?> callback, object? state = null)
         where T : RclObjectHandle
     {
         var token = Interlocked.Increment(ref _waitHandleToken);
@@ -357,7 +357,7 @@ public sealed class RclContext : IRclContext
         return new WaitHandleRegistration(this, static (ctx, x) => ctx.UnregisterWaitHandle(x), token);
     }
 
-    internal WaitHandleRegistration Register<T>(RclWaitObject<T> guardCondition, Action<object?> callback, object? state = null)
+    internal WaitHandleRegistration Register<T>(RclWaitObject<T> guardCondition, Action<RclObjectHandle, object?> callback, object? state = null)
         where T : RclObjectHandle
             => RegisterCore(guardCondition, callback, state);
 
@@ -531,7 +531,7 @@ public sealed class RclContext : IRclContext
         try
         {
             var wh = registry[completedHandle];
-            wh.Callback(wh.State);
+            wh.Callback(wh.WaitHandle, wh.State);
         }
         catch (Exception ex)
         {
@@ -545,7 +545,7 @@ public sealed class RclContext : IRclContext
         return (T)_features.GetOrAdd(name, featureFactory);
     }
 
-    private record struct WaitSetWorkItem(RclObjectHandle WaitHandle, Action<object?> Callback, object? State);
+    private record struct WaitSetWorkItem(RclObjectHandle WaitHandle, Action<RclObjectHandle, object?> Callback, object? State);
 
     private record struct CallbackWorkItem(SendOrPostCallback Callback, object? State, ManualResetValueTaskSource<bool>? CompletionSource);
 

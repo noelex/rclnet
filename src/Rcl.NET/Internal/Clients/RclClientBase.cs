@@ -132,6 +132,13 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
                 rcl_send_request(Handle.Object, request.Data.ToPointer(), &sequence));
         }
 
+        // The request must be added to _pendingRequests before registering cancellation token callback.
+        // Because if the cancellation token is already completed upon registration, the callback is
+        // called in place, and if the request is not in _pendingRequests, the request can never complete.
+
+        // Does not need locking or concurrent dictionary because we are on the event loop
+        _pendingRequests[sequence] = completion;
+
         var cancelArgs = ObjectPool.Rent<CancellationArgs>()
             .Reset(sequence, this, TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
 
@@ -158,8 +165,6 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         //     completionArgs.Return();
         // }
 
-        // Does not need locking or concurrent dictionary because we are on the event loop
-        _pendingRequests[sequence] = completion;
         return await new ValueTask<RosMessageBuffer>(completion, completion.Version);
     }
 

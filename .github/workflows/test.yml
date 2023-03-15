@@ -50,7 +50,7 @@ jobs:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-          dotnet test -c Release --no-build --verbosity normal
+          dotnet test -c Release --no-build
 
       - name: Test (cyclonedds)
         working-directory: src/Rcl.NET.Tests
@@ -58,7 +58,7 @@ jobs:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-          dotnet test -c Release --no-build --verbosity normal
+          dotnet test -c Release --no-build
 
   windows:
     runs-on: windows-latest
@@ -91,14 +91,14 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-        run: refreshenv && call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build --verbosity normal
+        run: refreshenv && call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
 
       - name: Test (cyclonedds)
         shell: cmd
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
-        run: refreshenv && call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build --verbosity normal
+        run: refreshenv && call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
 
   #test_macos:
   #  runs-on: macos-latest

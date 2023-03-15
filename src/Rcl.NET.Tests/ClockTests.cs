@@ -36,14 +36,11 @@ public class ClockTests
     }
 
     [SkippableTheory]
-    [InlineData(0.5, 100, 200, 50)]
-    [InlineData(1, 100, 100, 50)]
-    [InlineData(2, 200, 100, 50)]
+    [InlineData(0.5, 100, 200, 100)]
+    [InlineData(1, 100, 100, 100)]
+    [InlineData(2, 200, 100, 100)]
     public Task TestCancellationTokenSourceWithRosClock(double scale, int rosTime, int actualTime, double tol)
     {
-        Skip.If(Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true",
-            "Skipping clock tests when running by GitHub Actions because it's nearly impossible to meet the timing criteria.");
-
         return Task.Run(async () =>
         {
             using var clockCancellation = new CancellationTokenSource();

@@ -35,7 +35,6 @@ public readonly struct TimeoutRegistration : IDisposable
             _timer.Reset();
             _pool.Return(_timer);
         }
-
     }
 }
 
@@ -43,7 +42,6 @@ unsafe class ReusableTimer : IDisposable
 {
     private RclContext? _context;
     private SafeTimerHandle? _handle;
-    private CancellationTokenSource? _cts;
     private WaitHandleRegistration _registration;
 
     public void Start(CancellationTokenSource cts,
@@ -51,32 +49,30 @@ unsafe class ReusableTimer : IDisposable
     {
         _context = context;
         _handle = new SafeTimerHandle(context.Handle, clock.Handle, (long)period.TotalNanoseconds);
-        _cts = cts;
-        _registration = context.Register(_handle, OnWaitCompleted, this);
+        _registration = context.Register(_handle, OnWaitCompleted, cts);
 
         context.DefaultLogger.LogDebug($"Started new ReusableTimer {_handle.DangerousGetHandle()} with period {period}.");
     }
 
     public void Reset()
     {
-        if (!_registration.IsEmpty)
+        var ctx = Interlocked.Exchange(ref _context, null);
+        if (ctx != null)
         {
+            ctx.DefaultLogger.LogDebug($"Released ReusableTimer {_handle!.DangerousGetHandle()}.");
+
             _registration.Dispose();
             _registration = WaitHandleRegistration.Empty;
 
-            _context!.DefaultLogger.LogDebug($"Released ReusableTimer {_handle!.DangerousGetHandle()}.");
-            _context.SynchronizationContext.Post(s => ((IDisposable)s!).Dispose(), _handle);
-
-            _cts = null;
+            ctx.SynchronizationContext.Post(static s => ((IDisposable)s!).Dispose(), _handle);
             _handle = null;
-            _context = null;
         }
     }
 
-    private static void OnWaitCompleted(object? state)
+    private static unsafe void OnWaitCompleted(RclObjectHandle handle, object? state)
     {
-        var self = (ReusableTimer)state!;
-        self._cts?.Cancel();
+        rcl_timer_cancel(((SafeTimerHandle)handle).Object);
+        ((CancellationTokenSource)state!).Cancel();
     }
 
     public void Dispose()

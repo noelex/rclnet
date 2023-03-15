@@ -15,6 +15,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
     private readonly ExternalTimeSource _timeSource;
     private readonly ParameterService _parameters;
     private readonly CancellationTokenSource _cts = new();
+    private readonly RclGuardConditionImpl _graphSignal;
 
     public unsafe RclNodeImpl(
         RclContext context,
@@ -38,9 +39,9 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         Logger = context.CreateLogger(StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object))!);
 
         _graph = new(this);
-        var graphSignal = new RclGuardConditionImpl(context,
+        _graphSignal = new RclGuardConditionImpl(context,
             new(rcl_node_get_graph_guard_condition(Handle.Object)));
-        _ = GraphBuilder(graphSignal, _cts.Token);
+        _ = GraphBuilder(_graphSignal, _cts.Token);
 
         _parameters = new ParameterService(this, new());
         _timeSource = new ExternalTimeSource(this, Options.ClockQos);
@@ -82,29 +83,26 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
     {
         await Context.YieldIfNotCurrent();
 
-        using (graphSignal)
+        try
         {
-            try
+            while (true)
             {
-                while (!cancellationToken.IsCancellationRequested)
+                try
                 {
-                    try
-                    {
-                        _graph.Build();
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("Unable to build ROS graph: " + e.Message);
-                        Console.WriteLine(e.StackTrace);
-                    }
-
-                    await graphSignal.WaitOneAsync(false, cancellationToken).ConfigureAwait(false);
+                    _graph.Build();
                 }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Unable to build ROS graph: " + e.Message);
+                    Console.WriteLine(e.StackTrace);
+                }
+
+                await graphSignal.WaitOneAsync(false, cancellationToken).ConfigureAwait(false);
             }
-            finally
-            {
-                _graph.Complete();
-            }
+        }
+        finally
+        {
+            _graph.Complete();
         }
     }
 
@@ -114,7 +112,15 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         _parameters.Dispose();
         _cts.Cancel();
         _cts.Dispose();
+
+        // Graph signal must be disposed before node because the graph signal is owned by the node handle.
+        // When the node is diposed, the graph signal is also disposed internally, which is invisible to us.
+        // This will cause segfault when the event loop tries to wait for the already disposed graph signal.
+        //
+        // It's safe to dispose the signal here as the diposal happens on the event loop internally.
+        _graphSignal.Dispose();
         base.Dispose();
+
         if (!Clock.IsShared) Clock.Dispose();
     }
 }
