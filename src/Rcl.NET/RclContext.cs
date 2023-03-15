@@ -102,6 +102,9 @@ public sealed class RclContext : IRclContext
         _shutdownSignal = new SafeGuardConditionHandle(_context);
         _useSyncContext = useSynchronizationContext;
 
+        SteadyClock = new RclClock(this, RclClockType.Steady);
+        SystemClock = new RclClock(this, RclClockType.System);
+
         _mainLoopRunner = new(Run)
         {
             Name = "RCL Event Loop"
@@ -161,10 +164,18 @@ public sealed class RclContext : IRclContext
     public IRclGuardCondition CreateGuardCondition() => new RclGuardConditionImpl(this);
 
     /// <inheritdoc/>
-    public IRclTimer CreateTimer(RclClock clock, TimeSpan period) => new RclTimer(this, clock.Impl, period);
+    public IRclTimer CreateTimer(RclClock clock, TimeSpan period)
+    {
+        if(clock.Context != this)
+        {
+            throw new InvalidOperationException("Cannot create timer with a clock which is not own by current context.");
+        }
+
+        return new RclTimer(this, clock.Impl, period);
+    }
 
     /// <inheritdoc/>
-    public IRclTimer CreateTimer(TimeSpan period) => CreateTimer(RclClock.Steady, period);
+    public IRclTimer CreateTimer(TimeSpan period) => CreateTimer(SteadyClock, period);
 
     /// <inheritdoc/>
     public IRclNode CreateNode(string name, string @namespace = "/", NodeOptions? options = null)
@@ -174,6 +185,12 @@ public sealed class RclContext : IRclContext
             return new RclNodeImpl(this, name, @namespace, options);
         }
     }
+
+    /// <inheritdoc/>
+    public RclClock SteadyClock { get; }
+
+    /// <inheritdoc/>
+    public RclClock SystemClock { get; }
 
     /// <inheritdoc/>
     public YieldAwaiter Yield()
@@ -515,6 +532,13 @@ public sealed class RclContext : IRclContext
         _interruptSignal.Dispose();
         _shutdownSignal.Dispose();
         _context.Dispose();
+
+        // Don't call RclContextualObject.Dispose because the disposal
+        // won't be executed on the event loop anyway as it's already shutdown.
+        // And no one should be using these clocks at this point.
+        // So we release these clock handles directly.
+        SteadyClock.Impl.Handle.Dispose();
+        SystemClock.Impl.Handle.Dispose();
 
         if (Interlocked.Decrement(ref s_contextRefCount) == 0)
         {

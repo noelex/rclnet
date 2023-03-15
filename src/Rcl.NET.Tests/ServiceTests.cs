@@ -1,12 +1,21 @@
 ﻿using Rosidl.Messages.Rcl;
 using System.Diagnostics;
 using System.Threading;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Rcl.NET.Tests;
 
 public class ServiceTests
 {
     private const int RequestTimeout = 10_000, ServerOnlineTimeout = 1000;
+
+    private readonly ITestOutputHelper ms;
+
+    public ServiceTests(ITestOutputHelper ms)
+    {
+        this.ms = ms;
+    }
 
     [Fact]
     public async Task ClientRequestTimeout()
@@ -80,22 +89,32 @@ public class ServiceTests
                 ListParametersServiceRequest,
                 ListParametersServiceResponse>(service);
 
-            await client.TryWaitForServerAsync(ServerOnlineTimeout);
+            ms.WriteLine($"[{Environment.TickCount64}] Waiting for server...");
+            var result = await client.TryWaitForServerAsync(ServerOnlineTimeout);
+            ms.WriteLine($"[{Environment.TickCount64}] OK. Online = " +result); 
             await anotherContext.Yield();
-            // Now we are on the event loop of anotherContext.
+        // Now we are on the event loop of anotherContext.
 
-            // Captured the sync context of the anotherContext, we should be on the event loop of anotherContext.
+        // Captured the sync context of the anotherContext, we should be on the event loop of anotherContext.
+        ms.WriteLine($"[{Environment.TickCount64}] Invoke service on anotherContext...");
             await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
+        ms.WriteLine($"[{Environment.TickCount64}] OK.");
             Assert.True(anotherContext.IsCurrent);
 
-            // Suppressing the sync context.
+        // Suppressing the sync context.
+        ms.WriteLine($"[{Environment.TickCount64}] Invoke service on anotherContext with ConfigureAwait(false)...");
             await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout).ConfigureAwait(false);
+        ms.WriteLine($"[{Environment.TickCount64}] OK.");
 
-            // No captured sync context, we should be on thread pool thread.
+        // No captured sync context, we should be on thread pool thread.
+        ms.WriteLine($"[{Environment.TickCount64}] Invoke service without any sync context...");
             await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
+        ms.WriteLine($"[{Environment.TickCount64}] OK.");
             Assert.False(context.IsCurrent);
 
+        ms.WriteLine($"[{Environment.TickCount64}] Invoke service without any sync context...");
             await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout).ConfigureAwait(false);
+        ms.WriteLine($"[{Environment.TickCount64}] OK.");
             Assert.False(context.IsCurrent);
         });
     }

@@ -2,9 +2,9 @@ using Rcl.SafeHandles;
 
 namespace Rcl.Internal;
 
-class RclClockImpl : RclObject<SafeClockHandle>
+class RclClockImpl : RclContextualObject<SafeClockHandle>
 {
-    public RclClockImpl(RclClockType type) : base(new(type))
+    public RclClockImpl(RclContext context, RclClockType type) : base(context, new(type))
     {
         Type = type;
     }

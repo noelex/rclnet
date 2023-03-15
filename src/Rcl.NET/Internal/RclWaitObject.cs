@@ -9,7 +9,6 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
 
     private readonly Dictionary<int, ManualResetValueTaskSource<bool>> _awaiters = new();
     private readonly List<ManualResetValueTaskSource<bool>> _awaiterSnapshot = new();
-    private readonly CancellationTokenSource _shutdownSignal = new();
 
     private int _id, _disposed;
 

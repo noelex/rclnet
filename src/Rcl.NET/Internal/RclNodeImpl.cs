@@ -27,9 +27,9 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         Options = options ?? NodeOptions.Default;
         Clock = Options.Clock switch
         {
-            RclClockType.Ros => new(Options.Clock),
-            RclClockType.Steady => RclClock.Steady,
-            RclClockType.System => RclClock.System,
+            RclClockType.Ros  => new(context, Options.Clock),
+            RclClockType.Steady => context.SteadyClock,
+            RclClockType.System => context.SystemClock,
             _ => throw new RclException($"Unsupported clock type '{Options.Clock}'.")
         };
 
@@ -121,6 +121,6 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         _graphSignal.Dispose();
         base.Dispose();
 
-        if (!Clock.IsShared) Clock.Dispose();
+        if (Clock.Type == RclClockType.Ros) Clock.Dispose();
     }
 }
