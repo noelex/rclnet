@@ -86,14 +86,14 @@ jobs:
         id: ros-cache
         uses: actions/cache@v3
         with:
-          path: ./.ros/${{ matrix.ros_distribution }}/
+          path: c:/dev/${{ matrix.ros_distribution }}/
           key: ${{ matrix.ros_archive }}
 
       - name: Install ROS
         if: ${{ steps.ros-cache.outputs.cache-hit != 'true' }}
         run: |
           Invoke-WebRequest -Uri ${{ matrix.ros_archive }} -OutFile ros2-release.zip
-          Expand-Archive -Path ros2-release.zip ./.ros/${{ matrix.ros_distribution }}
+          Expand-Archive -Path ros2-release.zip c:/dev/${{ matrix.ros_distribution }}
 
       - name: Setup .NET 7.0
         uses: actions/setup-dotnet@v3
@@ -108,17 +108,19 @@ jobs:
 
       - name: Test (fastrtps)
         shell: cmd
+        working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
           ROS_LOCALHOST_ONLY: 1
-        run: refreshenv && call ./.ros/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test src/Rcl.NET.Tests -c Release --no-build 
+        run: refreshenv && c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
 
       - name: Test (cyclonedds)
         shell: cmd
+        working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
           ROS_LOCALHOST_ONLY: 1
-        run: refreshenv && call ./.ros/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test src/Rcl.NET.Tests -c Release --no-build 
+        run: refreshenv && c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
 
   #test_macos:
   #  runs-on: macos-latest
