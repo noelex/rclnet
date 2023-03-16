@@ -1,6 +1,35 @@
 # rclnet
 rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.
 
+## Features
+- Completely asynchronous and `async`/`await` friendly.
+- Flexible asynchronous scheduling control to fit rclnet into existing applications.
+- Unified message generation for POCOs and blittable structures.
+- Intuitive ROS graph querying and monitoring APIs.
+- Easy-to-use POCO-based APIs.
+- Fast and zero managed heap allocation APIs operating directly on native message buffers.
+- Single package with runtime support for different ROS 2 distros.
+- Builtin support for querying topic messages and ROS graph events with [Reactive Extensions](https://github.com/dotnet/reactive).
+
+### Supported ROS Features
+| Feature                 | Status | Additional Information                                                                                                                                                                                                                       |
+| ----------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Topics                  | ✅      | N/A                                                                                                                                                                                                                                          |
+| Services                | ✅      | N/A                                                                                                                                                                                                                                          |
+| Actions                 | ✅      | Managed implementation.                                                                                                                                                                                                                      |
+| Clocks                  | ✅      | Supports external time source by setting `use_sim_time` to `true`.<br/>`CancellationTokenSource`s can also be configured to cancel with timeout measured by external clock.                                                                  |
+| Timers                  | ✅      | N/A                                                                                                                                                                                                                                          |
+| Guard Conditions        | ✅      | N/A                                                                                                                                                                                                                                          |
+| Events                  | ✅      | Event handlers can be registered via `SubscriptionOptions` or `PublisherOptions` when creating the subscirption or publisher.                                                                                                                |
+| ROS Graph               | ✅      | Managed implementation.                                                                                                                                                                                                                      |
+| Logging                 | ✅      | Supports logging to stdout, /rosout and log files. Configurable with `--ros-args`.                                                                                                                                                           |
+| Content Filtered Topics | ✅      | Available since humble. 
+| Network Flow Endpoints  | ✅      | Available since galactic.<br/>Network flow endpoints of publishers and subscriptions can be retrieved via `IRclPublisher.Endpoints` and `IRclSubscription.Endpoints` property.<br/>Unique network flow endpoints requirement can be configured when creating `SubscriptionOptions` and `PublisherOptions`.|
+| Parameter Service       | ⚠️      | Supports loading parameters from command-line arguments and parameter files.<br/>Locally declared parameters are exposed via [Parameter API](https://design.ros2.org/articles/ros_parameters.html).<br/>Parameter client is not implemented. |
+| Lifecycle Nodes         | ❌      | N/A                                                                                                                                                                                                                                          |
+
+✅Supported ⚠️Partial support ❌Not supported ⏳In development
+
 ## Supported Platforms
 Supported .NET Versions:
 - .NET 7
@@ -13,7 +42,7 @@ Supported Operating Systems:
 - Ubuntu
 - Windows
 
-Should also work on Mac OS but untested.
+Should also work on macOS but untested.
 
 ## Getting Started
 rclnet provides project templates to help you getting started quickly. You can install the templates using the following command:
@@ -82,35 +111,6 @@ Assuming you've already installed the `ros2cs` utility, simply run the following
 ```
 ros2cs /path/to/ros2cs.spec
 ```
-
-## Features
-- Completely asynchronous and `async`/`await` friendly.
-- Flexible asynchronous scheduling control to fit rclnet into existing applications.
-- Unified message generation for POCOs and blittable structures.
-- Intuitive ROS graph querying and monitoring APIs.
-- Easy-to-use POCO-based APIs.
-- Fast and zero managed heap allocation APIs operating directly on native message buffers.
-- Single package with runtime support for different ROS 2 distros.
-- Builtin support for querying topic messages and ROS graph events with [Reactive Extensions](https://github.com/dotnet/reactive).
-
-### Supported ROS Features
-| Feature                 | Status | Additional Information                                                                                                                                                                                                                       |
-| ----------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Topics                  | ✅      | N/A                                                                                                                                                                                                                                          |
-| Services                | ✅      | N/A                                                                                                                                                                                                                                          |
-| Actions                 | ✅      | Managed implementation.                                                                                                                                                                                                                      |
-| Clocks                  | ✅      | Supports external time source by setting `use_sim_time` to `true`.<br/>`CancellationTokenSource`s can also be configured to cancel with timeout measured by external clock.                                                                  |
-| Timers                  | ✅      | N/A                                                                                                                                                                                                                                          |
-| Guard Conditions        | ✅      | N/A                                                                                                                                                                                                                                          |
-| Events                  | ✅      | Event handlers can be registered via `SubscriptionOptions` or `PublisherOptions` when creating the subscirption or publisher.                                                                                                                |
-| ROS Graph               | ✅      | Managed implementation.                                                                                                                                                                                                                      |
-| Logging                 | ✅      | Supports logging to stdout, /rosout and log files. Configurable with `--ros-args`.                                                                                                                                                           |
-| Content Filtered Topics | ✅      | Available since humble. 
-| Network Flow Endpoints  | ✅      | Available since galactic.<br/>Network flow endpoints of publishers and subscriptions can be retrieved via `IRclPublisher.Endpoints` and `IRclSubscription.Endpoints` property.<br/>Unique network flow endpoints requirement can be configured when creating `SubscriptionOptions` and `PublisherOptions`.|
-| Parameter Service       | ⚠️      | Supports loading parameters from command-line arguments and parameter files.<br/>Locally declared parameters are exposed via [Parameter API](https://design.ros2.org/articles/ros_parameters.html).<br/>Parameter client is not implemented. |
-| Lifecycle Nodes         | ❌      | N/A                                                                                                                                                                                                                                          |
-
-✅Supported ⚠️Partial support ❌Not supported ⏳In development
 
 ## Asynchronous Execution Model
 Unlike rclcpp and rclpy, rclnet doesn't have the concept of executors. Each `RclContext` runs its
