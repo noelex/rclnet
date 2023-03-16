@@ -59,7 +59,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
         var allocator = RclAllocator.Default.Object;
         var endpoints = RclHumble.rmw_get_zero_initialized_network_flow_endpoint_array();
-        
+
 
         try
         {
@@ -67,7 +67,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
                 RclHumble.rcl_publisher_get_network_flow_endpoints(Handle.Object, &allocator, &endpoints));
             return InteropHelpers.ConvertNetworkFlowEndpoints(ref endpoints);
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             _node.Context.DefaultLogger.LogDebug("Unable to retrieve network flow endpoints from publisher: " + e.Message);
             return Array.Empty<NetworkFlowEndpoint>();
@@ -177,7 +177,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
     public bool IsValid
          => rcl_publisher_is_valid(Handle.Object);
 
-    public NetworkFlowEndpoint[] Endpoints { get;}
+    public NetworkFlowEndpoint[] Endpoints { get; }
 
     public void Publish(RosMessageBuffer message)
     {
@@ -229,6 +229,12 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
     }
 
     public RosMessageBuffer CreateBuffer() => _introspection.CreateBuffer();
+
+    public unsafe void AssertLiveliness()
+    {
+        RclException.ThrowIfNonSuccess(
+            rcl_publisher_assert_liveliness(Handle.Object));
+    }
 
     public override void Dispose()
     {

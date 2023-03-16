@@ -94,6 +94,19 @@ public interface IRclPublisher : IRclObject
     /// </para>
     /// </returns>
     RosMessageBuffer CreateBuffer();
+
+    /// <summary>
+    /// Manually assert that this publisher is alive (for publishers created with <see cref="QosProfile.Liveliness"/> set to <see cref="LivelinessPolicy.ManualByTopic"/>).
+    /// </summary>
+    /// <remarks>
+    /// If the <see cref="QosProfile.Liveliness"/> is set to <see cref="LivelinessPolicy.ManualByTopic"/>, the creator of
+    /// this publisher may manually call this method at some point in time to signal to the rest
+    /// of the system that this topic is still alive.
+    /// <para>
+    /// This method must be called at least as often as the duration specified by <see cref="QosProfile.LivelinessLeaseDuration"/>.
+    /// </para>
+    /// </remarks>
+    void AssertLiveliness();
 }
 
 /// <summary>
