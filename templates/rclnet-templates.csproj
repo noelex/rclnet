@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageType>Template</PackageType>
-    <PackageVersion>1.1.1</PackageVersion>
     <PackageId>Rcl.NET.Templates</PackageId>
     <Title>ROS 2 Client Library Templates</Title>
     <Authors>noelex@outlook.jp</Authors>

@@ -13,23 +13,23 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
   
       - name: Setup .NET 7.0
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 7.0.x
 
       - name: Setup .NET 6.0
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 6.0.x
 
       - name: Build
-        working-directory: src
         run: |
           dotnet nuget locals all --clear
-          dotnet build -p:Version=${GITHUB_REF#refs/tags/v} -c Release
+          dotnet build -p:Version=${GITHUB_REF#refs/tags/v} -c Release src/rclnet.sln
+          dotnet build -p:Version=${GITHUB_REF#refs/tags/v} -c Release src/ros2cs.sln
 
       - name: Update Template Package Reference
         working-directory: templates/templates
