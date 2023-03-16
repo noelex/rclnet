@@ -139,7 +139,7 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
         => CancelAsync(TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
 
     public Task CancelAsync(CancellationToken cancellationToken)
-        => CancelAsync(cancellationToken);
+        => CancelAsync(Timeout.InfiniteTimeSpan, cancellationToken);
 
     private static void ThrowIfNonSuccess(ActionGoalStatus state)
     {
