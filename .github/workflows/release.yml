@@ -28,6 +28,7 @@ jobs:
       - name: Build
         run: |
           dotnet nuget locals all --clear
+          dotnet restore templates
           dotnet build -p:Version=${GITHUB_REF#refs/tags/v} -c Release src/rclnet.sln
           dotnet build -p:Version=${GITHUB_REF#refs/tags/v} -c Release src/ros2cs.sln
 
