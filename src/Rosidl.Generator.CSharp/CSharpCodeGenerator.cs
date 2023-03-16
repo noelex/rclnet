@@ -221,7 +221,7 @@ public class CSharpCodeGenerator
         Console.WriteLine($"Processed {packages.Count} package(s), " +
             $"{packages.SelectMany(x => x.Value.Messages).Count()} message definition(s) total.");
 
-        if (resolved.Count > 0)
+        if (resolved.Except(spec.Excludes).Count() > 0)
         {
             Console.WriteLine();
             Console.WriteLine("The following package(s) were automatically included as dependencies:");
@@ -231,7 +231,7 @@ public class CSharpCodeGenerator
             }
         }
 
-        if (unresolved.Count > 0)
+        if (unresolved.Except(spec.Excludes).Count() > 0)
         {
             Console.WriteLine();
             Console.WriteLine("The following package(s) were not found in configured package sources:");
