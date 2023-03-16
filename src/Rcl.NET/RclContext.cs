@@ -102,6 +102,9 @@ public sealed class RclContext : IRclContext
         _shutdownSignal = new SafeGuardConditionHandle(_context);
         _useSyncContext = useSynchronizationContext;
 
+        SteadyClock = new RclClock(this, RclClockType.Steady);
+        SystemClock = new RclClock(this, RclClockType.System);
+
         _mainLoopRunner = new(Run)
         {
             Name = "RCL Event Loop"
@@ -161,10 +164,18 @@ public sealed class RclContext : IRclContext
     public IRclGuardCondition CreateGuardCondition() => new RclGuardConditionImpl(this);
 
     /// <inheritdoc/>
-    public IRclTimer CreateTimer(RclClock clock, TimeSpan period) => new RclTimer(this, clock.Impl, period);
+    public IRclTimer CreateTimer(RclClock clock, TimeSpan period)
+    {
+        if(clock.Context != this)
+        {
+            throw new InvalidOperationException("Cannot create timer with a clock which is not own by current context.");
+        }
+
+        return new RclTimer(this, clock.Impl, period);
+    }
 
     /// <inheritdoc/>
-    public IRclTimer CreateTimer(TimeSpan period) => CreateTimer(RclClock.Steady, period);
+    public IRclTimer CreateTimer(TimeSpan period) => CreateTimer(SteadyClock, period);
 
     /// <inheritdoc/>
     public IRclNode CreateNode(string name, string @namespace = "/", NodeOptions? options = null)
@@ -174,6 +185,12 @@ public sealed class RclContext : IRclContext
             return new RclNodeImpl(this, name, @namespace, options);
         }
     }
+
+    /// <inheritdoc/>
+    public RclClock SteadyClock { get; }
+
+    /// <inheritdoc/>
+    public RclClock SystemClock { get; }
 
     /// <inheritdoc/>
     public YieldAwaiter Yield()
@@ -268,7 +285,7 @@ public sealed class RclContext : IRclContext
         Interrupt();
     }
 
-    private void RegisterWaitHandle(long token, RclObjectHandle handle, Action<object?> callback, object? state)
+    private void RegisterWaitHandle(long token, RclObjectHandle handle, Action<RclObjectHandle, object?> callback, object? state)
     {
         ThrowIfDisposed();
 
@@ -342,14 +359,14 @@ public sealed class RclContext : IRclContext
         Interrupt();
     }
 
-    internal WaitHandleRegistration Register(SafeTimerHandle handle, Action<object?> callback, object? state = null)
+    internal WaitHandleRegistration Register(SafeTimerHandle handle, Action<RclObjectHandle, object?> callback, object? state = null)
     {
         var token = Interlocked.Increment(ref _waitHandleToken);
         RegisterWaitHandle(token, handle, callback, state);
         return new WaitHandleRegistration(this, static (ctx, x) => ctx.UnregisterWaitHandle(x), token);
     }
 
-    private WaitHandleRegistration RegisterCore<T>(RclContextualObject<T> waitObject, Action<object?> callback, object? state = null)
+    private WaitHandleRegistration RegisterCore<T>(RclContextualObject<T> waitObject, Action<RclObjectHandle, object?> callback, object? state = null)
         where T : RclObjectHandle
     {
         var token = Interlocked.Increment(ref _waitHandleToken);
@@ -357,7 +374,7 @@ public sealed class RclContext : IRclContext
         return new WaitHandleRegistration(this, static (ctx, x) => ctx.UnregisterWaitHandle(x), token);
     }
 
-    internal WaitHandleRegistration Register<T>(RclWaitObject<T> guardCondition, Action<object?> callback, object? state = null)
+    internal WaitHandleRegistration Register<T>(RclWaitObject<T> guardCondition, Action<RclObjectHandle, object?> callback, object? state = null)
         where T : RclObjectHandle
             => RegisterCore(guardCondition, callback, state);
 
@@ -516,6 +533,13 @@ public sealed class RclContext : IRclContext
         _shutdownSignal.Dispose();
         _context.Dispose();
 
+        // Don't call RclContextualObject.Dispose because the disposal
+        // won't be executed on the event loop anyway as it's already shutdown.
+        // And no one should be using these clocks at this point.
+        // So we release these clock handles directly.
+        SteadyClock.Impl.Handle.Dispose();
+        SystemClock.Impl.Handle.Dispose();
+
         if (Interlocked.Decrement(ref s_contextRefCount) == 0)
         {
             rcl_logging_fini();
@@ -531,7 +555,7 @@ public sealed class RclContext : IRclContext
         try
         {
             var wh = registry[completedHandle];
-            wh.Callback(wh.State);
+            wh.Callback(wh.WaitHandle, wh.State);
         }
         catch (Exception ex)
         {
@@ -545,7 +569,7 @@ public sealed class RclContext : IRclContext
         return (T)_features.GetOrAdd(name, featureFactory);
     }
 
-    private record struct WaitSetWorkItem(RclObjectHandle WaitHandle, Action<object?> Callback, object? State);
+    private record struct WaitSetWorkItem(RclObjectHandle WaitHandle, Action<RclObjectHandle, object?> Callback, object? State);
 
     private record struct CallbackWorkItem(SendOrPostCallback Callback, object? State, ManualResetValueTaskSource<bool>? CompletionSource);
 

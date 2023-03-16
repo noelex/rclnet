@@ -1,0 +1,171 @@
+name: test
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main, release/*]
+  push:
+    branches: [main, release/*]
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ros_distribution:
+          - foxy
+          - humble
+        include:
+          - ros_distribution: foxy
+            docker_image: ros:foxy-ros-base
+          - ros_distribution: humble
+            docker_image: ros:humble-ros-base
+    container:
+      image: ${{ matrix.docker_image }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install additional ROS dependencies
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          apt update
+          apt install -y curl
+          rosdep update
+          rosdep install -i -y --from-paths src/Rcl.NET.Tests
+
+      - name: Setup .NET 7.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Build
+        working-directory: src/Rcl.NET.Tests
+        run: |
+          dotnet nuget locals all --clear
+          dotnet build -c Release
+      
+      - name: Test (fastrtps)
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+          ROS_LOCALHOST_ONLY: 1
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          dotnet test -c Release --no-build
+
+      - name: Test (cyclonedds)
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+          ROS_LOCALHOST_ONLY: 1
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          dotnet test -c Release --no-build
+
+  windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        ros_distribution:
+          - foxy
+          - humble
+        include:
+          - ros_distribution: humble
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-humble-20230308/ros2-humble-20230308-windows-release-amd64.zip
+          - ros_distribution: foxy
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-foxy-20221021/ros2-foxy-20221021-windows-release-amd64.zip
+    steps:
+      - uses: actions/checkout@v3
+  
+      - name: Install dependencies
+        run: |
+          reg add HKCU\SOFTWARE\Kitware\CMake /f
+          Invoke-WebRequest -Uri https://github.com/ros2/choco-packages/releases/download/2022-03-15/tinyxml2.6.0.0.nupkg -OutFile tinyxml2.6.0.0.nupkg
+          choco install --limit-output --no-progress -y -s . tinyxml2
+          choco install --limit-output --no-progress -y openssl
+
+      - name: Restore cached ROS installation
+        id: ros-cache
+        uses: actions/cache@v3
+        with:
+          path: c:/dev/${{ matrix.ros_distribution }}/
+          key: ${{ matrix.ros_archive }}
+
+      - name: Download and install ROS
+        if: ${{ steps.ros-cache.outputs.cache-hit != 'true' }}
+        run: |
+          Invoke-WebRequest -Uri ${{ matrix.ros_archive }} -OutFile ros2-release.zip
+          Expand-Archive -Path ros2-release.zip c:/dev/${{ matrix.ros_distribution }}
+
+      - name: Setup .NET 7.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Build
+        working-directory: src/Rcl.NET.Tests
+        run: |
+          dotnet nuget locals all --clear
+          dotnet build -c Release
+
+      - name: Test (fastrtps)
+        shell: cmd
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+          ROS_LOCALHOST_ONLY: 1
+        run: refreshenv && c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
+
+      - name: Test (cyclonedds)
+        shell: cmd
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+          ROS_LOCALHOST_ONLY: 1
+        run: refreshenv && c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
+
+  #test_macos:
+  #  runs-on: macos-latest
+  #  strategy:
+  #    matrix:
+  #      ros_distribution:
+  #        - foxy
+  #        - humble
+  #  steps:
+  #    - uses: actions/checkout@v2
+  
+  #    - name: Setup ROS environment
+  #      uses: ros-tooling/setup-ros@v0.6
+  #      with:
+  #        required-ros-distributions: ${{ matrix.ros_distribution }}
+
+  #    - name: Install additional ROS dependencies
+  #      run: |
+  #        . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+  #        rosdep update
+  #        rosdep install -i -y --from-paths src/Rcl.NET.Tests
+
+  #    - name: Setup .NET 7.0
+  #      uses: actions/setup-dotnet@v1
+  #      with:
+  #        dotnet-version: 7.0.x
+
+  #    - name: Build
+  #      working-directory: src/Rcl.NET.Tests
+  #      run: |
+  #        dotnet nuget locals all --clear
+  #        dotnet build -c Release
+
+  #    - name: Test (fastrtps)
+  #      working-directory: src/Rcl.NET.Tests
+  #      env:
+  #        RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+  #      run: |
+  #        . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+  #        dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
+
+  #    - name: Test (cyclonedds)
+  #      working-directory: src/Rcl.NET.Tests
+  #      env:
+  #        RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+  #      run: |
+  #        . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+  #        dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false

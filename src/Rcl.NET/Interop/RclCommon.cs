@@ -4812,7 +4812,7 @@ namespace Rcl.Interop
         [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
         public static extern rcl_ret_t rcl_logging_fini();
 
-        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("rcutils", CallingConvention = CallingConvention.Cdecl)]
         public static extern void rcutils_log(rcutils_log_location_t* location, int severity, byte* name, byte* format, nint args);
 
         [DllImport("rcl_yaml_param_parser", CallingConvention = CallingConvention.Cdecl)]

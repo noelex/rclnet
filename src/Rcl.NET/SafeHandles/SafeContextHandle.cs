@@ -8,9 +8,11 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
     {
         *Object = rcl_get_zero_initialized_context();
         var opts = rcl_get_zero_initialized_init_options();
-        rcl_init_options_init(&opts, RclAllocator.Default.Object);
+
         try
         {
+            RclException.ThrowIfNonSuccess(rcl_init_options_init(&opts, RclAllocator.Default.Object));
+
             int argc = args.Length;
             if (argc > 0)
             {
@@ -18,12 +20,17 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
                 Span<byte> argBuffer = stackalloc byte[bufferSize];
                 var argv = stackalloc byte*[argc];
                 InteropHelpers.FillUtf8Buffer(args, argBuffer, argv);
-                rcl_init(argc, argv, &opts, Object);
+                RclException.ThrowIfNonSuccess(rcl_init(argc, argv, &opts, Object));
             }
             else
             {
-                rcl_init(0, null, &opts, Object);
+                RclException.ThrowIfNonSuccess(rcl_init(0, null, &opts, Object));
             }
+        }
+        catch
+        {
+            Dispose();
+            throw;
         }
         finally
         {

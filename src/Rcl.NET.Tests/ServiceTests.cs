@@ -1,9 +1,15 @@
 ﻿using Rosidl.Messages.Rcl;
+using System.Diagnostics;
+using System.Threading;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Rcl.NET.Tests;
 
 public class ServiceTests
 {
+    private const int RequestTimeout = 10_000, ServerOnlineTimeout = 1000;
+
     [Fact]
     public async Task ClientRequestTimeout()
     {
@@ -14,8 +20,8 @@ public class ServiceTests
             ListParametersServiceRequest,
             ListParametersServiceResponse>(NameGenerator.GenerateServiceName());
 
-        await Assert.ThrowsAsync<TimeoutException>(async () =>
-            await client.InvokeAsync(new ListParametersServiceRequest(), 100));
+        await Assert.ThrowsAsync<TimeoutException>(() =>
+            client.InvokeAsync(new ListParametersServiceRequest(), 100));
     }
 
     [Fact]
@@ -42,7 +48,8 @@ public class ServiceTests
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
 
-        var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest());
+        await client.TryWaitForServerAsync(ServerOnlineTimeout);
+        var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
 
         Assert.True(response.Result.Names.SequenceEqual(actualResponse.Result.Names));
         Assert.True(response.Result.Prefixes.SequenceEqual(actualResponse.Result.Prefixes));
@@ -75,21 +82,22 @@ public class ServiceTests
                 ListParametersServiceRequest,
                 ListParametersServiceResponse>(service);
 
+            var result = await client.TryWaitForServerAsync(ServerOnlineTimeout);
             await anotherContext.Yield();
             // Now we are on the event loop of anotherContext.
 
             // Captured the sync context of the anotherContext, we should be on the event loop of anotherContext.
-            await client.InvokeAsync(new ListParametersServiceRequest());
+            await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
             Assert.True(anotherContext.IsCurrent);
 
             // Suppressing the sync context.
-            await client.InvokeAsync(new ListParametersServiceRequest()).ConfigureAwait(false);
+            await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout).ConfigureAwait(false);
 
             // No captured sync context, we should be on thread pool thread.
-            await client.InvokeAsync(new ListParametersServiceRequest());
+            await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
             Assert.False(context.IsCurrent);
 
-            await client.InvokeAsync(new ListParametersServiceRequest()).ConfigureAwait(false);
+            await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout).ConfigureAwait(false);
             Assert.False(context.IsCurrent);
         });
     }
@@ -118,6 +126,21 @@ public class ServiceTests
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
 
-        var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest());
+        await client.TryWaitForServerAsync(ServerOnlineTimeout);
+        var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
+    }
+
+    [Fact]
+    public async Task InvokeWithZeroTimeout()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = node.CreateClient<
+            ListParametersService,
+            ListParametersServiceRequest,
+            ListParametersServiceResponse>(NameGenerator.GenerateServiceName());
+
+        await Assert.ThrowsAsync<TimeoutException>(() =>
+            client.InvokeAsync(new ListParametersServiceRequest(), 0));
     }
 }

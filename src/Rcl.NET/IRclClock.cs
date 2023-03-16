@@ -24,4 +24,9 @@ public interface IRclClock: IRclObject
     /// depends on the underlying ROS time source. 
     /// </remarks>
     DateTimeOffset Now { get; }
+
+    /// <summary>
+    /// Gets the context which current <see cref="RclClock"/> is attached to.
+    /// </summary>
+    RclContext Context { get; }
 }

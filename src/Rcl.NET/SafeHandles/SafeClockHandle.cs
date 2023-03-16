@@ -7,8 +7,16 @@ unsafe class SafeClockHandle : RclObjectHandle<rcl_clock_t>
         *Object = new rcl_clock_t();
         var alloc=RclAllocator.Default.Object;
 
-        RclException.ThrowIfNonSuccess(
-            rcl_clock_init((rcl_clock_type_t)clockType, Object, &alloc));
+        try
+        {
+            RclException.ThrowIfNonSuccess(
+                rcl_clock_init((rcl_clock_type_t)clockType, Object, &alloc));
+        }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     protected override void ReleaseHandleCore(rcl_clock_t* ptr)

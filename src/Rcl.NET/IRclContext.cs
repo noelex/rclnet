@@ -8,6 +8,16 @@ namespace Rcl;
 public interface IRclContext : IDisposable, IAsyncDisposable
 {
     /// <summary>
+    /// Gets a shared steady clock which can be used by nodes within current context.
+    /// </summary>
+    RclClock SteadyClock { get; }
+
+    /// <summary>
+    /// Gets a shared system clock which can be used by nodes within current context.
+    /// </summary>
+    RclClock SystemClock { get; }
+
+    /// <summary>
     /// A context for scheduling executions on current <see cref="IRclContext"/> event loop.
     /// </summary>
     SynchronizationContext SynchronizationContext { get; }
@@ -37,13 +47,13 @@ public interface IRclContext : IDisposable, IAsyncDisposable
     /// <summary>
     /// Creates a timer with specified period.
     /// </summary>
-    /// <param name="clock">Clock to be used.</param>
+    /// <param name="clock">Clock to be used. The clock must be created by current context.</param>
     /// <param name="period">Period of the timer.</param>
     /// <returns>An <see cref="IRclTimer"/> object can be used for listening and controlling the timer.</returns>
     IRclTimer CreateTimer(RclClock clock, TimeSpan period);
 
     /// <summary>
-    /// Creates a timer with specified period using <see cref="RclClock.Steady"/>.
+    /// Creates a timer with specified period using <see cref="SteadyClock"/>.
     /// </summary>
     /// <param name="period">Period of the timer.</param>
     /// <returns>An <see cref="IRclTimer"/> object can be used for listening and controlling the timer.</returns>

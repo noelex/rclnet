@@ -1,0 +1,48 @@
+name: release
+on:
+  release:
+    branches: [main, release/*]
+    types:
+      - released
+jobs:
+  publish:
+    name: Release on ${{ matrix.os }}
+    environment: Release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v2
+  
+      - name: Setup .NET 7.0
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Setup .NET 6.0
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Build
+        working-directory: src
+        run: |
+          dotnet nuget locals all --clear
+          dotnet build -p:Version=${GITHUB_REF#refs/tags/v} -c Release
+
+      - name: Update Template Package Reference
+        working-directory: templates/templates
+        run: sed -i -E 's/(Version=\").+(\")/\1${GITHUB_REF#refs/tags/v}\2/' ros2-msg/Company.MessageLibrary1.csproj ros2-node/Company.Node1.csproj
+
+      - name: Pack
+        run: |
+          dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ src/Rosidl.Runtime
+          dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ src/Rcl.NET
+          dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ src/ros2cs
+          dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ templates
+      
+      - name: Publish NugGet Package
+        working-directory: bin
+        run: |
+          dotnet nuget push *.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate

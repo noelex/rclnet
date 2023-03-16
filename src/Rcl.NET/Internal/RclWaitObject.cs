@@ -9,7 +9,6 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
 
     private readonly Dictionary<int, ManualResetValueTaskSource<bool>> _awaiters = new();
     private readonly List<ManualResetValueTaskSource<bool>> _awaiterSnapshot = new();
-    private readonly CancellationTokenSource _shutdownSignal = new();
 
     private int _id, _disposed;
 
@@ -36,7 +35,7 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
 
     }
 
-    private static void OnSignalReceived(object? state)
+    private static void OnSignalReceived(RclObjectHandle handle, object? state)
     {
         var self = (RclWaitObject<T>)state!;
 
@@ -91,7 +90,7 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
     {
         if (Volatile.Read(ref _disposed) == 1)
         {
-            throw new ObjectDisposedException(nameof(RclGuardConditionImpl));
+            throw new ObjectDisposedException(GetType().Name);
         }
 
         // TODO: Maybe use private ObjectPools?
