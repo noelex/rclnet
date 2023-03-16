@@ -79,8 +79,22 @@ public interface IActionGoalController
 /// <summary>
 /// Control goal status on the server side.
 /// </summary>
+/// <remarks>
+/// The controller will NOT take the ownership of feedback message buffers passed to
+/// <see cref="IProgress{RosMessageBuffer}.Report(RosMessageBuffer)"/> and <see cref="ReportAsync(RosMessageBuffer, CancellationToken)"/>.
+/// </remarks>
 public interface INativeActionGoalController : IActionGoalController, IProgress<RosMessageBuffer>
 {
+    /// <summary>
+    /// Report action goal feedback asynchronously.
+    /// </summary>
+    /// <remarks>
+    /// This method will publish the feedback message using <see cref="IRclPublisher.PublishAsync(RosMessageBuffer)"/> asynchronously.
+    /// </remarks>
+    /// <param name="buffer">An <see cref="RosMessageBuffer"/> containing the feedback message to be published.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the operation.</param>
+    /// <returns>A <see cref="ValueTask"/> representing the completion of the asynchronous operation.</returns>
+    ValueTask ReportAsync(RosMessageBuffer buffer, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -89,6 +103,16 @@ public interface INativeActionGoalController : IActionGoalController, IProgress<
 public interface IActionGoalController<T> : IActionGoalController, IProgress<T>
     where T : IActionFeedback
 {
+    /// <summary>
+    /// Report action goal feedback asynchronously.
+    /// </summary>
+    /// <remarks>
+    /// This method will publish the feedback message using <see cref="IRclPublisher{T}.PublishAsync(T)"/> asynchronously.
+    /// </remarks>
+    /// <param name="feedback">Feedback message to be published.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the operation.</param>
+    /// <returns>A <see cref="ValueTask"/> representing the completion of the asynchronous operation.</returns>
+    ValueTask ReportAsync(T feedback, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

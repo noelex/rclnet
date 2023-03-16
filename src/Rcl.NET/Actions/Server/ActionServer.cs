@@ -6,6 +6,7 @@ using Rcl.Qos;
 using Rosidl.Messages.Action;
 using Rosidl.Messages.UniqueIdentifier;
 using Rosidl.Runtime;
+using System;
 using System.Text;
 namespace Rcl.Actions.Server;
 
@@ -448,11 +449,22 @@ internal class ActionServer : IActionServer
             _server._logger.LogDebug($"Action goal context [{GoalId}] disposed.");
         }
 
+        private void CopyFeedbackFrom(RosMessageBuffer src)
+        {
+            _server._functions.CopyFeedback(src.Data,
+                _server._typesupport.FeedbackMessage.GetMemberPointer(_feedbackMessageBuffer.Data, 1));
+        }
+
         public void Report(RosMessageBuffer value)
         {
-            _server._functions.CopyFeedback(value.Data,
-                _server._typesupport.FeedbackMessage.GetMemberPointer(_feedbackMessageBuffer.Data, 1));
+            CopyFeedbackFrom(value);
             _server._feedbackPublisher.Publish(_feedbackMessageBuffer);
+        }
+
+        public ValueTask ReportAsync(RosMessageBuffer buffer, CancellationToken cancellationToken = default)
+        {
+            CopyFeedbackFrom(buffer);
+            return _server._feedbackPublisher.PublishAsync(_feedbackMessageBuffer);
         }
     }
 }

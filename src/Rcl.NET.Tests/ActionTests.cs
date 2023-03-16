@@ -192,8 +192,10 @@ public class ActionTests
         Assert.Equal(ActionGoalStatus.Unknown, result.Status);
     }
 
-    [Fact]
-    public async Task ActionFeedbacks()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ActionFeedbacks(bool useAsyncFeedback)
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
@@ -204,7 +206,12 @@ public class ActionTests
             LookupTransformAction,
             LookupTransformActionGoal,
             LookupTransformActionResult,
-            LookupTransformActionFeedback>(actionName, new TestHandler(feedbackCount: 5, feedbackInterval: 100, executeWaitTime: 100));
+            LookupTransformActionFeedback>(actionName, new TestHandler(
+                feedbackCount: 5,
+                feedbackInterval: 100,
+                executeWaitTime: 100,
+                asyncFeedback: useAsyncFeedback)
+            );
 
         using var client = node.CreateActionClient<
             LookupTransformAction,
@@ -234,17 +241,18 @@ public class ActionTests
 
     private class TestHandler : ActionGoalHandler<LookupTransformActionGoal, LookupTransformActionResult, LookupTransformActionFeedback>
     {
-        private readonly bool _acceptGoal, _throwOnExecute;
+        private readonly bool _acceptGoal, _throwOnExecute, _asyncFeedback;
         private readonly int _executeWaitTime, _feedbackCount, _feedbackInterval;
 
         public TestHandler(bool acceptGoal = true, bool throwOnExecute = false,
-            int executeWaitTime = 0, int feedbackCount = 0, int feedbackInterval = 1000)
+            int executeWaitTime = 0, int feedbackCount = 0, int feedbackInterval = 1000, bool asyncFeedback = false)
         {
             _acceptGoal = acceptGoal;
             _throwOnExecute = throwOnExecute;
             _executeWaitTime = executeWaitTime;
             _feedbackCount = feedbackCount;
             _feedbackInterval = feedbackInterval;
+            _asyncFeedback = asyncFeedback;
         }
 
         public override bool CanAccept(Guid id, LookupTransformActionGoal goal)
@@ -270,7 +278,15 @@ public class ActionTests
                 {
                     break;
                 }
-                controller.Report(new());
+
+                if (_asyncFeedback)
+                {
+                    await controller.ReportAsync(new(), cancellationToken);
+                }
+                else
+                {
+                    controller.Report(new());
+                }
 
                 await Task.Delay(_feedbackInterval, cancellationToken);
             }
