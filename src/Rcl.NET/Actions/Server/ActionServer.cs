@@ -141,10 +141,7 @@ internal class ActionServer : IActionServer
         if (!_goals.ContainsKey(goalId) && _handler.CanAccept(goalId, new RosMessageBuffer(goal, static (a, b) => { })))
         {
             // Make a copy of the goal because we don't own the request buffer.
-            var copiedGoal = new RosMessageBuffer(
-                _functions.CreateGoal(),
-                (p, tab) => ((DynamicFunctionTable)tab!).DestroyGoal(p),
-                _functions);
+            var copiedGoal = _functions.CreateGoalBuffer();
 
             if (!_functions.CopyGoal(goal, copiedGoal.Data))
             {

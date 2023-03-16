@@ -115,7 +115,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
             return;
         }
 
-        var feedbackBuffer = introspection.CreateBuffer();
+        var feedbackBuffer = _functions.CreateFeedbackBuffer();
         _functions.CopyFeedback(introspection.GetMemberPointer(buffer.Data, 1), feedbackBuffer.Data);
         ctx.OnFeedbackReceived(feedbackBuffer);
     }
