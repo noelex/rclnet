@@ -79,7 +79,7 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
             _client.Introspection.ResultService.Request.AsRef<UUID.Priv>(requestBuffer, 0).CopyFrom(goalId);
         }
 
-        unsafe ActionGoalStatus ProcessResponse(nint responseBuffer, out RosMessageBuffer resultBuffer)
+        ActionGoalStatus ProcessResponse(nint responseBuffer, out RosMessageBuffer resultBuffer)
         {
             resultBuffer = RosMessageBuffer.Empty;
 
@@ -97,8 +97,8 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
                 return state;
             }
 
-            resultBuffer = _client.Functions.CreateResultBuffer();
-            _client.Functions.CopyResult(introspection.GetMemberPointer(responseBuffer, 1), resultBuffer.Data);
+            resultBuffer = _client.BufferHelper.CreateResultBuffer();
+            _client.BufferHelper.CopyResult(introspection.GetMemberPointer(responseBuffer, 1), resultBuffer.Data);
             return state;
         }
     }

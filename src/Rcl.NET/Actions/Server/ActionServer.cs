@@ -19,7 +19,7 @@ internal class ActionServer : IActionServer
     private readonly IRclPublisher _statusPublisher, _feedbackPublisher;
 
     private readonly INativeActionGoalHandler _handler;
-    private readonly DynamicFunctionTable _functions;
+    private readonly MessageBufferHelper _functions;
 
     private readonly Dictionary<Guid, GoalContext> _goals = new();
     private readonly CancellationTokenSource _shutdownSignal = new();
@@ -46,7 +46,7 @@ internal class ActionServer : IActionServer
         var getResultServiceName = actionName + Constants.GetResultService;
 
         _typesupport = new ActionIntrospection(actionTypesupport);
-        _functions = new DynamicFunctionTable(typesupportName);
+        _functions = new MessageBufferHelper(typesupportName);
 
         var done = false;
         try
@@ -448,7 +448,7 @@ internal class ActionServer : IActionServer
             _server._logger.LogDebug($"Action goal context [{GoalId}] disposed.");
         }
 
-        public unsafe void Report(RosMessageBuffer value)
+        public void Report(RosMessageBuffer value)
         {
             _server._functions.CopyFeedback(value.Data,
                 _server._typesupport.FeedbackMessage.GetMemberPointer(_feedbackMessageBuffer.Data, 1));

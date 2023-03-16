@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace Rcl.Actions;
 
-unsafe class DynamicFunctionTable
+unsafe class MessageBufferHelper
 {
-    public DynamicFunctionTable(string actionTypesupportName)
+    public MessageBufferHelper(string actionTypesupportName)
     {
         _createFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Feedback", "create");
         _destroyFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Feedback", "destroy");
@@ -22,15 +22,15 @@ unsafe class DynamicFunctionTable
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RosMessageBuffer CreateResultBuffer()
-        => new(_createResult(), (p, self) => ((DynamicFunctionTable)self!)._destroyResult(p), this);
+        => new(_createResult(), (p, self) => ((MessageBufferHelper)self!)._destroyResult(p), this);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RosMessageBuffer CreateFeedbackBuffer()
-        => new(_createFeedback(), (p, self) => ((DynamicFunctionTable)self!)._destroyFeedback(p), this);
+        => new(_createFeedback(), (p, self) => ((MessageBufferHelper)self!)._destroyFeedback(p), this);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RosMessageBuffer CreateGoalBuffer()
-        => new(_createGoal(), (p, self) => ((DynamicFunctionTable)self!)._destroyGoal(p), this);
+        => new(_createGoal(), (p, self) => ((MessageBufferHelper)self!)._destroyGoal(p), this);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool CopyGoal(nint src, nint dest) => _copyGoal(src, dest);
