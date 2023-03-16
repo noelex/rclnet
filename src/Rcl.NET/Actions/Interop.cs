@@ -7,7 +7,7 @@ unsafe class DynamicFunctionTable
     public DynamicFunctionTable(string actionTypesupportName)
     {
         CopyFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Feedback", "copy");
-        
+
         CreateResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Result", "create");
         DestroyResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Result", "destroy");
         CopyResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Result", "copy");
@@ -15,6 +15,11 @@ unsafe class DynamicFunctionTable
         CreateGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Goal", "create");
         DestroyGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Goal", "destroy");
         CopyGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Goal", "copy");
+    }
+
+    public RosMessageBuffer CreateResultBuffer()
+    {
+        return new RosMessageBuffer(CreateResult(), (p, self) => ((DynamicFunctionTable)self!).DestroyResult(p), this);
     }
 
     private static (string pkg, string subfolder, string name) BreakName(string pkg)

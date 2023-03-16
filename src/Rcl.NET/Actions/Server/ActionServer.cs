@@ -392,7 +392,7 @@ internal class ActionServer : IActionServer
         private readonly CancellationTokenSource _abort = new(), _cancel = new();
         private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        public GoalContext(Guid id, ActionServer server, TimeSpan accepted)
+        public unsafe GoalContext(Guid id, ActionServer server, TimeSpan accepted)
         {
             _goalId = id;
             _server = server;
@@ -401,7 +401,7 @@ internal class ActionServer : IActionServer
             _feedbackMessageBuffer = _server._typesupport.FeedbackMessage.CreateBuffer();
             _server._typesupport.FeedbackMessage.AsRef<UUID.Priv>(_feedbackMessageBuffer.Data, 0).CopyFrom(id);
 
-            _resultBuffer = _server._typesupport.ResultService.Response.CreateBuffer();
+            _resultBuffer = _server._functions.CreateResultBuffer();
 
             _server._logger.LogDebug($"Created action goal context [{GoalId}].");
         }
