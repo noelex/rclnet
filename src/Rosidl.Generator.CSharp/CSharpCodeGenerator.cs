@@ -108,7 +108,7 @@ public class CSharpCodeGenerator
             var path = Environment.GetEnvironmentVariable("AMENT_PREFIX_PATH");
             if (path != null)
             {
-                foreach (var p in path.Split(':').Reverse())
+                foreach (var p in path.Split(Path.PathSeparator).Reverse())
                 {
                     Console.WriteLine("Searching in directory: " + p);
                     foreach (var pkg in LoadPackages(Path.Combine(p, "share"))) packages[pkg.Name] = pkg;
@@ -221,7 +221,7 @@ public class CSharpCodeGenerator
         Console.WriteLine($"Processed {packages.Count} package(s), " +
             $"{packages.SelectMany(x => x.Value.Messages).Count()} message definition(s) total.");
 
-        if (resolved.Count > 0)
+        if (resolved.Except(spec.Excludes).Count() > 0)
         {
             Console.WriteLine();
             Console.WriteLine("The following package(s) were automatically included as dependencies:");
@@ -231,7 +231,7 @@ public class CSharpCodeGenerator
             }
         }
 
-        if (unresolved.Count > 0)
+        if (unresolved.Except(spec.Excludes).Count() > 0)
         {
             Console.WriteLine();
             Console.WriteLine("The following package(s) were not found in configured package sources:");

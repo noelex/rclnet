@@ -16,5 +16,5 @@ interface IActionClientImpl
 
     IntrospectionClient GetResultClient { get; }
 
-    DynamicFunctionTable Functions { get; }
+    MessageBufferHelper BufferHelper { get; }
 }

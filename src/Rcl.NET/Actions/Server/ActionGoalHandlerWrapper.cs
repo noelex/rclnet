@@ -74,5 +74,11 @@ internal class ActionGoalHandlerWrapper<TGoal, TResult, TFeedback> : INativeActi
             value.WriteTo(_feedbackBuffer.Data, _textEncoding);
             _nativeController.Report(_feedbackBuffer);
         }
+
+        public ValueTask ReportAsync(TFeedback feedback, CancellationToken cancellationToken = default)
+        {
+            feedback.WriteTo(_feedbackBuffer.Data, _textEncoding);
+            return _nativeController.ReportAsync(_feedbackBuffer, cancellationToken);
+        }
     }
 }

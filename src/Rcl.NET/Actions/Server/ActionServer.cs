@@ -6,6 +6,7 @@ using Rcl.Qos;
 using Rosidl.Messages.Action;
 using Rosidl.Messages.UniqueIdentifier;
 using Rosidl.Runtime;
+using System;
 using System.Text;
 namespace Rcl.Actions.Server;
 
@@ -19,7 +20,7 @@ internal class ActionServer : IActionServer
     private readonly IRclPublisher _statusPublisher, _feedbackPublisher;
 
     private readonly INativeActionGoalHandler _handler;
-    private readonly DynamicFunctionTable _functions;
+    private readonly MessageBufferHelper _functions;
 
     private readonly Dictionary<Guid, GoalContext> _goals = new();
     private readonly CancellationTokenSource _shutdownSignal = new();
@@ -46,7 +47,7 @@ internal class ActionServer : IActionServer
         var getResultServiceName = actionName + Constants.GetResultService;
 
         _typesupport = new ActionIntrospection(actionTypesupport);
-        _functions = new DynamicFunctionTable(typesupportName);
+        _functions = new MessageBufferHelper(typesupportName);
 
         var done = false;
         try
@@ -141,10 +142,7 @@ internal class ActionServer : IActionServer
         if (!_goals.ContainsKey(goalId) && _handler.CanAccept(goalId, new RosMessageBuffer(goal, static (a, b) => { })))
         {
             // Make a copy of the goal because we don't own the request buffer.
-            var copiedGoal = new RosMessageBuffer(
-                _functions.CreateGoal(),
-                (p, tab) => ((DynamicFunctionTable)tab!).DestroyGoal(p),
-                _functions);
+            var copiedGoal = _functions.CreateGoalBuffer();
 
             if (!_functions.CopyGoal(goal, copiedGoal.Data))
             {
@@ -230,11 +228,8 @@ internal class ActionServer : IActionServer
             _typesupport.ResultService.Response.AsRef<ActionGoalStatus>(response.Data, 0) = ctx.Status;
             if (ctx.Status == ActionGoalStatus.Succeeded)
             {
-                unsafe
-                {
-                    _functions.CopyResult(ctx.ResultBuffer.Data,
-                        _typesupport.ResultService.Response.GetMemberPointer(response.Data, 1));
-                }
+                _functions.CopyResult(ctx.ResultBuffer.Data,
+                    _typesupport.ResultService.Response.GetMemberPointer(response.Data, 1));
             }
 
             // If the timeout is configured to have value -1,
@@ -392,7 +387,7 @@ internal class ActionServer : IActionServer
         private readonly CancellationTokenSource _abort = new(), _cancel = new();
         private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        public GoalContext(Guid id, ActionServer server, TimeSpan accepted)
+        public unsafe GoalContext(Guid id, ActionServer server, TimeSpan accepted)
         {
             _goalId = id;
             _server = server;
@@ -401,7 +396,7 @@ internal class ActionServer : IActionServer
             _feedbackMessageBuffer = _server._typesupport.FeedbackMessage.CreateBuffer();
             _server._typesupport.FeedbackMessage.AsRef<UUID.Priv>(_feedbackMessageBuffer.Data, 0).CopyFrom(id);
 
-            _resultBuffer = _server._typesupport.ResultService.Response.CreateBuffer();
+            _resultBuffer = _server._functions.CreateResultBuffer();
 
             _server._logger.LogDebug($"Created action goal context [{GoalId}].");
         }
@@ -454,11 +449,22 @@ internal class ActionServer : IActionServer
             _server._logger.LogDebug($"Action goal context [{GoalId}] disposed.");
         }
 
-        public unsafe void Report(RosMessageBuffer value)
+        private void CopyFeedbackFrom(RosMessageBuffer src)
         {
-            _server._functions.CopyFeedback(value.Data,
+            _server._functions.CopyFeedback(src.Data,
                 _server._typesupport.FeedbackMessage.GetMemberPointer(_feedbackMessageBuffer.Data, 1));
+        }
+
+        public void Report(RosMessageBuffer value)
+        {
+            CopyFeedbackFrom(value);
             _server._feedbackPublisher.Publish(_feedbackMessageBuffer);
+        }
+
+        public ValueTask ReportAsync(RosMessageBuffer buffer, CancellationToken cancellationToken = default)
+        {
+            CopyFeedbackFrom(buffer);
+            return _server._feedbackPublisher.PublishAsync(_feedbackMessageBuffer);
         }
     }
 }

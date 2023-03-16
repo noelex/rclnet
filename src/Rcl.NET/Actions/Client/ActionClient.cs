@@ -26,7 +26,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
     private readonly ActionIntrospection _typesupport;
     private readonly Encoding _textEncoding;
 
-    private readonly DynamicFunctionTable _functions = new(TAction.TypeSupportName);
+    private readonly MessageBufferHelper _bufferHelper = new(TAction.TypeSupportName);
     private readonly ConcurrentDictionary<Guid, ActionGoalContextBase> _goals = new();
 
     private readonly CancellationTokenSource _cts = new();
@@ -48,7 +48,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         var done = false;
         try
         {
-            _cancelGoalClient = new(node, cancelGoalServiceName, 
+            _cancelGoalClient = new(node, cancelGoalServiceName,
                 new(qos: options.CancelServiceQos, textEncoding: options.TextEncoding));
             _sendGoalClient = new(node, sendGoalServiceName,
                 _typesupport.GoalServiceTypeSupport, new(qos: options.GoalServiceQos));
@@ -101,7 +101,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         }
     }
 
-    private unsafe void ProcessFeedbackMessage(IMessageIntrospection introspection, RosMessageBuffer buffer)
+    private void ProcessFeedbackMessage(IMessageIntrospection introspection, RosMessageBuffer buffer)
     {
         // UUID goal_id;
         // TFeedback.Priv feedback;
@@ -115,8 +115,8 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
             return;
         }
 
-        var feedbackBuffer = introspection.CreateBuffer();
-        _functions.CopyFeedback(introspection.GetMemberPointer(buffer.Data, 1), feedbackBuffer.Data);
+        var feedbackBuffer = _bufferHelper.CreateFeedbackBuffer();
+        _bufferHelper.CopyFeedback(introspection.GetMemberPointer(buffer.Data, 1), feedbackBuffer.Data);
         ctx.OnFeedbackReceived(feedbackBuffer);
     }
 
@@ -227,20 +227,17 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
         using var goalid = new UUID.Priv(goalId);
 
-        unsafe
+        // Copy fields into SendGoal_Request:
+        //
+        // UUID goal_id;
+        // TGoal.Priv goal;
+        Debug.Assert(requestIntrospection.MemberCount == 2);
+        Debug.Assert(requestIntrospection.GetMemberName(0) == "goal_id");
+        Debug.Assert(requestIntrospection.GetMemberName(1) == "goal");
+        requestIntrospection.AsRef<UUID.Priv>(requestBuffer, 0).CopyFrom(in goalid);
+        if (!_bufferHelper.CopyGoal(goalBuffer, requestIntrospection.GetMemberPointer(requestBuffer, 1)))
         {
-            // Copy fields into SendGoal_Request:
-            //
-            // UUID goal_id;
-            // TGoal.Priv goal;
-            Debug.Assert(requestIntrospection.MemberCount == 2);
-            Debug.Assert(requestIntrospection.GetMemberName(0) == "goal_id");
-            Debug.Assert(requestIntrospection.GetMemberName(1) == "goal");
-            requestIntrospection.AsRef<UUID.Priv>(requestBuffer, 0).CopyFrom(in goalid);
-            if (!_functions.CopyGoal(goalBuffer, requestIntrospection.GetMemberPointer(requestBuffer, 1)))
-            {
-                throw new RclException("Unable to copy goal buffer, send goal failed.");
-            }
+            throw new RclException("Unable to copy goal buffer, send goal failed.");
         }
     }
 
@@ -267,7 +264,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
     IntrospectionClient IActionClientImpl.GetResultClient => _getResultClient;
 
-    DynamicFunctionTable IActionClientImpl.Functions => _functions;
+    MessageBufferHelper IActionClientImpl.BufferHelper => _bufferHelper;
 
     bool IActionClientImpl.TryRemoveGoal(Guid goalId) => _goals.TryRemove(goalId, out _);
 

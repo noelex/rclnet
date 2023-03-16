@@ -10,6 +10,8 @@
   <build_depend>geometry_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
+  <build_depend>tf2_msgs</build_depend>
+  
   <build_depend>rmw_fastrtps_cpp</build_depend>
   <build_depend>rmw_cyclonedds_cpp</build_depend>
 

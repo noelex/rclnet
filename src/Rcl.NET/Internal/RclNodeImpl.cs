@@ -93,8 +93,8 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Unable to build ROS graph: " + e.Message);
-                    Console.WriteLine(e.StackTrace);
+                    Logger.LogWarning("Unable to build ROS graph: " + e.Message);
+                    Logger.LogWarning(e.StackTrace);
                 }
 
                 await graphSignal.WaitOneAsync(false, cancellationToken).ConfigureAwait(false);
