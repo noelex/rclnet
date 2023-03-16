@@ -33,7 +33,7 @@ jobs:
 
       - name: Update Template Package Reference
         working-directory: templates/templates
-        run: sed -i -E 's/(Version=\").+(\")/\1${GITHUB_REF#refs/tags/v}\2/' ros2-msg/Company.MessageLibrary1.csproj ros2-node/Company.Node1.csproj
+        run: sed -i -E "s/(Version=\").+(\")/\1${GITHUB_REF#refs/tags/v}\2/" ros2-msg/Company.MessageLibrary1.csproj ros2-node/Company.Node1.csproj
 
       - name: Pack
         run: |
