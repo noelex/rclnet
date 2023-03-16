@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Rcl.NET.Tests;
 
-namespace Rcl.NET.Tests;
 internal class NameGenerator
 {
-    private static long _id;
+    private static string GenerateUniqueId() => string.Join("", Guid.NewGuid().ToByteArray().Select(x => x.ToString("x2")));
 
-    public static string GenerateNodeName() => $"test_node_{Interlocked.Increment(ref _id)}";
+    public static string GenerateNodeName() => $"node_{GenerateUniqueId()}";
 
-    public static string GenerateTopicName() => $"test_topic_{Interlocked.Increment(ref _id)}";
+    public static string GenerateTopicName() => $"topic_{GenerateUniqueId()}";
 
-    public static string GenerateServiceName() => $"test_service_{Interlocked.Increment(ref _id)}";
+    public static string GenerateServiceName() => $"service_{GenerateUniqueId()}";
+
+    public static string GenerateActionName() => $"action_{GenerateUniqueId()}";
 }
