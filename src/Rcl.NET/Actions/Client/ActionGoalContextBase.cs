@@ -97,9 +97,7 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
                 return state;
             }
 
-            resultBuffer = new(_client.Functions.CreateResult(),
-                (p, func) => ((DynamicFunctionTable)func!).DestroyResult(p), _client.Functions);
-
+            resultBuffer = _client.Functions.CreateResultBuffer();
             _client.Functions.CopyResult(introspection.GetMemberPointer(responseBuffer, 1), resultBuffer.Data);
             return state;
         }

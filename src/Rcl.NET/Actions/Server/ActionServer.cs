@@ -227,11 +227,8 @@ internal class ActionServer : IActionServer
             _typesupport.ResultService.Response.AsRef<ActionGoalStatus>(response.Data, 0) = ctx.Status;
             if (ctx.Status == ActionGoalStatus.Succeeded)
             {
-                unsafe
-                {
-                    _functions.CopyResult(ctx.ResultBuffer.Data,
-                        _typesupport.ResultService.Response.GetMemberPointer(response.Data, 1));
-                }
+                _functions.CopyResult(ctx.ResultBuffer.Data,
+                    _typesupport.ResultService.Response.GetMemberPointer(response.Data, 1));
             }
 
             // If the timeout is configured to have value -1,

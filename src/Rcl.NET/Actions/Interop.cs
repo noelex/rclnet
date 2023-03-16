@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Rcl.Actions;
 
@@ -6,33 +7,39 @@ unsafe class DynamicFunctionTable
 {
     public DynamicFunctionTable(string actionTypesupportName)
     {
-        CreateFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Feedback", "create");
-        DestroyFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Feedback", "destroy");
-        CopyFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Feedback", "copy");
+        _createFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Feedback", "create");
+        _destroyFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Feedback", "destroy");
+        _copyFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Feedback", "copy");
         
-        CreateResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Result", "create");
-        DestroyResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Result", "destroy");
-        CopyResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Result", "copy");
+        _createResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Result", "create");
+        _destroyResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Result", "destroy");
+        _copyResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Result", "copy");
 
-        CreateGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Goal", "create");
-        DestroyGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Goal", "destroy");
-        CopyGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Goal", "copy");
+        _createGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Goal", "create");
+        _destroyGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Goal", "destroy");
+        _copyGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Goal", "copy");
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RosMessageBuffer CreateResultBuffer()
-    {
-        return new RosMessageBuffer(CreateResult(), (p, self) => ((DynamicFunctionTable)self!).DestroyResult(p), this);
-    }
+        => new(_createResult(), (p, self) => ((DynamicFunctionTable)self!)._destroyResult(p), this);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RosMessageBuffer CreateFeedbackBuffer()
-    {
-        return new RosMessageBuffer(CreateFeedback(), (p, self) => ((DynamicFunctionTable)self!).DestroyFeedback(p), this);
-    }
+        => new(_createFeedback(), (p, self) => ((DynamicFunctionTable)self!)._destroyFeedback(p), this);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RosMessageBuffer CreateGoalBuffer()
-    {
-        return new RosMessageBuffer(CreateGoal(), (p, self) => ((DynamicFunctionTable)self!).DestroyGoal(p), this);
-    }
+        => new(_createGoal(), (p, self) => ((DynamicFunctionTable)self!)._destroyGoal(p), this);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool CopyGoal(nint src, nint dest) => _copyGoal(src, dest);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool CopyFeedback(nint src, nint dest) => _copyFeedback(src, dest);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool CopyResult(nint src, nint dest) => _copyResult(src, dest);
 
     private static (string pkg, string subfolder, string name) BreakName(string pkg)
     {
@@ -50,10 +57,10 @@ unsafe class DynamicFunctionTable
         return NativeLibrary.GetExport(lib, symName);
     }
 
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool> CopyGoal, CopyFeedback, CopyResult;
+    private readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool> _copyGoal, _copyFeedback, _copyResult;
 
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint> CreateResult, CreateGoal, CreateFeedback;
+    private readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint> _createResult, _createGoal, _createFeedback;
 
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void> DestroyResult, DestroyGoal, DestroyFeedback;
+    private readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void> _destroyResult, _destroyGoal, _destroyFeedback;
 
 }
