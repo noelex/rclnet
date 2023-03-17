@@ -123,6 +123,12 @@ public static class CancellationTokenSourceExtensions
             return TimeoutRegistration.Empty;
         }
 
+        if (timeout == TimeSpan.Zero)
+        {
+            source.Cancel();
+            return TimeoutRegistration.Empty;
+        }
+
         var pool = context.GetOrAddFeature<ObjectPool<ReusableTimer>>(ReusableTimerPoolFeature, x => new());
         var timer = pool.Rent();
         timer.Start(source, context, clock.Impl, timeout);
