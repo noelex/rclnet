@@ -11,13 +11,13 @@ internal static class Utils
         var regex = node_name.Replace("/*", "(/\\w+)");
         return Regex.IsMatch(node_fqn, regex);
     }
-    public unsafe static ParameterDictionary ResolveParameterOverrides(
+    public unsafe static IDictionary<string, Variant> ResolveParameterOverrides(
            string nodeFqn,
            IDictionary<string, Variant> overrides,
            rcl_arguments_t* localArgs,
            rcl_arguments_t* globalArgs)
     {
-        var result = new ParameterDictionary();
+        var result = new Dictionary<string, Variant>();
         LoadParameters(result, globalArgs);
         LoadParameters(result, localArgs);
 
@@ -28,7 +28,7 @@ internal static class Utils
 
         return result;
 
-        void LoadParameters(ParameterDictionary result, rcl_arguments_t* source)
+        void LoadParameters(IDictionary<string, Variant> result, rcl_arguments_t* source)
         {
             if (source == null)
             {
@@ -56,7 +56,7 @@ internal static class Utils
         }
     }
 
-    private static unsafe void ExtractRclParams(string nodeFqn, rcl_params_t* src, ParameterDictionary dest)
+    private static unsafe void ExtractRclParams(string nodeFqn, rcl_params_t* src, IDictionary<string, Variant> dest)
     {
         for (int i = 0; i < (int)src->num_nodes.Value; i++)
         {
