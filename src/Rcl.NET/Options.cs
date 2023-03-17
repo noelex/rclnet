@@ -216,7 +216,7 @@ public record NodeOptions
     /// implicitly declare any that have not already been declared.
     /// </summary>
     /// <remarks>
-    /// Defaults to <see cref="false"/>.
+    /// Defaults to <see langword="false"/>.
     /// </remarks>
     public bool DeclareParameterFromOverrides { get; }
 
