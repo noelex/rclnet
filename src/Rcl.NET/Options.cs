@@ -1,8 +1,10 @@
 ﻿using Rcl.Interop;
+using Rcl.Parameters;
 using Rcl.Qos;
 using Rcl.Runtime;
 using System.Text;
 using System.Threading.Channels;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Rcl;
 
@@ -93,6 +95,16 @@ public record NodeOptions
     /// Supported distro(s): >=humble
     /// </para>
     /// </param>
+    /// <param name="parameterOverrides">
+    /// Override parameter values defined in YAML configuration file or command line arguments.
+    /// </param>
+    /// <param name="declareParameterFromOverrides">
+    /// If true, automatically iterate through the <see cref="ParameterOverrides"/> and
+    /// implicitly declare any that have not already been declared.
+    /// <para>
+    /// Defaults to <see langword="false"/>.
+    /// </para>
+    /// </param>
     public NodeOptions(
         string[]? arguments = null,
         [SupportedDistribution(RosEnvironment.Foxy)]
@@ -102,7 +114,9 @@ public record NodeOptions
         RclClockType clock = RclClockType.Ros,
         QosProfile? clockQos = null,
         [SupportedSinceDistribution(RosEnvironment.Humble)]
-        QosProfile? rosOutQos = null)
+        QosProfile? rosOutQos = null,
+        IDictionary<string, Variant>? parameterOverrides = null,
+        bool declareParameterFromOverrides = false)
     {
         if (domaindId != null)
         {
@@ -121,6 +135,8 @@ public record NodeOptions
         Clock = clock;
         ClockQos = clockQos ?? QosProfile.Clock;
         RosOutQos = rosOutQos ?? QosProfile.RosOut;
+        ParameterOverrides = parameterOverrides;
+        DeclareParameterFromOverrides = declareParameterFromOverrides;
     }
 
     /// <summary>
@@ -189,6 +205,20 @@ public record NodeOptions
     /// </para>
     /// </summary>
     public QosProfile ClockQos { get; }
+
+    /// <summary>
+    /// Override parameter values defined in YAML configuration file or command line arguments.
+    /// </summary>
+    public IDictionary<string, Variant>? ParameterOverrides { get; }
+
+    /// <summary>
+    /// If true, automatically iterate through the <see cref="ParameterOverrides"/> and
+    /// implicitly declare any that have not already been declared.
+    /// </summary>
+    /// <remarks>
+    /// Defaults to <see cref="false"/>.
+    /// </remarks>
+    public bool DeclareParameterFromOverrides { get; }
 
     /// <summary>
     /// Gets a <see cref="NodeOptions"/> instance with all options set to default values.

@@ -13,7 +13,7 @@ internal static class Utils
     }
     public unsafe static ParameterDictionary ResolveParameterOverrides(
            string nodeFqn,
-           ParameterDictionary overrides,
+           IDictionary<string, Variant> overrides,
            rcl_arguments_t* localArgs,
            rcl_arguments_t* globalArgs)
     {

@@ -16,12 +16,12 @@ partial class ParameterService : IParameterService, IDisposable
     private SpinLock _lock;
 
     private readonly RclNodeImpl _node;
-    private readonly ParameterDictionary _overrides = new();
+    private readonly IDictionary<string, Variant> _overrides;
     private readonly ConcurrentDictionary<string, ParameterStore> _parameters = new();
 
     private readonly List<ParameterChangingCallback> _onParameterChangingCallbacks = new();
 
-    internal unsafe ParameterService(RclNodeImpl node, ParameterDictionary paramOverrides)
+    internal unsafe ParameterService(RclNodeImpl node, IDictionary<string, Variant> paramOverrides)
     {
         _node = node;
 

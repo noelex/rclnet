@@ -10,6 +10,8 @@ namespace Rcl.Internal;
 
 partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
 {
+    private static readonly Dictionary<string, Variant> s_emptyParameterOverrides = new();
+
     private readonly RosGraph _graph;
     private readonly ExternalTimeSource _timeSource;
     private readonly ParameterService _parameters;
@@ -42,8 +44,17 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
             new(rcl_node_get_graph_guard_condition(Handle.Object)));
         _ = GraphBuilder(_graphSignal, _cts.Token);
 
-        _parameters = new ParameterService(this, new());
+        var overrides = Options.ParameterOverrides ?? s_emptyParameterOverrides;
+        _parameters = new ParameterService(this, overrides);
         _timeSource = new ExternalTimeSource(this, Options.ClockQos);
+
+        if (Options.DeclareParameterFromOverrides)
+        {
+            foreach(var (k,v) in overrides)
+            {
+                _parameters.Declare(k, v);
+            }
+        }
     }
 
     public IParameterService Parameters => _parameters;
