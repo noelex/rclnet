@@ -1,10 +1,12 @@
 ﻿using System.Reflection;
+using System.Runtime.InteropServices;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
 namespace Rcl.NET.Tests;
 public class RclTestFramework : XunitTestFramework
 {
+    private static readonly SemaphoreSlim s_rateLimiter = new(1);
     public RclTestFramework(IMessageSink messageSink)
         : base(messageSink)
     {
@@ -58,9 +60,32 @@ public class RclTestFramework : XunitTestFramework
         {
         }
 
-        protected override Task<RunSummary> RunTestMethodAsync(ITestMethod testMethod, IReflectionMethodInfo method, IEnumerable<IXunitTestCase> testCases, object[] constructorArguments)
-            => new CustomTestMethodRunner(testMethod, this.Class, method, testCases, this.DiagnosticMessageSink, this.MessageBus, new ExceptionAggregator(this.Aggregator), this.CancellationTokenSource, constructorArguments)
-                .RunAsync();
+        protected override async Task<RunSummary> RunTestMethodAsync(ITestMethod testMethod, IReflectionMethodInfo method, IEnumerable<IXunitTestCase> testCases, object[] constructorArguments)
+        {
+            // Manually limiting concurrency here because Creating and disposing multiple RclContexts
+            // concurrently may hang the test host when running on Windows with rmw_cyclonedds_cpp on foxy.
+            if (RosEnvironment.IsFoxy &&
+                RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp" &&
+                OperatingSystem.IsWindows())
+            {
+                await s_rateLimiter.WaitAsync();
+
+                try
+                {
+                    return await new CustomTestMethodRunner(testMethod, this.Class, method, testCases, this.DiagnosticMessageSink, this.MessageBus, new ExceptionAggregator(this.Aggregator), this.CancellationTokenSource, constructorArguments)
+                         .RunAsync();
+                }
+                finally
+                {
+                    s_rateLimiter.Release();
+                }
+            }
+            else
+            {
+                return await new CustomTestMethodRunner(testMethod, this.Class, method, testCases, this.DiagnosticMessageSink, this.MessageBus, new ExceptionAggregator(this.Aggregator), this.CancellationTokenSource, constructorArguments)
+                         .RunAsync();
+            }
+        }
     }
 
     private class CustomTestMethodRunner : XunitTestMethodRunner

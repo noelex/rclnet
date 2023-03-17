@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <ROS_DISTRO>humble</ROS_DISTRO>
+      <ROS_LOCALHOST_ONLY>0</ROS_LOCALHOST_ONLY>
+      <ROS_PYTHON_VERSION>3</ROS_PYTHON_VERSION>
+      <ROS_VERSION>2</ROS_VERSION>
+      <LD_LIBRARY_PATH>/opt/ros/humble/opt/yaml_cpp_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib</LD_LIBRARY_PATH>
+      <AMENT_PREFIX_PATH>/opt/ros/humble</AMENT_PREFIX_PATH>
+      <RMW_IMPLEMENTATION>rmw_cyclonedds_cpp</RMW_IMPLEMENTATION>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>

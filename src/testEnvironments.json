@@ -10,6 +10,16 @@
       "name": "WSL - Foxy",
       "type": "wsl",
       "wslDistribution": "Ubuntu-20.04"
+    },
+    {
+      "name": "Container - Foxy",
+      "type": "docker",
+      "dockerFile": "Rcl.NET.Tests/foxy.Dockerfile"
+    },
+    {
+      "name": "Container - Humble",
+      "type": "docker",
+      "dockerFile": "Rcl.NET.Tests/humble.Dockerfile"
     }
   ]
 }
