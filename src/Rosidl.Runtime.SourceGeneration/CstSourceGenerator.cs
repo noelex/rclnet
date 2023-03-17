@@ -1,7 +1,5 @@
-﻿using Microsoft.CodeAnalysis.Text;
-using Microsoft.CodeAnalysis;
-using System;
-using System.Collections.Generic;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 using System.Text;
 using System.Text.RegularExpressions;
 

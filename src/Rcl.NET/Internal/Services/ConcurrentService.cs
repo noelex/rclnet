@@ -1,10 +1,4 @@
-﻿using Rcl.Interop;
-using Rcl.Qos;
-using Rcl.SafeHandles;
-using Rosidl.Runtime;
-using Rosidl.Runtime.Interop;
-using System;
-using System.Reflection.PortableExecutable;
+﻿using Rosidl.Runtime;
 using System.Text;
 
 namespace Rcl.Internal.Services;
@@ -15,7 +9,7 @@ namespace Rcl.Internal.Services;
 /// <typeparam name="TService"></typeparam>
 /// <typeparam name="TRequest"></typeparam>
 /// <typeparam name="TResponse"></typeparam>
-internal class ConcurrentService<TService, TRequest, TResponse> 
+internal class ConcurrentService<TService, TRequest, TResponse>
     : ConcurrentIntrospectionService
     where TService : IService<TRequest, TResponse>
     where TRequest : IServiceRequest
@@ -37,7 +31,7 @@ internal class ConcurrentService<TService, TRequest, TResponse>
 
         public Handler(IConcurrentServiceHandler<TRequest, TResponse> handler, Encoding textEncoding)
         {
-            _handler= handler;
+            _handler = handler;
             _textEncoding = textEncoding;
         }
 

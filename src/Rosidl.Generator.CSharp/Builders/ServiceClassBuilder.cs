@@ -1,10 +1,5 @@
 ﻿using CppAst.CodeGen.CSharp;
 using Rosidl.Generator.CSharp.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Rosidl.Generator.CSharp.Builders;
 
@@ -141,7 +136,7 @@ public class ServiceBuildContext
 
     public object? ParentContext { get; }
 
-    public ServiceBuildContext(ServiceMetadata metadata, GeneratorOptions options, ServiceType type=ServiceType.Plain, object? parentContext = null)
+    public ServiceBuildContext(ServiceMetadata metadata, GeneratorOptions options, ServiceType type = ServiceType.Plain, object? parentContext = null)
     {
         Type = type;
         ParentContext = parentContext;

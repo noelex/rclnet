@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents an abstraction over various kind of clocks.
 /// </summary>
-public interface IRclClock: IRclObject
+public interface IRclClock : IRclObject
 {
     /// <summary>
     /// Type of the clock.

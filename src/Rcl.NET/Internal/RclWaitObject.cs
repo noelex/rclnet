@@ -16,7 +16,7 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
 
     protected RclWaitObject(RclContext context, T handle) : base(context, handle)
     {
-        
+
     }
 
     /// <summary>

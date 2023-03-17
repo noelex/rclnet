@@ -1,6 +1,4 @@
-﻿using Rcl.Graph;
-
-namespace Rcl.Graph;
+﻿namespace Rcl.Graph;
 
 /// <summary>
 /// Represents the type of an action endpoint.

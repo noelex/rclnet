@@ -1,5 +1,4 @@
 ﻿using Rcl.Interop;
-using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;

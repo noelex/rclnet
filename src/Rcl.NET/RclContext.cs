@@ -2,7 +2,6 @@
 using Rcl.Logging.Impl;
 using Rcl.SafeHandles;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace Rcl;
 
@@ -166,7 +165,7 @@ public sealed class RclContext : IRclContext
     /// <inheritdoc/>
     public IRclTimer CreateTimer(RclClock clock, TimeSpan period)
     {
-        if(clock.Context != this)
+        if (clock.Context != this)
         {
             throw new InvalidOperationException("Cannot create timer with a clock which is not own by current context.");
         }

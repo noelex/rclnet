@@ -1,12 +1,8 @@
 ﻿using Rcl.Actions;
 using Rcl.Graph;
-using Rcl.Internal.Services;
 using Rcl.Logging;
 using Rcl.Parameters;
-using Rcl.Qos;
 using Rosidl.Runtime;
-using System.Text;
-using System.Threading.Channels;
 
 namespace Rcl;
 
@@ -78,7 +74,7 @@ public interface IRclNode : IRclObject
     /// <param name="options"><see cref="SubscriptionOptions"/> to be used for the subscription. Defaults to <see cref="SubscriptionOptions.Default"/>.</param>
     /// <returns>A <see cref="IRclNativeSubscription"/> to be used for receiving topic messages.</returns>
     IRclNativeSubscription CreateNativeSubscription<T>(
-        string topicName,SubscriptionOptions? options = null) where T : IMessage;
+        string topicName, SubscriptionOptions? options = null) where T : IMessage;
 
     /// <summary>
     /// Create an ROS subscription and receive messages using native message buffers.
@@ -336,7 +332,7 @@ public interface IRclNode : IRclObject
     /// <returns></returns>
     IActionServer CreateActionServer<TAction, TGoal, TResult, TFeedback>(
         string actionName,
-        IActionGoalHandler<TGoal,TResult, TFeedback> handler,
+        IActionGoalHandler<TGoal, TResult, TFeedback> handler,
         ActionServerOptions? options = null)
         where TAction : IAction<TGoal, TResult, TFeedback>
         where TGoal : IActionGoal

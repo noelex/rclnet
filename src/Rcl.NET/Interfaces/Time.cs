@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace Rosidl.Messages.Builtin;
+﻿namespace Rosidl.Messages.Builtin;
 
 partial class Time
 {

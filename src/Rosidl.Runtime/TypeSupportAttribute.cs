@@ -1,11 +1,4 @@
-﻿using Rosidl.Runtime.Interop;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Rosidl.Runtime;
+﻿namespace Rosidl.Runtime;
 
 /// <summary>
 /// Specifies that the class is an ROS interface providing dynamic type support.

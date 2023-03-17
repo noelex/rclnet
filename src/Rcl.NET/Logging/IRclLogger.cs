@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace Rcl.Logging;
+﻿namespace Rcl.Logging;
 
 /// <summary>
 /// Represents a type used to perform logging in rclnet.

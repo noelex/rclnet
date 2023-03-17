@@ -14,7 +14,7 @@ unsafe class RclArgumentsImpl : IDisposable
 
     public RclArgumentsImpl(IntPtr handle)
     {
-        _handle = new SafeArgumentsHandle( handle);
+        _handle = new SafeArgumentsHandle(handle);
     }
 
     public int[] GetUnparsedArgumentIndices()

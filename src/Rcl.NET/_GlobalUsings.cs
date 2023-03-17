@@ -1,7 +1,6 @@
-﻿global using static Rcl.Interop.RclCommon;
-global using Rcl.Internal;
+﻿global using Rcl.Internal;
 global using Rcl.Utils;
-
+global using static Rcl.Interop.RclCommon;
 using System.Runtime.CompilerServices;
 [assembly: DisableRuntimeMarshalling]
 [assembly: InternalsVisibleTo("Rcl.NET.Tests, PublicKey=002400000480000094000000060200000024000052534131000400000100010075aba3dfe6f7b4a1b3fcd295a4a8652d77e891c02eb11600df39913e623d179a8d3951bea92c6e60733f08d8971270b8e4debb7432935c9c008c5bdfd051bc7e43be4590a81c9f7864fbee1c36481f11aea8f045c95c51779af69cd1c3945ac060d6550bd24b1aadccc2305cbdad75b448997af88d357f90ca97742144b372e8")]

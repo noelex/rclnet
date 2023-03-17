@@ -7,16 +7,16 @@ record struct NameWithType(string Name, string Type);
 
 record struct TopicEndPointData(
     GraphId Id,
-    string Type, 
-    NodeName Node, 
+    string Type,
+    NodeName Node,
     QosProfile QosProfile);
 
 internal struct GraphId : IEquatable<GraphId>
 {
     // These fields are initialized by directly copying the struct.
-    #pragma warning disable CS0649
+#pragma warning disable CS0649
     private readonly long _d1, _d2, _d3;
-    #pragma warning restore CS0649
+#pragma warning restore CS0649
 
     public GraphId(ReadOnlySpan<byte> data)
     {

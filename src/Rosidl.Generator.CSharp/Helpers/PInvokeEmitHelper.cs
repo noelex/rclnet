@@ -1,9 +1,4 @@
 ﻿using CppAst.CodeGen.CSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Rosidl.Generator.CSharp.Helpers;
 
@@ -52,7 +47,7 @@ internal static class PInvokeEmitHelper
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Bool)
         };
 
-        method.Parameters.Add(new CSharpParameter("input") { ParameterType = new CSharpPointerType( context.StructType), });
+        method.Parameters.Add(new CSharpParameter("input") { ParameterType = new CSharpPointerType(context.StructType), });
         method.Parameters.Add(new CSharpParameter("output") { ParameterType = new CSharpPointerType(context.StructType), });
 
         method.Body = (writer, element) =>

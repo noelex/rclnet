@@ -30,7 +30,7 @@ public class RosGraphTests
         await Task.WhenAny(t);
 
         // Wait until node disappears
-        await node.Graph.TryWaitForEventAsync((x,state) =>
+        await node.Graph.TryWaitForEventAsync((x, state) =>
             x is NodeDisappearedEvent nde &&
             nde.Node.Name.FullyQualifiedName == nodeNameToBeWaited, null, 500);
 

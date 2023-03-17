@@ -2,8 +2,6 @@ namespace Rcl.NET.Tests;
 
 using Rcl.Qos;
 using Rosidl.Messages.Builtin;
-using Rosidl.Messages.Sensor;
-using System.Diagnostics;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -169,7 +167,7 @@ public class PubSubTests
     [SkippableFact]
     public async Task IgnoreLocalPublications()
     {
-        Skip.If(RosEnvironment.IsFoxy && RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp", 
+        Skip.If(RosEnvironment.IsFoxy && RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp",
             "ignore_local_publications is not supported by rmw_fastrtps_cpp on foxy.");
 
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
@@ -298,7 +296,7 @@ public class PubSubTests
     public void ContentFilteredOptionsTooManyArguments()
     {
         Assert.Throws<ArgumentException>(() => new ContentFilterOptions(
-            "test", Enumerable.Range(0, 101).Select(x=>string.Empty).ToArray()));
+            "test", Enumerable.Range(0, 101).Select(x => string.Empty).ToArray()));
     }
 
     [SkippableFact]

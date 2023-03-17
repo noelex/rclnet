@@ -51,7 +51,7 @@ public abstract class ActionGoalHandler<TGoal, TResult, TFeedback> : IActionGoal
 
     /// <inheritdoc/>
     public abstract Task<TResult> ExecuteAsync(
-        IActionGoalController<TFeedback> controller,TGoal goal, CancellationToken cancellationToken);
+        IActionGoalController<TFeedback> controller, TGoal goal, CancellationToken cancellationToken);
 
     /// <inheritdoc/>
     public virtual void OnAccepted(IActionGoalController<TFeedback> controller)

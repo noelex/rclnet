@@ -9,9 +9,9 @@ using var sub = node.CreateNativeSubscription<Pose>("/turtle1/pose");
 using var cts = new CancellationTokenSource();
 _ = Task.Run(async () =>
 {
-    await foreach(var buffer in sub.ReadAllAsync(cts.Token))
+    await foreach (var buffer in sub.ReadAllAsync(cts.Token))
     {
-        using(buffer) ProcessMessage(node, buffer);
+        using (buffer) ProcessMessage(node, buffer);
     }
 
     static void ProcessMessage(IRclNode node, RosMessageBuffer buffer)

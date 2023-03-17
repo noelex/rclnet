@@ -1,10 +1,5 @@
 ﻿using CppAst.CodeGen.CSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Rosidl.Generator.CSharp.Helpers;
 
@@ -126,7 +121,7 @@ internal static class StructMethodEmitHelper
     {
         var fields = context.MessageContext.Metadata.Fields
             .OfType<VariableFieldMetadata>().ToArray();
-        
+
         StringBuilder body = new();
         var idx = 0;
         foreach (var f in fields)

@@ -1,5 +1,4 @@
-﻿using Rcl.Interop;
-using Rosidl.Runtime.Interop;
+﻿using Rosidl.Runtime.Interop;
 
 namespace Rcl.Graph;
 

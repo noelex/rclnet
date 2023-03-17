@@ -195,8 +195,8 @@ public interface INativeActionGoalContext : IActionGoalContext
 /// <typeparam name="TFeedback">Type of the feedback message.</typeparam>
 /// <typeparam name="TResult">Type of the result message.</typeparam>
 public interface IActionGoalContext<TResult, TFeedback> : IActionGoalContext, IObservable<TFeedback>
-    where TFeedback: IActionFeedback
-    where TResult: IActionResult
+    where TFeedback : IActionFeedback
+    where TResult : IActionResult
 {
     /// <summary>
     /// Gets the result of the goal.

@@ -1,5 +1,4 @@
 ﻿using Rosidl.Runtime;
-using System.Xml.Linq;
 
 namespace Rcl;
 

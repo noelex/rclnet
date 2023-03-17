@@ -1,5 +1,4 @@
 ﻿using Rcl.Interop;
-using Rcl.Logging;
 using Rosidl.Messages.Rcl;
 
 namespace Rcl.Parameters.Impl;

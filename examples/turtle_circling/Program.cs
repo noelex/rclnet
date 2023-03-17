@@ -2,7 +2,7 @@
 using Rosidl.Messages.Geometry;
 
 var r = 2f;
-if(args.Length > 0 && float.TryParse(args[0], out var input))
+if (args.Length > 0 && float.TryParse(args[0], out var input))
 {
     r = input;
 }
@@ -11,7 +11,7 @@ await using var ctx = new RclContext(args);
 using var node = ctx.CreateNode("turtle_circling");
 using var pub = node.CreatePublisher<Twist>("/turtle1/cmd_vel");
 
-using var cts=new CancellationTokenSource();
+using var cts = new CancellationTokenSource();
 _ = Task.Run(async () =>
 {
     var twist = new Twist(

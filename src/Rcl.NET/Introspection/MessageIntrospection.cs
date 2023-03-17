@@ -1,12 +1,5 @@
-﻿using Rosidl.Runtime.Interop;
-using Rosidl.Runtime;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Rosidl.Runtime;
+using Rosidl.Runtime.Interop;
 
 namespace Rcl.Introspection;
 
@@ -38,11 +31,11 @@ static class MessageIntrospection
 {
     public unsafe static IMessageIntrospection Create(MessageTypeSupport* typesupport)
     {
-        if(RosEnvironment.IsFoxy)
+        if (RosEnvironment.IsFoxy)
         {
             return new FoxyMessageIntrospection(typesupport);
         }
-        else if(RosEnvironment.IsHumble)
+        else if (RosEnvironment.IsHumble)
         {
             return new HumbleMessageIntrospection(typesupport);
         }
@@ -59,7 +52,7 @@ static class MessageIntrospection
     {
         if (RosEnvironment.IsFoxy)
         {
-            return new FoxyMessageIntrospection( messageMembers);
+            return new FoxyMessageIntrospection(messageMembers);
         }
         else if (RosEnvironment.IsHumble)
         {

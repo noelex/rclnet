@@ -1,6 +1,5 @@
 ﻿using Rcl.Internal.Clients;
 using Rcl.Introspection;
-using Rcl.Qos;
 using Rosidl.Messages.Action;
 using Rosidl.Messages.UniqueIdentifier;
 using Rosidl.Runtime;

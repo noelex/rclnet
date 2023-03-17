@@ -24,7 +24,7 @@ public class RclException : Exception
     /// </summary>
     /// <param name="message">Message of the error.</param>
     public RclException(string message)
-        :base(message)
+        : base(message)
     {
         Data[nameof(ErrorCode)] = -1;
     }

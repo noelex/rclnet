@@ -5,7 +5,7 @@ unsafe class SafeClockHandle : RclObjectHandle<rcl_clock_t>
     public SafeClockHandle(RclClockType clockType)
     {
         *Object = new rcl_clock_t();
-        var alloc=RclAllocator.Default.Object;
+        var alloc = RclAllocator.Default.Object;
 
         try
         {

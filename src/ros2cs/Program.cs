@@ -1,7 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Rosidl.Generator.CSharp;
 
-if(args.Length==1 && args[0] is "/?" or "/h" or "-h" or "--help")
+if (args.Length == 1 && args[0] is "/?" or "/h" or "-h" or "--help")
 {
     Console.WriteLine(
 @"

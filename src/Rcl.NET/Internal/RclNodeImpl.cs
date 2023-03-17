@@ -5,7 +5,6 @@ using Rcl.Parameters;
 using Rcl.Parameters.Impl;
 using Rcl.SafeHandles;
 using Rosidl.Runtime.Interop;
-using System.Diagnostics;
 
 namespace Rcl.Internal;
 
@@ -27,7 +26,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         Options = options ?? NodeOptions.Default;
         Clock = Options.Clock switch
         {
-            RclClockType.Ros  => new(context, Options.Clock),
+            RclClockType.Ros => new(context, Options.Clock),
             RclClockType.Steady => context.SteadyClock,
             RclClockType.System => context.SystemClock,
             _ => throw new RclException($"Unsupported clock type '{Options.Clock}'.")

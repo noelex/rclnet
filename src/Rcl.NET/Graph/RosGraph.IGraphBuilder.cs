@@ -11,7 +11,7 @@ public partial class RosGraph
         }
         return s;
     }
-    
+
     void IGraphBuilder.OnAddServiceServer(RosServiceEndPoint server)
     {
         _newServers.Add(server);

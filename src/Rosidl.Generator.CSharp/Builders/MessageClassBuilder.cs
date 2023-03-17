@@ -265,7 +265,7 @@ public class MessageClassBuilder
                                 writer.AppendLine($"    this.{fieldName} = new string[{arraySize}];");
                                 writer.AppendLine($"    for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.AppendLine("    {");
-                                if(prim.ValueType is PrimitiveTypes.String)
+                                if (prim.ValueType is PrimitiveTypes.String)
                                 {
                                     writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}[__i].AsSpan(), textEncoding);");
                                 }
@@ -503,7 +503,7 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
-            
+
             writer.WriteLine($"return {_context.PrivStructName}" +
                 $".TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<" +
                     $"{_context.PrivStructName}>(data.ToPointer()));");
@@ -708,7 +708,7 @@ public class MessageClassBuilder
                                 if (!previousLineIsBlank) writer.WriteLine();
                                 writer.WriteLine($"for (int __i = 0; __i < {arraySize}; __i++)");
                                 writer.WriteLine("{");
-                                if(prim.ValueType is PrimitiveTypes.String)
+                                if (prim.ValueType is PrimitiveTypes.String)
                                 {
                                     writer.WriteLine($"    priv.{fieldName}[__i].CopyFrom(this.{fieldName}[__i], textEncoding);");
                                 }

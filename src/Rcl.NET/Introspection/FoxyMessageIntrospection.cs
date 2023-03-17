@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace Rcl.Introspection;
 
-internal unsafe class FoxyMessageIntrospection: IMessageIntrospection
+internal unsafe class FoxyMessageIntrospection : IMessageIntrospection
 {
     private readonly MessageMembers* _typesupport;
     private readonly MessageMember_Foxy* _members;

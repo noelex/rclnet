@@ -1,6 +1,4 @@
 ﻿using System.Runtime.InteropServices;
-using static Rcl.Interop.RclHumble;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Rcl.Interop;
 
@@ -343,12 +341,12 @@ internal unsafe static class RclHumble
     [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
     public static extern rcl_ret_t rcl_publisher_get_network_flow_endpoints(
       rcl_publisher_t* publisher,
-      rcl_allocator_t * allocator,
+      rcl_allocator_t* allocator,
       rmw_network_flow_endpoint_array_t* network_flow_endpoint_array);
 
     [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
     public static extern rcl_ret_t rcl_subscription_get_network_flow_endpoints(
       rcl_subscription_t* subscription,
-      rcl_allocator_t * allocator,
+      rcl_allocator_t* allocator,
       rmw_network_flow_endpoint_array_t* network_flow_endpoint_array);
 }

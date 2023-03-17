@@ -2,7 +2,6 @@
 using Rcl.Parameters;
 using Rcl.Qos;
 using Rosidl.Messages.Rosgraph;
-using System.Xml.Linq;
 
 namespace Rcl.Internal.NodeServices;
 
@@ -43,7 +42,7 @@ class ExternalTimeSource : IDisposable
 
             if (newValue.AsBoolean())
             {
-                if(self._node.Clock.Type != RclClockType.Ros)
+                if (self._node.Clock.Type != RclClockType.Ros)
                 {
                     return ValidationResult.Failure("use_sim_time parameter can't be true while not using ROS clock.");
                 }
@@ -51,7 +50,7 @@ class ExternalTimeSource : IDisposable
                 self._overrideEnabled = self._node.Clock.Impl.IsRosTimeOverrideEnabled;
 
                 // Suppress asynchronous scheduling because clock updates may be published very frequently.
-                self._subscription = self._node.CreateNativeSubscription<Clock>("/clock", 
+                self._subscription = self._node.CreateNativeSubscription<Clock>("/clock",
                     new(qos: self._qos, allowSynchronousContinuations: true));
                 _ = self.UpdateClockAsync(self._subscription);
 

@@ -68,7 +68,7 @@ public class RosTopic
                 nodes.TryGetValue(ep.Node, out var node))
             {
                 var endpoint = new RosTopicEndPoint(
-                    this, node, type,  ep.Type, ep.QosProfile);
+                    this, node, type, ep.Type, ep.QosProfile);
 
                 dest[ep.Id] = endpoint;
                 if (type is TopicEndPointType.Publisher)

@@ -1,6 +1,4 @@
-﻿using Rcl.Qos;
-
-namespace Rcl.Actions;
+﻿namespace Rcl.Actions;
 
 internal static class Constants
 {

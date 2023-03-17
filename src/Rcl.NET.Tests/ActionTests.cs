@@ -231,7 +231,7 @@ public class ActionTests
         static async Task<int> CountFeedbacks(IAsyncEnumerable<LookupTransformActionFeedback> items)
         {
             var count = 0;
-            await foreach(var f in items)
+            await foreach (var f in items)
             {
                 count++;
             }
