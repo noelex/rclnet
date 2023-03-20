@@ -35,6 +35,28 @@ public interface IRclContext : IDisposable, IAsyncDisposable
     IRclNode CreateNode(string name, string @namespace = "/", NodeOptions? options = null);
 
     /// <summary>
+    /// Creates an ROS node with specified <see cref="RclClock"/>.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="IRclNode"/> created by this method will use the clock specified by <paramref name="clockOverride"/> as its internal clock,
+    /// and the <see cref="NodeOptions.Clock"/> and <see cref="NodeOptions.ClockQos"/> options are ignored.
+    /// <para>
+    /// The node will become a 'consumer' of the clock, that is, no subscription of /clock topic will be created and the node will never try to
+    /// set time override of the clock, regardless of the type of the clock. 
+    /// </para>
+    /// <para>
+    /// This can be useful if you want your application to have a single node to be the producer of the clock, so that other nodes can also use the
+    /// same external time source without subscribing to the /clock topic. 
+    /// </para>
+    /// </remarks>
+    /// <param name="name">Name of the node.</param>
+    /// <param name="clockOverride">The <see cref="RclClock"/> to be used to override clock settings.</param>
+    /// <param name="namespace">Namespace of the node.</param>
+    /// <param name="options">Other options to be used when creating the node.</param>
+    /// <returns></returns>
+    IRclNode CreateNode(string name, RclClock clockOverride, string @namespace = "/", NodeOptions? options = null);
+
+    /// <summary>
     /// Creates a timer with specified period.
     /// </summary>
     /// <param name="clock">Clock to be used. The clock must be created by current context.</param>

@@ -6,9 +6,6 @@ namespace Rcl.NET.Tests;
 
 public class ClockTests
 {
-    private static readonly SemaphoreSlim _concurrencyControl = new(1);
-
-
     private static async Task GenerateClockAsync(double scale = 1.0, CancellationToken cancellationToken = default)
     {
         const int resolution = 20_000_000;
@@ -41,48 +38,78 @@ public class ClockTests
     [InlineData(0.5, 100, 200, 100)]
     [InlineData(1, 100, 100, 100)]
     [InlineData(2, 200, 100, 100)]
-    public Task TestCancellationTokenSourceWithRosClock(double scale, int rosTime, int actualTime, double tol)
+    public async Task TestCancellationTokenSourceWithRosClock(double scale, int rosTime, int actualTime, double tol)
     {
         Skip.If(TestConfig.GitHubActions,
             "Skipping clock tests when running by GitHub Actions because it's nearly impossible to meet the timing criteria.");
 
-        return Task.Run(async () =>
+
+        using var clockCancellation = new CancellationTokenSource();
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+
+        var task = GenerateClockAsync(scale, clockCancellation.Token);
+
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName(),
+            options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
+
+        var sw = Stopwatch.StartNew();
+        try
         {
-            await _concurrencyControl.WaitAsync();
-            try
-            {
-                using var clockCancellation = new CancellationTokenSource();
-                await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+            using var cts = new CancellationTokenSource();
+            cts.CancelAfter(10_000);
+            using var reg = cts.CancelAfter(rosTime, node);
 
-                var task = GenerateClockAsync(scale, clockCancellation.Token);
+            await Task.Delay(-1, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            sw.Stop();
+            Assert.Equal(actualTime, sw.ElapsedMilliseconds, tol);
+        }
+        finally
+        {
+            clockCancellation.Cancel();
+            await Task.WhenAny(task).WaitAsync(TimeSpan.FromSeconds(5));
+        }
+    }
 
-                using var node = ctx.CreateNode(NameGenerator.GenerateNodeName(),
-                    options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
+    [SkippableTheory]
+    [InlineData(0.5, 100, 200, 100)]
+    [InlineData(1, 100, 100, 100)]
+    [InlineData(2, 200, 100, 100)]
+    public async Task CancelWithOverrideClock(double scale, int rosTime, int actualTime, double tol)
+    {
+        Skip.If(TestConfig.GitHubActions,
+            "Skipping clock tests when running by GitHub Actions because it's nearly impossible to meet the timing criteria.");
 
-                var sw = Stopwatch.StartNew();
-                try
-                {
-                    using var cts = new CancellationTokenSource();
-                    cts.CancelAfter(10_000);
-                    using var reg = cts.CancelAfter(rosTime, node);
+        using var clockCancellation = new CancellationTokenSource();
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
 
-                    await Task.Delay(-1, cts.Token);
-                }
-                catch (OperationCanceledException)
-                {
-                    sw.Stop();
-                    Assert.Equal(actualTime, sw.ElapsedMilliseconds, tol);
-                }
-                finally
-                {
-                    clockCancellation.Cancel();
-                    await Task.WhenAny(task).WaitAsync(TimeSpan.FromSeconds(5));
-                }
-            }
-            finally
-            {
-                _concurrencyControl.Release();
-            }
-        });
+        var task = GenerateClockAsync(scale, clockCancellation.Token);
+
+        using var clockProducer = ctx.CreateNode(NameGenerator.GenerateNodeName(),
+            options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
+
+        using var clockConsumer = ctx.CreateNode(NameGenerator.GenerateNodeName(), clockProducer.Clock);
+
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            using var cts = new CancellationTokenSource();
+            cts.CancelAfter(10_000);
+            using var reg = cts.CancelAfter(rosTime, clockConsumer);
+
+            await Task.Delay(-1, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            sw.Stop();
+            Assert.Equal(actualTime, sw.ElapsedMilliseconds, tol);
+        }
+        finally
+        {
+            clockCancellation.Cancel();
+            await Task.WhenAny(task).WaitAsync(TimeSpan.FromSeconds(5));
+        }
     }
 }

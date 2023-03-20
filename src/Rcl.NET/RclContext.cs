@@ -173,7 +173,16 @@ public sealed class RclContext : IRclContext
     {
         using (ScopedLock.Lock(ref s_nodeCreationLock))
         {
-            return new RclNodeImpl(this, name, @namespace, options);
+            return new RclNodeImpl(this, name, @namespace, null, options);
+        }
+    }
+
+    /// <inheritdoc/>
+    public IRclNode CreateNode(string name, RclClock clockOverride, string @namespace = "/", NodeOptions? options = null)
+    {
+        using (ScopedLock.Lock(ref s_nodeCreationLock))
+        {
+            return new RclNodeImpl(this, name, @namespace, clockOverride, options);
         }
     }
 

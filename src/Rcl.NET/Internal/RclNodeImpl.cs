@@ -13,7 +13,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
     private static readonly Dictionary<string, Variant> s_emptyParameterOverrides = new();
 
     private readonly RosGraph _graph;
-    private readonly ExternalTimeSource _timeSource;
+    private readonly ExternalTimeSource? _timeSource;
     private readonly ParameterService _parameters;
     private readonly CancellationTokenSource _cts = new();
     private readonly RclGuardConditionImpl _graphSignal;
@@ -21,12 +21,13 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
     public unsafe RclNodeImpl(
         RclContext context,
         string name,
-         string @namespace = "",
+        string @namespace = "",
+        RclClock? clockOverride = null,
         NodeOptions? options = null)
         : base(context, new(context.Handle, name, @namespace, options ?? NodeOptions.Default))
     {
         Options = options ?? NodeOptions.Default;
-        Clock = Options.Clock switch
+        Clock = clockOverride ?? Options.Clock switch
         {
             RclClockType.Ros => new(Options.Clock),
             RclClockType.Steady => RclClock.SteadyClock,
@@ -46,7 +47,12 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
 
         var overrides = Options.ParameterOverrides ?? s_emptyParameterOverrides;
         _parameters = new ParameterService(this, overrides);
-        _timeSource = new ExternalTimeSource(this, Options.ClockQos);
+
+        // Create the time source only when we're not using clockOverride.
+        if (clockOverride == null)
+        {
+            _timeSource = new ExternalTimeSource(this, Options.ClockQos);
+        }
 
         if (Options.DeclareParameterFromOverrides)
         {
@@ -118,7 +124,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
 
     public override void Dispose()
     {
-        _timeSource.Dispose();
+        _timeSource?.Dispose();
         _parameters.Dispose();
         _cts.Cancel();
         _cts.Dispose();
@@ -131,6 +137,9 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         _graphSignal.Dispose();
         base.Dispose();
 
-        if (Clock.Type == RclClockType.Ros) Clock.Dispose();
+        // Dispose the clock only when the node owns it.
+        // _timeSource == null: Using a overrided clock which the node doesn't own.
+        // Clock.Type != RclClockType.Ros: Using shared system/steady clock.
+        if (_timeSource != null && Clock.Type == RclClockType.Ros) Clock.Dispose();
     }
 }
