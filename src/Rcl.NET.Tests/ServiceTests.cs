@@ -139,4 +139,38 @@ public class ServiceTests
         await Assert.ThrowsAsync<TimeoutException>(() =>
             client.InvokeAsync(new ListParametersServiceRequest(), 0));
     }
+
+    [Fact]
+    public async Task InvokeShouldBeInterruptedWhenClientIsDisposed()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        var client = node.CreateClient<
+            ListParametersService,
+            ListParametersServiceRequest,
+            ListParametersServiceResponse>(NameGenerator.GenerateServiceName());
+
+        var assertTask = Assert.ThrowsAsync<ObjectDisposedException>(() =>
+            client.InvokeAsync(new ListParametersServiceRequest(), 1000));
+        await Task.Delay(100).ContinueWith(x => client.Dispose());
+
+        await assertTask;
+    }
+
+    [Fact]
+    public async Task InvokeWithManualCancel()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = node.CreateClient<
+            ListParametersService,
+            ListParametersServiceRequest,
+            ListParametersServiceResponse>(NameGenerator.GenerateServiceName());
+        using var cts = new CancellationTokenSource(100);
+
+        var ex = await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            client.InvokeAsync(new ListParametersServiceRequest(), 1000, cts.Token));
+
+        Assert.Equal(cts.Token, ex.CancellationToken);
+    }
 }

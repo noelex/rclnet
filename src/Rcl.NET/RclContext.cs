@@ -607,7 +607,7 @@ public sealed class RclContext : IRclContext
             }
             else
             {
-                SendAsync(d, state).AsTask().Wait();
+                SendAsync(d, state).AsTask().GetAwaiter().GetResult();
             }
         }
 

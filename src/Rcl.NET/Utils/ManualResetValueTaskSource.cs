@@ -37,12 +37,35 @@ internal sealed class ManualResetValueTaskSource<T> : IValueTaskSource<T>, IValu
 
     public T GetResult(short token)
     {
-        return _core.GetResult(token);
+        try
+        {
+            return _core.GetResult(token);
+        }
+        finally
+        {
+            CallAndResetFinallyCallback(token);
+        }
     }
 
     void IValueTaskSource.GetResult(short token)
     {
-        _core.GetResult(token);
+        try
+        {
+            _core.GetResult(token);
+        }
+        finally
+        {
+            CallAndResetFinallyCallback(token);
+        }
+    }
+
+    private void CallAndResetFinallyCallback(short token)
+    {
+        // Call _finallyCallback exactly once when completed.
+        if (_core.GetStatus(token) != ValueTaskSourceStatus.Pending)
+        {
+            Interlocked.Exchange(ref _finallyCallback, null)?.Invoke(_finallyCallbackState);
+        }
     }
 
     public ValueTaskSourceStatus GetStatus(short token) => _core.GetStatus(token);
@@ -50,42 +73,6 @@ internal sealed class ManualResetValueTaskSource<T> : IValueTaskSource<T>, IValu
     [Obsolete("OnCompleted this not supposed to be called by application code. Use OnFinally instead.", true)]
     public void OnCompleted(Action<object?> continuation, object? state, short token, ValueTaskSourceOnCompletedFlags flags)
     {
-        var args = ObjectPool.Rent<CompleteCallbacks>()
-            .Reset(continuation, state, _finallyCallback, _finallyCallbackState);
-
-        _core.OnCompleted(static s =>
-        {
-            var arg = (CompleteCallbacks)s!;
-            try
-            {
-                arg.Callback?.Invoke(arg.State);
-            }
-            finally
-            {
-                arg.FinallyCallback?.Invoke(arg.FinallyCallbackState);
-                ObjectPool.Return(arg);
-            }
-        }, args, token, DisableContextCapture ? ValueTaskSourceOnCompletedFlags.None : flags);
-    }
-
-    private class CompleteCallbacks
-    {
-        public Action<object?>? Callback { get; private set; }
-
-        public object? State { get; private set; }
-
-        public Action<object?>? FinallyCallback { get; private set; }
-
-        public object? FinallyCallbackState { get; private set; }
-
-        public CompleteCallbacks Reset(Action<object?>? callback, object? state,
-             Action<object?>? finallyCallback, object? finallyCallbackState)
-        {
-            Callback = callback;
-            State = state;
-            FinallyCallback = finallyCallback;
-            FinallyCallbackState = finallyCallbackState;
-            return this;
-        }
+        _core.OnCompleted(continuation, state, token, DisableContextCapture ? ValueTaskSourceOnCompletedFlags.None : flags);
     }
 }

@@ -113,7 +113,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         // TODO: Maybe use private ObjectPools?
         var completion = ObjectPool.Rent<ManualResetValueTaskSource<RosMessageBuffer>>();
         var timeoutCts = ObjectPool.Rent<CancellationTokenSource>();
-        using var reg = timeoutCts.CancelAfter(timeoutMilliseconds, _node);
+        var cancelAfterReg = timeoutCts.CancelAfter(timeoutMilliseconds, _node);
 
         // Yielding back to the event loop is required to avoid the situation that response 
         // has already been received at the point we add the ValueTaskSource into _pendingRequests,
@@ -147,7 +147,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         var completionArgs =
             ObjectPool.Rent<CompletionArgs>()
-            .Reset(sequence, this, completion, outerReg, disposeReg, timeoutReg, timeoutCts, cancelArgs);
+            .Reset(sequence, this, completion, outerReg, disposeReg, timeoutReg, timeoutCts, cancelArgs, cancelAfterReg);
 
         completion.RunContinuationsAsynchronously = true;
         completion.OnFinally(state => ((CompletionArgs)state!).Return(), completionArgs);
@@ -164,7 +164,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         //     completionArgs.Return();
         // }
 
-        return await new ValueTask<RosMessageBuffer>(completion, completion.Version);
+        return await new ValueTask<RosMessageBuffer>(completion, completion.Version).ConfigureAwait(false);
     }
 
     public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken = default)
@@ -256,6 +256,8 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         public CancellationTokenRegistration TimeoutCanellationReg { get; private set; }
 
+        public TimeoutRegistration CancelAfterReg { get; private set; }
+
         public CancellationTokenSource TimeoutSource { get; private set; } = null!;
 
         public CancellationArgs CancellationArgs { get; private set; } = null!;
@@ -268,7 +270,8 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             CancellationTokenRegistration shutdownCancellation,
             CancellationTokenRegistration timeoutCancellation,
             CancellationTokenSource timeoutSource,
-            CancellationArgs canelArgs)
+            CancellationArgs canelArgs,
+            TimeoutRegistration cancelAfterReg)
         {
             Sequence = sequence;
             This = @this;
@@ -278,11 +281,14 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             TimeoutCanellationReg = timeoutCancellation;
             TimeoutSource = timeoutSource;
             CancellationArgs = canelArgs;
+            CancelAfterReg = cancelAfterReg;
             return this;
         }
 
         public void Return()
         {
+            CancelAfterReg.Dispose();
+
             // Cancel CancellationTokenRegistrations
             OuterCanellationReg.Dispose();
             ShutdownCanellationReg.Dispose();
@@ -315,6 +321,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             TimeoutCanellationReg = default;
             TimeoutSource = default!;
             CancellationArgs = default!;
+            CancelAfterReg = default;
             ObjectPool.Return(this);
         }
     }
