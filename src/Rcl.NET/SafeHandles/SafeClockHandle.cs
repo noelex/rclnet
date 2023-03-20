@@ -2,6 +2,8 @@ namespace Rcl.SafeHandles;
 
 unsafe class SafeClockHandle : RclObjectHandle<rcl_clock_t>
 {
+    internal SpinLock SyncRoot = new();
+
     public SafeClockHandle(RclClockType clockType)
     {
         *Object = new rcl_clock_t();

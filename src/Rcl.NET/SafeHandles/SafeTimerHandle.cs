@@ -1,16 +1,25 @@
+using Rosidl.Messages.Rosgraph;
+
 namespace Rcl.SafeHandles;
 
 unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
 {
+    private readonly SafeClockHandle _clock;
+
     public SafeTimerHandle(
         SafeContextHandle context, SafeClockHandle clock, long period)
     {
-        *Object = rcl_get_zero_initialized_timer();
+        _clock = clock;
+        * Object = rcl_get_zero_initialized_timer();
+
         try
         {
-            RclException.ThrowIfNonSuccess(
-                rcl_timer_init(Object, clock.Object, context.Object,
-                  period, null, RclAllocator.Default.Object));
+            using (ScopedLock.Lock(ref _clock.SyncRoot))
+            {
+                RclException.ThrowIfNonSuccess(
+                    rcl_timer_init(Object, clock.Object, context.Object,
+                      period, null, RclAllocator.Default.Object));
+            }
         }
         catch
         {
@@ -21,6 +30,9 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
 
     protected override void ReleaseHandleCore(rcl_timer_t* ptr)
     {
-        rcl_timer_fini(ptr);
+        using (ScopedLock.Lock(ref _clock.SyncRoot))
+        {
+            rcl_timer_fini(ptr);
+        }
     }
 }
