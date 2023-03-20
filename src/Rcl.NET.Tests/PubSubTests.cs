@@ -7,13 +7,6 @@ using Xunit.Abstractions;
 
 public class PubSubTests
 {
-    private readonly ITestOutputHelper _output;
-
-    public PubSubTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
-
     [Fact]
     public async Task PubSubStronglyTypedMessages()
     {

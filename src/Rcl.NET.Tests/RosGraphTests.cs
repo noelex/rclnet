@@ -21,7 +21,7 @@ public class RosGraphTests
         var t = RunAnotherNodeAsync(nodeNameToBeWaited, cts.Token);
 
         // Looks like node discovery is much slower on foxy, need to set to larger timeout here.
-        isOnline = await node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 500);
+        isOnline = await node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 5000);
         Assert.True(isOnline);
 
         isOnline = await node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 0);
@@ -33,7 +33,7 @@ public class RosGraphTests
         // Wait until node disappears
         await node.Graph.TryWatchAsync((graph, e) =>
             e is NodeDisappearedEvent nde &&
-            nde.Node.Name.FullyQualifiedName == nodeNameToBeWaited, 500);
+            nde.Node.Name.FullyQualifiedName == nodeNameToBeWaited, 5000);
 
         isOnline = await node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 0);
         Assert.False(isOnline);
