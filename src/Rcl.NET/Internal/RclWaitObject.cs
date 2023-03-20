@@ -107,7 +107,7 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
             ObjectPool.Rent<CompletedCallbackArgs>()
             .Reset(this, reg, id, tcs, cancellationArgs);
         tcs.OnFinally(static state =>
-            ((RclWaitObject<T>.CompletedCallbackArgs)state!).Return(), (object)completionArg);
+            ((RclWaitObject<T>.CompletedCallbackArgs)state!).Return(), completionArg);
 
         AddAwaiter(id, tcs);
         return new ValueTask(tcs, tcs.Version);

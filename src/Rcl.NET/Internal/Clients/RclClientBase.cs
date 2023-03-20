@@ -108,12 +108,12 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
     protected abstract RosMessageBuffer CreateResponseBuffer();
 
-    public async Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, int timeoutMilliseconds, CancellationToken cancellationToken = default)
+    public async Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
         // TODO: Maybe use private ObjectPools?
         var completion = ObjectPool.Rent<ManualResetValueTaskSource<RosMessageBuffer>>();
         var timeoutCts = ObjectPool.Rent<CancellationTokenSource>();
-        var cancelAfterReg = timeoutCts.CancelAfter(timeoutMilliseconds, _node);
+        var cancelAfterReg = timeoutCts.CancelAfter(timeout, _node);
 
         // Yielding back to the event loop is required to avoid the situation that response 
         // has already been received at the point we add the ValueTaskSource into _pendingRequests,
@@ -139,7 +139,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         _pendingRequests[sequence] = completion;
 
         var cancelArgs = ObjectPool.Rent<CancellationArgs>()
-            .Reset(sequence, this, TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
+            .Reset(sequence, this, timeout, cancellationToken);
 
         var outerReg = cancellationToken.Register(static s => ((CancellationArgs)s!).CancelWithOuterToken(), cancelArgs);
         var disposeReg = _shutdownSignal.Token.Register(static s => ((CancellationArgs)s!).CancelAsDisposed(), cancelArgs);
@@ -167,11 +167,11 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         return await new ValueTask<RosMessageBuffer>(completion, completion.Version).ConfigureAwait(false);
     }
 
-    public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken = default)
-        => InvokeAsync(request, (int)timeout.TotalMilliseconds, cancellationToken);
+    public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, int timeoutMilliseconds, CancellationToken cancellationToken = default)
+        => InvokeAsync(request, TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
 
     public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, CancellationToken cancellationToken = default)
-        => InvokeAsync(request, Timeout.Infinite, cancellationToken);
+        => InvokeAsync(request, Timeout.InfiniteTimeSpan, cancellationToken);
 
     public override void Dispose()
     {
