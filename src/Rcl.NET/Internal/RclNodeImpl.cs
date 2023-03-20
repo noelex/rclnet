@@ -28,9 +28,9 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         Options = options ?? NodeOptions.Default;
         Clock = Options.Clock switch
         {
-            RclClockType.Ros => new(context, Options.Clock),
-            RclClockType.Steady => context.SteadyClock,
-            RclClockType.System => context.SystemClock,
+            RclClockType.Ros => new(Options.Clock),
+            RclClockType.Steady => RclClock.SteadyClock,
+            RclClockType.System => RclClock.SystemClock,
             _ => throw new RclException($"Unsupported clock type '{Options.Clock}'.")
         };
 

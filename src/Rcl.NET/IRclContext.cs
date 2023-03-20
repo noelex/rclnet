@@ -8,16 +8,6 @@ namespace Rcl;
 public interface IRclContext : IDisposable, IAsyncDisposable
 {
     /// <summary>
-    /// Gets a shared steady clock which can be used by nodes within current context.
-    /// </summary>
-    RclClock SteadyClock { get; }
-
-    /// <summary>
-    /// Gets a shared system clock which can be used by nodes within current context.
-    /// </summary>
-    RclClock SystemClock { get; }
-
-    /// <summary>
     /// A context for scheduling executions on current <see cref="IRclContext"/> event loop.
     /// </summary>
     SynchronizationContext SynchronizationContext { get; }
