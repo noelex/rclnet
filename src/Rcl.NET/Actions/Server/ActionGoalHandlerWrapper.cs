@@ -25,7 +25,7 @@ internal class ActionGoalHandlerWrapper<TGoal, TResult, TFeedback> : INativeActi
     public async Task ExecuteAsync(INativeActionGoalController controller, RosMessageBuffer goal, RosMessageBuffer result, CancellationToken cancellationToken)
     {
         var r = await _innerHandler.ExecuteAsync(
-            _wrappers[controller.GoalId], (TGoal)TGoal.CreateFrom(goal.Data, _textEncoding), cancellationToken);
+            _wrappers[controller.GoalId], (TGoal)TGoal.CreateFrom(goal.Data, _textEncoding), cancellationToken).ConfigureAwait(false);
         r.WriteTo(result.Data, _textEncoding);
     }
 

@@ -39,7 +39,7 @@ internal class ConcurrentService<TService, TRequest, TResponse>
             RosMessageBuffer request, RosMessageBuffer response, CancellationToken cancellationToken = default)
         {
             var req = (TRequest)TRequest.CreateFrom(request.Data, _textEncoding);
-            var resp = await _handler.ProcessRequestAsync(req, cancellationToken);
+            var resp = await _handler.ProcessRequestAsync(req, cancellationToken).ConfigureAwait(false);
             resp.WriteTo(response.Data, _textEncoding);
         }
     }

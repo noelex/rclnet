@@ -221,7 +221,7 @@ internal class ActionServer : IActionServer
     {
         if (_goals.TryGetValue(request.AsRef<GetResultRequest>().GoalId, out var ctx))
         {
-            await ctx.Completion.WaitAsync(cancellationToken);
+            await ctx.Completion.WaitAsync(cancellationToken).ConfigureAwait(false);
 
             _typesupport.ResultService.Response.AsRef<ActionGoalStatus>(response.Data, 0) = ctx.Status;
             if (ctx.Status == ActionGoalStatus.Succeeded)

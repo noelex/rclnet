@@ -35,7 +35,7 @@ internal class ConcurrentIntrospectionService : IntrospectionServiceBase
         using (request)
         using (response)
         {
-            await _handler.ProcessRequestAsync(request, response, _shutdownSignal.Token);
+            await _handler.ProcessRequestAsync(request, response, _shutdownSignal.Token).ConfigureAwait(false);
 
             // We may resume execution on a background thread,
             // but since calling rcl_send_response is thread-safe,

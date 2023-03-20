@@ -40,7 +40,7 @@ internal class NativeActionGoalContext : ActionGoalContextBase, INativeActionGoa
 
         try
         {
-            await foreach (var buffer in _feedbackChannel.Reader.ReadAllAsync(cancellationToken))
+            await foreach (var buffer in _feedbackChannel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
             {
                 yield return buffer;
             }

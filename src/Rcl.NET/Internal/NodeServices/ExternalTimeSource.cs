@@ -74,7 +74,7 @@ class ExternalTimeSource : IDisposable
 
     private async Task UpdateClockAsync(IRclNativeSubscription sub)
     {
-        await foreach (var e in sub.ReadAllAsync())
+        await foreach (var e in sub.ReadAllAsync().ConfigureAwait(false))
         {
             using (e) UpdateClock(e);
         }

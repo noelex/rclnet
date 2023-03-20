@@ -44,7 +44,7 @@ internal class RclClient<TService, TRequest, TResponse> : RclClientBase, IRclCli
         using var requestBuffer = RosMessageBuffer.Create<TRequest>();
         request.WriteTo(requestBuffer.Data, _textEncoding);
 
-        using var responseBuffer = await InvokeAsync(requestBuffer, timeout, cancellationToken);
+        using var responseBuffer = await InvokeAsync(requestBuffer, timeout, cancellationToken).ConfigureAwait(false);
         return (TResponse)TResponse.CreateFrom(responseBuffer.Data, _textEncoding);
     }
 

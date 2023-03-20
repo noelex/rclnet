@@ -57,7 +57,7 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
 
     public async Task<RosMessageBuffer> GetResultAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
-        var result = await GetResultWithStatusAsync(timeout, cancellationToken);
+        var result = await GetResultWithStatusAsync(timeout, cancellationToken).ConfigureAwait(false);
         ThrowIfNonSuccess(result.Status);
         return result.Result;
     }
@@ -67,7 +67,7 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
         using var requestBuffer = _client.GetResultClient.CreateRequestBuffer();
         BuildRequest(requestBuffer.Data);
 
-        using var response = await _client.GetResultClient.InvokeAsync(requestBuffer, timeout, cancellationToken);
+        using var response = await _client.GetResultClient.InvokeAsync(requestBuffer, timeout, cancellationToken).ConfigureAwait(false);
         var status = ProcessResponse(response.Data, out var result);
         return new(status, result);
 
@@ -104,17 +104,17 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
     }
 
     public async Task<ActionResult> GetResultWithStatusAsync(int timeoutMilliseconds, CancellationToken cancellationToken)
-        => await GetResultWithStatusAsync(TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
+        => await GetResultWithStatusAsync(TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken).ConfigureAwait(false);
 
     public async Task<ActionResult> GetResultWithStatusAsync(CancellationToken cancellationToken)
-        => await GetResultWithStatusAsync(Timeout.InfiniteTimeSpan, cancellationToken);
+        => await GetResultWithStatusAsync(Timeout.InfiniteTimeSpan, cancellationToken).ConfigureAwait(false);
 
     public async Task CancelAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
         using var requestBuffer = RosMessageBuffer.Create<CancelGoalServiceRequest>();
         PrepareRequest(requestBuffer);
 
-        using var responseBuffer = await _client.CancelClient.InvokeAsync(requestBuffer, timeout, cancellationToken);
+        using var responseBuffer = await _client.CancelClient.InvokeAsync(requestBuffer, timeout, cancellationToken).ConfigureAwait(false);
         ProcessResponse(responseBuffer);
 
         void PrepareRequest(RosMessageBuffer buffer)

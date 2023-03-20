@@ -94,7 +94,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
     private async Task ReadFeedbacksAsync(CancellationToken cancellationToken = default)
     {
         var introspection = _typesupport.FeedbackMessage;
-        await foreach (var buffer in _feedbackSubscription.ReadAllAsync(cancellationToken))
+        await foreach (var buffer in _feedbackSubscription.ReadAllAsync(cancellationToken).ConfigureAwait(false))
         {
             using (buffer) ProcessFeedbackMessage(introspection, buffer);
         }
@@ -121,7 +121,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
     private async Task ReadStatusAsync(CancellationToken cancellationToken)
     {
-        await foreach (var buffer in _statusSubscription.ReadAllAsync(cancellationToken))
+        await foreach (var buffer in _statusSubscription.ReadAllAsync(cancellationToken).ConfigureAwait(false))
         {
             using (buffer) ProcessStatusArray(buffer);
         }
@@ -145,7 +145,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         using var requestBuffer = _sendGoalClient.CreateRequestBuffer();
         BuildSendGoalRequest(goalId, goalBuffer.Data, requestBuffer.Data);
 
-        using var responseBuffer = await _sendGoalClient.InvokeAsync(requestBuffer, timeoutMilliseconds, cancellationToken);
+        using var responseBuffer = await _sendGoalClient.InvokeAsync(requestBuffer, timeoutMilliseconds, cancellationToken).ConfigureAwait(false);
 
         // bool accepted;
         // Time.Priv stamp;
@@ -165,7 +165,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
         try
         {
-            accepted = await InvokeSendGoalAsync(goalBuffer, uid, timeoutMilliseconds, cancellationToken);
+            accepted = await InvokeSendGoalAsync(goalBuffer, uid, timeoutMilliseconds, cancellationToken).ConfigureAwait(false);
 
             if (!accepted)
             {
@@ -199,7 +199,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
             using var goalBuffer = RosMessageBuffer.Create<TGoal>();
             goal.WriteTo(goalBuffer.Data, _textEncoding);
 
-            accepted = await InvokeSendGoalAsync(goalBuffer, uid, timeoutMilliseconds, cancellationToken);
+            accepted = await InvokeSendGoalAsync(goalBuffer, uid, timeoutMilliseconds, cancellationToken).ConfigureAwait(false);
 
             if (!accepted)
             {

@@ -55,7 +55,7 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
 
         try
         {
-            await foreach (var buffer in _feedbackChannel.Reader.ReadAllAsync(cancellationToken))
+            await foreach (var buffer in _feedbackChannel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
             {
                 yield return buffer;
             }
@@ -94,35 +94,35 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
 
     async Task<TResult> IActionGoalContext<TResult, TFeedback>.GetResultAsync(CancellationToken cancellationToken)
     {
-        using var buffer = await GetResultAsync(cancellationToken);
+        using var buffer = await GetResultAsync(cancellationToken).ConfigureAwait(false);
         return (TResult)TResult.CreateFrom(buffer.Data, _textEncoding);
     }
 
     async Task<TResult> IActionGoalContext<TResult, TFeedback>.GetResultAsync(int timeoutMilliseconds, CancellationToken cancellationToken)
     {
-        using var buffer = await GetResultAsync(timeoutMilliseconds, cancellationToken);
+        using var buffer = await GetResultAsync(timeoutMilliseconds, cancellationToken).ConfigureAwait(false);
         return (TResult)TResult.CreateFrom(buffer.Data, _textEncoding);
     }
 
     async Task<TResult> IActionGoalContext<TResult, TFeedback>.GetResultAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
-        using var buffer = await GetResultAsync(timeout, cancellationToken);
+        using var buffer = await GetResultAsync(timeout, cancellationToken).ConfigureAwait(false);
         return (TResult)TResult.CreateFrom(buffer.Data, _textEncoding);
     }
 
     async Task<ActionResult<TResult>> IActionGoalContext<TResult, TFeedback>.GetResultWithStatusAsync(CancellationToken cancellationToken)
     {
-        return CreateResultWithStatus(await GetResultWithStatusAsync(cancellationToken));
+        return CreateResultWithStatus(await GetResultWithStatusAsync(cancellationToken).ConfigureAwait(false));
     }
 
     async Task<ActionResult<TResult>> IActionGoalContext<TResult, TFeedback>.GetResultWithStatusAsync(int timeoutMilliseconds, CancellationToken cancellationToken)
     {
-        return CreateResultWithStatus(await GetResultWithStatusAsync(timeoutMilliseconds, cancellationToken));
+        return CreateResultWithStatus(await GetResultWithStatusAsync(timeoutMilliseconds, cancellationToken).ConfigureAwait(false));
     }
 
     async Task<ActionResult<TResult>> IActionGoalContext<TResult, TFeedback>.GetResultWithStatusAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
-        return CreateResultWithStatus(await GetResultWithStatusAsync(timeout, cancellationToken));
+        return CreateResultWithStatus(await GetResultWithStatusAsync(timeout, cancellationToken).ConfigureAwait(false));
     }
 
     private ActionResult<TResult> CreateResultWithStatus(ActionResult result)

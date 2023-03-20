@@ -95,7 +95,7 @@ public partial class RosGraph
 
         try
         {
-            await obs.Completion.WaitAsync(cts.Token);
+            await obs.Completion.WaitAsync(cts.Token).ConfigureAwait(false);
             return true;
         }
         catch (OperationCanceledException)
@@ -203,7 +203,7 @@ public partial class RosGraph
     public async Task WatchAsync(Func<RosGraph, RosGraphEvent?, object?, bool> watcher,
         TimeSpan timeout, object? state, CancellationToken cancellationToken = default)
     {
-        var success = await TryWatchAsync(watcher, timeout, state, cancellationToken);
+        var success = await TryWatchAsync(watcher, timeout, state, cancellationToken).ConfigureAwait(false);
         if (!success)
         {
             throw new TimeoutException();
@@ -369,7 +369,7 @@ public partial class RosGraph
     /// <exception cref="TimeoutException">The server didn't become available during the wait.</exception>
     public async Task WaitForServiceServerAsync(string serviceName, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
-        if (!await TryWaitForServiceServerAsync(serviceName, timeout, cancellationToken))
+        if (!await TryWaitForServiceServerAsync(serviceName, timeout, cancellationToken).ConfigureAwait(false))
         {
             throw new TimeoutException();
         }
@@ -438,7 +438,7 @@ public partial class RosGraph
     /// <exception cref="TimeoutException">The server didn't become available during the wait.</exception>
     public async Task WaitForActionServerAsync(string actionName, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
-        if (!await TryWaitForActionServerAsync(actionName, timeout, cancellationToken))
+        if (!await TryWaitForActionServerAsync(actionName, timeout, cancellationToken).ConfigureAwait(false))
         {
             throw new TimeoutException();
         }
@@ -507,7 +507,7 @@ public partial class RosGraph
     /// <exception cref="TimeoutException">The node didn't become available during the wait.</exception>
     public async Task WaitForNodeAsync(string nodeName, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
-        if (!await TryWaitForNodeAsync(nodeName, timeout, cancellationToken))
+        if (!await TryWaitForNodeAsync(nodeName, timeout, cancellationToken).ConfigureAwait(false))
         {
             throw new TimeoutException();
         }
