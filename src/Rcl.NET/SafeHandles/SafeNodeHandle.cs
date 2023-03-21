@@ -4,6 +4,11 @@ namespace Rcl.SafeHandles;
 
 unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
 {
+    // Creating / disposing nodes with /rosout logging enabled requires access
+    // to a static logger map, which is not thread-safe application wide.
+    // Thus a global lock is required here.
+    private static SpinLock s_nodeCreationLock = new();
+
     public SafeNodeHandle(SafeContextHandle context, string name, string @namespace, NodeOptions options)
     {
         *Object = rcl_get_zero_initialized_node();
@@ -48,8 +53,9 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
         opts.use_global_arguments = options.UseGlobalArguments;
         opts.enable_rosout = options.EnableRosOut;
 
-        RclException.ThrowIfNonSuccess(
-            rcl_node_init(Object, namePtr, nsPtr, context.Object, &opts));
+        using (ScopedLock.Lock(ref s_nodeCreationLock))
+            RclException.ThrowIfNonSuccess(
+                rcl_node_init(Object, namePtr, nsPtr, context.Object, &opts));
     }
 
     private void InitHumble(byte* namePtr, byte* nsPtr, SafeContextHandle context, NodeOptions options)
@@ -62,8 +68,9 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
         opts.enable_rosout = options.EnableRosOut;
         opts.rosout_qos = options.RosOutQos.ToRmwQosProfile();
 
-        RclException.ThrowIfNonSuccess(
-            rcl_node_init(Object, namePtr, nsPtr, context.Object, &opts));
+        using (ScopedLock.Lock(ref s_nodeCreationLock))
+            RclException.ThrowIfNonSuccess(
+                rcl_node_init(Object, namePtr, nsPtr, context.Object, &opts));
     }
 
     private void ParseArguments(string[] args, rcl_arguments_t* result)
@@ -89,6 +96,6 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
 
     protected override void ReleaseHandleCore(rcl_node_t* ptr)
     {
-        rcl_node_fini(ptr);
+        using (ScopedLock.Lock(ref s_nodeCreationLock)) rcl_node_fini(ptr);
     }
 }

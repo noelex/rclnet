@@ -20,15 +20,6 @@ namespace Rcl;
 /// </remarks>
 public sealed class RclContext : IRclContext
 {
-    // Creating nodes with /rosout logging enabled requires access
-    // to a static logger map, which is not thread-safe application wide.
-    //
-    // Creation of other rcl objects is also not thread-safe, but limited to
-    // the scope of a specific RclContext or RclNode, which can be resolved
-    // by yielding to the owner RclContext before calling.
-    //
-    // Thus we only need a lock for node creation here.
-    private static SpinLock s_nodeCreationLock = new();
     private static int s_contextRefCount = 0;
     private static readonly ObjectPool<ManualResetValueTaskSource<bool>> s_tcsPool = ObjectPool<ManualResetValueTaskSource<bool>>.Shared;
 
@@ -170,21 +161,11 @@ public sealed class RclContext : IRclContext
 
     /// <inheritdoc/>
     public IRclNode CreateNode(string name, string @namespace = "/", NodeOptions? options = null)
-    {
-        using (ScopedLock.Lock(ref s_nodeCreationLock))
-        {
-            return new RclNodeImpl(this, name, @namespace, null, options);
-        }
-    }
+        => new RclNodeImpl(this, name, @namespace, null, options);
 
     /// <inheritdoc/>
     public IRclNode CreateNode(string name, RclClock clockOverride, string @namespace = "/", NodeOptions? options = null)
-    {
-        using (ScopedLock.Lock(ref s_nodeCreationLock))
-        {
-            return new RclNodeImpl(this, name, @namespace, clockOverride, options);
-        }
-    }
+        => new RclNodeImpl(this, name, @namespace, clockOverride, options);
 
     /// <inheritdoc/>
     public YieldAwaiter Yield()
