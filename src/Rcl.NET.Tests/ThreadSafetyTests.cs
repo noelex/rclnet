@@ -1,81 +1,81 @@
-﻿using Xunit.Abstractions;
+﻿using System.Xml.Linq;
+using Xunit.Abstractions;
 
 namespace Rcl.NET.Tests;
 
 public class ThreadSafetyTests
 {
-    [Fact]
-    public async Task ConcurrentContextCreation()
-    {
-        var tasks = Enumerable.Range(0, Environment.ProcessorCount).Select(x => Task.Run(() => new RclContext(TestConfig.DefaultContextArguments))).ToArray();
-        var contexts = await Task.WhenAll(tasks);
-        await Task.WhenAll(contexts.Select(async x => await x.DisposeAsync()));
-        Assert.True(true);
-    }
+    private static readonly int s_concurrency = 32;
 
     [Theory]
     [InlineData(RclClockType.Steady)]
     [InlineData(RclClockType.System)]
     [InlineData(RclClockType.Ros)]
-    public async Task ConcurrentTimerCreation(RclClockType clockType)
+    public async Task ConcurrentTimerCreationAndDisposal_MultipleContexts(RclClockType clockType)
     {
-        await using var context = new RclContext(TestConfig.DefaultContextArguments);
-        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
-
-        var clock = clockType switch
-        {
-            RclClockType.Steady => RclClock.SteadyClock,
-            RclClockType.System => RclClock.SystemClock,
-            RclClockType.Ros => node.Clock,
-            _ => throw new NotSupportedException()
-        };
-
-        var tasks = Enumerable.Range(0, Environment.ProcessorCount).Select(x => Task.Run(() => context.CreateTimer(clock, TimeSpan.FromMilliseconds(200))));
-        var timers = await Task.WhenAll(tasks);
-        using var cts = new CancellationTokenSource(1000);
-        await Task.WhenAll(timers.Select(async x => await x.WaitOneAsync(cts.Token)));
-        await Task.WhenAll(timers.Select(x => Task.Run(() => x.Dispose())));
-    }
-
-    [Theory]
-    [InlineData(RclClockType.Steady)]
-    [InlineData(RclClockType.System)]
-    [InlineData(RclClockType.Ros)]
-    public async Task ConcurrentTimerCreationAndDisposal(RclClockType clockType)
-    {
-        await using var context = new RclContext(TestConfig.DefaultContextArguments);
-        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
-
-        var clock = clockType switch
-        {
-            RclClockType.Steady => RclClock.SteadyClock,
-            RclClockType.System => RclClock.SystemClock,
-            RclClockType.Ros => node.Clock,
-            _ => throw new NotSupportedException()
-        };
-
-        var timers = await Task.WhenAll(
-            Enumerable.Range(0, Environment.ProcessorCount)
-            .Select(x => Task.Run(() => context.CreateTimer(clock, TimeSpan.FromMilliseconds(200))))
+        await Task.WhenAll(
+            Enumerable.Range(0, s_concurrency)
+            .Select(x => Random.Shared.Next(1, 5))
+            .Select(CreateContextAndTestTimerAsync)
         );
-        await Task.WhenAll(timers.Select(x => Task.Run(() => x.Dispose())));
 
-        var tasks2 = Enumerable.Range(0, Environment.ProcessorCount)
-            .Select(x => Task.Run(() => context.CreateTimer(clock, TimeSpan.FromMilliseconds(200)))).ToArray();
-        await Task.WhenAll(timers.Select(x => Task.Run(() => x.Dispose())).Merge(tasks2));
+        async Task CreateContextAndTestTimerAsync(int timeout)
+        {
+            await using var context = new RclContext(TestConfig.DefaultContextArguments);
+            using var node = context.CreateNode(NameGenerator.GenerateNodeName());
 
-        using var cts = new CancellationTokenSource(1000);
-        await Task.WhenAll(tasks2.Select(async x => await x.Result.WaitOneAsync(cts.Token)));
-        await Task.WhenAll(tasks2.Select(x => Task.Run(() => x.Result.Dispose())));
+            await CreateTimerWaitAndDisposeAsync(node, clockType, timeout);
+        }
+    }
+
+    [Theory]
+    [InlineData(RclClockType.Steady)]
+    [InlineData(RclClockType.System)]
+    [InlineData(RclClockType.Ros)]
+    public async Task ConcurrentTimerCreationAndDisposal_SingleContext(RclClockType clockType)
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+
+        await Task.WhenAll(
+            Enumerable.Range(0, s_concurrency)
+            .Select(x => Random.Shared.Next(1, 5))
+            .Select(x => CreateTimerWaitAndDisposeAsync(node, clockType, x))
+        );
     }
 
     [Fact]
-    public async Task ConcurrentGuardConditionCreation()
+    public async Task ConcurrentGuardConditionCreation_SingleContext()
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
-        var tasks = Enumerable.Range(0, Environment.ProcessorCount).Select(x => Task.Run(() => context.CreateGuardCondition()));
-        var objects = await Task.WhenAll(tasks);
-        await Task.WhenAll(objects.Select(x => Task.Run(() => x.Dispose())));
+        await Task.WhenAll(
+            Enumerable.Range(0, s_concurrency)
+            .Select(x => Random.Shared.Next(1, 5))
+            .Select(x => CreateGuardConditionWaitAndDisposeAsync(context, x))
+        );
+    }
+
+    private static async Task CreateTimerWaitAndDisposeAsync(IRclNode node, RclClockType type, int timeout)
+    {
+        var clock = type switch
+        {
+            RclClockType.Steady => RclClock.SteadyClock,
+            RclClockType.System => RclClock.SystemClock,
+            RclClockType.Ros => node.Clock,
+            _ => throw new NotSupportedException()
+        };
+
+        using var cts = new CancellationTokenSource(1000);
+        using var timer = node.Context.CreateTimer(clock, TimeSpan.FromMilliseconds(timeout));
+        await timer.WaitOneAsync(cts.Token);
+    }
+
+    private static async Task CreateGuardConditionWaitAndDisposeAsync(IRclContext context, int timeout)
+    {
+        using var cts = new CancellationTokenSource(1000);
+        using var gc = context.CreateGuardCondition();
+        _ = Task.Delay(timeout).ContinueWith(x => gc.Trigger());
+        await gc.WaitOneAsync(cts.Token);
     }
 }
 

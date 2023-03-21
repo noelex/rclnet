@@ -10,7 +10,7 @@ public class RclTestFramework : XunitTestFramework
     public RclTestFramework(IMessageSink messageSink)
         : base(messageSink)
     {
-        messageSink.OnMessage(new DiagnosticMessage($"Running tests with {nameof(RclTestFramework)}."));
+        messageSink.OnMessage(new DiagnosticMessage($"Running tests with {nameof(RclTestFramework)}, ProcessorCount = {Environment.ProcessorCount}."));
     }
 
     protected override ITestFrameworkExecutor CreateExecutor(AssemblyName assemblyName)

@@ -56,7 +56,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
 
         if (Options.DeclareParameterFromOverrides)
         {
-            foreach(var (k,v) in overrides)
+            foreach (var (k, v) in overrides)
             {
                 _parameters.Declare(k, v);
             }
@@ -140,6 +140,9 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         // Dispose the clock only when the node owns it.
         // _timeSource == null: Using a overrided clock which the node doesn't own.
         // Clock.Type != RclClockType.Ros: Using shared system/steady clock.
-        if (_timeSource != null && Clock.Type == RclClockType.Ros) Clock.Dispose();
+        if (_timeSource != null && Clock.Type == RclClockType.Ros)
+        {
+            Context.SynchronizationContext.Post(x => ((IDisposable)x!).Dispose(), Clock);
+        }
     }
 }
