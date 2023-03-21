@@ -498,8 +498,9 @@ public sealed class RclContext : IRclContext
                     {
                         if (cb.CompletionSource is null)
                         {
-                            DefaultLogger.LogWarning("Unhandled exception was thrown by a user callback: " + ex.Message);
-                            DefaultLogger.LogWarning(ex.StackTrace);
+                            DefaultLogger.LogFatal("Unhandled exception was thrown by a user callback: " + ex.Message);
+                            DefaultLogger.LogFatal(ex.StackTrace);
+                            throw;
                         }
                         else
                         {
@@ -539,8 +540,9 @@ public sealed class RclContext : IRclContext
         }
         catch (Exception ex)
         {
-            DefaultLogger.LogWarning($"Unhandled exception was thrown by wait handle callback: {ex.Message}");
-            DefaultLogger.LogWarning(ex.StackTrace);
+            DefaultLogger.LogFatal($"Unhandled exception was thrown by wait handle callback: {ex.Message}");
+            DefaultLogger.LogFatal(ex.StackTrace);
+            throw;
         }
     }
 

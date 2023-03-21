@@ -5,7 +5,7 @@ namespace Rcl.NET.Tests;
 
 public class ThreadSafetyTests
 {
-    private static readonly int s_concurrency = 32;
+    private static readonly int s_concurrency = Environment.ProcessorCount;
 
     [Theory]
     [InlineData(RclClockType.Steady)]
