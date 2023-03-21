@@ -2,6 +2,8 @@
 using Rcl.Logging.Impl;
 using Rcl.SafeHandles;
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Rcl;
 
@@ -43,6 +45,16 @@ public sealed class RclContext : IRclContext
 
     private int _disposed;
     private long _waitHandleToken;
+
+    unsafe static RclContext()
+    {
+        var lib = NativeLibrary.Load("rcutils", System.Reflection.Assembly.GetExecutingAssembly(), null);
+        var isInitialized = Unsafe.AsRef<bool>(NativeLibrary.GetExport(lib, "g_rcutils_logging_initialized").ToPointer());
+        if (!isInitialized)
+        {
+            RclException.ThrowIfNonSuccess(rcutils_logging_initialize());
+        }
+    }
 
     /// <summary>
     /// Creates a new <see cref="RclContext"/> with specified arguments and logger factory.
