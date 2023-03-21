@@ -49,7 +49,7 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-          dotnet test -c Release --no-build
+          dotnet test -c Release --no-build --verbosity normal --blame-crash --blame-hang-timeout 1m
 
       - name: Test (cyclonedds)
         working-directory: src/Rcl.NET.Tests
@@ -58,7 +58,7 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-          dotnet test -c Release --no-build
+          dotnet test -c Release --no-build --verbosity normal --blame-crash --blame-hang-timeout 1m
 
   windows:
     runs-on: windows-latest
@@ -112,7 +112,7 @@ jobs:
         env:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
           ROS_LOCALHOST_ONLY: 0
-        run: refreshenv && c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
+        run: refreshenv && c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build --verbosity normal --blame-crash --blame-hang-timeout 1m
 
       - name: Test (cyclonedds)
         shell: cmd
@@ -120,7 +120,7 @@ jobs:
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
           ROS_LOCALHOST_ONLY: 0
-        run: refreshenv && c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build
+        run: refreshenv && c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build --verbosity normal --blame-crash --blame-hang-timeout 1m
 
   #test_macos:
   #  runs-on: macos-latest

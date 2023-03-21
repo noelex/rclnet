@@ -98,43 +98,44 @@ public class RclTestFramework : XunitTestFramework
             _diagnosticMessageSink = diagnosticMessageSink;
         }
 
-        protected override async Task<RunSummary> RunTestCaseAsync(IXunitTestCase testCase)
+        protected override Task<RunSummary> RunTestCaseAsync(IXunitTestCase testCase)
         {
-            var parameters = string.Empty;
+            return base.RunTestCaseAsync(testCase);
+            //var parameters = string.Empty;
 
-            if (testCase.TestMethodArguments != null)
-            {
-                parameters = string.Join(", ", testCase.TestMethodArguments.Select(a => a?.ToString() ?? "null"));
-            }
+            //if (testCase.TestMethodArguments != null)
+            //{
+            //    parameters = string.Join(", ", testCase.TestMethodArguments.Select(a => a?.ToString() ?? "null"));
+            //}
 
-            var test = $"{TestMethod.TestClass.Class.Name}.{TestMethod.Method.Name}({parameters})";
+            //var test = $"{TestMethod.TestClass.Class.Name}.{TestMethod.Method.Name}({parameters})";
 
-            _diagnosticMessageSink.OnMessage(new DiagnosticMessage($"STARTED: {test}"));
+            //_diagnosticMessageSink.OnMessage(new DiagnosticMessage($"STARTED: {test}"));
 
-            try
-            {
-                var deadlineMinutes = 1;
-                using var timer = new Timer(
-                    _ => _diagnosticMessageSink.OnMessage(new DiagnosticMessage($"WARNING: {test} has been running for more than {deadlineMinutes} minutes")),
-                    null,
-                    TimeSpan.FromMinutes(deadlineMinutes),
-                    Timeout.InfiniteTimeSpan);
+            //try
+            //{
+            //    var deadlineMinutes = 1;
+            //    using var timer = new Timer(
+            //        _ => _diagnosticMessageSink.OnMessage(new DiagnosticMessage($"WARNING: {test} has been running for more than {deadlineMinutes} minutes")),
+            //        null,
+            //        TimeSpan.FromMinutes(deadlineMinutes),
+            //        Timeout.InfiniteTimeSpan);
 
-                var result = await base.RunTestCaseAsync(testCase);
+            //    var result = await base.RunTestCaseAsync(testCase);
 
-                var status = result.Failed > 0
-                    ? "FAILURE"
-                    : (result.Skipped > 0 ? "SKIPPED" : "SUCCESS");
+            //    var status = result.Failed > 0
+            //        ? "FAILURE"
+            //        : (result.Skipped > 0 ? "SKIPPED" : "SUCCESS");
 
-                _diagnosticMessageSink.OnMessage(new DiagnosticMessage($"{status}: {test} ({result.Time}s)"));
+            //    _diagnosticMessageSink.OnMessage(new DiagnosticMessage($"{status}: {test} ({result.Time}s)"));
 
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _diagnosticMessageSink.OnMessage(new DiagnosticMessage($"ERROR: {test} ({ex.Message})"));
-                throw;
-            }
+            //    return result;
+            //}
+            //catch (Exception ex)
+            //{
+            //    _diagnosticMessageSink.OnMessage(new DiagnosticMessage($"ERROR: {test} ({ex.Message})"));
+            //    throw;
+            //}
         }
     }
 }
