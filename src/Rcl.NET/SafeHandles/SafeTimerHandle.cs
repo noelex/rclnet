@@ -19,6 +19,7 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
                 RclException.ThrowIfNonSuccess(
                     rcl_timer_init(Object, clock.Object, context.Object,
                       period, null, RclAllocator.Default.Object));
+                _clock.AddTimerRef();
             }
         }
         catch
@@ -33,6 +34,7 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
         using (ScopedLock.Lock(ref _clock.SyncRoot))
         {
             rcl_timer_fini(ptr);
+            _clock.ReleaseTimerRef();
         }
     }
 }
