@@ -474,7 +474,14 @@ public sealed class RclContext : IRclContext
                 // Are we shutting down?
                 if (_shutdownSignal.DangerousGetHandle() == new nint(ws.guard_conditions[1]))
                 {
-                    isShutdownRequested = true;
+                    // TODO: _shutdownSignal occasionally gets triggered unexpectedly 
+                    // when running with cyclonedds on Ubuntu.
+                    // Make sure context disposal is actually requested before exiting
+                    // the event loop.
+                    if (Volatile.Read(ref _disposed) == 1)
+                    {
+                        isShutdownRequested = true;
+                    }
                 }
 
                 // Snapshot callbacks.
