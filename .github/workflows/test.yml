@@ -71,7 +71,7 @@ jobs:
           - ros_distribution: humble
             ros_archive: https://github.com/ros2/ros2/releases/download/release-humble-20230308/ros2-humble-20230308-windows-release-amd64.zip
           - ros_distribution: foxy
-            ros_archive: https://github.com/ros2/ros2/releases/download/release-foxy-20221021/ros2-foxy-20221021-windows-release-amd64.zip
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-foxy-20230322/ros2-foxy-20230322-windows-release-amd64.zip
     steps:
       - uses: actions/checkout@v3
   
