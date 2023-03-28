@@ -35,7 +35,7 @@ static class MessageIntrospection
         {
             return new FoxyMessageIntrospection(typesupport);
         }
-        else if (RosEnvironment.IsHumble)
+        else if (RosEnvironment.IsHumble || RosEnvironment.IsIron)
         {
             return new HumbleMessageIntrospection(typesupport);
         }
@@ -54,7 +54,7 @@ static class MessageIntrospection
         {
             return new FoxyMessageIntrospection(messageMembers);
         }
-        else if (RosEnvironment.IsHumble)
+        else if (RosEnvironment.IsHumble || RosEnvironment.IsIron)
         {
             return new HumbleMessageIntrospection(messageMembers);
         }

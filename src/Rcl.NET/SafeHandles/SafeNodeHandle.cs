@@ -28,7 +28,10 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
                 switch (RosEnvironment.Distribution)
                 {
                     case RosEnvironment.Foxy: InitFoxy(namePtr, nsPtr, context, options); break;
-                    case RosEnvironment.Humble: InitHumble(namePtr, nsPtr, context, options); break;
+                    case RosEnvironment.Humble:
+                    case RosEnvironment.Iron:
+                        InitHumbleOrLater(namePtr, nsPtr, context, options);
+                        break;
                     default: throw new NotImplementedException();
                 }
             }
@@ -58,7 +61,7 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
                 rcl_node_init(Object, namePtr, nsPtr, context.Object, &opts));
     }
 
-    private void InitHumble(byte* namePtr, byte* nsPtr, SafeContextHandle context, NodeOptions options)
+    private void InitHumbleOrLater(byte* namePtr, byte* nsPtr, SafeContextHandle context, NodeOptions options)
     {
         var opts = RclHumble.rcl_node_get_default_options();
 

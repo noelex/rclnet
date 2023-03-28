@@ -14,12 +14,17 @@
     {
       "name": "Container - Foxy",
       "type": "docker",
-      "dockerFile": "Rcl.NET.Tests/foxy.Dockerfile"
+      "dockerImage": "Rcl.NET.Tests/foxy.Dockerfile"
     },
     {
       "name": "Container - Humble",
       "type": "docker",
       "dockerFile": "Rcl.NET.Tests/humble.Dockerfile"
+    },
+    {
+      "name": "Container - Iron",
+      "type": "docker",
+      "dockerFile": "Rcl.NET.Tests/iron.Dockerfile"
     }
   ]
 }
