@@ -218,6 +218,7 @@ public record QosProfile(
             deadline = Deadline.ToRmwTime(),
             lifespan = LifeSpan.ToRmwTime(),
             liveliness = (rmw_qos_liveliness_policy_t)Liveliness,
+            liveliness_lease_duration = LivelinessLeaseDuration.ToRmwTime(),
             avoid_ros_namespace_conventions = AvoidRosNamespaceConventions
         };
     }
