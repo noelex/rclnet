@@ -1,4 +1,5 @@
 using Rcl.Qos;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Rcl.Graph;
@@ -21,6 +22,15 @@ internal struct GraphId : IEquatable<GraphId>
     public GraphId(ReadOnlySpan<byte> data)
     {
         this = MemoryMarshal.Cast<byte, GraphId>(data)[0];
+    }
+
+    /// <summary>
+    /// This is for iron or later, as the size of the GID is changed from 24 to 16 bytes.
+    /// </summary>
+    /// <param name="guid"></param>
+    public unsafe GraphId(Guid guid)
+    {
+        Unsafe.AsRef<Guid>(Unsafe.AsPointer(ref this)) = guid;
     }
 
     public unsafe GraphId(byte* data)

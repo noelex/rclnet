@@ -4556,7 +4556,7 @@ namespace Rcl.Interop
         /// Given `allocator` must be the same used to initialize the given `topic_endpoint_info_array`.
         /// </pre>
         [DllImport("rmw", CallingConvention = CallingConvention.Cdecl)]
-        public static extern rcl_ret_t rmw_topic_endpoint_info_array_fini(RclCommon.rmw_topic_endpoint_info_array_t* topic_endpoint_info_array, RclCommon.rcutils_allocator_t* allocator);
+        public static extern rcl_ret_t rmw_topic_endpoint_info_array_fini(void* topic_endpoint_info_array, RclCommon.rcutils_allocator_t* allocator);
 
         /// <summary>
         /// Return a list of service names and types associated with a node.
@@ -4739,7 +4739,7 @@ namespace Rcl.Interop
         /// &lt;i&gt;[1] implementation may need to protect the data structure with a lock&lt;/i&gt;
         /// </remarks>
         [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
-        public static extern rcl_ret_t rcl_get_publishers_info_by_topic(RclCommon.rcl_node_t* node, RclCommon.rcutils_allocator_t* allocator, byte* topic_name, bool no_mangle, RclCommon.rmw_topic_endpoint_info_array_t* publishers_info);
+        public static extern rcl_ret_t rcl_get_publishers_info_by_topic(RclCommon.rcl_node_t* node, RclCommon.rcutils_allocator_t* allocator, byte* topic_name, bool no_mangle, void* publishers_info);
 
         /// <summary>
         /// Return a list of all subscriptions to a topic.
@@ -4778,7 +4778,7 @@ namespace Rcl.Interop
         /// &lt;i&gt;[1] implementation may need to protect the data structure with a lock&lt;/i&gt;
         /// </remarks>
         [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
-        public static extern rcl_ret_t rcl_get_subscriptions_info_by_topic(RclCommon.rcl_node_t* node, RclCommon.rcutils_allocator_t* allocator, byte* topic_name, bool no_mangle, RclCommon.rmw_topic_endpoint_info_array_t* subscriptions_info);
+        public static extern rcl_ret_t rcl_get_subscriptions_info_by_topic(RclCommon.rcl_node_t* node, RclCommon.rcutils_allocator_t* allocator, byte* topic_name, bool no_mangle, void* subscriptions_info);
 
         /// <summary>
         /// Check if a service server is available for the given service client.

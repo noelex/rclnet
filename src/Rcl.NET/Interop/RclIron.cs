@@ -42,4 +42,60 @@ unsafe static class RclIron
         /// </summary>
         public bool from_intra_process;
     }
+
+    /// <summary>
+    /// A data structure that encapsulates the node name, node namespace,
+    /// topic_type, gid, and qos_profile of publishers and subscriptions
+    /// for a topic.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public partial struct rmw_topic_endpoint_info_t
+    {
+        /// <summary>
+        /// Name of the node
+        /// </summary>
+        public byte* node_name;
+
+        /// <summary>
+        /// Namespace of the node
+        /// </summary>
+        public byte* node_namespace;
+
+        /// <summary>
+        /// The associated topic type
+        /// </summary>
+        public byte* topic_type;
+
+        /// <summary>
+        /// The endpoint type
+        /// </summary>
+        public rmw_endpoint_type_t endpoint_type;
+
+        /// <summary>
+        /// The GID of the endpoint
+        /// </summary>
+        public Guid endpoint_gid;
+
+        /// <summary>
+        /// QoS profile of the endpoint
+        /// </summary>
+        public rmw_qos_profile_t qos_profile;
+    }
+
+    /// <summary>
+    /// Array of topic endpoint information
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public partial struct rmw_topic_endpoint_info_array_t
+    {
+        /// <summary>
+        /// Size of the array.
+        /// </summary>
+        public size_t size;
+
+        /// <summary>
+        /// Contiguous storage for topic endpoint information elements.
+        /// </summary>
+        public rmw_topic_endpoint_info_t* info_array;
+    }
 }

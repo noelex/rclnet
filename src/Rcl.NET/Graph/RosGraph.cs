@@ -350,6 +350,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
         var allocator = RclAllocator.Default.Object;
         rmw_topic_endpoint_info_array_t endpoints;
+        var ironOrLater = RosEnvironment.IsSupported(RosEnvironment.Iron);
 
         RclException.ThrowIfNonSuccess(
             rcl_get_publishers_info_by_topic(
@@ -361,7 +362,14 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
         using (var items = SpanOwner<TopicEndPointData>.Allocate((int)endpoints.size.Value))
         {
-            CopyTopicEndpoints(&endpoints, items.Span, &allocator.Value);
+            if (ironOrLater)
+            {
+                CopyTopicEndpoints((RclIron.rmw_topic_endpoint_info_array_t*)&endpoints, items.Span, &allocator.Value);
+            }
+            else
+            {
+                CopyTopicEndpoints(&endpoints, items.Span, &allocator.Value);
+            }
             topic.UpdatePublishers(this, items.Span, _nodes);
         }
 
@@ -375,7 +383,14 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
         using (var items = SpanOwner<TopicEndPointData>.Allocate((int)endpoints.size.Value))
         {
-            CopyTopicEndpoints(&endpoints, items.Span, &allocator.Value);
+            if (ironOrLater)
+            {
+                CopyTopicEndpoints((RclIron.rmw_topic_endpoint_info_array_t*)&endpoints, items.Span, &allocator.Value);
+            }
+            else
+            {
+                CopyTopicEndpoints(&endpoints, items.Span, &allocator.Value);
+            }
             topic.UpdateSubscribers(this, items.Span, _nodes);
         }
     }
@@ -390,6 +405,31 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                 ref var item = ref src->info_array[i];
                 dest[i] = new(
                     new(src->info_array[i].endpoint_gid),
+                    StringMarshal.CreatePooledString(item.topic_type)!,
+                    new(
+                        StringMarshal.CreatePooledString(item.node_name)!,
+                        StringMarshal.CreatePooledString(item.node_namespace)!
+                    ),
+                    QosProfile.Create(in item.qos_profile)
+                );
+            }
+        }
+        finally
+        {
+            rmw_topic_endpoint_info_array_fini(src, allocator);
+        }
+    }
+
+    private unsafe void CopyTopicEndpoints(
+        RclIron.rmw_topic_endpoint_info_array_t* src, Span<TopicEndPointData> dest, rcutils_allocator_t* allocator)
+    {
+        try
+        {
+            for (var i = 0; i < (int)src->size.Value; i++)
+            {
+                ref var item = ref src->info_array[i];
+                dest[i] = new(
+                    new(item.endpoint_gid),
                     StringMarshal.CreatePooledString(item.topic_type)!,
                     new(
                         StringMarshal.CreatePooledString(item.node_name)!,
