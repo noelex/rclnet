@@ -14,6 +14,7 @@ internal unsafe class ServiceIntrospection
 
     public ServiceIntrospection(ServiceTypeSupport* ts)
     {
+        TypeSupportHandle = ts;
         fixed (byte* id = TypeSupportIdentifier.Introspection)
         {
             ts = ts->Handler(ts, (sbyte*)id);
@@ -23,6 +24,8 @@ internal unsafe class ServiceIntrospection
             _typesupport = serviceMembers;
         }
     }
+
+    public ServiceTypeSupport* TypeSupportHandle { get; }
 
     public string Name => StringMarshal.CreatePooledString(_typesupport->ServiceName)!;
 

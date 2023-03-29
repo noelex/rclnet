@@ -53,5 +53,4 @@ internal class RclClient<TService, TRequest, TResponse> : RclClientBase, IRclCli
 
     public Task<TResponse> InvokeAsync(TRequest request, CancellationToken cancellationToken = default)
         => InvokeAsync(request, Timeout.Infinite, cancellationToken);
-
 }

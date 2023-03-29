@@ -1,4 +1,6 @@
-﻿using Rosidl.Runtime;
+﻿using Rcl.Qos;
+using Rcl.Runtime;
+using Rosidl.Runtime;
 
 namespace Rcl;
 
@@ -25,6 +27,22 @@ public interface IRclClient<TRequest, TResponse> : IRclObject
     /// Gets the name of the service being invoked.
     /// </summary>
     string Name { get; }
+
+    /// <summary>
+    /// Configure service introspection for the client.
+    /// </summary>
+    /// <remarks>
+    /// Supported distro(s): >=iron
+    /// </remarks>
+    /// <param name="state">The desired state of service introspection.</param>
+    /// <param name="qos">
+    /// <see cref="QosProfile"/> to use when creating the introspection publisher.
+    /// <para>
+    /// Defaults to <see cref="QosProfile.SystemDefault"/>.
+    /// </para>
+    /// </param>
+    [SupportedSinceDistribution(RosEnvironment.Iron)]
+    void ConfigureIntrospection(ServiceIntrospectionState state, QosProfile? qos = null);
 
     /// <summary>
     /// Try wait for the server become available, or until timeout.
