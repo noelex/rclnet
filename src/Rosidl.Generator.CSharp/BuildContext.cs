@@ -47,6 +47,7 @@ public enum MessageType
     Plain,
     ServiceRequest,
     ServiceResponse,
+    ServiceEvent,
     ActionGoal,
     ActionFeedback,
     ActionResult,

@@ -2,6 +2,28 @@
 # A path relative to this file or an absolute path can be used.
 output ./
 
+# Generate code for service introspection.
+#
+# This feature requires 'service_msgs' package.
+#
+# If ROS_DISTRO indicates a distribution which supports service introspection
+# and this directive is not specfied, then 'on' is used as the default value.
+# Otherwise, defaults to 'off'.
+# service-introspection [on|off]
+
+# Generate implementation details for actions, including FeedbackMessage,
+# SendGoal request/response and GetResult request/response.
+#
+# This feature requires 'unique_identifier_msgs' and 'builtin_interfaces' package.
+#
+# Detail messages are not neccesary for using action servers and clients as rclnet
+# utilizes introspection to construct and extract Feedback / Goal and Result messages.
+# Enabling 'action-details' will allow you to perform service introspection on Result
+# and Goal services, or manually subscribe Feedback messages, at the cost of increased
+# code size.
+# The default value is 'off'.
+# action-details [on|off]
+
 # Generate classes with internal visibility rather than public.
 # internal
 

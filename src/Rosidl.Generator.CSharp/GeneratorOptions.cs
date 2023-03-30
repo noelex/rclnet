@@ -35,21 +35,87 @@ public class GeneratorOptions
 
     public Func<ActionBuildContext, ActionMetadata, string> ResolveActionClassName { get; set; } = (ctx, s) => s.Name + "Action";
 
-    public Func<MessageBuildContext, ComplexTypeMetadata, string> ResolveMessageClassName { get; set; } = (ctx, metadata)
-        =>
-        metadata is MessageMetadata
-        ? ctx.Type switch
+    public Func<MessageBuildContext, ComplexTypeMetadata, string> ResolveMessageClassName { get; set; } = (ctx, metadata) =>
         {
-            MessageType.Plain => metadata.Name,
-            MessageType.ServiceRequest => ((ServiceBuildContext)ctx.ParentContext!).ClassName + "Request",
-            MessageType.ServiceResponse => ((ServiceBuildContext)ctx.ParentContext!).ClassName + "Response",
-            MessageType.ActionFeedback => ((ActionBuildContext)ctx.ParentContext!).ClassName + "Feedback",
-            MessageType.ActionGoal => ((ActionBuildContext)ctx.ParentContext!).ClassName + "Goal",
-            MessageType.ActionResult => ((ActionBuildContext)ctx.ParentContext!).ClassName + "Result",
-            MessageType.ActionFeedbackMessage => ((ActionBuildContext)ctx.ParentContext!).ClassName + "FeedbackMessage",
-            _ => throw new NotImplementedException()
-        }
-        : metadata.Name;
+            // Special case for service events as they refer Request / Response classes with private names.
+            // We need to convert those private names to public ones.
+            if (metadata is not MessageMetadata)
+            {
+                if (ctx.Type == MessageType.ServiceEvent && ctx.ParentContext is ServiceBuildContext)
+                {
+                    var parentContext = (ServiceBuildContext)ctx.ParentContext!;
+
+                    if (metadata.Package == parentContext.Metadata.Package
+                        && metadata.SubFolder == parentContext.Metadata.SubFolder
+                        && metadata.Name.StartsWith(parentContext.Metadata.Name))
+                    {
+                        if (metadata.Name.LastIndexOf("_Request") == parentContext.Metadata.Name.Length)
+                        {
+                            return parentContext.ClassName + "Request";
+                        }
+                        else if (metadata.Name.LastIndexOf("_Response") == parentContext.Metadata.Name.Length)
+                        {
+                            return parentContext.ClassName + "Response";
+                        }
+                    }
+                }
+
+                if (ctx.Type == MessageType.ActionFeedbackMessage &&
+                   ctx.ParentContext is ActionBuildContext)
+                {
+                    var parentContext = (ActionBuildContext)ctx.ParentContext!;
+                    if (metadata.Package == parentContext.Metadata.Package
+                        && metadata.SubFolder == parentContext.Metadata.SubFolder
+                        && metadata.Name.StartsWith(parentContext.Metadata.Name))
+                    {
+                        if (metadata.Name.LastIndexOf("_Feedback") == parentContext.Metadata.Name.Length)
+                        {
+                            return parentContext.ClassName + "Feedback";
+                        }
+                    }
+                }
+
+                if (ctx.ParentContext is ServiceBuildContext serviceContext &&
+                    serviceContext.ParentContext is ActionBuildContext actionContext)
+                {
+                    var parentContext = actionContext;
+                    if (metadata.Package == parentContext.Metadata.Package
+                        && metadata.SubFolder == parentContext.Metadata.SubFolder
+                        && metadata.Name.StartsWith(parentContext.Metadata.Name))
+                    {
+                        if (ctx.Type == MessageType.ServiceResponse)
+                        {
+                            if (metadata.Name.LastIndexOf("_Result") == parentContext.Metadata.Name.Length)
+                            {
+                                return parentContext.ClassName + "Result";
+                            }
+                        }
+                        else if (ctx.Type == MessageType.ServiceRequest)
+                        {
+                            if (metadata.Name.LastIndexOf("_Goal") == parentContext.Metadata.Name.Length)
+                            {
+                                return parentContext.ClassName + "Goal";
+                            }
+                        }
+                    }
+                }
+            }
+
+            return metadata is MessageMetadata
+            ? ctx.Type switch
+            {
+                MessageType.Plain => metadata.Name,
+                MessageType.ServiceRequest => ((ServiceBuildContext)ctx.ParentContext!).ClassName + "Request",
+                MessageType.ServiceResponse => ((ServiceBuildContext)ctx.ParentContext!).ClassName + "Response",
+                MessageType.ServiceEvent => ((ServiceBuildContext)ctx.ParentContext!).ClassName + "Event",
+                MessageType.ActionFeedback => ((ActionBuildContext)ctx.ParentContext!).ClassName + "Feedback",
+                MessageType.ActionGoal => ((ActionBuildContext)ctx.ParentContext!).ClassName + "Goal",
+                MessageType.ActionResult => ((ActionBuildContext)ctx.ParentContext!).ClassName + "Result",
+                MessageType.ActionFeedbackMessage => ((ActionBuildContext)ctx.ParentContext!).ClassName + "FeedbackMessage",
+                _ => throw new NotImplementedException()
+            }
+            : metadata.Name;
+        };
 
     public Func<MessageBuildContext, ComplexTypeMetadata, string> ResolveMessagePrivStructName { get; set; } = (ctx, metadata) => "Priv";
 

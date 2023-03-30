@@ -56,7 +56,7 @@ public class MsgParser
 
     private readonly Dictionary<string, ComplexTypeMetadata> _complexTypeCache = new();
 
-    private IEnumerable<Statement> Parse(TextReader reader, bool disposeReader = false)
+    private static IEnumerable<Statement> Parse(TextReader reader, bool disposeReader = false)
     {
         try
         {
@@ -140,7 +140,7 @@ public class MsgParser
         }
     }
 
-    private string? ExtractInlineComment(ref string input)
+    private static string? ExtractInlineComment(ref string input)
     {
         var closed = true;
         char currentDelim = '\0';
@@ -181,13 +181,13 @@ public class MsgParser
         return inlineComment?.Trim();
     }
 
-    private Statement[] ReadStatements(Stream stream, bool leaveOpen)
+    private static Statement[] ReadStatements(Stream stream, bool leaveOpen)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8, true, 1024, leaveOpen: leaveOpen);
         return Parse(reader).ToArray();
     }
 
-    private Statement[] ReadStatements(string input)
+    private static Statement[] ReadStatements(string input)
     {
         using var reader = new StringReader(input);
         return Parse(reader).ToArray();
@@ -220,7 +220,29 @@ public class MsgParser
 
         return new(package, subFolder, name, fileComments,
             ExtractFields(package, lines, requestStatements),
-            ExtractFields(package, lines, responseStatements));
+            ExtractFields(package, lines, responseStatements),
+            EmitServiceEventFields(package, subFolder, name));
+    }
+
+    internal IReadOnlyCollection<FieldMetadata> EmitServiceEventFields(string package, string subdir, string name)
+    {
+        var statements = ReadStatements($"""
+            # Event info
+            # Contains event type, timestamp, and request ID
+            service_msgs/msg/ServiceEventInfo info
+
+            # The actual request content sent or received
+            # This field is only set if the event type is REQUEST_SENT or REQUEST_RECEIVED,
+            # and the introspection feauture is configured to include payload data.
+            {package}/{subdir}/{name}_Request[<=1] request
+
+            # The actual response content sent or received
+            # This field is only set if the event type is RESPONSE_SENT or RESPONSE_RECEIVED,
+            # and the introspection feauture is configured to include payload data.
+            {package}/{subdir}/{name}_Response[<=1] response
+            """);
+        var msg = ParseMessage(package, subdir, name, statements);
+        return msg.Fields;
     }
 
     private ActionMetadata ParseAction(string package, string subFolder, string name, Statement[] lines)
@@ -351,11 +373,12 @@ public class MsgParser
         if (!_primitiveTypeCache.TryGetValue(declaration.Type, out var t))
         {
             var fullName = declaration.Type.Contains('/')
-                ? declaration.Type : $"{package}/{declaration.Type}";
+                ? declaration.Type : $"{package}/msg/{declaration.Type}";
             if (!_complexTypeCache.TryGetValue(fullName, out var type))
             {
                 var parts = fullName.Split('/');
-                type = new ComplexTypeMetadata(parts[0], string.Empty, parts[^1]);
+                var subdir = parts.Length == 3 ? parts[1] : "msg";
+                type = new ComplexTypeMetadata(parts[0], subdir, parts[^1]);
                 _complexTypeCache[fullName] = type;
             }
 

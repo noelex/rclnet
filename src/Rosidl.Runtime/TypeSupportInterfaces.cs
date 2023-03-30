@@ -131,6 +131,11 @@ public interface IServiceRequest : IMessage { }
 public interface IServiceResponse : IMessage { }
 
 /// <summary>
+/// Represents a service introspection event.
+/// </summary>
+public interface IServiceEvent: IMessage { }
+
+/// <summary>
 /// Represents an ROS action goal message.
 /// </summary>
 public interface IActionGoal : IMessage { }
