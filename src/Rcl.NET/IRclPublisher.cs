@@ -30,6 +30,11 @@ public interface IRclPublisher : IRclObject
     string Name { get; }
 
     /// <summary>
+    /// Gets the globally unique identifier (GID) of the publisher.
+    /// </summary>
+    GraphId Gid { get; }
+
+    /// <summary>
     /// Gets the network flow endpoints of current publisher.
     /// </summary>
     /// <remarks>

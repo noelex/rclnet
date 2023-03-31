@@ -42,6 +42,20 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
             InitializePublisherEvents(options,
                 ref _livelinessEvent, ref _deadlineMissedEvent, ref _qosEvent);
 
+            var rmwHandle = rcl_publisher_get_rmw_handle(Handle.Object);
+            if (RosEnvironment.IsSupported(RosEnvironment.Iron))
+            {
+                RclIron.rmw_gid_t gid;
+                RclException.ThrowIfNonSuccess(rmw_get_gid_for_publisher(rmwHandle, &gid));
+                Gid = new(gid.data);
+            }
+            else
+            {
+                rmw_gid_t gid;
+                RclException.ThrowIfNonSuccess(rmw_get_gid_for_publisher(rmwHandle, &gid));
+                Gid = new(new ReadOnlySpan<byte>(gid.data, 24));
+            }
+
             completelyInitialized = true;
         }
         finally
@@ -178,6 +192,8 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
          => rcl_publisher_is_valid(Handle.Object);
 
     public NetworkFlowEndpoint[] Endpoints { get; }
+
+    public GraphId Gid { get; }
 
     public void Publish(RosMessageBuffer message)
     {

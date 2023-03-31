@@ -4836,5 +4836,14 @@ namespace Rcl.Interop
         [SuppressGCTransition]
         [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
         public static extern rcl_ret_t rcl_set_ros_time_override(rcl_clock_t* clock, rcl_time_point_value_t time_value);
+
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        public static extern nint rcl_publisher_get_rmw_handle(rcl_publisher_t* publisher);
+
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
+        public static extern nint rcl_client_get_rmw_handle(rcl_client_t* client);
+
+        [DllImport("rmw_implementation", CallingConvention = CallingConvention.Cdecl)]
+        public static extern rcl_ret_t rmw_get_gid_for_publisher(nint rmwPubliherHandle, void* gid);
     }
 }

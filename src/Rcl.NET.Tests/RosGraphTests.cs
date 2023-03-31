@@ -152,6 +152,39 @@ public class RosGraphTests
             node.Graph.WatchAsync((graph, e) => graph.Topics.Any(x => x.Name == targetTopic), 100));
     }
 
+    [Fact]
+    public async Task PublisherGid()
+    {
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+
+        var topic = "/" + NameGenerator.GenerateTopicName();
+
+        var watcher = node.Graph.TryWatchAsync((graph, e) => 
+            graph.Topics.FirstOrDefault(x => x.Name == topic)?.Publishers?.Any() == true, -1);
+        using var cts = new CancellationTokenSource();
+
+        var gidTask = new TaskCompletionSource<GraphId>();
+        var t = RunInSeparateContext(async ctx =>
+        {
+            using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+            using var pub = node.CreatePublisher<Time>(topic);
+            gidTask.SetResult(pub.Gid);
+            await Task.Delay(-1, cts.Token);
+        });
+
+        try
+        {
+            Assert.True(await watcher);
+            Assert.Equal(node.Graph.Topics.First(x => x.Name == topic).Publishers.First().Gid, await gidTask.Task);
+        }
+        finally
+        {
+            cts.Cancel();
+            await Task.WhenAny(t);
+        }
+    }
+
     private async Task RunInSeparateContext(Func<RclContext, Task> action)
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);

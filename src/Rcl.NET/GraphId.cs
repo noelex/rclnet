@@ -5,17 +5,23 @@ namespace Rcl;
 /// <summary>
 /// Represents a unique identifier for ROS communication entities.
 /// </summary>
+[StructLayout(LayoutKind.Explicit)]
 public unsafe struct GraphId : IEquatable<GraphId>
 {
-    private fixed byte _data[24];
+    [FieldOffset(0)]
+    private byte _data;
+
+    [FieldOffset(0)]
+    private long _data0;
+
+    [FieldOffset(8)]
+    private long _data1;
+
+    [FieldOffset(16)]
+    private long _data2;
 
     private Span<byte> AsSpan()
-    {
-        fixed (void* p = _data)
-        {
-            return new(p, 24);
-        }
-    }
+        => MemoryMarshal.CreateSpan(ref _data, 24);
 
     /// <summary>
     /// Create a new <see cref="GraphId"/> with its value copied from a <see cref="ReadOnlySpan{Byte}"/>.
@@ -23,7 +29,7 @@ public unsafe struct GraphId : IEquatable<GraphId>
     /// <param name="data">The <see cref="ReadOnlySpan{Byte}"/> to be copied from. The size of the <paramref name="data"/> must be either 16 or 24 bytes.</param>
     public unsafe GraphId(ReadOnlySpan<byte> data)
     {
-        if (data.Length != 16 || data.Length != 24)
+        if (data.Length != 16 && data.Length != 24)
         {
             throw new ArgumentException($"Size of the GID data must be either 16 or 24 bytes.");
         }
@@ -75,9 +81,10 @@ public unsafe struct GraphId : IEquatable<GraphId>
     public override string ToString()
     {
         Span<char> output = stackalloc char[24 * 2];
+        var data = AsSpan();
         for (int i = 0; i < 24; i++)
         {
-            _data[i].TryFormat(output[(i * 2)..], out _, "x2");
+            data[i].TryFormat(output[(i * 2)..], out _, "x2");
         }
 
         return output.ToString();
