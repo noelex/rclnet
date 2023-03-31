@@ -129,4 +129,7 @@ unsafe static class RclIron
       rcl_publisher_options_t publisher_options,
       rcl_service_introspection_state_t introspection_state);
 
+    [DllImport("rmw_implementation", CallingConvention = CallingConvention.Cdecl)]
+    public static extern rcl_ret_t rmw_get_gid_for_client(nint rmw_client_handle, void* gid);
+
 }

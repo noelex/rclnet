@@ -23,6 +23,14 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         _typesupport = typeSupport;
         Name = StringMarshal.CreatePooledString(rcl_client_get_service_name(Handle.Object))!;
 
+        if (RosEnvironment.IsSupported(RosEnvironment.Iron))
+        {
+            RclIron.rmw_gid_t gid;
+            var handle = rcl_client_get_rmw_handle(Handle.Object);
+            RclException.ThrowIfNonSuccess(RclIron.rmw_get_gid_for_client(handle, &gid));
+            Gid = new(gid.data);
+        }
+
         RegisterWaitHandle();
     }
 
@@ -70,6 +78,8 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         => _node.Graph.WaitForServiceServerAsync(Name!, cancellationToken);
 
     public string Name { get; }
+
+    public GraphId Gid { get; }
 
     public unsafe bool IsValid
          => rcl_client_is_valid(Handle.Object);

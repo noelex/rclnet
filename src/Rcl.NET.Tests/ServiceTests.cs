@@ -173,4 +173,19 @@ public class ServiceTests
 
         Assert.Equal(cts.Token, ex.CancellationToken);
     }
+
+    [SkippableFact]
+    public async Task ClientGid()
+    {
+        Skip.If(!RosEnvironment.IsSupported(RosEnvironment.Iron), "Service introspection is only supported on iron and later.");
+
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = node.CreateClient<
+            ListParametersService,
+            ListParametersServiceRequest,
+            ListParametersServiceResponse>(NameGenerator.GenerateServiceName());
+
+        Assert.NotEqual(GraphId.Empty, client.Gid);
+    }
 }

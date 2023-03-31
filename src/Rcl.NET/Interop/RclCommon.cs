@@ -4844,6 +4844,6 @@ namespace Rcl.Interop
         public static extern nint rcl_client_get_rmw_handle(rcl_client_t* client);
 
         [DllImport("rmw_implementation", CallingConvention = CallingConvention.Cdecl)]
-        public static extern rcl_ret_t rmw_get_gid_for_publisher(nint rmwPubliherHandle, void* gid);
+        public static extern rcl_ret_t rmw_get_gid_for_publisher(nint rmw_publisher_handle, void* gid);
     }
 }

@@ -29,6 +29,18 @@ public interface IRclClient<TRequest, TResponse> : IRclObject
     string Name { get; }
 
     /// <summary>
+    /// Gets the globally unique identifier (GID) of the service client.
+    /// </summary>
+    /// <remarks>
+    /// Supported by: >=iron
+    /// <para>
+    /// This property will return <see cref="GraphId.Empty"/> when accessed from an unsupported ROS distribution.
+    /// </para>
+    /// </remarks>
+    [SupportedSinceDistribution(RosEnvironment.Iron)]
+    GraphId Gid { get; }
+
+    /// <summary>
     /// Configure service introspection for the client.
     /// </summary>
     /// <remarks>

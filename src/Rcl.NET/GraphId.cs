@@ -46,6 +46,11 @@ public unsafe struct GraphId : IEquatable<GraphId>
         guid.TryWriteBytes(AsSpan());
     }
 
+    /// <summary>
+    /// Represents an uninitialized <see cref="GraphId"/>.
+    /// </summary>
+    public static readonly GraphId Empty = default;
+
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
