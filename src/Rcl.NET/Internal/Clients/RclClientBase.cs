@@ -28,7 +28,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             RclIron.rmw_gid_t gid;
             var handle = rcl_client_get_rmw_handle(Handle.Object);
             RclException.ThrowIfNonSuccess(RclIron.rmw_get_gid_for_client(handle, &gid));
-            Gid = new(gid.data);
+            Gid = new(gid.GetGidSpan());
         }
 
         RegisterWaitHandle();

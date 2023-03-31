@@ -47,13 +47,13 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
             {
                 RclIron.rmw_gid_t gid;
                 RclException.ThrowIfNonSuccess(rmw_get_gid_for_publisher(rmwHandle, &gid));
-                Gid = new(gid.data);
+                Gid = new(gid.GetGidSpan());
             }
             else
             {
                 rmw_gid_t gid;
                 RclException.ThrowIfNonSuccess(rmw_get_gid_for_publisher(rmwHandle, &gid));
-                Gid = new(new ReadOnlySpan<byte>(gid.data, 24));
+                Gid = new(gid.GetGidSpan());
             }
 
             completelyInitialized = true;

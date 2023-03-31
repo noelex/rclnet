@@ -1,4 +1,8 @@
 ﻿using Rosidl.Messages.Rcl;
+using Rosidl.Messages.Service;
+using Rosidl.Messages.Tf2;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Rcl.NET.Tests;
 
@@ -187,5 +191,169 @@ public class ServiceTests
             ListParametersServiceResponse>(NameGenerator.GenerateServiceName());
 
         Assert.NotEqual(GraphId.Empty, client.Gid);
+    }
+
+    [SkippableFact]
+    public async Task ServiceIntrospectionForClients()
+    {
+        Skip.If(!RosEnvironment.IsSupported(RosEnvironment.Iron), "Service introspection is only supported on iron and later.");
+
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+
+        var name = NameGenerator.GenerateServiceName();
+        var introspectionTopic = "/" + name + "/_service_event";
+        var eventType = "rcl_interfaces/srv/ListParameters_Event";
+
+        using var client = node.CreateClient<
+            ListParametersService,
+            ListParametersServiceRequest,
+            ListParametersServiceResponse>(name);
+
+        client.ConfigureIntrospection(ServiceIntrospectionState.Disabled);
+        var success = await node.Graph.TryWatchAsync((g, e) =>
+            !g.Topics.Any(x => x.Name == introspectionTopic), 1000);
+        Assert.True(success);
+
+        client.ConfigureIntrospection(ServiceIntrospectionState.MetadataOnly);
+        success = await node.Graph.TryWatchAsync((g, e) =>
+            g.Topics.Any(x => x.Name == introspectionTopic &&
+            x.Publishers.Count == 1 &&
+            x.Publishers.First().Type == eventType), 1000);
+        Assert.True(success);
+
+        client.ConfigureIntrospection(ServiceIntrospectionState.Disabled);
+        success = await node.Graph.TryWatchAsync((g, e) =>
+            !g.Topics.Any(x => x.Name == introspectionTopic), 1000);
+        Assert.True(success);
+
+        client.ConfigureIntrospection(ServiceIntrospectionState.Full);
+        success = await node.Graph.TryWatchAsync((g, e) =>
+            g.Topics.Any(x => x.Name == introspectionTopic &&
+            x.Publishers.Count == 1 &&
+            x.Publishers.First().Type == eventType), 1000);
+        Assert.True(success);
+    }
+
+    [SkippableFact]
+    public async Task ServiceIntrospectionForServers()
+    {
+        Skip.If(!RosEnvironment.IsSupported(RosEnvironment.Iron), "Service introspection is only supported on iron and later.");
+
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+
+        var name = NameGenerator.GenerateServiceName();
+        var introspectionTopic = "/" + name + "/_service_event";
+        var eventType = "rcl_interfaces/srv/ListParameters_Event";
+
+        using var server = node.CreateService<
+            ListParametersService,
+            ListParametersServiceRequest,
+            ListParametersServiceResponse>(name, (req, state) => new());
+
+        server.ConfigureIntrospection(ServiceIntrospectionState.Disabled);
+        var success = await node.Graph.TryWatchAsync((g, e) =>
+            !g.Topics.Any(x => x.Name == introspectionTopic), 1000);
+        Assert.True(success);
+
+        server.ConfigureIntrospection(ServiceIntrospectionState.MetadataOnly);
+        success = await node.Graph.TryWatchAsync((g, e) =>
+            g.Topics.Any(x => x.Name == introspectionTopic &&
+            x.Publishers.Count == 1 &&
+            x.Publishers.First().Type == eventType), 1000);
+        Assert.True(success);
+
+        server.ConfigureIntrospection(ServiceIntrospectionState.Disabled);
+        success = await node.Graph.TryWatchAsync((g, e) =>
+            !g.Topics.Any(x => x.Name == introspectionTopic), 1000);
+        Assert.True(success);
+
+        server.ConfigureIntrospection(ServiceIntrospectionState.Full);
+        success = await node.Graph.TryWatchAsync((g, e) =>
+            g.Topics.Any(x => x.Name == introspectionTopic &&
+            x.Publishers.Count == 1 &&
+            x.Publishers.First().Type == eventType), 1000);
+        Assert.True(success);
+    }
+
+    [SkippableTheory]
+    [InlineData(ServiceIntrospectionState.MetadataOnly)]
+    [InlineData(ServiceIntrospectionState.Full)]
+    public async Task PerformServiceIntrospection(ServiceIntrospectionState state)
+    {
+        Skip.If(!RosEnvironment.IsSupported(RosEnvironment.Iron), "Service introspection is only supported on iron and later.");
+
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+
+        var name = NameGenerator.GenerateServiceName();
+        var introspectionTopic = "/" + name + "/_service_event";
+
+        using var server = node.CreateService<
+            FrameGraphService,
+            FrameGraphServiceRequest,
+            FrameGraphServiceResponse>(name, (req, state) => new());
+
+        using var client = node.CreateClient<
+            FrameGraphService,
+            FrameGraphServiceRequest,
+            FrameGraphServiceResponse>(name);
+
+        server.ConfigureIntrospection(state);
+        client.ConfigureIntrospection(state);
+
+        var events = new Dictionary<byte, FrameGraphServiceEvent>();
+
+        using var cts = new CancellationTokenSource(1000);
+        var introspectTask = IntrospectService(4, cts.Token);
+        await client.InvokeAsync(new FrameGraphServiceRequest());
+
+        await introspectTask;
+        Assert.Equal(4, events.Count);
+
+        Assert.Equal(ServiceEventInfo.REQUEST_SENT, events.ElementAt(0).Key);
+        Assert.Equal(ServiceEventInfo.REQUEST_RECEIVED, events.ElementAt(1).Key);
+        Assert.Equal(ServiceEventInfo.RESPONSE_SENT, events.ElementAt(2).Key);
+        Assert.Equal(ServiceEventInfo.RESPONSE_RECEIVED, events.ElementAt(3).Key);
+
+        Assert.Equal(client.Gid, new(MemoryMarshal.Cast<sbyte, byte>(events[ServiceEventInfo.REQUEST_SENT].Info.ClientGid)));
+        Assert.Equal(client.Gid, new(MemoryMarshal.Cast<sbyte, byte>(events[ServiceEventInfo.RESPONSE_RECEIVED].Info.ClientGid)));
+
+        if(state == ServiceIntrospectionState.Full)
+        {
+            Assert.Single(events[ServiceEventInfo.REQUEST_SENT].Request);
+            Assert.Empty(events[ServiceEventInfo.REQUEST_SENT].Response);
+            Assert.Single(events[ServiceEventInfo.REQUEST_RECEIVED].Request);
+            Assert.Empty(events[ServiceEventInfo.REQUEST_RECEIVED].Response);
+            Assert.Empty(events[ServiceEventInfo.RESPONSE_SENT].Request);
+            Assert.Single(events[ServiceEventInfo.RESPONSE_SENT].Response);
+            Assert.Empty(events[ServiceEventInfo.RESPONSE_RECEIVED].Request);
+            Assert.Single(events[ServiceEventInfo.RESPONSE_RECEIVED].Response);
+        }
+        else
+        {
+            Assert.Empty(events[ServiceEventInfo.REQUEST_SENT].Request);
+            Assert.Empty(events[ServiceEventInfo.REQUEST_SENT].Response);
+            Assert.Empty(events[ServiceEventInfo.REQUEST_RECEIVED].Request);
+            Assert.Empty(events[ServiceEventInfo.REQUEST_RECEIVED].Response);
+            Assert.Empty(events[ServiceEventInfo.RESPONSE_SENT].Request);
+            Assert.Empty(events[ServiceEventInfo.RESPONSE_SENT].Response);
+            Assert.Empty(events[ServiceEventInfo.RESPONSE_RECEIVED].Request);
+            Assert.Empty(events[ServiceEventInfo.RESPONSE_RECEIVED].Response);
+        }
+
+        async Task IntrospectService(int expectedEvents, CancellationToken cancellationToken)
+        {
+            using var sub = node.CreateSubscription<FrameGraphServiceEvent>(introspectionTopic, new(queueSize: 10));
+            await foreach (var item in sub.ReadAllAsync(cancellationToken))
+            {
+                events[item.Info.EventType] = item;
+                if (events.Count == expectedEvents)
+                {
+                    break;
+                }
+            }
+        }
     }
 }

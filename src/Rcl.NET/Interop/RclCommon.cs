@@ -676,6 +676,8 @@ namespace Rcl.Interop
             /// Bype data Gid value
             /// </summary>
             public fixed byte data[24];
+
+            public Span<byte> GetGidSpan() => MemoryMarshal.CreateSpan(ref data[0], 24);
         }
 
         /// <summary>
@@ -1564,6 +1566,8 @@ namespace Rcl.Interop
             /// QoS profile of the endpoint
             /// </summary>
             public RclCommon.rmw_qos_profile_t qos_profile;
+
+            public Span<byte> GetGidSpan() => MemoryMarshal.CreateSpan(ref endpoint_gid[0], 24);
         }
 
         /// <summary>

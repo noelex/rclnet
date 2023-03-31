@@ -38,15 +38,6 @@ public unsafe struct GraphId : IEquatable<GraphId>
     }
 
     /// <summary>
-    /// Create a new <see cref="GraphId"/> with its value copied from a <see cref="Guid"/>.
-    /// </summary>
-    /// <param name="guid">The <see cref="Guid"/> to be copied from.</param>
-    public GraphId(Guid guid)
-    {
-        guid.TryWriteBytes(AsSpan());
-    }
-
-    /// <summary>
     /// Represents an uninitialized <see cref="GraphId"/>.
     /// </summary>
     public static readonly GraphId Empty = default;
@@ -64,8 +55,7 @@ public unsafe struct GraphId : IEquatable<GraphId>
     /// <inheritdoc/>
     public override int GetHashCode()
     {
-        var data = MemoryMarshal.Cast<byte, long>(AsSpan());
-        return HashCode.Combine(data[0], data[1], data[2]);
+        return HashCode.Combine(_data0, _data1, _data2);
     }
 
     /// <inheritdoc/>
@@ -77,7 +67,10 @@ public unsafe struct GraphId : IEquatable<GraphId>
         => !(a == b);
 
     /// <inheritdoc/>
-    public bool Equals(GraphId other) => AsSpan().SequenceEqual(other.AsSpan());
+    public bool Equals(GraphId other) =>
+        _data0 == other._data0 &&
+        _data1 == other._data1 &&
+        _data2 == other._data2;
 
     /// <summary>
     /// Convert to <see cref="GraphId"/> to its string representation.
@@ -85,11 +78,18 @@ public unsafe struct GraphId : IEquatable<GraphId>
     /// <returns>A hexadecimal string representing the content of the <see cref="GraphId"/>.</returns>
     public override string ToString()
     {
-        Span<char> output = stackalloc char[24 * 2];
+        Span<char> output = stackalloc char[24 * 2 + 2];
         var data = AsSpan();
+
+        var sep = 0;
         for (int i = 0; i < 24; i++)
         {
-            data[i].TryFormat(output[(i * 2)..], out _, "x2");
+            data[i].TryFormat(output[(i * 2 + sep)..], out _, "X2");
+            if (i == 7 || i == 15)
+            {
+                output[(i + 1) * 2 + sep] = '-';
+                sep++;
+            }
         }
 
         return output.ToString();

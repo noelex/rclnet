@@ -11,24 +11,17 @@ using System;
 
 #nullable enable
 
-namespace Rosidl.Messages.Sensor
+namespace Rosidl.Messages.Service
 {
     /// <summary>
-    /// Single pressure reading.  This message is appropriate for measuring the
-    /// pressure inside of a fluid (air, water, etc).  This also includes
-    /// atmospheric or barometric pressure.
-    /// 
-    /// This message is not appropriate for force/pressure contact sensors.
+    /// Message interface definition for <c>service_msgs/msg/ServiceEventInfo</c>.
     /// </summary>
-    /// <remarks>
-    /// Message interface definition for <c>sensor_msgs/msg/FluidPressure</c>.
-    /// </remarks>
-    [global::Rosidl.Runtime.TypeSupportAttribute("sensor_msgs/msg/FluidPressure")]
-    internal unsafe partial class FluidPressure : global::Rosidl.Runtime.IMessage
+    [global::Rosidl.Runtime.TypeSupportAttribute("service_msgs/msg/ServiceEventInfo")]
+    internal unsafe partial class ServiceEventInfo : global::Rosidl.Runtime.IMessage
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
-        public static string TypeSupportName => "sensor_msgs/msg/FluidPressure";
+        public static string TypeSupportName => "service_msgs/msg/ServiceEventInfo";
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
@@ -37,83 +30,152 @@ namespace Rosidl.Messages.Sensor
             return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
             
             [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-            [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__sensor_msgs__msg__FluidPressure")]
+            [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__service_msgs__msg__ServiceEventInfo")]
             static extern nint _PInvoke();
         }
         
         /// <summary>
-        /// Create a new instance of <see cref="FluidPressure"/> with fields initialized to specified values.
+        /// Create a new instance of <see cref="ServiceEventInfo"/> with fields initialized to specified values.
         /// </summary>
-        /// <param name='header'>
-        /// timestamp of the measurement
-        /// <para>(originally defined as: <c><![CDATA[std_msgs/msg/Header header]]></c>)</para>
+        /// <param name='eventType'>
+        /// The type of event this message represents
+        /// <para>(originally defined as: <c><![CDATA[uint8 event_type]]></c>)</para>
         /// </param>
-        /// <param name='fluidPressure'>
-        /// Absolute pressure reading in Pascals.
-        /// <para>(originally defined as: <c><![CDATA[float64 fluid_pressure]]></c>)</para>
+        /// <param name='stamp'>
+        /// Timestamp for when the event occurred (sent or received time)
+        /// <para>(originally defined as: <c><![CDATA[builtin_interfaces/msg/Time stamp]]></c>)</para>
         /// </param>
-        /// <param name='variance'>
-        /// 0 is interpreted as variance unknown
-        /// <para>(originally defined as: <c><![CDATA[float64 variance]]></c>)</para>
+        /// <param name='clientGid'>
+        /// Unique identifier for the client that sent the service request
+        /// Note, this is only unique for the current session.
+        /// The size here has to match the size of rmw_dds_common/msg/Gid,
+        /// but unfortunately we cannot use that message directly due to a
+        /// circular dependency.
+        /// <para>(originally defined as: <c><![CDATA[int8[16] client_gid]]></c>)</para>
+        /// </param>
+        /// <param name='sequenceNumber'>
+        /// Sequence number for the request
+        /// Combined with the client ID, this creates a unique ID for the service transaction
+        /// <para>(originally defined as: <c><![CDATA[int64 sequence_number]]></c>)</para>
         /// </param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
-        public FluidPressure(
-            global::Rosidl.Messages.Std.Header? @header = null,
-            double @fluidPressure = 0d,
-            double @variance = 0d
+        public ServiceEventInfo(
+            byte @eventType = 0,
+            global::Rosidl.Messages.Builtin.Time? @stamp = null,
+            sbyte[]? @clientGid = null,
+            long @sequenceNumber = 0
         )
         {
-            Header = @header ?? new global::Rosidl.Messages.Std.Header();
-            FluidPressure_ = @fluidPressure;
-            Variance = @variance;
+            EventType = @eventType;
+            Stamp = @stamp ?? new global::Rosidl.Messages.Builtin.Time();
+        
+            if (@clientGid != null)
+            {
+                ClientGid = @clientGid;
+            }
+            else
+            {
+                ClientGid = new sbyte[16];
+            }
+        
+            SequenceNumber = @sequenceNumber;
         }
         
         
         /// <summary>
-        /// Create a new instance of <see cref="FluidPressure"/>, and copy its data from the specified <see cref="Priv"/> structure.
+        /// Create a new instance of <see cref="ServiceEventInfo"/>, and copy its data from the specified <see cref="Priv"/> structure.
         /// </summary>
         /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
         /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
-        public FluidPressure(in Priv priv, global::System.Text.Encoding textEncoding)
+        public ServiceEventInfo(in Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.Header = new global::Rosidl.Messages.Std.Header(in priv.Header, textEncoding);
-            this.FluidPressure_ = priv.FluidPressure_;
-            this.Variance = priv.Variance;
+            this.EventType = priv.EventType;
+            this.Stamp = new global::Rosidl.Messages.Builtin.Time(in priv.Stamp, textEncoding);
+            this.ClientGid = priv.ClientGid.ToArray();
+            this.SequenceNumber = priv.SequenceNumber;
         }
         
         
         /// <summary>
-        /// timestamp of the measurement
+        /// Originally defined as: <c><![CDATA[uint8 REQUEST_SENT = 0]]></c>
         /// </summary>
-        /// <remarks>
-        /// Originally defined as: <c><![CDATA[std_msgs/msg/Header header]]></c>
-        /// </remarks>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
-        public global::Rosidl.Messages.Std.Header Header { get; set; }
+        public const byte REQUEST_SENT = 0;
         
         /// <summary>
-        /// Absolute pressure reading in Pascals.
+        /// Originally defined as: <c><![CDATA[uint8 REQUEST_RECEIVED = 1]]></c>
         /// </summary>
-        /// <remarks>
-        /// Originally defined as: <c><![CDATA[float64 fluid_pressure]]></c>
-        /// </remarks>
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
-        public double FluidPressure_ { get; set; }
+        public const byte REQUEST_RECEIVED = 1;
         
         /// <summary>
-        /// 0 is interpreted as variance unknown
+        /// Originally defined as: <c><![CDATA[uint8 RESPONSE_SENT = 2]]></c>
+        /// </summary>
+        public const byte RESPONSE_SENT = 2;
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[uint8 RESPONSE_RECEIVED = 3]]></c>
+        /// </summary>
+        public const byte RESPONSE_RECEIVED = 3;
+        
+        /// <summary>
+        /// The type of event this message represents
         /// </summary>
         /// <remarks>
-        /// Originally defined as: <c><![CDATA[float64 variance]]></c>
+        /// Originally defined as: <c><![CDATA[uint8 event_type]]></c>
         /// </remarks>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
-        public double Variance { get; set; }
+        public byte EventType { get; set; }
+        
+        /// <summary>
+        /// Timestamp for when the event occurred (sent or received time)
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Time stamp]]></c>
+        /// </remarks>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.Builtin.Time Stamp { get; set; }
+        
+        private sbyte[] __backingField__ClientGid;
+        
+        /// <summary>
+        /// Unique identifier for the client that sent the service request
+        /// Note, this is only unique for the current session.
+        /// The size here has to match the size of rmw_dds_common/msg/Gid,
+        /// but unfortunately we cannot use that message directly due to a
+        /// circular dependency.
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[int8[16] client_gid]]></c>
+        /// </remarks>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public sbyte[] ClientGid
+        {
+            get
+            {
+                return __backingField__ClientGid;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__ClientGid))]
+            set
+            {
+                __backingField__ClientGid = value.Length == 16 ? value : throw new global::System.ArgumentException("Size of the array 'ClientGid' must be 16.");
+            }
+        }
+        
+        /// <summary>
+        /// Sequence number for the request
+        /// Combined with the client ID, this creates a unique ID for the service transaction
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[int64 sequence_number]]></c>
+        /// </remarks>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public long SequenceNumber { get; set; }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
@@ -126,16 +188,17 @@ namespace Rosidl.Messages.Sensor
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.Header.WriteTo(ref priv.Header, textEncoding);
-            priv.FluidPressure_ = this.FluidPressure_;
-            priv.Variance = this.Variance;
+            priv.EventType = this.EventType;
+            this.Stamp.WriteTo(ref priv.Stamp, textEncoding);
+            this.ClientGid.CopyTo(priv.ClientGid);
+            priv.SequenceNumber = this.SequenceNumber;
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
         {
-            return new FluidPressure(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+            return new ServiceEventInfo(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -181,41 +244,57 @@ namespace Rosidl.Messages.Sensor
         }
         
         /// <summary>
-        /// Single pressure reading.  This message is appropriate for measuring the
-        /// pressure inside of a fluid (air, water, etc).  This also includes
-        /// atmospheric or barometric pressure.
-        /// 
-        /// This message is not appropriate for force/pressure contact sensors.
+        /// Blittable native structure for <c>service_msgs/msg/ServiceEventInfo</c>.
         /// </summary>
-        /// <remarks>
-        /// Blittable native structure for <c>sensor_msgs/msg/FluidPressure</c>.
-        /// </remarks>
         [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
         public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
         {
             /// <summary>
-            /// timestamp of the measurement
+            /// The type of event this message represents
             /// </summary>
             /// <remarks>
-            /// Originally defined as: <c><![CDATA[std_msgs/msg/Header header]]></c>
+            /// Originally defined as: <c><![CDATA[uint8 event_type]]></c>
             /// </remarks>
-            public global::Rosidl.Messages.Std.Header.Priv Header;
+            public byte EventType;
             
             /// <summary>
-            /// Absolute pressure reading in Pascals.
+            /// Timestamp for when the event occurred (sent or received time)
             /// </summary>
             /// <remarks>
-            /// Originally defined as: <c><![CDATA[float64 fluid_pressure]]></c>
+            /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Time stamp]]></c>
             /// </remarks>
-            public double FluidPressure_;
+            public global::Rosidl.Messages.Builtin.Time.Priv Stamp;
+            
+            private fixed sbyte __ClientGid[16];
             
             /// <summary>
-            /// 0 is interpreted as variance unknown
+            /// Unique identifier for the client that sent the service request
+            /// Note, this is only unique for the current session.
+            /// The size here has to match the size of rmw_dds_common/msg/Gid,
+            /// but unfortunately we cannot use that message directly due to a
+            /// circular dependency.
             /// </summary>
             /// <remarks>
-            /// Originally defined as: <c><![CDATA[float64 variance]]></c>
+            /// Originally defined as: <c><![CDATA[int8[16] client_gid]]></c>
             /// </remarks>
-            public double Variance;
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public global::System.Span<sbyte> ClientGid
+            {
+                get
+                {
+                    fixed (global::Rosidl.Messages.Service.ServiceEventInfo.Priv* __p = &this) return new (__p->__ClientGid, 16);
+                }
+            }
+            
+            /// <summary>
+            /// Sequence number for the request
+            /// Combined with the client ID, this creates a unique ID for the service transaction
+            /// </summary>
+            /// <remarks>
+            /// Originally defined as: <c><![CDATA[int64 sequence_number]]></c>
+            /// </remarks>
+            public long SequenceNumber;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
             [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
@@ -304,9 +383,14 @@ namespace Rosidl.Messages.Sensor
             public override int GetHashCode()
             {
                 var __hashCode = new global::System.HashCode();
-                __hashCode.Add(this.Header);
-                __hashCode.Add(this.FluidPressure_);
-                __hashCode.Add(this.Variance);
+                __hashCode.Add(this.EventType);
+                __hashCode.Add(this.Stamp);
+                for (int __i = 0; __i < 16; __i++)
+                {
+                    __hashCode.Add(this.ClientGid[__i]);
+                }
+                __hashCode.Add(this.SequenceNumber);
+            
                 return __hashCode.ToHashCode();
             }
             
@@ -331,7 +415,7 @@ namespace Rosidl.Messages.Sensor
                 return _PInvoke();
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_generator_c", EntryPoint = "sensor_msgs__msg__FluidPressure__create")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_generator_c", EntryPoint = "service_msgs__msg__ServiceEventInfo__create")]
                 static extern Priv* _PInvoke();
             }
             
@@ -342,7 +426,7 @@ namespace Rosidl.Messages.Sensor
                 _PInvoke(msg);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_generator_c", EntryPoint = "sensor_msgs__msg__FluidPressure__destroy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_generator_c", EntryPoint = "service_msgs__msg__ServiceEventInfo__destroy")]
                 static extern void _PInvoke(Priv* msg);
             }
             
@@ -356,7 +440,7 @@ namespace Rosidl.Messages.Sensor
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_generator_c", EntryPoint = "sensor_msgs__msg__FluidPressure__init")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_generator_c", EntryPoint = "service_msgs__msg__ServiceEventInfo__init")]
                 static extern bool _PInvoke(Priv* msg);
             }
             
@@ -370,7 +454,7 @@ namespace Rosidl.Messages.Sensor
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_generator_c", EntryPoint = "sensor_msgs__msg__FluidPressure__fini")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_generator_c", EntryPoint = "service_msgs__msg__ServiceEventInfo__fini")]
                 static extern void _PInvoke(Priv* msg);
             }
             
@@ -384,7 +468,7 @@ namespace Rosidl.Messages.Sensor
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_generator_c", EntryPoint = "sensor_msgs__msg__FluidPressure__are_qual")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_generator_c", EntryPoint = "service_msgs__msg__ServiceEventInfo__are_qual")]
                 static extern bool _PInvoke(Priv* lhs, Priv* rhs);
             }
             
@@ -395,7 +479,7 @@ namespace Rosidl.Messages.Sensor
                 return _PInvoke(input, output);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_generator_c", EntryPoint = "sensor_msgs__msg__FluidPressure__copy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_generator_c", EntryPoint = "service_msgs__msg__ServiceEventInfo__copy")]
                 static extern bool _PInvoke(Priv* input, Priv* output);
             }
             
@@ -406,21 +490,14 @@ namespace Rosidl.Messages.Sensor
             {
                 if (!ret)
                 {
-                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Sensor.FluidPressure.Priv.{caller}'.");
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Service.ServiceEventInfo.Priv.{caller}'.");
                 }
             }
         }
         
         /// <summary>
-        /// Single pressure reading.  This message is appropriate for measuring the
-        /// pressure inside of a fluid (air, water, etc).  This also includes
-        /// atmospheric or barometric pressure.
-        /// 
-        /// This message is not appropriate for force/pressure contact sensors.
+        /// Blittable native sequence structure for <c>service_msgs/msg/ServiceEventInfo</c>.
         /// </summary>
-        /// <remarks>
-        /// Blittable native sequence structure for <c>sensor_msgs/msg/FluidPressure</c>.
-        /// </remarks>
         [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
         public partial struct PrivSequence : global::System.IEquatable<PrivSequence>, global::System.IDisposable
         {
@@ -575,7 +652,7 @@ namespace Rosidl.Messages.Sensor
                 return _PInvoke();
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_generator_c", EntryPoint = "sensor_msgs__msg__FluidPressure__Sequence__create")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_generator_c", EntryPoint = "service_msgs__msg__ServiceEventInfo__Sequence__create")]
                 static extern PrivSequence* _PInvoke();
             }
             
@@ -586,7 +663,7 @@ namespace Rosidl.Messages.Sensor
                 _PInvoke(msg);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_generator_c", EntryPoint = "sensor_msgs__msg__FluidPressure__Sequence__destroy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_generator_c", EntryPoint = "service_msgs__msg__ServiceEventInfo__Sequence__destroy")]
                 static extern void _PInvoke(PrivSequence* msg);
             }
             
@@ -600,7 +677,7 @@ namespace Rosidl.Messages.Sensor
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_generator_c", EntryPoint = "sensor_msgs__msg__FluidPressure__Sequence__init")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_generator_c", EntryPoint = "service_msgs__msg__ServiceEventInfo__Sequence__init")]
                 static extern bool _PInvoke(PrivSequence* msg, nuint size);
             }
             
@@ -614,7 +691,7 @@ namespace Rosidl.Messages.Sensor
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_generator_c", EntryPoint = "sensor_msgs__msg__FluidPressure__Sequence__fini")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_generator_c", EntryPoint = "service_msgs__msg__ServiceEventInfo__Sequence__fini")]
                 static extern void _PInvoke(PrivSequence* msg);
             }
             
@@ -628,7 +705,7 @@ namespace Rosidl.Messages.Sensor
                 }
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_generator_c", EntryPoint = "sensor_msgs__msg__FluidPressure__Sequence__are_qual")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_generator_c", EntryPoint = "service_msgs__msg__ServiceEventInfo__Sequence__are_qual")]
                 static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
             }
             
@@ -639,7 +716,7 @@ namespace Rosidl.Messages.Sensor
                 return _PInvoke(input, output);
                 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("sensor_msgs__rosidl_generator_c", EntryPoint = "sensor_msgs__msg__FluidPressure__Sequence__copy")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("service_msgs__rosidl_generator_c", EntryPoint = "service_msgs__msg__ServiceEventInfo__Sequence__copy")]
                 static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
             }
             
@@ -650,7 +727,7 @@ namespace Rosidl.Messages.Sensor
             {
                 if (!ret)
                 {
-                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Sensor.FluidPressure.PrivSequence.{caller}'.");
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Service.ServiceEventInfo.PrivSequence.{caller}'.");
                 }
             }
         }

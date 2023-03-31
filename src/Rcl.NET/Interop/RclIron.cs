@@ -20,7 +20,9 @@ unsafe static class RclIron
         /// <summary>
         /// Bype data Gid value
         /// </summary>
-        public Guid data;
+        public fixed byte data[16];
+
+        public Span<byte> GetGidSpan() => MemoryMarshal.CreateSpan(ref data[0], 16);
     }
 
     /// <summary>
@@ -76,12 +78,14 @@ unsafe static class RclIron
         /// <summary>
         /// The GID of the endpoint
         /// </summary>
-        public Guid endpoint_gid;
+        public fixed byte endpoint_gid[16];
 
         /// <summary>
         /// QoS profile of the endpoint
         /// </summary>
         public rmw_qos_profile_t qos_profile;
+
+        public Span<byte> GetGidSpan() => MemoryMarshal.CreateSpan(ref endpoint_gid[0], 16);
     }
 
     /// <summary>

@@ -404,7 +404,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             {
                 ref var item = ref src->info_array[i];
                 dest[i] = new(
-                    new(new ReadOnlySpan<byte>(src->info_array[i].endpoint_gid, 24)),
+                    new(src->info_array[i].GetGidSpan()),
                     StringMarshal.CreatePooledString(item.topic_type)!,
                     new(
                         StringMarshal.CreatePooledString(item.node_name)!,
@@ -429,7 +429,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             {
                 ref var item = ref src->info_array[i];
                 dest[i] = new(
-                    new(item.endpoint_gid),
+                    new(item.GetGidSpan()),
                     StringMarshal.CreatePooledString(item.topic_type)!,
                     new(
                         StringMarshal.CreatePooledString(item.node_name)!,
