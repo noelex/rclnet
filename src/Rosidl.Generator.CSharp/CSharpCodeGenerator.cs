@@ -13,17 +13,6 @@ record Package(string Name, Message[] Messages);
 
 class ParseSpec
 {
-    private static bool IsServiceIntrospectionSupported()
-    {
-        var distro = Environment.GetEnvironmentVariable("ROS_DISTRO");
-        if (distro == "rolling" || distro == "iron")
-        {
-            return true;
-        }
-
-        return false;
-    }
-
     public Dictionary<string, string> NamespaceMapping { get; } = new();
 
     public Dictionary<string, string> PackageMapping { get; } = new();
@@ -42,7 +31,7 @@ class ParseSpec
 
     public bool IsInternal { get; } = false;
 
-    public bool EnableServiceIntrospection { get; } = IsServiceIntrospectionSupported();
+    public bool EnableServiceIntrospection { get; } = false;
 
     public bool EnableActionDetails { get; } = false;
 

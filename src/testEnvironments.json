@@ -14,7 +14,7 @@
     {
       "name": "Container - Foxy",
       "type": "docker",
-      "dockerImage": "Rcl.NET.Tests/foxy.Dockerfile"
+      "dockerFile": "Rcl.NET.Tests/foxy.Dockerfile"
     },
     {
       "name": "Container - Humble",

@@ -3,12 +3,8 @@
 output ./
 
 # Generate code for service introspection.
-#
 # This feature requires 'service_msgs' package.
-#
-# If ROS_DISTRO indicates a distribution which supports service introspection
-# and this directive is not specfied, then 'on' is used as the default value.
-# Otherwise, defaults to 'off'.
+# The default value is 'off'.
 # service-introspection [on|off]
 
 # Generate implementation details for actions, including FeedbackMessage,
