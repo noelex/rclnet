@@ -12,13 +12,21 @@ public unsafe struct GraphId : IEquatable<GraphId>
     private byte _data;
 
     [FieldOffset(0)]
-    private long _data0;
+    private readonly long _data0;
 
     [FieldOffset(8)]
-    private long _data1;
+    private readonly long _data1;
 
     [FieldOffset(16)]
-    private long _data2;
+    private readonly long _data2;
+
+    /// <summary>
+    /// Number of effective bytes of the <see cref="GraphId"/> structure for current ROS distribution.
+    /// </summary>
+    /// <remarks>
+    /// The value of the field is 16 for <see cref="RosEnvironment.Iron"/> or newer distributions, and 24 for earlier distributions.
+    /// </remarks>
+    public static readonly int Size = RosEnvironment.IsSupported(RosEnvironment.Iron) ? 16 : 24;
 
     private Span<byte> AsSpan()
         => MemoryMarshal.CreateSpan(ref _data, 24);

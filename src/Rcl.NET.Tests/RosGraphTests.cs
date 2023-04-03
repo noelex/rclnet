@@ -176,7 +176,7 @@ public class RosGraphTests
         try
         {
             Assert.True(await watcher);
-            Assert.Equal(node.Graph.Topics.First(x => x.Name == topic).Publishers.First().Gid, await gidTask.Task);
+            Assert.Equal(node.Graph.Topics.Single(x => x.Name == topic).Publishers.Single().Gid, await gidTask.Task);
         }
         finally
         {
