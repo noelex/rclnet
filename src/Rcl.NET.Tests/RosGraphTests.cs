@@ -152,9 +152,12 @@ public class RosGraphTests
             node.Graph.WatchAsync((graph, e) => graph.Topics.Any(x => x.Name == targetTopic), 100));
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task PublisherGid()
     {
+        // TODO: Track https://github.com/ros2/rmw_cyclonedds/issues/446
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp", "rmw_get_gid_for_publisher is broken in 'rmw_cyclonedds_cpp'.");
+
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
