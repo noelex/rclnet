@@ -74,7 +74,7 @@ public record ActionClientOptions
         QosProfile? feedbackTopicQos = null,
         QosProfile? statusTopicQos = null,
         Encoding? textEncoding = null,
-        int queueSize = 1,
+        int queueSize = 64,
         BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest,
         bool allowSynchronousContinuations = false)
     {

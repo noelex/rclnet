@@ -372,7 +372,7 @@ public record SubscriptionOptions
     public SubscriptionOptions(
         QosProfile? qos = null,
         Encoding? textEncoding = null,
-        int queueSize = 1,
+        int queueSize = 64,
         BoundedChannelFullMode fullMode = BoundedChannelFullMode.DropOldest,
         Action<LivelinessChangedEvent>? livelinessChangedHandler = null,
         Action<RequestedDeadlineMissedEvent>? requestedDeadlineMissedHandler = null,
