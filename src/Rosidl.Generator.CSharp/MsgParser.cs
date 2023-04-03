@@ -297,7 +297,7 @@ public class MsgParser
         return seperators switch
         {
             0 => ParseMessage(package, subFolder ?? "msg", name, statements),
-            1 => ParseService(package, subFolder ?? "svc", name, statements),
+            1 => ParseService(package, subFolder ?? "srv", name, statements),
             2 => ParseAction(package, subFolder ?? "action", name, statements),
             _ => throw new FormatException($"Unexpected count of seperators. Expecting 0, 1 or 2, received {seperators}.")
         };
@@ -310,7 +310,7 @@ public class MsgParser
         return seperators switch
         {
             0 => ParseMessage(package, subFolder ?? "msg", name, statements),
-            1 => ParseService(package, subFolder ?? "svc", name, statements),
+            1 => ParseService(package, subFolder ?? "srv", name, statements),
             2 => ParseAction(package, subFolder ?? "action", name, statements),
             _ => throw new FormatException($"Unexpected count of seperators. Expecting 0, 1 or 2, received {seperators}.")
         };
