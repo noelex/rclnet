@@ -31,7 +31,7 @@ jobs:
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
           apt update
           apt install -y curl
-          rosdep update
+          rosdep update --include-eol-distros
           rosdep install -i -y --from-paths src/Rcl.NET.Tests
 
       - name: Setup .NET 7.0
