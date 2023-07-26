@@ -47,6 +47,15 @@ unsafe static class RclIron
         public bool from_intra_process;
     }
 
+    /// A ROS 2 interface type hash per REP-2011 RIHS standard.
+    public unsafe partial struct rosidl_type_hash_t
+    {
+        public byte version;
+        public fixed byte value[32];
+
+        public Span<byte> GetValueSpan() => MemoryMarshal.CreateSpan(ref value[0], 32);
+    }
+
     /// <summary>
     /// A data structure that encapsulates the node name, node namespace,
     /// topic_type, gid, and qos_profile of publishers and subscriptions
@@ -69,6 +78,11 @@ unsafe static class RclIron
         /// The associated topic type
         /// </summary>
         public byte* topic_type;
+
+        /// <summary>
+        /// Hashed value for topic type's description
+        /// </summary>
+        public rosidl_type_hash_t topic_type_hash;
 
         /// <summary>
         /// The endpoint type
