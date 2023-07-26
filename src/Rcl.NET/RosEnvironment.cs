@@ -29,7 +29,7 @@ public unsafe static class RosEnvironment
     /// <summary>
     /// ROS 2 Iron Irwini.
     /// </summary>
-    public const string Iron = "rolling"; // TODO: Change 'rolling' to 'iron' when release.
+    public const string Iron = "iron";
 
     /// <summary>
     /// Gets whether the application is running in foxy.
