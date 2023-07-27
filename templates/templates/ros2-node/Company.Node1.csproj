@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Rcl.NET" Version="1.1.1" />
+    <PackageReference Include="Rcl.NET" Version="1.2.0" />
   </ItemGroup>
 
 </Project>
