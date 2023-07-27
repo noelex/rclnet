@@ -23,10 +23,11 @@ rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowin
 | Events                  | ✅      | Event handlers can be registered via `SubscriptionOptions` or `PublisherOptions` when creating the subscirption or publisher.                                                                                                                |
 | ROS Graph               | ✅      | Managed implementation.                                                                                                                                                                                                                      |
 | Logging                 | ✅      | Supports logging to stdout, /rosout and log files. Configurable with `--ros-args`.                                                                                                                                                           |
-| Content Filtered Topics | ✅      | Available since humble. 
-| Network Flow Endpoints  | ✅      | Available since galactic.<br/>Network flow endpoints of publishers and subscriptions can be retrieved via `IRclPublisher.Endpoints` and `IRclSubscription.Endpoints` property.<br/>Unique network flow endpoints requirement can be configured when creating `SubscriptionOptions` and `PublisherOptions`.|
-| Parameter Service       | ⚠️      | Supports loading parameters from command-line arguments and parameter files.<br/>Locally declared parameters are exposed via [Parameter API](https://design.ros2.org/articles/ros_parameters.html).<br/>Parameter client is not implemented. |
-| Lifecycle Nodes         | ❌      | N/A                                                                                                                                                                                                                                          |
+| [Content Filtered Topics](https://github.com/ros2/design/blob/918c09758ed4c0854aa128b9c8ed0051c21a6590/articles/content_filtering.md) | ✅      | Available since humble. 
+| [Network Flow Endpoints](https://design.ros2.org/articles/unique_network_flows.html)  | ✅      | Available since galactic.<br/>Network flow endpoints of publishers and subscriptions can be retrieved via `IRclPublisher.Endpoints` and `IRclSubscription.Endpoints` property.<br/>Unique network flow endpoints requirement can be configured when creating `SubscriptionOptions` and `PublisherOptions`.|
+| [Service Introspection](https://github.com/ros-infrastructure/rep/blob/jacob/service_introspection/rep-2012.rst)   | ✅      | Available since iron. |
+| [Parameter Service](https://design.ros2.org/articles/ros_parameters.html)       | ⚠️      | Supports loading parameters from command-line arguments and parameter files.<br/>Locally declared parameters are exposed via Parameter API.<br/>Parameter client is not implemented. |
+| [Lifecycle Nodes](https://design.ros2.org/articles/node_lifecycle.html)         | ❌      | N/A                                                                                                                                                                                                                                          |
 
 ✅Supported ⚠️Partial support ❌Not supported ⏳In development
 
@@ -35,6 +36,7 @@ Supported .NET Versions:
 - .NET 7
 
 Supported ROS 2 Distributions:
+- Iron Irwini
 - Humble Hawksbill
 - Foxy Fitzroy
 

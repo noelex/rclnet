@@ -23,11 +23,11 @@ namespace Rosidl.Messages.Tf2
     internal unsafe partial class LookupTransformAction : global::Rosidl.Runtime.IAction<LookupTransformActionGoal, LookupTransformActionResult, LookupTransformActionFeedback>
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static string TypeSupportName => "tf2_msgs/action/LookupTransform";
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
         {
             return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Action);
@@ -48,11 +48,11 @@ namespace Rosidl.Messages.Tf2
     internal unsafe partial class LookupTransformActionGoal : global::Rosidl.Runtime.IActionGoal
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static string TypeSupportName => "tf2_msgs/action/LookupTransform_Goal";
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
         {
             return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
@@ -73,14 +73,14 @@ namespace Rosidl.Messages.Tf2
         /// Originally defined as: <c><![CDATA[string source_frame]]></c>
         /// </param>
         /// <param name='sourceTime'>
-        /// Originally defined as: <c><![CDATA[builtin_interfaces/Time source_time]]></c>
+        /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Time source_time]]></c>
         /// </param>
         /// <param name='timeout'>
-        /// Originally defined as: <c><![CDATA[builtin_interfaces/Duration timeout]]></c>
+        /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Duration timeout]]></c>
         /// </param>
         /// <param name='targetTime'>
         /// Advanced API
-        /// <para>(originally defined as: <c><![CDATA[builtin_interfaces/Time target_time]]></c>)</para>
+        /// <para>(originally defined as: <c><![CDATA[builtin_interfaces/msg/Time target_time]]></c>)</para>
         /// </param>
         /// <param name='fixedFrame'>
         /// Originally defined as: <c><![CDATA[string fixed_frame]]></c>
@@ -90,7 +90,7 @@ namespace Rosidl.Messages.Tf2
         /// <para>(originally defined as: <c><![CDATA[bool advanced]]></c>)</para>
         /// </param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public LookupTransformActionGoal(
             string @targetFrame = "",
             string @sourceFrame = "",
@@ -117,7 +117,7 @@ namespace Rosidl.Messages.Tf2
         /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
         /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public LookupTransformActionGoal(in Priv priv, global::System.Text.Encoding textEncoding)
         {
             this.TargetFrame = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.TargetFrame.AsSpan(), textEncoding);
@@ -137,45 +137,45 @@ namespace Rosidl.Messages.Tf2
         /// Originally defined as: <c><![CDATA[string target_frame]]></c>
         /// </remarks>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public string TargetFrame { get; set; }
         
         /// <summary>
         /// Originally defined as: <c><![CDATA[string source_frame]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public string SourceFrame { get; set; }
         
         /// <summary>
-        /// Originally defined as: <c><![CDATA[builtin_interfaces/Time source_time]]></c>
+        /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Time source_time]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public global::Rosidl.Messages.Builtin.Time SourceTime { get; set; }
         
         /// <summary>
-        /// Originally defined as: <c><![CDATA[builtin_interfaces/Duration timeout]]></c>
+        /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Duration timeout]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public global::Rosidl.Messages.Builtin.Duration Timeout { get; set; }
         
         /// <summary>
         /// Advanced API
         /// </summary>
         /// <remarks>
-        /// Originally defined as: <c><![CDATA[builtin_interfaces/Time target_time]]></c>
+        /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Time target_time]]></c>
         /// </remarks>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public global::Rosidl.Messages.Builtin.Time TargetTime { get; set; }
         
         /// <summary>
         /// Originally defined as: <c><![CDATA[string fixed_frame]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public string FixedFrame { get; set; }
         
         /// <summary>
@@ -185,18 +185,18 @@ namespace Rosidl.Messages.Tf2
         /// Originally defined as: <c><![CDATA[bool advanced]]></c>
         /// </remarks>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public bool Advanced { get; set; }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public void WriteTo(nint data, global::System.Text.Encoding textEncoding)
         {
             WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
             priv.TargetFrame.CopyFrom(this.TargetFrame, textEncoding);
@@ -209,49 +209,49 @@ namespace Rosidl.Messages.Tf2
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
         {
             return new LookupTransformActionGoal(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static nint UnsafeCreate()
         {
             return new(Priv.Create());
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static void UnsafeDestroy(nint data)
         {
             Priv.Destroy((Priv*)data);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static bool UnsafeInitialize(nint data)
         {
             return Priv.TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static void UnsafeFinalize(nint data)
         {
             Priv.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static bool UnsafeInitializeSequence(int size, nint data)
         {
             return PrivSequence.TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static void UnsafeFinalizeSequence(nint data)
         {
             PrivSequence.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
@@ -280,12 +280,12 @@ namespace Rosidl.Messages.Tf2
             public global::Rosidl.Runtime.Interop.CString SourceFrame;
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[builtin_interfaces/Time source_time]]></c>
+            /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Time source_time]]></c>
             /// </summary>
             public global::Rosidl.Messages.Builtin.Time.Priv SourceTime;
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[builtin_interfaces/Duration timeout]]></c>
+            /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Duration timeout]]></c>
             /// </summary>
             public global::Rosidl.Messages.Builtin.Duration.Priv Timeout;
             
@@ -293,7 +293,7 @@ namespace Rosidl.Messages.Tf2
             /// Advanced API
             /// </summary>
             /// <remarks>
-            /// Originally defined as: <c><![CDATA[builtin_interfaces/Time target_time]]></c>
+            /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Time target_time]]></c>
             /// </remarks>
             public global::Rosidl.Messages.Builtin.Time.Priv TargetTime;
             
@@ -311,21 +311,21 @@ namespace Rosidl.Messages.Tf2
             public bool Advanced;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv()
             {
                 ThrowIfNonSuccess(TryInitialize(out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv(Priv src)
                 : this(in src)
             {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv(in Priv src)
                 : this()
             {
@@ -333,7 +333,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv(Priv* src)
                 : this()
             {
@@ -341,28 +341,28 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void Dispose()
             {
                 Finalize(ref this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(Priv src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(in Priv src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(Priv* src)
             {
                 fixed (Priv* pThis = &this)
@@ -372,7 +372,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(in Priv input, out Priv output)
             {
                 fixed (Priv* pInput = &input, pOutput = &output)
@@ -382,18 +382,18 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public bool Equals(Priv other)
             {
                 return Priv.AreEqual(in other, in this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override bool Equals(object? obj) => obj is Priv s ? this.Equals(s) : false;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override int GetHashCode()
             {
                 var __hashCode = new global::System.HashCode();
@@ -408,21 +408,21 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator ==(Priv lhs, Priv rhs)
             {
                 return lhs.Equals(rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator !=(Priv lhs, Priv rhs)
             {
                 return !(lhs == rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static Priv* Create()
             {
                 return _PInvoke();
@@ -433,7 +433,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Destroy(Priv* msg)
             {
                 _PInvoke(msg);
@@ -444,7 +444,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool TryInitialize(out Priv msg)
             {
                 fixed (Priv* pMsg = &msg)
@@ -458,7 +458,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Finalize(ref Priv msg)
             {
                 fixed (Priv* pMsg = &msg)
@@ -472,7 +472,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool AreEqual(in Priv lhs, in Priv rhs)
             {
                 fixed (Priv* plhs = &lhs, prhs = &rhs)
@@ -486,7 +486,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(Priv* input, Priv* output)
             {
                 return _PInvoke(input, output);
@@ -497,7 +497,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
             string caller = "")
             {
@@ -528,28 +528,28 @@ namespace Rosidl.Messages.Tf2
             public int Capcacity => (int)__capacity;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence()
                 : this(0)
             {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(int size)
             {
                 ThrowIfNonSuccess(TryInitialize(size, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(PrivSequence src)
                 : this(in src)
             {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(in PrivSequence src)
                 : this()
             {
@@ -557,7 +557,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(PrivSequence* src)
                 : this()
             {
@@ -565,7 +565,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(System.ReadOnlySpan<Priv> src)
                 : this(src.Length)
             {
@@ -573,21 +573,21 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void Dispose()
             {
                 Finalize(ref this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public System.Span<Priv> AsSpan()
             {
                 return new(__data, Size);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(System.ReadOnlySpan<Priv> src)
             {
                 Finalize(ref this);
@@ -596,21 +596,21 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(PrivSequence src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(in PrivSequence src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(PrivSequence* src)
             {
                 fixed (PrivSequence* pThis = &this)
@@ -620,7 +620,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(in PrivSequence input, out PrivSequence output)
             {
                 fixed (PrivSequence* pInput = &input, pOutput = &output)
@@ -630,39 +630,39 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public bool Equals(PrivSequence other)
             {
                 return PrivSequence.AreEqual(in other, in this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override bool Equals(object? obj) => obj is PrivSequence s ? this.Equals(s) : false;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override int GetHashCode()
             {
                 return global::System.HashCode.Combine((nint)__data, __size, __capacity);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator ==(PrivSequence lhs, PrivSequence rhs)
             {
                 return lhs.Equals(rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator !=(PrivSequence lhs, PrivSequence rhs)
             {
                 return !(lhs == rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static PrivSequence* Create()
             {
                 return _PInvoke();
@@ -673,7 +673,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Destroy(PrivSequence* msg)
             {
                 _PInvoke(msg);
@@ -684,7 +684,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool TryInitialize(int size, out PrivSequence msg)
             {
                 fixed (PrivSequence* pMsg = &msg)
@@ -698,7 +698,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Finalize(ref PrivSequence msg)
             {
                 fixed (PrivSequence* pMsg = &msg)
@@ -712,7 +712,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool AreEqual(in PrivSequence lhs, in PrivSequence rhs)
             {
                 fixed (PrivSequence* plhs = &lhs, prhs = &rhs)
@@ -726,7 +726,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(PrivSequence* input, PrivSequence* output)
             {
                 return _PInvoke(input, output);
@@ -737,7 +737,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
             string caller = "")
             {
@@ -759,11 +759,11 @@ namespace Rosidl.Messages.Tf2
     internal unsafe partial class LookupTransformActionResult : global::Rosidl.Runtime.IActionResult
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static string TypeSupportName => "tf2_msgs/action/LookupTransform_Result";
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
         {
             return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
@@ -777,13 +777,13 @@ namespace Rosidl.Messages.Tf2
         /// Create a new instance of <see cref="LookupTransformActionResult"/> with fields initialized to specified values.
         /// </summary>
         /// <param name='transform'>
-        /// Originally defined as: <c><![CDATA[geometry_msgs/TransformStamped transform]]></c>
+        /// Originally defined as: <c><![CDATA[geometry_msgs/msg/TransformStamped transform]]></c>
         /// </param>
         /// <param name='error'>
-        /// Originally defined as: <c><![CDATA[tf2_msgs/TF2Error error]]></c>
+        /// Originally defined as: <c><![CDATA[tf2_msgs/msg/TF2Error error]]></c>
         /// </param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public LookupTransformActionResult(
             global::Rosidl.Messages.Geometry.TransformStamped? @transform = null,
             global::Rosidl.Messages.Tf2.TF2Error? @error = null
@@ -800,7 +800,7 @@ namespace Rosidl.Messages.Tf2
         /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
         /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public LookupTransformActionResult(in Priv priv, global::System.Text.Encoding textEncoding)
         {
             this.Transform = new global::Rosidl.Messages.Geometry.TransformStamped(in priv.Transform, textEncoding);
@@ -809,28 +809,28 @@ namespace Rosidl.Messages.Tf2
         
         
         /// <summary>
-        /// Originally defined as: <c><![CDATA[geometry_msgs/TransformStamped transform]]></c>
+        /// Originally defined as: <c><![CDATA[geometry_msgs/msg/TransformStamped transform]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public global::Rosidl.Messages.Geometry.TransformStamped Transform { get; set; }
         
         /// <summary>
-        /// Originally defined as: <c><![CDATA[tf2_msgs/TF2Error error]]></c>
+        /// Originally defined as: <c><![CDATA[tf2_msgs/msg/TF2Error error]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public global::Rosidl.Messages.Tf2.TF2Error Error { get; set; }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public void WriteTo(nint data, global::System.Text.Encoding textEncoding)
         {
             WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
             this.Transform.WriteTo(ref priv.Transform, textEncoding);
@@ -838,49 +838,49 @@ namespace Rosidl.Messages.Tf2
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
         {
             return new LookupTransformActionResult(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static nint UnsafeCreate()
         {
             return new(Priv.Create());
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static void UnsafeDestroy(nint data)
         {
             Priv.Destroy((Priv*)data);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static bool UnsafeInitialize(nint data)
         {
             return Priv.TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static void UnsafeFinalize(nint data)
         {
             Priv.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static bool UnsafeInitializeSequence(int size, nint data)
         {
             return PrivSequence.TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static void UnsafeFinalizeSequence(nint data)
         {
             PrivSequence.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
@@ -896,31 +896,31 @@ namespace Rosidl.Messages.Tf2
         public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
         {
             /// <summary>
-            /// Originally defined as: <c><![CDATA[geometry_msgs/TransformStamped transform]]></c>
+            /// Originally defined as: <c><![CDATA[geometry_msgs/msg/TransformStamped transform]]></c>
             /// </summary>
             public global::Rosidl.Messages.Geometry.TransformStamped.Priv Transform;
             
             /// <summary>
-            /// Originally defined as: <c><![CDATA[tf2_msgs/TF2Error error]]></c>
+            /// Originally defined as: <c><![CDATA[tf2_msgs/msg/TF2Error error]]></c>
             /// </summary>
             public global::Rosidl.Messages.Tf2.TF2Error.Priv Error;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv()
             {
                 ThrowIfNonSuccess(TryInitialize(out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv(Priv src)
                 : this(in src)
             {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv(in Priv src)
                 : this()
             {
@@ -928,7 +928,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv(Priv* src)
                 : this()
             {
@@ -936,28 +936,28 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void Dispose()
             {
                 Finalize(ref this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(Priv src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(in Priv src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(Priv* src)
             {
                 fixed (Priv* pThis = &this)
@@ -967,7 +967,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(in Priv input, out Priv output)
             {
                 fixed (Priv* pInput = &input, pOutput = &output)
@@ -977,18 +977,18 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public bool Equals(Priv other)
             {
                 return Priv.AreEqual(in other, in this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override bool Equals(object? obj) => obj is Priv s ? this.Equals(s) : false;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override int GetHashCode()
             {
                 var __hashCode = new global::System.HashCode();
@@ -998,21 +998,21 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator ==(Priv lhs, Priv rhs)
             {
                 return lhs.Equals(rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator !=(Priv lhs, Priv rhs)
             {
                 return !(lhs == rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static Priv* Create()
             {
                 return _PInvoke();
@@ -1023,7 +1023,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Destroy(Priv* msg)
             {
                 _PInvoke(msg);
@@ -1034,7 +1034,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool TryInitialize(out Priv msg)
             {
                 fixed (Priv* pMsg = &msg)
@@ -1048,7 +1048,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Finalize(ref Priv msg)
             {
                 fixed (Priv* pMsg = &msg)
@@ -1062,7 +1062,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool AreEqual(in Priv lhs, in Priv rhs)
             {
                 fixed (Priv* plhs = &lhs, prhs = &rhs)
@@ -1076,7 +1076,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(Priv* input, Priv* output)
             {
                 return _PInvoke(input, output);
@@ -1087,7 +1087,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
             string caller = "")
             {
@@ -1118,28 +1118,28 @@ namespace Rosidl.Messages.Tf2
             public int Capcacity => (int)__capacity;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence()
                 : this(0)
             {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(int size)
             {
                 ThrowIfNonSuccess(TryInitialize(size, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(PrivSequence src)
                 : this(in src)
             {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(in PrivSequence src)
                 : this()
             {
@@ -1147,7 +1147,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(PrivSequence* src)
                 : this()
             {
@@ -1155,7 +1155,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(System.ReadOnlySpan<Priv> src)
                 : this(src.Length)
             {
@@ -1163,21 +1163,21 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void Dispose()
             {
                 Finalize(ref this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public System.Span<Priv> AsSpan()
             {
                 return new(__data, Size);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(System.ReadOnlySpan<Priv> src)
             {
                 Finalize(ref this);
@@ -1186,21 +1186,21 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(PrivSequence src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(in PrivSequence src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(PrivSequence* src)
             {
                 fixed (PrivSequence* pThis = &this)
@@ -1210,7 +1210,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(in PrivSequence input, out PrivSequence output)
             {
                 fixed (PrivSequence* pInput = &input, pOutput = &output)
@@ -1220,39 +1220,39 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public bool Equals(PrivSequence other)
             {
                 return PrivSequence.AreEqual(in other, in this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override bool Equals(object? obj) => obj is PrivSequence s ? this.Equals(s) : false;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override int GetHashCode()
             {
                 return global::System.HashCode.Combine((nint)__data, __size, __capacity);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator ==(PrivSequence lhs, PrivSequence rhs)
             {
                 return lhs.Equals(rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator !=(PrivSequence lhs, PrivSequence rhs)
             {
                 return !(lhs == rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static PrivSequence* Create()
             {
                 return _PInvoke();
@@ -1263,7 +1263,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Destroy(PrivSequence* msg)
             {
                 _PInvoke(msg);
@@ -1274,7 +1274,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool TryInitialize(int size, out PrivSequence msg)
             {
                 fixed (PrivSequence* pMsg = &msg)
@@ -1288,7 +1288,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Finalize(ref PrivSequence msg)
             {
                 fixed (PrivSequence* pMsg = &msg)
@@ -1302,7 +1302,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool AreEqual(in PrivSequence lhs, in PrivSequence rhs)
             {
                 fixed (PrivSequence* plhs = &lhs, prhs = &rhs)
@@ -1316,7 +1316,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(PrivSequence* input, PrivSequence* output)
             {
                 return _PInvoke(input, output);
@@ -1327,7 +1327,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
             string caller = "")
             {
@@ -1349,11 +1349,11 @@ namespace Rosidl.Messages.Tf2
     internal unsafe partial class LookupTransformActionFeedback : global::Rosidl.Runtime.IActionFeedback
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static string TypeSupportName => "tf2_msgs/action/LookupTransform_Feedback";
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
         {
             return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
@@ -1367,7 +1367,7 @@ namespace Rosidl.Messages.Tf2
         /// Create a new instance of <see cref="LookupTransformActionFeedback"/> with fields initialized to specified values.
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public LookupTransformActionFeedback() { }
         
         
@@ -1377,69 +1377,69 @@ namespace Rosidl.Messages.Tf2
         /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
         /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public LookupTransformActionFeedback(in Priv priv, global::System.Text.Encoding textEncoding)
         {
         }
         
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public void WriteTo(nint data, global::System.Text.Encoding textEncoding)
         {
             WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
         {
             return new LookupTransformActionFeedback(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static nint UnsafeCreate()
         {
             return new(Priv.Create());
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static void UnsafeDestroy(nint data)
         {
             Priv.Destroy((Priv*)data);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static bool UnsafeInitialize(nint data)
         {
             return Priv.TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static void UnsafeFinalize(nint data)
         {
             Priv.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static bool UnsafeInitializeSequence(int size, nint data)
         {
             return PrivSequence.TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static void UnsafeFinalizeSequence(nint data)
         {
             PrivSequence.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
@@ -1455,21 +1455,21 @@ namespace Rosidl.Messages.Tf2
         public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
         {
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv()
             {
                 ThrowIfNonSuccess(TryInitialize(out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv(Priv src)
                 : this(in src)
             {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv(in Priv src)
                 : this()
             {
@@ -1477,7 +1477,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv(Priv* src)
                 : this()
             {
@@ -1485,28 +1485,28 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void Dispose()
             {
                 Finalize(ref this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(Priv src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(in Priv src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(Priv* src)
             {
                 fixed (Priv* pThis = &this)
@@ -1516,7 +1516,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(in Priv input, out Priv output)
             {
                 fixed (Priv* pInput = &input, pOutput = &output)
@@ -1526,18 +1526,18 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public bool Equals(Priv other)
             {
                 return Priv.AreEqual(in other, in this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override bool Equals(object? obj) => obj is Priv s ? this.Equals(s) : false;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override int GetHashCode()
             {
                 var __hashCode = new global::System.HashCode();
@@ -1546,21 +1546,21 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator ==(Priv lhs, Priv rhs)
             {
                 return lhs.Equals(rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator !=(Priv lhs, Priv rhs)
             {
                 return !(lhs == rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static Priv* Create()
             {
                 return _PInvoke();
@@ -1571,7 +1571,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Destroy(Priv* msg)
             {
                 _PInvoke(msg);
@@ -1582,7 +1582,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool TryInitialize(out Priv msg)
             {
                 fixed (Priv* pMsg = &msg)
@@ -1596,7 +1596,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Finalize(ref Priv msg)
             {
                 fixed (Priv* pMsg = &msg)
@@ -1610,7 +1610,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool AreEqual(in Priv lhs, in Priv rhs)
             {
                 fixed (Priv* plhs = &lhs, prhs = &rhs)
@@ -1624,7 +1624,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(Priv* input, Priv* output)
             {
                 return _PInvoke(input, output);
@@ -1635,7 +1635,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
             string caller = "")
             {
@@ -1666,28 +1666,28 @@ namespace Rosidl.Messages.Tf2
             public int Capcacity => (int)__capacity;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence()
                 : this(0)
             {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(int size)
             {
                 ThrowIfNonSuccess(TryInitialize(size, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(PrivSequence src)
                 : this(in src)
             {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(in PrivSequence src)
                 : this()
             {
@@ -1695,7 +1695,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(PrivSequence* src)
                 : this()
             {
@@ -1703,7 +1703,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(System.ReadOnlySpan<Priv> src)
                 : this(src.Length)
             {
@@ -1711,21 +1711,21 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void Dispose()
             {
                 Finalize(ref this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public System.Span<Priv> AsSpan()
             {
                 return new(__data, Size);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(System.ReadOnlySpan<Priv> src)
             {
                 Finalize(ref this);
@@ -1734,21 +1734,21 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(PrivSequence src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(in PrivSequence src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(PrivSequence* src)
             {
                 fixed (PrivSequence* pThis = &this)
@@ -1758,7 +1758,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(in PrivSequence input, out PrivSequence output)
             {
                 fixed (PrivSequence* pInput = &input, pOutput = &output)
@@ -1768,39 +1768,39 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public bool Equals(PrivSequence other)
             {
                 return PrivSequence.AreEqual(in other, in this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override bool Equals(object? obj) => obj is PrivSequence s ? this.Equals(s) : false;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override int GetHashCode()
             {
                 return global::System.HashCode.Combine((nint)__data, __size, __capacity);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator ==(PrivSequence lhs, PrivSequence rhs)
             {
                 return lhs.Equals(rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator !=(PrivSequence lhs, PrivSequence rhs)
             {
                 return !(lhs == rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static PrivSequence* Create()
             {
                 return _PInvoke();
@@ -1811,7 +1811,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Destroy(PrivSequence* msg)
             {
                 _PInvoke(msg);
@@ -1822,7 +1822,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool TryInitialize(int size, out PrivSequence msg)
             {
                 fixed (PrivSequence* pMsg = &msg)
@@ -1836,7 +1836,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Finalize(ref PrivSequence msg)
             {
                 fixed (PrivSequence* pMsg = &msg)
@@ -1850,7 +1850,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool AreEqual(in PrivSequence lhs, in PrivSequence rhs)
             {
                 fixed (PrivSequence* plhs = &lhs, prhs = &rhs)
@@ -1864,7 +1864,7 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(PrivSequence* input, PrivSequence* output)
             {
                 return _PInvoke(input, output);
@@ -1875,13 +1875,4385 @@ namespace Rosidl.Messages.Tf2
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
             string caller = "")
             {
                 if (!ret)
                 {
                     throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionFeedback.PrivSequence.{caller}'.");
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Simple API
+    /// </summary>
+    /// <remarks>
+    /// Message interface definition for <c>tf2_msgs/action/LookupTransform_FeedbackMessage</c>.
+    /// </remarks>
+    [global::Rosidl.Runtime.TypeSupportAttribute("tf2_msgs/action/LookupTransform_FeedbackMessage")]
+    internal unsafe partial class LookupTransformActionFeedbackMessage : global::Rosidl.Runtime.IMessage
+    {
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static string TypeSupportName => "tf2_msgs/action/LookupTransform_FeedbackMessage";
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
+        {
+            return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
+            
+            [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+            [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__tf2_msgs__action__LookupTransform_FeedbackMessage")]
+            static extern nint _PInvoke();
+        }
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionFeedbackMessage"/> with fields initialized to specified values.
+        /// </summary>
+        /// <param name='goalId'>
+        /// Originally defined as: <c><![CDATA[unique_identifier_msgs/msg/UUID goal_id]]></c>
+        /// </param>
+        /// <param name='feedback'>
+        /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_Feedback feedback]]></c>
+        /// </param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionFeedbackMessage(
+            global::Rosidl.Messages.UniqueIdentifier.UUID? @goalId = null,
+            global::Rosidl.Messages.Tf2.LookupTransformActionFeedback? @feedback = null
+        )
+        {
+            GoalId = @goalId ?? new global::Rosidl.Messages.UniqueIdentifier.UUID();
+            Feedback = @feedback ?? new global::Rosidl.Messages.Tf2.LookupTransformActionFeedback();
+        }
+        
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionFeedbackMessage"/>, and copy its data from the specified <see cref="Priv"/> structure.
+        /// </summary>
+        /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
+        /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionFeedbackMessage(in Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            this.GoalId = new global::Rosidl.Messages.UniqueIdentifier.UUID(in priv.GoalId, textEncoding);
+            this.Feedback = new global::Rosidl.Messages.Tf2.LookupTransformActionFeedback(in priv.Feedback, textEncoding);
+        }
+        
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[unique_identifier_msgs/msg/UUID goal_id]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.UniqueIdentifier.UUID GoalId { get; set; }
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_Feedback feedback]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.Tf2.LookupTransformActionFeedback Feedback { get; set; }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(nint data, global::System.Text.Encoding textEncoding)
+        {
+            WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            this.GoalId.WriteTo(ref priv.GoalId, textEncoding);
+            this.Feedback.WriteTo(ref priv.Feedback, textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
+        {
+            return new LookupTransformActionFeedbackMessage(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static nint UnsafeCreate()
+        {
+            return new(Priv.Create());
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeDestroy(nint data)
+        {
+            Priv.Destroy((Priv*)data);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitialize(nint data)
+        {
+            return Priv.TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalize(nint data)
+        {
+            Priv.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitializeSequence(int size, nint data)
+        {
+            return PrivSequence.TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalizeSequence(nint data)
+        {
+            PrivSequence.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native structure for <c>tf2_msgs/action/LookupTransform_FeedbackMessage</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
+        {
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[unique_identifier_msgs/msg/UUID goal_id]]></c>
+            /// </summary>
+            public global::Rosidl.Messages.UniqueIdentifier.UUID.Priv GoalId;
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_Feedback feedback]]></c>
+            /// </summary>
+            public global::Rosidl.Messages.Tf2.LookupTransformActionFeedback.Priv Feedback;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv()
+            {
+                ThrowIfNonSuccess(TryInitialize(out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(in Priv src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv* src)
+            {
+                fixed (Priv* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in Priv input, out Priv output)
+            {
+                fixed (Priv* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(Priv other)
+            {
+                return Priv.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is Priv s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                var __hashCode = new global::System.HashCode();
+                __hashCode.Add(this.GoalId);
+                __hashCode.Add(this.Feedback);
+                return __hashCode.ToHashCode();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(Priv lhs, Priv rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(Priv lhs, Priv rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static Priv* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_FeedbackMessage__create")]
+                static extern Priv* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(Priv* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_FeedbackMessage__destroy")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(out Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_FeedbackMessage__init")]
+                static extern bool _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_FeedbackMessage__fini")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in Priv lhs, in Priv rhs)
+            {
+                fixed (Priv* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_FeedbackMessage__are_qual")]
+                static extern bool _PInvoke(Priv* lhs, Priv* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(Priv* input, Priv* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_FeedbackMessage__copy")]
+                static extern bool _PInvoke(Priv* input, Priv* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionFeedbackMessage.Priv.{caller}'.");
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native sequence structure for <c>tf2_msgs/action/LookupTransform_FeedbackMessage</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct PrivSequence : global::System.IEquatable<PrivSequence>, global::System.IDisposable
+        {
+            private Priv* __data;
+            
+            private nuint __size;
+            
+            private nuint __capacity;
+            
+            public int Size => (int)__size;
+            
+            public int Capcacity => (int)__capacity;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence()
+                : this(0)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(int size)
+            {
+                ThrowIfNonSuccess(TryInitialize(size, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(in PrivSequence src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(System.ReadOnlySpan<Priv> src)
+                : this(src.Length)
+            {
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public System.Span<Priv> AsSpan()
+            {
+                return new(__data, Size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(System.ReadOnlySpan<Priv> src)
+            {
+                Finalize(ref this);
+                ThrowIfNonSuccess(TryInitialize(src.Length, out this));
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence* src)
+            {
+                fixed (PrivSequence* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in PrivSequence input, out PrivSequence output)
+            {
+                fixed (PrivSequence* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(PrivSequence other)
+            {
+                return PrivSequence.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is PrivSequence s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                return global::System.HashCode.Combine((nint)__data, __size, __capacity);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(PrivSequence lhs, PrivSequence rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(PrivSequence lhs, PrivSequence rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static PrivSequence* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_FeedbackMessage__Sequence__create")]
+                static extern PrivSequence* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(PrivSequence* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_FeedbackMessage__Sequence__destroy")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(int size, out PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg, (uint)size);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_FeedbackMessage__Sequence__init")]
+                static extern bool _PInvoke(PrivSequence* msg, nuint size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_FeedbackMessage__Sequence__fini")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in PrivSequence lhs, in PrivSequence rhs)
+            {
+                fixed (PrivSequence* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_FeedbackMessage__Sequence__are_qual")]
+                static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(PrivSequence* input, PrivSequence* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_FeedbackMessage__Sequence__copy")]
+                static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionFeedbackMessage.PrivSequence.{caller}'.");
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Simple API
+    /// </summary>
+    /// <remarks>
+    /// Service interface definition for <c>tf2_msgs/action/LookupTransform_SendGoal</c>.
+    /// </remarks>
+    [global::Rosidl.Runtime.TypeSupportAttribute("tf2_msgs/action/LookupTransform_SendGoal")]
+    internal unsafe partial class LookupTransformActionSendGoalService : global::Rosidl.Runtime.IService<LookupTransformActionSendGoalServiceRequest, LookupTransformActionSendGoalServiceResponse>
+    {
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static string TypeSupportName => "tf2_msgs/action/LookupTransform_SendGoal";
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
+        {
+            return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Service);
+            
+            [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+            [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_service_type_support_handle__tf2_msgs__action__LookupTransform_SendGoal")]
+            static extern nint _PInvoke();
+        }
+    }
+    
+    /// <summary>
+    /// Simple API
+    /// </summary>
+    /// <remarks>
+    /// Message interface definition for <c>tf2_msgs/action/LookupTransform_SendGoal_Request</c>.
+    /// </remarks>
+    [global::Rosidl.Runtime.TypeSupportAttribute("tf2_msgs/action/LookupTransform_SendGoal_Request")]
+    internal unsafe partial class LookupTransformActionSendGoalServiceRequest : global::Rosidl.Runtime.IServiceRequest
+    {
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static string TypeSupportName => "tf2_msgs/action/LookupTransform_SendGoal_Request";
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
+        {
+            return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
+            
+            [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+            [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__tf2_msgs__action__LookupTransform_SendGoal_Request")]
+            static extern nint _PInvoke();
+        }
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionSendGoalServiceRequest"/> with fields initialized to specified values.
+        /// </summary>
+        /// <param name='goalId'>
+        /// Originally defined as: <c><![CDATA[unique_identifier_msgs/msg/UUID goal_id]]></c>
+        /// </param>
+        /// <param name='goal'>
+        /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_Goal goal]]></c>
+        /// </param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionSendGoalServiceRequest(
+            global::Rosidl.Messages.UniqueIdentifier.UUID? @goalId = null,
+            global::Rosidl.Messages.Tf2.LookupTransformActionGoal? @goal = null
+        )
+        {
+            GoalId = @goalId ?? new global::Rosidl.Messages.UniqueIdentifier.UUID();
+            Goal = @goal ?? new global::Rosidl.Messages.Tf2.LookupTransformActionGoal();
+        }
+        
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionSendGoalServiceRequest"/>, and copy its data from the specified <see cref="Priv"/> structure.
+        /// </summary>
+        /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
+        /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionSendGoalServiceRequest(in Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            this.GoalId = new global::Rosidl.Messages.UniqueIdentifier.UUID(in priv.GoalId, textEncoding);
+            this.Goal = new global::Rosidl.Messages.Tf2.LookupTransformActionGoal(in priv.Goal, textEncoding);
+        }
+        
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[unique_identifier_msgs/msg/UUID goal_id]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.UniqueIdentifier.UUID GoalId { get; set; }
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_Goal goal]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.Tf2.LookupTransformActionGoal Goal { get; set; }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(nint data, global::System.Text.Encoding textEncoding)
+        {
+            WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            this.GoalId.WriteTo(ref priv.GoalId, textEncoding);
+            this.Goal.WriteTo(ref priv.Goal, textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
+        {
+            return new LookupTransformActionSendGoalServiceRequest(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static nint UnsafeCreate()
+        {
+            return new(Priv.Create());
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeDestroy(nint data)
+        {
+            Priv.Destroy((Priv*)data);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitialize(nint data)
+        {
+            return Priv.TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalize(nint data)
+        {
+            Priv.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitializeSequence(int size, nint data)
+        {
+            return PrivSequence.TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalizeSequence(nint data)
+        {
+            PrivSequence.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native structure for <c>tf2_msgs/action/LookupTransform_SendGoal_Request</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
+        {
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[unique_identifier_msgs/msg/UUID goal_id]]></c>
+            /// </summary>
+            public global::Rosidl.Messages.UniqueIdentifier.UUID.Priv GoalId;
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_Goal goal]]></c>
+            /// </summary>
+            public global::Rosidl.Messages.Tf2.LookupTransformActionGoal.Priv Goal;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv()
+            {
+                ThrowIfNonSuccess(TryInitialize(out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(in Priv src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv* src)
+            {
+                fixed (Priv* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in Priv input, out Priv output)
+            {
+                fixed (Priv* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(Priv other)
+            {
+                return Priv.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is Priv s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                var __hashCode = new global::System.HashCode();
+                __hashCode.Add(this.GoalId);
+                __hashCode.Add(this.Goal);
+                return __hashCode.ToHashCode();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(Priv lhs, Priv rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(Priv lhs, Priv rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static Priv* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Request__create")]
+                static extern Priv* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(Priv* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Request__destroy")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(out Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Request__init")]
+                static extern bool _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Request__fini")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in Priv lhs, in Priv rhs)
+            {
+                fixed (Priv* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Request__are_qual")]
+                static extern bool _PInvoke(Priv* lhs, Priv* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(Priv* input, Priv* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Request__copy")]
+                static extern bool _PInvoke(Priv* input, Priv* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceRequest.Priv.{caller}'.");
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native sequence structure for <c>tf2_msgs/action/LookupTransform_SendGoal_Request</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct PrivSequence : global::System.IEquatable<PrivSequence>, global::System.IDisposable
+        {
+            private Priv* __data;
+            
+            private nuint __size;
+            
+            private nuint __capacity;
+            
+            public int Size => (int)__size;
+            
+            public int Capcacity => (int)__capacity;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence()
+                : this(0)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(int size)
+            {
+                ThrowIfNonSuccess(TryInitialize(size, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(in PrivSequence src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(System.ReadOnlySpan<Priv> src)
+                : this(src.Length)
+            {
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public System.Span<Priv> AsSpan()
+            {
+                return new(__data, Size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(System.ReadOnlySpan<Priv> src)
+            {
+                Finalize(ref this);
+                ThrowIfNonSuccess(TryInitialize(src.Length, out this));
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence* src)
+            {
+                fixed (PrivSequence* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in PrivSequence input, out PrivSequence output)
+            {
+                fixed (PrivSequence* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(PrivSequence other)
+            {
+                return PrivSequence.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is PrivSequence s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                return global::System.HashCode.Combine((nint)__data, __size, __capacity);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(PrivSequence lhs, PrivSequence rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(PrivSequence lhs, PrivSequence rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static PrivSequence* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Request__Sequence__create")]
+                static extern PrivSequence* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(PrivSequence* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Request__Sequence__destroy")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(int size, out PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg, (uint)size);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Request__Sequence__init")]
+                static extern bool _PInvoke(PrivSequence* msg, nuint size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Request__Sequence__fini")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in PrivSequence lhs, in PrivSequence rhs)
+            {
+                fixed (PrivSequence* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Request__Sequence__are_qual")]
+                static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(PrivSequence* input, PrivSequence* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Request__Sequence__copy")]
+                static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceRequest.PrivSequence.{caller}'.");
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Simple API
+    /// </summary>
+    /// <remarks>
+    /// Message interface definition for <c>tf2_msgs/action/LookupTransform_SendGoal_Response</c>.
+    /// </remarks>
+    [global::Rosidl.Runtime.TypeSupportAttribute("tf2_msgs/action/LookupTransform_SendGoal_Response")]
+    internal unsafe partial class LookupTransformActionSendGoalServiceResponse : global::Rosidl.Runtime.IServiceResponse
+    {
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static string TypeSupportName => "tf2_msgs/action/LookupTransform_SendGoal_Response";
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
+        {
+            return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
+            
+            [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+            [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__tf2_msgs__action__LookupTransform_SendGoal_Response")]
+            static extern nint _PInvoke();
+        }
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionSendGoalServiceResponse"/> with fields initialized to specified values.
+        /// </summary>
+        /// <param name='accepted'>
+        /// Originally defined as: <c><![CDATA[bool accepted]]></c>
+        /// </param>
+        /// <param name='stamp'>
+        /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Time stamp]]></c>
+        /// </param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionSendGoalServiceResponse(
+            bool @accepted = false,
+            global::Rosidl.Messages.Builtin.Time? @stamp = null
+        )
+        {
+            Accepted = @accepted;
+            Stamp = @stamp ?? new global::Rosidl.Messages.Builtin.Time();
+        }
+        
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionSendGoalServiceResponse"/>, and copy its data from the specified <see cref="Priv"/> structure.
+        /// </summary>
+        /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
+        /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionSendGoalServiceResponse(in Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            this.Accepted = priv.Accepted;
+            this.Stamp = new global::Rosidl.Messages.Builtin.Time(in priv.Stamp, textEncoding);
+        }
+        
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[bool accepted]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public bool Accepted { get; set; }
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Time stamp]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.Builtin.Time Stamp { get; set; }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(nint data, global::System.Text.Encoding textEncoding)
+        {
+            WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            priv.Accepted = this.Accepted;
+            this.Stamp.WriteTo(ref priv.Stamp, textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
+        {
+            return new LookupTransformActionSendGoalServiceResponse(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static nint UnsafeCreate()
+        {
+            return new(Priv.Create());
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeDestroy(nint data)
+        {
+            Priv.Destroy((Priv*)data);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitialize(nint data)
+        {
+            return Priv.TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalize(nint data)
+        {
+            Priv.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitializeSequence(int size, nint data)
+        {
+            return PrivSequence.TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalizeSequence(nint data)
+        {
+            PrivSequence.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native structure for <c>tf2_msgs/action/LookupTransform_SendGoal_Response</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
+        {
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[bool accepted]]></c>
+            /// </summary>
+            public bool Accepted;
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[builtin_interfaces/msg/Time stamp]]></c>
+            /// </summary>
+            public global::Rosidl.Messages.Builtin.Time.Priv Stamp;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv()
+            {
+                ThrowIfNonSuccess(TryInitialize(out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(in Priv src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv* src)
+            {
+                fixed (Priv* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in Priv input, out Priv output)
+            {
+                fixed (Priv* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(Priv other)
+            {
+                return Priv.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is Priv s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                var __hashCode = new global::System.HashCode();
+                __hashCode.Add(this.Accepted);
+                __hashCode.Add(this.Stamp);
+                return __hashCode.ToHashCode();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(Priv lhs, Priv rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(Priv lhs, Priv rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static Priv* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Response__create")]
+                static extern Priv* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(Priv* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Response__destroy")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(out Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Response__init")]
+                static extern bool _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Response__fini")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in Priv lhs, in Priv rhs)
+            {
+                fixed (Priv* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Response__are_qual")]
+                static extern bool _PInvoke(Priv* lhs, Priv* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(Priv* input, Priv* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Response__copy")]
+                static extern bool _PInvoke(Priv* input, Priv* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceResponse.Priv.{caller}'.");
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native sequence structure for <c>tf2_msgs/action/LookupTransform_SendGoal_Response</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct PrivSequence : global::System.IEquatable<PrivSequence>, global::System.IDisposable
+        {
+            private Priv* __data;
+            
+            private nuint __size;
+            
+            private nuint __capacity;
+            
+            public int Size => (int)__size;
+            
+            public int Capcacity => (int)__capacity;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence()
+                : this(0)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(int size)
+            {
+                ThrowIfNonSuccess(TryInitialize(size, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(in PrivSequence src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(System.ReadOnlySpan<Priv> src)
+                : this(src.Length)
+            {
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public System.Span<Priv> AsSpan()
+            {
+                return new(__data, Size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(System.ReadOnlySpan<Priv> src)
+            {
+                Finalize(ref this);
+                ThrowIfNonSuccess(TryInitialize(src.Length, out this));
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence* src)
+            {
+                fixed (PrivSequence* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in PrivSequence input, out PrivSequence output)
+            {
+                fixed (PrivSequence* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(PrivSequence other)
+            {
+                return PrivSequence.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is PrivSequence s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                return global::System.HashCode.Combine((nint)__data, __size, __capacity);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(PrivSequence lhs, PrivSequence rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(PrivSequence lhs, PrivSequence rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static PrivSequence* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Response__Sequence__create")]
+                static extern PrivSequence* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(PrivSequence* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Response__Sequence__destroy")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(int size, out PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg, (uint)size);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Response__Sequence__init")]
+                static extern bool _PInvoke(PrivSequence* msg, nuint size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Response__Sequence__fini")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in PrivSequence lhs, in PrivSequence rhs)
+            {
+                fixed (PrivSequence* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Response__Sequence__are_qual")]
+                static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(PrivSequence* input, PrivSequence* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Response__Sequence__copy")]
+                static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceResponse.PrivSequence.{caller}'.");
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Simple API
+    /// </summary>
+    /// <remarks>
+    /// Message interface definition for <c>tf2_msgs/action/LookupTransform_SendGoal_Event</c>.
+    /// </remarks>
+    [global::Rosidl.Runtime.TypeSupportAttribute("tf2_msgs/action/LookupTransform_SendGoal_Event")]
+    internal unsafe partial class LookupTransformActionSendGoalServiceEvent : global::Rosidl.Runtime.IServiceEvent
+    {
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static string TypeSupportName => "tf2_msgs/action/LookupTransform_SendGoal_Event";
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
+        {
+            return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
+            
+            [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+            [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__tf2_msgs__action__LookupTransform_SendGoal_Event")]
+            static extern nint _PInvoke();
+        }
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionSendGoalServiceEvent"/> with fields initialized to specified values.
+        /// </summary>
+        /// <param name='info'>
+        /// Event info
+        /// Contains event type, timestamp, and request ID
+        /// <para>(originally defined as: <c><![CDATA[service_msgs/msg/ServiceEventInfo info]]></c>)</para>
+        /// </param>
+        /// <param name='request'>
+        /// The actual request content sent or received
+        /// This field is only set if the event type is REQUEST_SENT or REQUEST_RECEIVED,
+        /// and the introspection feauture is configured to include payload data.
+        /// <para>(originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_SendGoal_Request[<=1] request]]></c>)</para>
+        /// </param>
+        /// <param name='response'>
+        /// The actual response content sent or received
+        /// This field is only set if the event type is RESPONSE_SENT or RESPONSE_RECEIVED,
+        /// and the introspection feauture is configured to include payload data.
+        /// <para>(originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_SendGoal_Response[<=1] response]]></c>)</para>
+        /// </param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionSendGoalServiceEvent(
+            global::Rosidl.Messages.Service.ServiceEventInfo? @info = null,
+            global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceRequest[]? @request = null,
+            global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceResponse[]? @response = null
+        )
+        {
+            Info = @info ?? new global::Rosidl.Messages.Service.ServiceEventInfo();
+            Request = @request ?? global::System.Array.Empty<global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceRequest>();
+            Response = @response ?? global::System.Array.Empty<global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceResponse>();
+        }
+        
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionSendGoalServiceEvent"/>, and copy its data from the specified <see cref="Priv"/> structure.
+        /// </summary>
+        /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
+        /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionSendGoalServiceEvent(in Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            this.Info = new global::Rosidl.Messages.Service.ServiceEventInfo(in priv.Info, textEncoding);
+        
+            this.Request = new global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceRequest[priv.Request.Size];
+            var Request_span = priv.Request.AsSpan();
+            for (int __i = 0; __i < this.Request.Length; __i++)
+            {
+                this.Request[__i] = new global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceRequest(in Request_span[__i], textEncoding);
+            }
+        
+            this.Response = new global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceResponse[priv.Response.Size];
+            var Response_span = priv.Response.AsSpan();
+            for (int __i = 0; __i < this.Response.Length; __i++)
+            {
+                this.Response[__i] = new global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceResponse(in Response_span[__i], textEncoding);
+            }
+        }
+        
+        
+        /// <summary>
+        /// Event info
+        /// Contains event type, timestamp, and request ID
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[service_msgs/msg/ServiceEventInfo info]]></c>
+        /// </remarks>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.Service.ServiceEventInfo Info { get; set; }
+        
+        private global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceRequest[] __backingField__Request;
+        
+        /// <summary>
+        /// The actual request content sent or received
+        /// This field is only set if the event type is REQUEST_SENT or REQUEST_RECEIVED,
+        /// and the introspection feauture is configured to include payload data.
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_SendGoal_Request[<=1] request]]></c>
+        /// </remarks>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceRequest[] Request
+        {
+            get
+            {
+                return __backingField__Request;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__Request))]
+            set
+            {
+                __backingField__Request = value.Length <= 1 ? value : throw new global::System.ArgumentException("Size of the array or string 'Request' must be less or equal than 1.");
+            }
+        }
+        
+        private global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceResponse[] __backingField__Response;
+        
+        /// <summary>
+        /// The actual response content sent or received
+        /// This field is only set if the event type is RESPONSE_SENT or RESPONSE_RECEIVED,
+        /// and the introspection feauture is configured to include payload data.
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_SendGoal_Response[<=1] response]]></c>
+        /// </remarks>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceResponse[] Response
+        {
+            get
+            {
+                return __backingField__Response;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__Response))]
+            set
+            {
+                __backingField__Response = value.Length <= 1 ? value : throw new global::System.ArgumentException("Size of the array or string 'Response' must be less or equal than 1.");
+            }
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(nint data, global::System.Text.Encoding textEncoding)
+        {
+            WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            this.Info.WriteTo(ref priv.Info, textEncoding);
+            
+            priv.Request = new global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceRequest.PrivSequence(this.Request.Length);
+            var Request_span = priv.Request.AsSpan();
+            for (int __i = 0; __i < this.Request.Length; __i++)
+            {
+                this.Request[__i].WriteTo(ref Request_span[__i], textEncoding);
+            }
+            
+            priv.Response = new global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceResponse.PrivSequence(this.Response.Length);
+            var Response_span = priv.Response.AsSpan();
+            for (int __i = 0; __i < this.Response.Length; __i++)
+            {
+                this.Response[__i].WriteTo(ref Response_span[__i], textEncoding);
+            }
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
+        {
+            return new LookupTransformActionSendGoalServiceEvent(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static nint UnsafeCreate()
+        {
+            return new(Priv.Create());
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeDestroy(nint data)
+        {
+            Priv.Destroy((Priv*)data);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitialize(nint data)
+        {
+            return Priv.TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalize(nint data)
+        {
+            Priv.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitializeSequence(int size, nint data)
+        {
+            return PrivSequence.TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalizeSequence(nint data)
+        {
+            PrivSequence.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native structure for <c>tf2_msgs/action/LookupTransform_SendGoal_Event</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
+        {
+            /// <summary>
+            /// Event info
+            /// Contains event type, timestamp, and request ID
+            /// </summary>
+            /// <remarks>
+            /// Originally defined as: <c><![CDATA[service_msgs/msg/ServiceEventInfo info]]></c>
+            /// </remarks>
+            public global::Rosidl.Messages.Service.ServiceEventInfo.Priv Info;
+            
+            /// <summary>
+            /// The actual request content sent or received
+            /// This field is only set if the event type is REQUEST_SENT or REQUEST_RECEIVED,
+            /// and the introspection feauture is configured to include payload data.
+            /// </summary>
+            /// <remarks>
+            /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_SendGoal_Request[<=1] request]]></c>
+            /// </remarks>
+            public global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceRequest.PrivSequence Request;
+            
+            /// <summary>
+            /// The actual response content sent or received
+            /// This field is only set if the event type is RESPONSE_SENT or RESPONSE_RECEIVED,
+            /// and the introspection feauture is configured to include payload data.
+            /// </summary>
+            /// <remarks>
+            /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_SendGoal_Response[<=1] response]]></c>
+            /// </remarks>
+            public global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceResponse.PrivSequence Response;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv()
+            {
+                ThrowIfNonSuccess(TryInitialize(out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(in Priv src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv* src)
+            {
+                fixed (Priv* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in Priv input, out Priv output)
+            {
+                fixed (Priv* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(Priv other)
+            {
+                return Priv.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is Priv s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                var __hashCode = new global::System.HashCode();
+                __hashCode.Add(this.Info);
+                __hashCode.Add(this.Request);
+                __hashCode.Add(this.Response);
+                return __hashCode.ToHashCode();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(Priv lhs, Priv rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(Priv lhs, Priv rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static Priv* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Event__create")]
+                static extern Priv* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(Priv* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Event__destroy")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(out Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Event__init")]
+                static extern bool _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Event__fini")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in Priv lhs, in Priv rhs)
+            {
+                fixed (Priv* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Event__are_qual")]
+                static extern bool _PInvoke(Priv* lhs, Priv* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(Priv* input, Priv* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Event__copy")]
+                static extern bool _PInvoke(Priv* input, Priv* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceEvent.Priv.{caller}'.");
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native sequence structure for <c>tf2_msgs/action/LookupTransform_SendGoal_Event</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct PrivSequence : global::System.IEquatable<PrivSequence>, global::System.IDisposable
+        {
+            private Priv* __data;
+            
+            private nuint __size;
+            
+            private nuint __capacity;
+            
+            public int Size => (int)__size;
+            
+            public int Capcacity => (int)__capacity;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence()
+                : this(0)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(int size)
+            {
+                ThrowIfNonSuccess(TryInitialize(size, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(in PrivSequence src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(System.ReadOnlySpan<Priv> src)
+                : this(src.Length)
+            {
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public System.Span<Priv> AsSpan()
+            {
+                return new(__data, Size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(System.ReadOnlySpan<Priv> src)
+            {
+                Finalize(ref this);
+                ThrowIfNonSuccess(TryInitialize(src.Length, out this));
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence* src)
+            {
+                fixed (PrivSequence* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in PrivSequence input, out PrivSequence output)
+            {
+                fixed (PrivSequence* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(PrivSequence other)
+            {
+                return PrivSequence.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is PrivSequence s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                return global::System.HashCode.Combine((nint)__data, __size, __capacity);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(PrivSequence lhs, PrivSequence rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(PrivSequence lhs, PrivSequence rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static PrivSequence* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Event__Sequence__create")]
+                static extern PrivSequence* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(PrivSequence* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Event__Sequence__destroy")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(int size, out PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg, (uint)size);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Event__Sequence__init")]
+                static extern bool _PInvoke(PrivSequence* msg, nuint size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Event__Sequence__fini")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in PrivSequence lhs, in PrivSequence rhs)
+            {
+                fixed (PrivSequence* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Event__Sequence__are_qual")]
+                static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(PrivSequence* input, PrivSequence* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_SendGoal_Event__Sequence__copy")]
+                static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionSendGoalServiceEvent.PrivSequence.{caller}'.");
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Simple API
+    /// </summary>
+    /// <remarks>
+    /// Service interface definition for <c>tf2_msgs/action/LookupTransform_GetResult</c>.
+    /// </remarks>
+    [global::Rosidl.Runtime.TypeSupportAttribute("tf2_msgs/action/LookupTransform_GetResult")]
+    internal unsafe partial class LookupTransformActionGetResultService : global::Rosidl.Runtime.IService<LookupTransformActionGetResultServiceRequest, LookupTransformActionGetResultServiceResponse>
+    {
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static string TypeSupportName => "tf2_msgs/action/LookupTransform_GetResult";
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
+        {
+            return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Service);
+            
+            [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+            [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_service_type_support_handle__tf2_msgs__action__LookupTransform_GetResult")]
+            static extern nint _PInvoke();
+        }
+    }
+    
+    /// <summary>
+    /// Simple API
+    /// </summary>
+    /// <remarks>
+    /// Message interface definition for <c>tf2_msgs/action/LookupTransform_GetResult_Request</c>.
+    /// </remarks>
+    [global::Rosidl.Runtime.TypeSupportAttribute("tf2_msgs/action/LookupTransform_GetResult_Request")]
+    internal unsafe partial class LookupTransformActionGetResultServiceRequest : global::Rosidl.Runtime.IServiceRequest
+    {
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static string TypeSupportName => "tf2_msgs/action/LookupTransform_GetResult_Request";
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
+        {
+            return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
+            
+            [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+            [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__tf2_msgs__action__LookupTransform_GetResult_Request")]
+            static extern nint _PInvoke();
+        }
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionGetResultServiceRequest"/> with fields initialized to specified values.
+        /// </summary>
+        /// <param name='goalId'>
+        /// Originally defined as: <c><![CDATA[unique_identifier_msgs/msg/UUID goal_id]]></c>
+        /// </param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionGetResultServiceRequest(
+            global::Rosidl.Messages.UniqueIdentifier.UUID? @goalId = null
+        )
+        {
+            GoalId = @goalId ?? new global::Rosidl.Messages.UniqueIdentifier.UUID();
+        }
+        
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionGetResultServiceRequest"/>, and copy its data from the specified <see cref="Priv"/> structure.
+        /// </summary>
+        /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
+        /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionGetResultServiceRequest(in Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            this.GoalId = new global::Rosidl.Messages.UniqueIdentifier.UUID(in priv.GoalId, textEncoding);
+        }
+        
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[unique_identifier_msgs/msg/UUID goal_id]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.UniqueIdentifier.UUID GoalId { get; set; }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(nint data, global::System.Text.Encoding textEncoding)
+        {
+            WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            this.GoalId.WriteTo(ref priv.GoalId, textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
+        {
+            return new LookupTransformActionGetResultServiceRequest(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static nint UnsafeCreate()
+        {
+            return new(Priv.Create());
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeDestroy(nint data)
+        {
+            Priv.Destroy((Priv*)data);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitialize(nint data)
+        {
+            return Priv.TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalize(nint data)
+        {
+            Priv.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitializeSequence(int size, nint data)
+        {
+            return PrivSequence.TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalizeSequence(nint data)
+        {
+            PrivSequence.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native structure for <c>tf2_msgs/action/LookupTransform_GetResult_Request</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
+        {
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[unique_identifier_msgs/msg/UUID goal_id]]></c>
+            /// </summary>
+            public global::Rosidl.Messages.UniqueIdentifier.UUID.Priv GoalId;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv()
+            {
+                ThrowIfNonSuccess(TryInitialize(out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(in Priv src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv* src)
+            {
+                fixed (Priv* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in Priv input, out Priv output)
+            {
+                fixed (Priv* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(Priv other)
+            {
+                return Priv.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is Priv s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                var __hashCode = new global::System.HashCode();
+                __hashCode.Add(this.GoalId);
+                return __hashCode.ToHashCode();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(Priv lhs, Priv rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(Priv lhs, Priv rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static Priv* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Request__create")]
+                static extern Priv* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(Priv* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Request__destroy")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(out Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Request__init")]
+                static extern bool _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Request__fini")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in Priv lhs, in Priv rhs)
+            {
+                fixed (Priv* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Request__are_qual")]
+                static extern bool _PInvoke(Priv* lhs, Priv* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(Priv* input, Priv* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Request__copy")]
+                static extern bool _PInvoke(Priv* input, Priv* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceRequest.Priv.{caller}'.");
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native sequence structure for <c>tf2_msgs/action/LookupTransform_GetResult_Request</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct PrivSequence : global::System.IEquatable<PrivSequence>, global::System.IDisposable
+        {
+            private Priv* __data;
+            
+            private nuint __size;
+            
+            private nuint __capacity;
+            
+            public int Size => (int)__size;
+            
+            public int Capcacity => (int)__capacity;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence()
+                : this(0)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(int size)
+            {
+                ThrowIfNonSuccess(TryInitialize(size, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(in PrivSequence src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(System.ReadOnlySpan<Priv> src)
+                : this(src.Length)
+            {
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public System.Span<Priv> AsSpan()
+            {
+                return new(__data, Size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(System.ReadOnlySpan<Priv> src)
+            {
+                Finalize(ref this);
+                ThrowIfNonSuccess(TryInitialize(src.Length, out this));
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence* src)
+            {
+                fixed (PrivSequence* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in PrivSequence input, out PrivSequence output)
+            {
+                fixed (PrivSequence* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(PrivSequence other)
+            {
+                return PrivSequence.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is PrivSequence s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                return global::System.HashCode.Combine((nint)__data, __size, __capacity);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(PrivSequence lhs, PrivSequence rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(PrivSequence lhs, PrivSequence rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static PrivSequence* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Request__Sequence__create")]
+                static extern PrivSequence* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(PrivSequence* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Request__Sequence__destroy")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(int size, out PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg, (uint)size);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Request__Sequence__init")]
+                static extern bool _PInvoke(PrivSequence* msg, nuint size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Request__Sequence__fini")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in PrivSequence lhs, in PrivSequence rhs)
+            {
+                fixed (PrivSequence* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Request__Sequence__are_qual")]
+                static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(PrivSequence* input, PrivSequence* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Request__Sequence__copy")]
+                static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceRequest.PrivSequence.{caller}'.");
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Simple API
+    /// </summary>
+    /// <remarks>
+    /// Message interface definition for <c>tf2_msgs/action/LookupTransform_GetResult_Response</c>.
+    /// </remarks>
+    [global::Rosidl.Runtime.TypeSupportAttribute("tf2_msgs/action/LookupTransform_GetResult_Response")]
+    internal unsafe partial class LookupTransformActionGetResultServiceResponse : global::Rosidl.Runtime.IServiceResponse
+    {
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static string TypeSupportName => "tf2_msgs/action/LookupTransform_GetResult_Response";
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
+        {
+            return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
+            
+            [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+            [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__tf2_msgs__action__LookupTransform_GetResult_Response")]
+            static extern nint _PInvoke();
+        }
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionGetResultServiceResponse"/> with fields initialized to specified values.
+        /// </summary>
+        /// <param name='status'>
+        /// Originally defined as: <c><![CDATA[int8 status]]></c>
+        /// </param>
+        /// <param name='result'>
+        /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_Result result]]></c>
+        /// </param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionGetResultServiceResponse(
+            sbyte @status = 0,
+            global::Rosidl.Messages.Tf2.LookupTransformActionResult? @result = null
+        )
+        {
+            Status = @status;
+            Result = @result ?? new global::Rosidl.Messages.Tf2.LookupTransformActionResult();
+        }
+        
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionGetResultServiceResponse"/>, and copy its data from the specified <see cref="Priv"/> structure.
+        /// </summary>
+        /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
+        /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionGetResultServiceResponse(in Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            this.Status = priv.Status;
+            this.Result = new global::Rosidl.Messages.Tf2.LookupTransformActionResult(in priv.Result, textEncoding);
+        }
+        
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[int8 status]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public sbyte Status { get; set; }
+        
+        /// <summary>
+        /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_Result result]]></c>
+        /// </summary>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.Tf2.LookupTransformActionResult Result { get; set; }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(nint data, global::System.Text.Encoding textEncoding)
+        {
+            WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            priv.Status = this.Status;
+            this.Result.WriteTo(ref priv.Result, textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
+        {
+            return new LookupTransformActionGetResultServiceResponse(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static nint UnsafeCreate()
+        {
+            return new(Priv.Create());
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeDestroy(nint data)
+        {
+            Priv.Destroy((Priv*)data);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitialize(nint data)
+        {
+            return Priv.TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalize(nint data)
+        {
+            Priv.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitializeSequence(int size, nint data)
+        {
+            return PrivSequence.TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalizeSequence(nint data)
+        {
+            PrivSequence.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native structure for <c>tf2_msgs/action/LookupTransform_GetResult_Response</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
+        {
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[int8 status]]></c>
+            /// </summary>
+            public sbyte Status;
+            
+            /// <summary>
+            /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_Result result]]></c>
+            /// </summary>
+            public global::Rosidl.Messages.Tf2.LookupTransformActionResult.Priv Result;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv()
+            {
+                ThrowIfNonSuccess(TryInitialize(out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(in Priv src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv* src)
+            {
+                fixed (Priv* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in Priv input, out Priv output)
+            {
+                fixed (Priv* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(Priv other)
+            {
+                return Priv.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is Priv s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                var __hashCode = new global::System.HashCode();
+                __hashCode.Add(this.Status);
+                __hashCode.Add(this.Result);
+                return __hashCode.ToHashCode();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(Priv lhs, Priv rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(Priv lhs, Priv rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static Priv* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Response__create")]
+                static extern Priv* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(Priv* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Response__destroy")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(out Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Response__init")]
+                static extern bool _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Response__fini")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in Priv lhs, in Priv rhs)
+            {
+                fixed (Priv* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Response__are_qual")]
+                static extern bool _PInvoke(Priv* lhs, Priv* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(Priv* input, Priv* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Response__copy")]
+                static extern bool _PInvoke(Priv* input, Priv* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceResponse.Priv.{caller}'.");
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native sequence structure for <c>tf2_msgs/action/LookupTransform_GetResult_Response</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct PrivSequence : global::System.IEquatable<PrivSequence>, global::System.IDisposable
+        {
+            private Priv* __data;
+            
+            private nuint __size;
+            
+            private nuint __capacity;
+            
+            public int Size => (int)__size;
+            
+            public int Capcacity => (int)__capacity;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence()
+                : this(0)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(int size)
+            {
+                ThrowIfNonSuccess(TryInitialize(size, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(in PrivSequence src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(System.ReadOnlySpan<Priv> src)
+                : this(src.Length)
+            {
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public System.Span<Priv> AsSpan()
+            {
+                return new(__data, Size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(System.ReadOnlySpan<Priv> src)
+            {
+                Finalize(ref this);
+                ThrowIfNonSuccess(TryInitialize(src.Length, out this));
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence* src)
+            {
+                fixed (PrivSequence* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in PrivSequence input, out PrivSequence output)
+            {
+                fixed (PrivSequence* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(PrivSequence other)
+            {
+                return PrivSequence.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is PrivSequence s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                return global::System.HashCode.Combine((nint)__data, __size, __capacity);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(PrivSequence lhs, PrivSequence rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(PrivSequence lhs, PrivSequence rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static PrivSequence* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Response__Sequence__create")]
+                static extern PrivSequence* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(PrivSequence* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Response__Sequence__destroy")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(int size, out PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg, (uint)size);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Response__Sequence__init")]
+                static extern bool _PInvoke(PrivSequence* msg, nuint size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Response__Sequence__fini")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in PrivSequence lhs, in PrivSequence rhs)
+            {
+                fixed (PrivSequence* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Response__Sequence__are_qual")]
+                static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(PrivSequence* input, PrivSequence* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Response__Sequence__copy")]
+                static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceResponse.PrivSequence.{caller}'.");
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Simple API
+    /// </summary>
+    /// <remarks>
+    /// Message interface definition for <c>tf2_msgs/action/LookupTransform_GetResult_Event</c>.
+    /// </remarks>
+    [global::Rosidl.Runtime.TypeSupportAttribute("tf2_msgs/action/LookupTransform_GetResult_Event")]
+    internal unsafe partial class LookupTransformActionGetResultServiceEvent : global::Rosidl.Runtime.IServiceEvent
+    {
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static string TypeSupportName => "tf2_msgs/action/LookupTransform_GetResult_Event";
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
+        {
+            return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
+            
+            [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+            [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_typesupport_c", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__tf2_msgs__action__LookupTransform_GetResult_Event")]
+            static extern nint _PInvoke();
+        }
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionGetResultServiceEvent"/> with fields initialized to specified values.
+        /// </summary>
+        /// <param name='info'>
+        /// Event info
+        /// Contains event type, timestamp, and request ID
+        /// <para>(originally defined as: <c><![CDATA[service_msgs/msg/ServiceEventInfo info]]></c>)</para>
+        /// </param>
+        /// <param name='request'>
+        /// The actual request content sent or received
+        /// This field is only set if the event type is REQUEST_SENT or REQUEST_RECEIVED,
+        /// and the introspection feauture is configured to include payload data.
+        /// <para>(originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_GetResult_Request[<=1] request]]></c>)</para>
+        /// </param>
+        /// <param name='response'>
+        /// The actual response content sent or received
+        /// This field is only set if the event type is RESPONSE_SENT or RESPONSE_RECEIVED,
+        /// and the introspection feauture is configured to include payload data.
+        /// <para>(originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_GetResult_Response[<=1] response]]></c>)</para>
+        /// </param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionGetResultServiceEvent(
+            global::Rosidl.Messages.Service.ServiceEventInfo? @info = null,
+            global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceRequest[]? @request = null,
+            global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceResponse[]? @response = null
+        )
+        {
+            Info = @info ?? new global::Rosidl.Messages.Service.ServiceEventInfo();
+            Request = @request ?? global::System.Array.Empty<global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceRequest>();
+            Response = @response ?? global::System.Array.Empty<global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceResponse>();
+        }
+        
+        
+        /// <summary>
+        /// Create a new instance of <see cref="LookupTransformActionGetResultServiceEvent"/>, and copy its data from the specified <see cref="Priv"/> structure.
+        /// </summary>
+        /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
+        /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public LookupTransformActionGetResultServiceEvent(in Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            this.Info = new global::Rosidl.Messages.Service.ServiceEventInfo(in priv.Info, textEncoding);
+        
+            this.Request = new global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceRequest[priv.Request.Size];
+            var Request_span = priv.Request.AsSpan();
+            for (int __i = 0; __i < this.Request.Length; __i++)
+            {
+                this.Request[__i] = new global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceRequest(in Request_span[__i], textEncoding);
+            }
+        
+            this.Response = new global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceResponse[priv.Response.Size];
+            var Response_span = priv.Response.AsSpan();
+            for (int __i = 0; __i < this.Response.Length; __i++)
+            {
+                this.Response[__i] = new global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceResponse(in Response_span[__i], textEncoding);
+            }
+        }
+        
+        
+        /// <summary>
+        /// Event info
+        /// Contains event type, timestamp, and request ID
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[service_msgs/msg/ServiceEventInfo info]]></c>
+        /// </remarks>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.Service.ServiceEventInfo Info { get; set; }
+        
+        private global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceRequest[] __backingField__Request;
+        
+        /// <summary>
+        /// The actual request content sent or received
+        /// This field is only set if the event type is REQUEST_SENT or REQUEST_RECEIVED,
+        /// and the introspection feauture is configured to include payload data.
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_GetResult_Request[<=1] request]]></c>
+        /// </remarks>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceRequest[] Request
+        {
+            get
+            {
+                return __backingField__Request;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__Request))]
+            set
+            {
+                __backingField__Request = value.Length <= 1 ? value : throw new global::System.ArgumentException("Size of the array or string 'Request' must be less or equal than 1.");
+            }
+        }
+        
+        private global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceResponse[] __backingField__Response;
+        
+        /// <summary>
+        /// The actual response content sent or received
+        /// This field is only set if the event type is RESPONSE_SENT or RESPONSE_RECEIVED,
+        /// and the introspection feauture is configured to include payload data.
+        /// </summary>
+        /// <remarks>
+        /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_GetResult_Response[<=1] response]]></c>
+        /// </remarks>
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceResponse[] Response
+        {
+            get
+            {
+                return __backingField__Response;
+            }
+            [global::System.Diagnostics.CodeAnalysis.MemberNotNullAttribute(nameof(__backingField__Response))]
+            set
+            {
+                __backingField__Response = value.Length <= 1 ? value : throw new global::System.ArgumentException("Size of the array or string 'Response' must be less or equal than 1.");
+            }
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(nint data, global::System.Text.Encoding textEncoding)
+        {
+            WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
+        {
+            this.Info.WriteTo(ref priv.Info, textEncoding);
+            
+            priv.Request = new global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceRequest.PrivSequence(this.Request.Length);
+            var Request_span = priv.Request.AsSpan();
+            for (int __i = 0; __i < this.Request.Length; __i++)
+            {
+                this.Request[__i].WriteTo(ref Request_span[__i], textEncoding);
+            }
+            
+            priv.Response = new global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceResponse.PrivSequence(this.Response.Length);
+            var Response_span = priv.Response.AsSpan();
+            for (int __i = 0; __i < this.Response.Length; __i++)
+            {
+                this.Response[__i].WriteTo(ref Response_span[__i], textEncoding);
+            }
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
+        {
+            return new LookupTransformActionGetResultServiceEvent(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static nint UnsafeCreate()
+        {
+            return new(Priv.Create());
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeDestroy(nint data)
+        {
+            Priv.Destroy((Priv*)data);
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitialize(nint data)
+        {
+            return Priv.TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalize(nint data)
+        {
+            Priv.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static bool UnsafeInitializeSequence(int size, nint data)
+        {
+            return PrivSequence.TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+        public static void UnsafeFinalizeSequence(nint data)
+        {
+            PrivSequence.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native structure for <c>tf2_msgs/action/LookupTransform_GetResult_Event</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct Priv : global::System.IEquatable<Priv>, global::System.IDisposable
+        {
+            /// <summary>
+            /// Event info
+            /// Contains event type, timestamp, and request ID
+            /// </summary>
+            /// <remarks>
+            /// Originally defined as: <c><![CDATA[service_msgs/msg/ServiceEventInfo info]]></c>
+            /// </remarks>
+            public global::Rosidl.Messages.Service.ServiceEventInfo.Priv Info;
+            
+            /// <summary>
+            /// The actual request content sent or received
+            /// This field is only set if the event type is REQUEST_SENT or REQUEST_RECEIVED,
+            /// and the introspection feauture is configured to include payload data.
+            /// </summary>
+            /// <remarks>
+            /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_GetResult_Request[<=1] request]]></c>
+            /// </remarks>
+            public global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceRequest.PrivSequence Request;
+            
+            /// <summary>
+            /// The actual response content sent or received
+            /// This field is only set if the event type is RESPONSE_SENT or RESPONSE_RECEIVED,
+            /// and the introspection feauture is configured to include payload data.
+            /// </summary>
+            /// <remarks>
+            /// Originally defined as: <c><![CDATA[tf2_msgs/action/LookupTransform_GetResult_Response[<=1] response]]></c>
+            /// </remarks>
+            public global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceResponse.PrivSequence Response;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv()
+            {
+                ThrowIfNonSuccess(TryInitialize(out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(in Priv src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public Priv(Priv* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in Priv src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(Priv* src)
+            {
+                fixed (Priv* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in Priv input, out Priv output)
+            {
+                fixed (Priv* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(Priv other)
+            {
+                return Priv.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is Priv s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                var __hashCode = new global::System.HashCode();
+                __hashCode.Add(this.Info);
+                __hashCode.Add(this.Request);
+                __hashCode.Add(this.Response);
+                return __hashCode.ToHashCode();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(Priv lhs, Priv rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(Priv lhs, Priv rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static Priv* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Event__create")]
+                static extern Priv* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(Priv* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Event__destroy")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(out Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Event__init")]
+                static extern bool _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref Priv msg)
+            {
+                fixed (Priv* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Event__fini")]
+                static extern void _PInvoke(Priv* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in Priv lhs, in Priv rhs)
+            {
+                fixed (Priv* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Event__are_qual")]
+                static extern bool _PInvoke(Priv* lhs, Priv* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(Priv* input, Priv* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Event__copy")]
+                static extern bool _PInvoke(Priv* input, Priv* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceEvent.Priv.{caller}'.");
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Simple API
+        /// </summary>
+        /// <remarks>
+        /// Blittable native sequence structure for <c>tf2_msgs/action/LookupTransform_GetResult_Event</c>.
+        /// </remarks>
+        [global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)]
+        public partial struct PrivSequence : global::System.IEquatable<PrivSequence>, global::System.IDisposable
+        {
+            private Priv* __data;
+            
+            private nuint __size;
+            
+            private nuint __capacity;
+            
+            public int Size => (int)__size;
+            
+            public int Capcacity => (int)__capacity;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence()
+                : this(0)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(int size)
+            {
+                ThrowIfNonSuccess(TryInitialize(size, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence src)
+                : this(in src)
+            {
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(in PrivSequence src)
+                : this()
+            {
+                CopyFrom(in src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(PrivSequence* src)
+                : this()
+            {
+                CopyFrom(src); 
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public PrivSequence(System.ReadOnlySpan<Priv> src)
+                : this(src.Length)
+            {
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void Dispose()
+            {
+                Finalize(ref this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public System.Span<Priv> AsSpan()
+            {
+                return new(__data, Size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(System.ReadOnlySpan<Priv> src)
+            {
+                Finalize(ref this);
+                ThrowIfNonSuccess(TryInitialize(src.Length, out this));
+                src.CopyTo(AsSpan());
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(in PrivSequence src)
+            {
+                ThrowIfNonSuccess(TryCopy(in src, out this));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public void CopyFrom(PrivSequence* src)
+            {
+                fixed (PrivSequence* pThis = &this)
+                {
+                    ThrowIfNonSuccess(TryCopy(src, pThis));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(in PrivSequence input, out PrivSequence output)
+            {
+                fixed (PrivSequence* pInput = &input, pOutput = &output)
+                {
+                    return TryCopy(pInput, pOutput);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public bool Equals(PrivSequence other)
+            {
+                return PrivSequence.AreEqual(in other, in this);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override bool Equals(object? obj) => obj is PrivSequence s ? this.Equals(s) : false;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public override int GetHashCode()
+            {
+                return global::System.HashCode.Combine((nint)__data, __size, __capacity);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator ==(PrivSequence lhs, PrivSequence rhs)
+            {
+                return lhs.Equals(rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool operator !=(PrivSequence lhs, PrivSequence rhs)
+            {
+                return !(lhs == rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static PrivSequence* Create()
+            {
+                return _PInvoke();
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Event__Sequence__create")]
+                static extern PrivSequence* _PInvoke();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Destroy(PrivSequence* msg)
+            {
+                _PInvoke(msg);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Event__Sequence__destroy")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static bool TryInitialize(int size, out PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    return _PInvoke(pMsg, (uint)size);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Event__Sequence__init")]
+                static extern bool _PInvoke(PrivSequence* msg, nuint size);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void Finalize(ref PrivSequence msg)
+            {
+                fixed (PrivSequence* pMsg = &msg)
+                {
+                    _PInvoke(pMsg);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Event__Sequence__fini")]
+                static extern void _PInvoke(PrivSequence* msg);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool AreEqual(in PrivSequence lhs, in PrivSequence rhs)
+            {
+                fixed (PrivSequence* plhs = &lhs, prhs = &rhs)
+                {
+                    return _PInvoke(plhs, prhs);
+                }
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Event__Sequence__are_qual")]
+                static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            private static bool TryCopy(PrivSequence* input, PrivSequence* output)
+            {
+                return _PInvoke(input, output);
+                
+                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
+                [global::System.Runtime.InteropServices.DllImportAttribute("tf2_msgs__rosidl_generator_c", EntryPoint = "tf2_msgs__action__LookupTransform_GetResult_Event__Sequence__copy")]
+                static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
+            public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
+            string caller = "")
+            {
+                if (!ret)
+                {
+                    throw new global::Rosidl.Runtime.RosidlException($"An error occurred when calling 'global::Rosidl.Messages.Tf2.LookupTransformActionGetResultServiceEvent.PrivSequence.{caller}'.");
                 }
             }
         }

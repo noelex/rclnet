@@ -1,4 +1,6 @@
-﻿using Rosidl.Runtime;
+﻿using Rcl.Qos;
+using Rcl.Runtime;
+using Rosidl.Runtime;
 
 namespace Rcl;
 
@@ -25,6 +27,34 @@ public interface IRclClient<TRequest, TResponse> : IRclObject
     /// Gets the name of the service being invoked.
     /// </summary>
     string Name { get; }
+
+    /// <summary>
+    /// Gets the globally unique identifier (GID) of the service client.
+    /// </summary>
+    /// <remarks>
+    /// Supported by: >=iron
+    /// <para>
+    /// This property will return <see cref="GraphId.Empty"/> when accessed from an unsupported ROS distribution.
+    /// </para>
+    /// </remarks>
+    [SupportedSinceDistribution(RosEnvironment.Iron)]
+    GraphId Gid { get; }
+
+    /// <summary>
+    /// Configure service introspection for the client.
+    /// </summary>
+    /// <remarks>
+    /// Supported distro(s): >=iron
+    /// </remarks>
+    /// <param name="state">The desired state of service introspection.</param>
+    /// <param name="qos">
+    /// <see cref="QosProfile"/> to use when creating the introspection publisher.
+    /// <para>
+    /// Defaults to <see cref="QosProfile.SystemDefault"/>.
+    /// </para>
+    /// </param>
+    [SupportedSinceDistribution(RosEnvironment.Iron)]
+    void ConfigureIntrospection(ServiceIntrospectionState state, QosProfile? qos = null);
 
     /// <summary>
     /// Try wait for the server become available, or until timeout.

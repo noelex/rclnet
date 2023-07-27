@@ -1,4 +1,6 @@
 ﻿using CppAst.CodeGen.CSharp;
+using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Rosidl.Generator.CSharp;
@@ -18,7 +20,8 @@ static class Attributes
         = new CSharpFreeAttribute("global::System.Diagnostics.DebuggerNonUserCodeAttribute");
 
     public static readonly CSharpAttribute GeneratedCode
-        = new CSharpFreeAttribute("global::System.CodeDom.Compiler.GeneratedCodeAttribute(\"Rosidl.Runtime.Generator.CSharp\", \"1.0.0\")");
+        = new CSharpFreeAttribute($"global::System.CodeDom.Compiler.GeneratedCodeAttribute(\"ros2cs\", " +
+            $"\"{FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion}\")");
 }
 
 public record VariableFieldInfo(
@@ -47,6 +50,7 @@ public enum MessageType
     Plain,
     ServiceRequest,
     ServiceResponse,
+    ServiceEvent,
     ActionGoal,
     ActionFeedback,
     ActionResult,

@@ -28,6 +28,10 @@ internal unsafe class IntrospectionNativeSubscription
         // if need to access header fields on foxy.
         // Defined as RclHumble.rmw_message_info_t only because it has bigger size
         // to be compatible with both foxy and humble.
+        //
+        // Size of the GID was changed from 24 bytes to 16 bytes since iron.
+        // We can still use RclHumble.rmw_message_info_t because it's bigger in size,
+        // unless we need to access rmw_message_info_t.from_intra_process.
         RclHumble.rmw_message_info_t header;
 
         var buffer = _introspection.CreateBuffer();

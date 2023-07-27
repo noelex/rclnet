@@ -31,6 +31,10 @@ class ParseSpec
 
     public bool IsInternal { get; } = false;
 
+    public bool EnableServiceIntrospection { get; } = false;
+
+    public bool EnableActionDetails { get; } = false;
+
     public ParseSpec(string specFile)
     {
         if (!File.Exists(specFile))
@@ -66,6 +70,30 @@ class ParseSpec
                 case "map-namespace":
                     var mapping = parts[1].Split(':');
                     NamespaceMapping.Add(mapping[0], mapping[1]);
+                    break;
+                case "service-introspection":
+                    if (parts.Length != 2)
+                    {
+                        throw new Exception($"'service-introspection' requires exactly one argument.");
+                    }
+                    EnableServiceIntrospection = parts[1] switch
+                    {
+                        "on" => true,
+                        "off" => false,
+                        _ => throw new Exception($"'{parts[1]}' is not a valid value for 'service-introspection' directive."),
+                    };
+                    break;
+                case "action-details":
+                    if (parts.Length != 2)
+                    {
+                        throw new Exception($"'action-details' requires exactly one argument.");
+                    }
+                    EnableActionDetails = parts[1] switch
+                    {
+                        "on" => true,
+                        "off" => false,
+                        _ => throw new Exception($"'{parts[1]}' is not a valid value for 'action-details' directive."),
+                    };
                     break;
                 case "map-package":
                     var p = parts[1].Split(':');
@@ -131,7 +159,7 @@ public class CSharpCodeGenerator
         var unresolved = new List<string>();
         while (true)
         {
-            var deps = ResolveDependencies(includedPackages);
+            var deps = ResolveDependencies(includedPackages, spec);
             if (deps.Count == 0 || deps.All(unresolved.Contains)) break;
 
             foreach (var dep in deps)
@@ -171,9 +199,9 @@ public class CSharpCodeGenerator
                     dir = Path.Combine(dir, "Actions");
                     if (!Directory.Exists(dir))
                         Directory.CreateDirectory(dir);
-                    var ctx = new ActionBuildContext(action, opts);
+                    var ctx = new ActionBuildContext(action, opts, parser);
                     code = new ActionClassBuilder(ctx)
-                        .Build($"{msg.Name}.cs", spec.IsInternal);
+                        .Build($"{msg.Name}.cs", spec.IsInternal, spec.EnableServiceIntrospection, spec.EnableActionDetails);
                 }
                 else if (metadata is ServiceMetadata service)
                 {
@@ -182,7 +210,7 @@ public class CSharpCodeGenerator
                         Directory.CreateDirectory(dir);
                     var ctx = new ServiceBuildContext(service, opts);
                     code = new ServiceClassBuilder(ctx)
-                        .Build($"{msg.Name}.cs", spec.IsInternal);
+                        .Build($"{msg.Name}.cs", spec.IsInternal, spec.EnableServiceIntrospection);
                 }
                 else
                 {
@@ -259,7 +287,7 @@ public class CSharpCodeGenerator
             try
             {
                 var root = XDocument.Load(packageXml);
-                if (root.Element("package")!.Element("member_of_group")!.Value != "rosidl_interface_packages")
+                if (root.Element("package")!.Element("member_of_group")?.Value != "rosidl_interface_packages")
                 {
                     return false;
                 }
@@ -332,7 +360,7 @@ public class CSharpCodeGenerator
         }
     }
 
-    private static List<string> ResolveDependencies(Dictionary<string, Package> packages)
+    private static List<string> ResolveDependencies(Dictionary<string, Package> packages, ParseSpec spec)
     {
         var missing = new List<string>();
 
@@ -350,17 +378,41 @@ public class CSharpCodeGenerator
                 {
                     ResolveFields(packages, s.RequestFields, missing);
                     ResolveFields(packages, s.ResponseFields, missing);
+
+                    if (spec.EnableServiceIntrospection)
+                    {
+                        Requires("service_msgs");
+                    }
                 }
                 else if (metadata is ActionMetadata a)
                 {
                     ResolveFields(packages, a.GoalFields, missing);
                     ResolveFields(packages, a.ResultFields, missing);
                     ResolveFields(packages, a.FeedbackFields, missing);
+
+                    if (spec.EnableServiceIntrospection)
+                    {
+                        Requires("service_msgs");
+                    }
+
+                    if (spec.EnableActionDetails)
+                    {
+                        Requires("builtin_interfaces");
+                        Requires("unique_identifier_msgs");
+                    }
                 }
             }
         }
 
         return missing;
+
+        void Requires(string package)
+        {
+            if (!packages.ContainsKey(package) && !missing.Contains(package))
+            {
+                missing.Add(package);
+            }
+        }
     }
 
     private static void ResolveFields(Dictionary<string, Package> packages, IEnumerable<FieldMetadata> fields, List<string> missingDependencies)

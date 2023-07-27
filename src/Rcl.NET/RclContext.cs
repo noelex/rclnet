@@ -69,7 +69,7 @@ public sealed class RclContext : IRclContext
     /// </param>
     public unsafe RclContext(string[] args, IRclLoggerFactory? loggerFactory = null, bool useSynchronizationContext = false)
     {
-        if (!RosEnvironment.IsFoxy && !RosEnvironment.IsHumble)
+        if (!RosEnvironment.IsSupported(RosEnvironment.Distribution))
         {
             string message;
             if (RosEnvironment.Distribution == string.Empty)

@@ -12,7 +12,7 @@ public class ActionClassBuilder
         _context = context;
     }
 
-    public CSharpElement Build(string path, bool isInternal)
+    public CSharpElement Build(string path, bool isInternal, bool generateEvent, bool generateDetails)
     {
         var cls = new CSharpClass(_context.ClassName);
 
@@ -49,14 +49,18 @@ public class ActionClassBuilder
         ns.Members.Add(new MessageClassBuilder(_context.Result).Build(null, isInternal));
         ns.Members.Add(new MessageClassBuilder(_context.Feedback).Build(null, isInternal));
 
-        // The following types will not be used by application codes.
-        // Rcl.NET access these types using message introspection,
-        // so there's no need to exposed these types as the Action
-        // class will need to take 10 generic arguments to define all of them.
-        //
-        //ns.Members.Add(new MessageClassBuilder(_context.FeedbackMessage).Build(null));
-        //new ServiceClassBuilder(_context.SendGoal).Build(ns);
-        //new ServiceClassBuilder(_context.GetResult).Build(ns);
+        if (generateDetails)
+        {
+            // The following types will not be used by application codes.
+            // Rcl.NET access these types using message introspection,
+            // so there's no need to exposed these types as the Action
+            // class will need to take 10 generic arguments to define all of them.
+            // 
+            // Just generating these for completeness (mainly for service introspection).
+            ns.Members.Add(new MessageClassBuilder(_context.FeedbackMessage).Build(null, isInternal));
+            new ServiceClassBuilder(_context.SendGoal).Build(ns, isInternal, generateEvent);
+            new ServiceClassBuilder(_context.GetResult).Build(ns, isInternal, generateEvent);
+        }
 
         var file = new CSharpGeneratedFile(path);
         file.Members.Clear();
@@ -129,7 +133,7 @@ public class ActionBuildContext
 
     public string ClassName { get; }
 
-    public ActionBuildContext(ActionMetadata metadata, GeneratorOptions options, object? parentContext = null)
+    public ActionBuildContext(ActionMetadata metadata, GeneratorOptions options, MsgParser parser, object? parentContext = null)
     {
         Metadata = metadata;
         Options = options;
@@ -148,8 +152,8 @@ public class ActionBuildContext
             options, MessageType.ActionFeedback, this);
 
         FeedbackMessage = GenerateFeedbackMessage();
-        SendGoal = GenerateSendGoal();
-        GetResult = GenerateGetResult();
+        SendGoal = GenerateSendGoal(parser);
+        GetResult = GenerateGetResult(parser);
     }
 
     public MessageBuildContext GenerateFeedbackMessage()
@@ -159,27 +163,28 @@ public class ActionBuildContext
             new VariableFieldMetadata[]
             {
                 new(UuidType, "goal_id", null, Array.Empty<string>()),
-                new(Feedback.Metadata, "feedback", null, Array.Empty<string>()),
+                new(Feedback.Metadata.Ref(), "feedback", null, Array.Empty<string>()),
             }),
             Options, MessageType.ActionFeedbackMessage, this);
     }
 
-    private ServiceBuildContext GenerateSendGoal()
+    private ServiceBuildContext GenerateSendGoal(MsgParser parser)
     {
         return new ServiceBuildContext(
             new ServiceMetadata(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_SendGoal", Metadata.Comments,
             new[] {
                 new VariableFieldMetadata(UuidType, "goal_id", null, Array.Empty<string>()),
-                new VariableFieldMetadata(Goal.Metadata, "stamp", null, Array.Empty<string>())
+                new VariableFieldMetadata(Goal.Metadata.Ref(), "goal", null, Array.Empty<string>())
             },
             new[] {
                 new VariableFieldMetadata(new PrimitiveTypeMetadata(PrimitiveTypes.Bool, null), "accepted", null, Array.Empty<string>()),
                 new VariableFieldMetadata(TimeType, "stamp", null, Array.Empty<string>())
-            }
+            },
+            parser.EmitServiceEventFields(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_SendGoal")
             ), Options, ServiceType.ActionSendGoal, this);
     }
 
-    private ServiceBuildContext GenerateGetResult()
+    private ServiceBuildContext GenerateGetResult(MsgParser parser)
     {
         return new ServiceBuildContext(
             new ServiceMetadata(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_GetResult", Metadata.Comments,
@@ -188,8 +193,9 @@ public class ActionBuildContext
             },
             new[] {
                 new VariableFieldMetadata(new PrimitiveTypeMetadata(PrimitiveTypes.Int8, null), "status", null, Array.Empty<string>()),
-                new VariableFieldMetadata(Result.Metadata, "result", null, Array.Empty<string>())
-            }
+                new VariableFieldMetadata(Result.Metadata.Ref(), "result", null, Array.Empty<string>())
+            },
+            parser.EmitServiceEventFields(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_GetResult")
             ), Options, ServiceType.ActionGetResult, this);
     }
 }

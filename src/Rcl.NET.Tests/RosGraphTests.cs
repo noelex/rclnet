@@ -1,5 +1,7 @@
 ﻿using Rcl.Graph;
 using Rosidl.Messages.Builtin;
+using System.Threading;
+using Xunit.Abstractions;
 
 namespace Rcl.NET.Tests;
 
@@ -17,36 +19,31 @@ public class RosGraphTests
         var isOnline = await node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 0);
         Assert.False(isOnline);
 
-        using var cts = new CancellationTokenSource();
-        var t = RunAnotherNodeAsync(nodeNameToBeWaited, cts.Token);
-
         // Looks like node discovery is much slower on foxy, need to set to larger timeout here.
-        isOnline = await node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 5000);
-        Assert.True(isOnline);
+        var watcher = node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 5000);
+        using var cts = new CancellationTokenSource();
+        var t = RunInSeparateContext(async ctx =>
+        {
+            using var node = ctx.CreateNode(nodeNameToBeWaited);
+            await Task.Delay(-1, cts.Token);
+        });
 
-        isOnline = await node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 0);
-        Assert.True(isOnline);
-
-        cts.Cancel();
-        await Task.WhenAny(t);
+        try
+        {
+            Assert.True(await watcher);
+        }
+        finally
+        {
+            cts.Cancel();
+            await Task.WhenAny(t);
+        }        
 
         // Wait until node disappears
-        await node.Graph.TryWatchAsync((graph, e) =>
-            e is NodeDisappearedEvent nde &&
-            nde.Node.Name.FullyQualifiedName == nodeNameToBeWaited, 5000);
+        await node.Graph.TryWatchAsync((graph, e) => 
+            graph.Nodes.All(x=>x.Name.FullyQualifiedName != fullyQualifiedName), 5000);
 
         isOnline = await node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 0);
         Assert.False(isOnline);
-
-        static async Task RunAnotherNodeAsync(string nodeName, CancellationToken cancellationToken)
-        {
-            await Task.Delay(10, cancellationToken);
-
-            await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-            using var node = ctx.CreateNode(nodeName);
-
-            await Task.Delay(-1, cancellationToken);
-        }
     }
 
     [Fact]
@@ -55,12 +52,81 @@ public class RosGraphTests
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
-        var targetTopic = "/" + NameGenerator.GenerateNodeName();
+        var targetTopic = "/" + NameGenerator.GenerateTopicName();
         var watcher = node.Graph.TryWatchAsync((graph, e) => graph.Topics.Any(x => x.Name == targetTopic), 1000);
 
         using var pub = node.CreatePublisher<Time>(targetTopic);
 
         Assert.True(await watcher);
+    }
+
+    [Fact]
+    public async Task WatchForTopicInSeparateContext()
+    {
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+
+        var targetTopic = "/" + NameGenerator.GenerateTopicName();
+        var watcher = node.Graph.TryWatchAsync((graph, e) => graph.Topics.Any(x => x.Name == targetTopic), 1000);
+
+        using var cts = new CancellationTokenSource();
+        var t = RunInSeparateContext(async ctx =>
+        {
+            using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+            using var pub = node.CreatePublisher<Time>(targetTopic);
+            await Task.Delay(-1, cts.Token);
+        });
+
+        try
+        {
+            Assert.True(await watcher);
+        }
+        finally
+        {
+            cts.Cancel();
+            await Task.WhenAny(t);
+        }
+    }
+
+    [Fact]
+    public async Task WatchForNode()
+    {
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+
+        var targetNodeName = NameGenerator.GenerateNodeName();
+        var watcher = node.Graph.TryWatchAsync((graph, e) => graph.Nodes.Any(x => x.Name.Name == targetNodeName), 1000);
+
+        using var targetNode = ctx.CreateNode(targetNodeName);
+
+        Assert.True(await watcher);
+    }
+
+    [Fact]
+    public async Task WatchForNodeInSeparateContext()
+    {
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+
+        var targetNodeName = NameGenerator.GenerateNodeName();
+        var watcher = node.Graph.TryWatchAsync((graph, e) => graph.Nodes.Any(x => x.Name.Name == targetNodeName), 1000);
+
+        using var cts = new CancellationTokenSource();
+        var t = RunInSeparateContext(async ctx =>
+        {
+            using var node = ctx.CreateNode(targetNodeName);
+            await Task.Delay(-1, cts.Token);
+        });
+
+        try
+        {
+            Assert.True(await watcher);
+        }
+        finally
+        {
+            cts.Cancel();
+            await Task.WhenAny(t);
+        }
     }
 
     [Fact]
@@ -84,5 +150,47 @@ public class RosGraphTests
         var targetTopic = "/" + NameGenerator.GenerateNodeName();
         await Assert.ThrowsAsync<TimeoutException>(() =>
             node.Graph.WatchAsync((graph, e) => graph.Topics.Any(x => x.Name == targetTopic), 100));
+    }
+
+    [SkippableFact]
+    public async Task PublisherGid()
+    {
+        // TODO: Track https://github.com/ros2/rmw_cyclonedds/issues/446
+        Skip.If(RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp", "rmw_get_gid_for_publisher is broken in 'rmw_cyclonedds_cpp'.");
+
+        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+
+        var topic = "/" + NameGenerator.GenerateTopicName();
+
+        var watcher = node.Graph.TryWatchAsync((graph, e) => 
+            graph.Topics.FirstOrDefault(x => x.Name == topic)?.Publishers?.Any() == true, -1);
+        using var cts = new CancellationTokenSource();
+
+        var gidTask = new TaskCompletionSource<GraphId>();
+        var t = RunInSeparateContext(async ctx =>
+        {
+            using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+            using var pub = node.CreatePublisher<Time>(topic);
+            gidTask.SetResult(pub.Gid);
+            await Task.Delay(-1, cts.Token);
+        });
+
+        try
+        {
+            Assert.True(await watcher);
+            Assert.Equal(node.Graph.Topics.Single(x => x.Name == topic).Publishers.Single().Gid, await gidTask.Task);
+        }
+        finally
+        {
+            cts.Cancel();
+            await Task.WhenAny(t);
+        }
+    }
+
+    private async Task RunInSeparateContext(Func<RclContext, Task> action)
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        await action(context);
     }
 }

@@ -13,11 +13,14 @@ jobs:
         ros_distribution:
           - foxy
           - humble
+          - iron
         include:
           - ros_distribution: foxy
             docker_image: ros:foxy-ros-base
           - ros_distribution: humble
             docker_image: ros:humble-ros-base
+          - ros_distribution: iron
+            docker_image: ros:iron-ros-base
     container:
       image: ${{ matrix.docker_image }}
     steps:
@@ -28,7 +31,7 @@ jobs:
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
           apt update
           apt install -y curl
-          rosdep update
+          rosdep update --include-eol-distros
           rosdep install -i -y --from-paths src/Rcl.NET.Tests
 
       - name: Setup .NET 7.0
@@ -67,11 +70,14 @@ jobs:
         ros_distribution:
           - foxy
           - humble
+          - iron
         include:
+          - ros_distribution: iron
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-iron-20230717/ros2-iron-20230717-windows-release-amd64.zip
           - ros_distribution: humble
-            ros_archive: https://github.com/ros2/ros2/releases/download/release-humble-20230308/ros2-humble-20230308-windows-release-amd64.zip
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-humble-20230724/ros2-humble-20230724-windows-release-amd64.zip
           - ros_distribution: foxy
-            ros_archive: https://github.com/ros2/ros2/releases/download/release-foxy-20230322/ros2-foxy-20230322-windows-release-amd64.zip
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-foxy-20230620/ros2-foxy-20230620-windows-release-amd64.zip
     steps:
       - uses: actions/checkout@v3
   

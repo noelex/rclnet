@@ -23,11 +23,11 @@ namespace Rosidl.Messages.Geometry
     internal unsafe partial class Quaternion : global::Rosidl.Runtime.IMessage
     {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static string TypeSupportName => "geometry_msgs/msg/Quaternion";
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static global::Rosidl.Runtime.TypeSupportHandle GetTypeSupportHandle()
         {
             return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
@@ -53,7 +53,7 @@ namespace Rosidl.Messages.Geometry
         /// Originally defined as: <c><![CDATA[float64 w 1]]></c>
         /// </param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public Quaternion(
             double @x = 0d,
             double @y = 0d,
@@ -74,7 +74,7 @@ namespace Rosidl.Messages.Geometry
         /// <param name="priv">The <see cref="Priv"/> structure to be copied from.</param>
         /// <param name="textEncoding">Text encoding of the strings in the <see cref="Priv"/> structure and its containing structures, if any.</param>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public Quaternion(in Priv priv, global::System.Text.Encoding textEncoding)
         {
             this.X = priv.X;
@@ -88,39 +88,39 @@ namespace Rosidl.Messages.Geometry
         /// Originally defined as: <c><![CDATA[float64 x 0]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public double X { get; set; }
         
         /// <summary>
         /// Originally defined as: <c><![CDATA[float64 y 0]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public double Y { get; set; }
         
         /// <summary>
         /// Originally defined as: <c><![CDATA[float64 z 0]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public double Z { get; set; }
         
         /// <summary>
         /// Originally defined as: <c><![CDATA[float64 w 1]]></c>
         /// </summary>
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public double W { get; set; }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public void WriteTo(nint data, global::System.Text.Encoding textEncoding)
         {
             WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public void WriteTo(ref Priv priv, global::System.Text.Encoding textEncoding)
         {
             priv.X = this.X;
@@ -130,49 +130,49 @@ namespace Rosidl.Messages.Geometry
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static global::Rosidl.Runtime.IMessage CreateFrom(nint data, global::System.Text.Encoding textEncoding)
         {
             return new Quaternion(in global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static nint UnsafeCreate()
         {
             return new(Priv.Create());
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static void UnsafeDestroy(nint data)
         {
             Priv.Destroy((Priv*)data);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static bool UnsafeInitialize(nint data)
         {
             return Priv.TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static void UnsafeFinalize(nint data)
         {
             Priv.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static bool UnsafeInitializeSequence(int size, nint data)
         {
             return PrivSequence.TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
         public static void UnsafeFinalizeSequence(nint data)
         {
             PrivSequence.Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<PrivSequence>(data.ToPointer()));
@@ -208,21 +208,21 @@ namespace Rosidl.Messages.Geometry
             public double W;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv()
             {
                 ThrowIfNonSuccess(TryInitialize(out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv(Priv src)
                 : this(in src)
             {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv(in Priv src)
                 : this()
             {
@@ -230,7 +230,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public Priv(Priv* src)
                 : this()
             {
@@ -238,28 +238,28 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void Dispose()
             {
                 Finalize(ref this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(Priv src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(in Priv src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(Priv* src)
             {
                 fixed (Priv* pThis = &this)
@@ -269,7 +269,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(in Priv input, out Priv output)
             {
                 fixed (Priv* pInput = &input, pOutput = &output)
@@ -279,18 +279,18 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public bool Equals(Priv other)
             {
                 return Priv.AreEqual(in other, in this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override bool Equals(object? obj) => obj is Priv s ? this.Equals(s) : false;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override int GetHashCode()
             {
                 var __hashCode = new global::System.HashCode();
@@ -302,21 +302,21 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator ==(Priv lhs, Priv rhs)
             {
                 return lhs.Equals(rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator !=(Priv lhs, Priv rhs)
             {
                 return !(lhs == rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static Priv* Create()
             {
                 return _PInvoke();
@@ -327,7 +327,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Destroy(Priv* msg)
             {
                 _PInvoke(msg);
@@ -338,7 +338,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool TryInitialize(out Priv msg)
             {
                 fixed (Priv* pMsg = &msg)
@@ -352,7 +352,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Finalize(ref Priv msg)
             {
                 fixed (Priv* pMsg = &msg)
@@ -366,7 +366,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool AreEqual(in Priv lhs, in Priv rhs)
             {
                 fixed (Priv* plhs = &lhs, prhs = &rhs)
@@ -380,7 +380,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(Priv* input, Priv* output)
             {
                 return _PInvoke(input, output);
@@ -391,7 +391,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
             string caller = "")
             {
@@ -422,28 +422,28 @@ namespace Rosidl.Messages.Geometry
             public int Capcacity => (int)__capacity;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence()
                 : this(0)
             {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(int size)
             {
                 ThrowIfNonSuccess(TryInitialize(size, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(PrivSequence src)
                 : this(in src)
             {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(in PrivSequence src)
                 : this()
             {
@@ -451,7 +451,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(PrivSequence* src)
                 : this()
             {
@@ -459,7 +459,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public PrivSequence(System.ReadOnlySpan<Priv> src)
                 : this(src.Length)
             {
@@ -467,21 +467,21 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void Dispose()
             {
                 Finalize(ref this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public System.Span<Priv> AsSpan()
             {
                 return new(__data, Size);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(System.ReadOnlySpan<Priv> src)
             {
                 Finalize(ref this);
@@ -490,21 +490,21 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(PrivSequence src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(in PrivSequence src)
             {
                 ThrowIfNonSuccess(TryCopy(in src, out this));
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public void CopyFrom(PrivSequence* src)
             {
                 fixed (PrivSequence* pThis = &this)
@@ -514,7 +514,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(in PrivSequence input, out PrivSequence output)
             {
                 fixed (PrivSequence* pInput = &input, pOutput = &output)
@@ -524,39 +524,39 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public bool Equals(PrivSequence other)
             {
                 return PrivSequence.AreEqual(in other, in this);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override bool Equals(object? obj) => obj is PrivSequence s ? this.Equals(s) : false;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public override int GetHashCode()
             {
                 return global::System.HashCode.Combine((nint)__data, __size, __capacity);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator ==(PrivSequence lhs, PrivSequence rhs)
             {
                 return lhs.Equals(rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool operator !=(PrivSequence lhs, PrivSequence rhs)
             {
                 return !(lhs == rhs);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static PrivSequence* Create()
             {
                 return _PInvoke();
@@ -567,7 +567,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Destroy(PrivSequence* msg)
             {
                 _PInvoke(msg);
@@ -578,7 +578,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static bool TryInitialize(int size, out PrivSequence msg)
             {
                 fixed (PrivSequence* pMsg = &msg)
@@ -592,7 +592,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void Finalize(ref PrivSequence msg)
             {
                 fixed (PrivSequence* pMsg = &msg)
@@ -606,7 +606,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool AreEqual(in PrivSequence lhs, in PrivSequence rhs)
             {
                 fixed (PrivSequence* plhs = &lhs, prhs = &rhs)
@@ -620,7 +620,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             private static bool TryCopy(PrivSequence* input, PrivSequence* output)
             {
                 return _PInvoke(input, output);
@@ -631,7 +631,7 @@ namespace Rosidl.Messages.Geometry
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
+            [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0")]
             public static void ThrowIfNonSuccess(bool ret, [global::System.Runtime.CompilerServices.CallerMemberNameAttribute]
             string caller = "")
             {

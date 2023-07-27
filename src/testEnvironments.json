@@ -20,6 +20,11 @@
       "name": "Container - Humble",
       "type": "docker",
       "dockerFile": "Rcl.NET.Tests/humble.Dockerfile"
+    },
+    {
+      "name": "Container - Iron",
+      "type": "docker",
+      "dockerFile": "Rcl.NET.Tests/iron.Dockerfile"
     }
   ]
 }

@@ -55,6 +55,8 @@ public record MessageMetadata(
         return string.IsNullOrEmpty(SubFolder) ?
             $"{Package}/{Name}" : $"{Package}/{SubFolder}/{Name}";
     }
+
+    public ComplexTypeMetadata Ref() => new(Package, SubFolder, Name);
 }
 
 public record ServiceMetadata(
@@ -63,7 +65,8 @@ public record ServiceMetadata(
     string Name,
     string[] Comments,
     IReadOnlyCollection<FieldMetadata> RequestFields,
-    IReadOnlyCollection<FieldMetadata> ResponseFields
+    IReadOnlyCollection<FieldMetadata> ResponseFields,
+    IReadOnlyCollection<FieldMetadata> EventFields
 ) : ComplexTypeMetadata(Package, SubFolder, Name)
 {
     public override string ToString()

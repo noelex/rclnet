@@ -1,4 +1,5 @@
 ﻿using Rcl.Interop;
+using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
@@ -6,7 +7,7 @@ using Rosidl.Runtime.Interop;
 namespace Rcl.Internal.Clients;
 internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 {
-
+    private readonly TypeSupportHandle _typesupport;
     private readonly RclNodeImpl _node;
     private readonly Dictionary<long, ManualResetValueTaskSource<RosMessageBuffer>> _pendingRequests = new();
     private readonly CancellationTokenSource _shutdownSignal = new();
@@ -19,8 +20,16 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         : base(node.Context, new(node.Handle, typeSupport, serviceName, options.Qos))
     {
         _node = node;
-
+        _typesupport = typeSupport;
         Name = StringMarshal.CreatePooledString(rcl_client_get_service_name(Handle.Object))!;
+
+        if (RosEnvironment.IsSupported(RosEnvironment.Iron))
+        {
+            RclIron.rmw_gid_t gid;
+            var handle = rcl_client_get_rmw_handle(Handle.Object);
+            RclException.ThrowIfNonSuccess(RclIron.rmw_get_gid_for_client(handle, &gid));
+            Gid = new(gid.GetGidSpan());
+        }
 
         RegisterWaitHandle();
     }
@@ -33,6 +42,24 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             rcl_service_server_is_available(_node.Handle.Object, Handle.Object, &available);
             return available;
         }
+    }
+
+    public unsafe void ConfigureIntrospection(ServiceIntrospectionState state, QosProfile? qos = null)
+    {
+        RosEnvironment.Require(RosEnvironment.Iron, feature: "Service Introspection");
+
+        var opts = RclHumble.rcl_publisher_get_default_options();
+        opts.qos = (qos ?? QosProfile.SystemDefault).ToRmwQosProfile();
+
+        var ret = RclIron.rcl_client_configure_service_introspection(
+            Handle.Object,
+            _node.Handle.Object,
+            _node.Clock.Impl.Handle.Object,
+            _typesupport.GetServiceTypeSupport(),
+            opts,
+            (RclIron.rcl_service_introspection_state_t)state);
+
+        RclException.ThrowIfNonSuccess(ret);
     }
 
     public Task<bool> TryWaitForServerAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default)
@@ -51,6 +78,8 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         => _node.Graph.WaitForServiceServerAsync(Name!, cancellationToken);
 
     public string Name { get; }
+
+    public GraphId Gid { get; }
 
     public unsafe bool IsValid
          => rcl_client_is_valid(Handle.Object);

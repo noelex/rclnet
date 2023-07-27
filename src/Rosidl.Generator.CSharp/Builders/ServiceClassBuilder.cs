@@ -12,7 +12,7 @@ public class ServiceClassBuilder
         _context = context;
     }
 
-    private CSharpElement[] Build(bool isInternal)
+    private CSharpElement[] Build(bool isInternal, bool generateEvent)
     {
         var cls = new CSharpClass(_context.ClassName);
         if (isInternal)
@@ -40,18 +40,24 @@ public class ServiceClassBuilder
             m.Attributes.Add(Attributes.GeneratedCode);
         }
 
-        return new CSharpElement[]
+        var items= new CSharpElement[]
         {
             cls,
             new MessageClassBuilder(_context.Request).Build(null, isInternal),
-            new MessageClassBuilder(_context.Response).Build(null, isInternal)
+            new MessageClassBuilder(_context.Response).Build(null, isInternal),
         };
+
+        if (generateEvent)
+        {
+            return items.Append(new MessageClassBuilder(_context.Event).Build(null, isInternal)).ToArray();
+        }
+        return items;
     }
-    public CSharpElement Build(string path, bool isInternal)
+    public CSharpElement Build(string path, bool isInternal, bool generateEvent)
     {
         var ns = new CSharpNamespace(_context.Request.Namespace);
 
-        foreach (var item in Build(isInternal))
+        foreach (var item in Build(isInternal, generateEvent))
         {
             ns.Members.Add(item);
         }
@@ -64,9 +70,9 @@ public class ServiceClassBuilder
         return file;
     }
 
-    public void Build(CSharpNamespace ns, bool isInternal)
+    public void Build(CSharpNamespace ns, bool isInternal, bool generateEvent)
     {
-        foreach (var item in Build(isInternal))
+        foreach (var item in Build(isInternal, generateEvent))
         {
             ns.Members.Add(item);
         }
@@ -126,6 +132,8 @@ public class ServiceBuildContext
 
     public MessageBuildContext Response { get; }
 
+    public MessageBuildContext Event { get; }
+
     public ServiceMetadata Metadata { get; }
 
     public GeneratorOptions Options { get; }
@@ -152,8 +160,8 @@ public class ServiceBuildContext
             new(metadata.Package, metadata.SubFolder, metadata.Name + "_Response", metadata.Comments, metadata.ResponseFields),
             options, MessageType.ServiceResponse, this);
 
-
-
-
+        Event = new(
+            new(metadata.Package, metadata.SubFolder, metadata.Name + "_Event", metadata.Comments, metadata.EventFields),
+            options, MessageType.ServiceEvent, this);
     }
 }

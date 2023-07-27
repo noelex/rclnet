@@ -24,13 +24,13 @@ internal static class Extensions
         cls.BaseTypes.Add(new CSharpFreeType(
             context.Type switch
             {
-                MessageType.Plain => "global::Rosidl.Runtime.IMessage",
+                MessageType.Plain or MessageType.ActionFeedbackMessage => "global::Rosidl.Runtime.IMessage",
                 MessageType.ServiceRequest => "global::Rosidl.Runtime.IServiceRequest",
                 MessageType.ServiceResponse => "global::Rosidl.Runtime.IServiceResponse",
+                MessageType.ServiceEvent => "global::Rosidl.Runtime.IServiceEvent",
                 MessageType.ActionGoal => "global::Rosidl.Runtime.IActionGoal",
                 MessageType.ActionFeedback => "global::Rosidl.Runtime.IActionFeedback",
                 MessageType.ActionResult => "global::Rosidl.Runtime.IActionResult",
-                MessageType.ActionFeedbackMessage => "global::Rosidl.Runtime.IActionFeedbackMessage",
                 _ => throw new NotSupportedException()
             }
         ));
