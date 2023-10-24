@@ -35,72 +35,133 @@ class ParseSpec
 
     public bool EnableActionDetails { get; } = false;
 
+    public string? SpecFile { get; }
+
+    public bool IgnoreMissing { get; } = false;
+
     public ParseSpec(string specFile)
+        : this(new CommandlineOption[] { new("", specFile) })
     {
-        if (!File.Exists(specFile))
+    }
+
+    public ParseSpec(IEnumerable<CommandlineOption> options)
+    {
+        var specFile = options.FirstOrDefault(x => x.Name == string.Empty)?.Value;
+        if (specFile == null && !options.Any())
         {
-            throw new Exception($"Spec file '{specFile}' does not exist.");
+            specFile = Path.Combine(Environment.CurrentDirectory, "ros2cs.spec");
         }
 
-        var lines = File.ReadAllLines(specFile);
-        foreach (var line in lines.Select(x => x.Trim()))
+        if (specFile != null)
         {
-            if (line.StartsWith("#") || line.Length == 0) continue;
-            var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-            var directive = parts[0];
-            switch (directive)
+            if (!File.Exists(specFile))
+            {
+                throw new Exception($"Spec file '{specFile}' does not exist.");
+            }
+
+            SpecFile = specFile;
+            var lines = File.ReadAllLines(specFile);
+            foreach (var line in lines.Select(x => x.Trim()))
+            {
+                if (line.StartsWith("#") || line.Length == 0) continue;
+                var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                var directive = parts[0];
+                switch (directive)
+                {
+                    case "output":
+                        OutputDirectory = parts[1]; break;
+                    case "internal":
+                        IsInternal = true; break;
+                    case "namespace":
+                        DefaultRootNamespace = parts[1]; break;
+                    case "from-ament-index":
+                        UseAmentIndex = true; break;
+                    case "ignore-missing":
+                        IgnoreMissing = true; break;
+                    case "from-directory":
+                        SourceDirectories.Add(parts[1]);
+                        break;
+                    case "include":
+                        Includes.AddRange(parts[1..]);
+                        break;
+                    case "exclude":
+                        Excludes.AddRange(parts[1..]);
+                        break;
+                    case "map-namespace":
+                        var mapping = parts[1].Split(':');
+                        NamespaceMapping.Add(mapping[0], mapping[1]);
+                        break;
+                    case "service-introspection":
+                        if (parts.Length != 2)
+                        {
+                            throw new Exception($"'service-introspection' requires exactly one argument.");
+                        }
+                        EnableServiceIntrospection = parts[1] switch
+                        {
+                            "on" => true,
+                            "off" => false,
+                            _ => throw new Exception($"'{parts[1]}' is not a valid value for 'service-introspection' directive."),
+                        };
+                        break;
+                    case "action-details":
+                        if (parts.Length != 2)
+                        {
+                            throw new Exception($"'action-details' requires exactly one argument.");
+                        }
+                        EnableActionDetails = parts[1] switch
+                        {
+                            "on" => true,
+                            "off" => false,
+                            _ => throw new Exception($"'{parts[1]}' is not a valid value for 'action-details' directive."),
+                        };
+                        break;
+                    case "map-package":
+                        var p = parts[1].Split(':');
+                        PackageMapping.Add(p[0], p[1]);
+                        break;
+                    default:
+                        throw new Exception($"Unrecognized directive '{directive}'.");
+                }
+            }
+        }
+
+        foreach (var opt in options)
+        {
+            switch (opt.Name)
             {
                 case "output":
-                    OutputDirectory = parts[1]; break;
+                    OutputDirectory = opt.Value; break;
                 case "internal":
-                    IsInternal = true; break;
+                    IsInternal = opt.Value == "yes"; break;
                 case "namespace":
-                    DefaultRootNamespace = parts[1]; break;
+                    DefaultRootNamespace = opt.Value!; break;
                 case "from-ament-index":
-                    UseAmentIndex = true; break;
+                    UseAmentIndex = opt.Value == "yes"; break;
+                case "ignore-missing":
+                    IgnoreMissing = opt.Value == "yes"; break;
                 case "from-directory":
-                    SourceDirectories.Add(parts[1]);
+                    SourceDirectories.Add(opt.Value!);
                     break;
                 case "include":
-                    Includes.AddRange(parts[1..]);
+                    Includes.AddRange(opt.Value!.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
                     break;
                 case "exclude":
-                    Excludes.AddRange(parts[1..]);
+                    Excludes.AddRange(opt.Value!.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
                     break;
                 case "map-namespace":
-                    var mapping = parts[1].Split(':');
+                    var mapping = opt.Value!.Split(':');
                     NamespaceMapping.Add(mapping[0], mapping[1]);
                     break;
                 case "service-introspection":
-                    if (parts.Length != 2)
-                    {
-                        throw new Exception($"'service-introspection' requires exactly one argument.");
-                    }
-                    EnableServiceIntrospection = parts[1] switch
-                    {
-                        "on" => true,
-                        "off" => false,
-                        _ => throw new Exception($"'{parts[1]}' is not a valid value for 'service-introspection' directive."),
-                    };
+                    EnableServiceIntrospection = opt.Value == "yes";
                     break;
                 case "action-details":
-                    if (parts.Length != 2)
-                    {
-                        throw new Exception($"'action-details' requires exactly one argument.");
-                    }
-                    EnableActionDetails = parts[1] switch
-                    {
-                        "on" => true,
-                        "off" => false,
-                        _ => throw new Exception($"'{parts[1]}' is not a valid value for 'action-details' directive."),
-                    };
+                    EnableActionDetails = opt.Value == "yes";
                     break;
                 case "map-package":
-                    var p = parts[1].Split(':');
+                    var p = opt.Value!.Split(':');
                     PackageMapping.Add(p[0], p[1]);
                     break;
-                default:
-                    throw new Exception($"Unrecognized directive '{directive}'.");
             }
         }
     }
@@ -108,12 +169,31 @@ class ParseSpec
 
 public class CSharpCodeGenerator
 {
+    public static int Generate(string[] args)
+    {
+        try
+        {
+            var spec = new ParseSpec(CommandlineOptionParser.Parse(args));
+            var baseDir = spec.SpecFile != null ? Path.GetDirectoryName(Path.GetFullPath(spec.SpecFile))! : Environment.CurrentDirectory;
+            return Generate(spec, baseDir);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return 2;
+        }
+    }
+
     public static void Generate(string specFilePath)
     {
         var spec = new ParseSpec(specFilePath);
-        var packages = new Dictionary<string, Package>();
-
         var baseDir = Path.GetDirectoryName(Path.GetFullPath(specFilePath))!;
+        Generate(spec, baseDir);
+    }
+
+    private static int Generate(ParseSpec spec, string baseDir)
+    {
+        var packages = new Dictionary<string, Package>();
         var outputDir = spec.OutputDirectory ?? baseDir;
         if (!Path.IsPathRooted(outputDir))
         {
@@ -183,6 +263,17 @@ public class CSharpCodeGenerator
             packages = packages.Where(x => !spec.Excludes.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
         }
 
+        var missingPackages = unresolved
+            .Union(spec.Includes.Except(resolved))
+            .Except(spec.Excludes)
+            .Distinct()
+            .ToArray();
+        if (missingPackages.Length > 0 && !spec.IgnoreMissing)
+        {
+            PrintStats(true);
+            return 1;
+        }
+
         var parser = new MsgParser();
         foreach (var cand in packages.Values)
         {
@@ -242,27 +333,39 @@ public class CSharpCodeGenerator
             }
         }
 
-        Console.WriteLine();
-        Console.WriteLine($"Processed {packages.Count} package(s), " +
-            $"{packages.SelectMany(x => x.Value.Messages).Count()} message definition(s) total.");
+        PrintStats(false);
+        return 0;
 
-        if (resolved.Except(spec.Excludes).Count() > 0)
+        void PrintStats(bool aborted)
         {
             Console.WriteLine();
-            Console.WriteLine("The following package(s) were automatically included as dependencies:");
-            foreach (var dep in resolved)
+            Console.WriteLine($"{(aborted ? "Found" : "Processed")} {packages.Count} package(s), " +
+                $"{packages.SelectMany(x => x.Value.Messages).Count()} message definition(s) total.");
+
+            if (resolved.Except(spec.Excludes).Count() > 0)
             {
-                if (!spec.Excludes.Contains(dep)) Console.WriteLine(dep);
+                Console.WriteLine();
+                Console.WriteLine("The following package(s) were automatically included as dependencies:");
+                foreach (var dep in resolved)
+                {
+                    if (!spec.Excludes.Contains(dep)) Console.WriteLine(dep);
+                }
             }
-        }
 
-        if (unresolved.Except(spec.Excludes).Count() > 0)
-        {
-            Console.WriteLine();
-            Console.WriteLine("The following package(s) were not found in configured package sources:");
-            foreach (var dep in unresolved)
+            if (missingPackages.Length > 0)
             {
-                if (!spec.Excludes.Contains(dep)) Console.WriteLine(dep);
+                Console.WriteLine();
+                Console.WriteLine("The following package(s) were not found in configured package sources:");
+                foreach (var dep in missingPackages)
+                {
+                    Console.WriteLine(dep);
+                }
+            }
+
+            if (aborted)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Source generation is aborted due to missing package(s).");
             }
         }
 
