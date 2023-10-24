@@ -69,8 +69,8 @@ OPTIONS:
         A path relative to the SPEC_FILE (if not specified, relative to current directory),
         or an absolute path can be used.
 
-    -s,
-    --from-directory=SRC_DIR
+    -I,
+    --from-directory=INCLUDE_DIR
         Read packages from specified root package directory containing one or more packages.
         A path relative to this file or an absolute path can be used.
 

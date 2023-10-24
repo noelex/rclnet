@@ -19,7 +19,7 @@ class CommandlineOptionParser
         new OptionDefinition("namespace", new[]{ "-n", "--namespace" }),
         new OptionDefinition("output", new[]{ "-o", "--output" }),
 
-        new OptionDefinition("from-directory",new[]{ "-s", "--from-directory" }, AllowMultiple: true),
+        new OptionDefinition("from-directory",new[]{ "-I", "--from-directory" }, AllowMultiple: true),
         new OptionDefinition("include",new[]{ "-i", "--include" }, AllowMultiple: true),
         new OptionDefinition("exclude",new[]{ "-e", "--exclude" }, AllowMultiple: true),
 
