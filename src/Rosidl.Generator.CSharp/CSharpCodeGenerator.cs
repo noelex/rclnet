@@ -264,7 +264,7 @@ public class CSharpCodeGenerator
         }
 
         var missingPackages = unresolved
-            .Union(spec.Includes.Except(resolved))
+            .Union(spec.Includes.Except(packages.Keys))
             .Except(spec.Excludes)
             .Distinct()
             .ToArray();
