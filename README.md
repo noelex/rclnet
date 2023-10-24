@@ -163,7 +163,8 @@ OPTIONS:
         Ignore missing included and depedency packages, proceed with packages currently
         available anyway.
 
-        By default, ros2cs will abort if any package dependency is missing with exit code 1.
+        By default, ros2cs will abort with exit code 1 if any package dependency is missing,
+        unless missing packages are excluded explicitly using 'exclude' option.
         Enabling this option forces ros2cs to generate code even if some packages are missing.
 
         This option is disabled by default.
