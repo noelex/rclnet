@@ -317,19 +317,27 @@ public class CSharpCodeGenerator
                 var pth = Path.Combine(dir, file.FilePath.ToString());
                 Console.WriteLine($"Converting {metadata} to {pth} ...");
 
-                var fs = new MemoryFileSystem();
-                var cw = new CodeWriter(new CodeWriterOptions(fs));
-                cw.Options[CSharpGeneratedFile.FileGeneratedByKey] = "ros2cs";
-                file.DumpTo(cw);
-                var w = fs.ReadAllLines("/" + file.FilePath);
-
-                if (File.Exists(pth) && File.ReadAllLines(pth).SequenceEqual(w))
+                using var fs = new MemoryFileSystem();
+                var filePath = "/" + file.FilePath;
+                try
                 {
-                    // Don't touch the file if unchanged.
-                    continue;
-                }
+                    var cw = new CodeWriter(new CodeWriterOptions(fs));
+                    cw.Options[CSharpGeneratedFile.FileGeneratedByKey] = "ros2cs";
+                    file.DumpTo(cw);
+                    var w = fs.ReadAllLines(filePath);
 
-                File.WriteAllLines(pth, w);
+                    if (File.Exists(pth) && File.ReadAllLines(pth).SequenceEqual(w))
+                    {
+                        // Don't touch the file if unchanged.
+                        continue;
+                    }
+
+                    File.WriteAllLines(pth, w);
+                }
+                finally
+                {
+                    fs.DeleteFile(filePath);
+                }
             }
         }
 
