@@ -29,6 +29,9 @@ jobs:
       - name: Install additional ROS dependencies
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          # ros:foxy-ros-base is no longer being updated due to EOL of foxy.
+          # We have to pull the new GPG key for ROS package repository manually.
+          apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4B63CF8FDE49746E98FA01DDAD19BAB3CBF125EA
           apt update
           apt install -y curl
           rosdep update --include-eol-distros
@@ -38,6 +41,11 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 7.0.x
+
+      - name: Setup .NET 8.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0.x
 
       - name: Build
         working-directory: src/Rcl.NET.Tests
