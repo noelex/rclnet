@@ -41,11 +41,7 @@ internal class ConcurrentIntrospectionService : IntrospectionServiceBase
             // but since calling rcl_send_response is thread-safe,
             // there's no need to yield back to RclContext event loop here.
 
-            rcl_ret_t ret;
-            unsafe
-            {
-                ret = rcl_send_response(Handle.Object, &requestId, response.Data.ToPointer());
-            }
+            var ret = SendResponse(requestId, response.Data);
 
             if (ret != rcl_ret_t.RCL_RET_OK)
             {
@@ -53,6 +49,11 @@ internal class ConcurrentIntrospectionService : IntrospectionServiceBase
                 await _node.Context.YieldIfNotCurrent();
                 RclException.ThrowIfNonSuccess(ret);
             }
+        }
+
+        unsafe rcl_ret_t SendResponse(rmw_request_id_t requestId, IntPtr responseData)
+        {
+            return rcl_send_response(Handle.Object, &requestId, responseData.ToPointer());
         }
     }
 

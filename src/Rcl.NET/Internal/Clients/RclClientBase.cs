@@ -153,12 +153,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         // needed andthis method can just return a plain ValueTask to save some allocations.
         await _node.Context.YieldIfNotCurrent();
 
-        long sequence;
-        unsafe
-        {
-            RclException.ThrowIfNonSuccess(
-                rcl_send_request(Handle.Object, request.Data.ToPointer(), &sequence));
-        }
+        var sequence = SendRequest(request.Data);
 
         // The request must be added to _pendingRequests before registering cancellation token callback.
         // Because if the cancellation token is already completed upon registration, the callback is
@@ -194,6 +189,14 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         // }
 
         return await new ValueTask<RosMessageBuffer>(completion, completion.Version).ConfigureAwait(false);
+
+        unsafe long SendRequest(IntPtr requestData)
+        {
+            long sequence;
+            RclException.ThrowIfNonSuccess(
+               rcl_send_request(Handle.Object, requestData.ToPointer(), &sequence));
+            return sequence;
+        }
     }
 
     public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, int timeoutMilliseconds, CancellationToken cancellationToken = default)

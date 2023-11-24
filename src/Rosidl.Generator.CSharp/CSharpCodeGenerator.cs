@@ -275,6 +275,7 @@ public class CSharpCodeGenerator
         }
 
         var parser = new MsgParser();
+        using var fs = new MemoryFileSystem();
         foreach (var cand in packages.Values)
         {
             foreach (var msg in cand.Messages)
@@ -317,7 +318,6 @@ public class CSharpCodeGenerator
                 var pth = Path.Combine(dir, file.FilePath.ToString());
                 Console.WriteLine($"Converting {metadata} to {pth} ...");
 
-                using var fs = new MemoryFileSystem();
                 var filePath = "/" + file.FilePath;
                 try
                 {
