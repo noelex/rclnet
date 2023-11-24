@@ -8,6 +8,7 @@ RUN echo "from urllib import request\nrequest.urlretrieve('https://packages.micr
        ros-iron-rmw-fastrtps-cpp \
        ros-iron-tf2-msgs \
        dotnet-runtime-7.0 \
+       dotnet-runtime-8.0 \
        ros-iron-service-msgs \
     && apt-get autoremove -y \
     && apt-get clean -y \
