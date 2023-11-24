@@ -132,7 +132,7 @@ OPTIONS:
         This feature requires 'service_msgs' package.
         This option is disabled by default.
 
-    --action-defails,
+    --action-details,
     --no-action-details
         Generate implementation details for actions, including FeedbackMessage, SendGoal
         request/response and GetResult request/response.
