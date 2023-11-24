@@ -8,6 +8,7 @@ RUN echo "from urllib import request\nrequest.urlretrieve('https://packages.micr
        ros-foxy-rmw-fastrtps-cpp \
        ros-foxy-tf2-msgs \
        dotnet-runtime-7.0 \
+       dotnet-runtime-8.0 \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
