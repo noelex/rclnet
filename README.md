@@ -34,6 +34,7 @@ rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowin
 ## Supported Platforms
 Supported .NET Versions:
 - .NET 7
+- .NET 8
 
 Supported ROS 2 Distributions:
 - Iron Irwini
@@ -115,7 +116,7 @@ ros2cs /path/to/ros2cs.spec
 ```
 
 ### Configuring Message Generation Using Command-line Arguments
-Starting from v1.2.1, ros2cs supports specifying message generation options using command-line arguments. You can
+Starting from v1.3.0, ros2cs supports specifying message generation options using command-line arguments. You can
 configure message generation using command-line arguments in conjunction with ros2cs.spec files.
 
 ```
