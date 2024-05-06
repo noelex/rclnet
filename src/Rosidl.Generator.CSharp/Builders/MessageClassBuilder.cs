@@ -848,6 +848,7 @@ public class MessageClassBuilder
                 case float f: return $"{f}f";
                 case long l: return $"{l}L";
                 case ulong ul: return $"{ul}UL";
+                case uint u: return $"{u}U";
                 case string s:
                     s = s.Escape();
                     return $"\"{s}\"";
