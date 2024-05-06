@@ -1,15 +1,17 @@
 FROM ros:iron-ros-core
-RUN echo "from urllib import request\nrequest.urlretrieve('https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb', 'packages-microsoft-prod.deb')" | python3  \
-    && dpkg -i packages-microsoft-prod.deb \
-    && rm packages-microsoft-prod.deb \
-    && apt-get update \
+RUN apt-get update \
     && apt-get -y install --no-install-recommends \
        ros-iron-rmw-cyclonedds-cpp \
        ros-iron-rmw-fastrtps-cpp \
        ros-iron-tf2-msgs \
-       dotnet-runtime-7.0 \
-       dotnet-runtime-8.0 \
        ros-iron-service-msgs \
+       wget \
     && apt-get autoremove -y \
     && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh  \
+    && chmod +x ./dotnet-install.sh \
+    && ./dotnet-install.sh --channel 8.0 --runtime dotnet \
+    && ./dotnet-install.sh --channel 7.0 --runtime dotnet
+ENV DOTNET_ROOT=/root/.dotnet
+ENV PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
