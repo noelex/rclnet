@@ -13,13 +13,17 @@ public record VariableFieldMetadata(TypeMetadata Type, string Name, object? Defa
 
     private static string ToString(object value)
     {
-        if (value is string[] s)
+        if (value is string sv)
         {
-            return $"[{string.Join(", ", s.Select(x => string.Format("\"{0}\"", x.Escape())))}]";
+            return string.Format("\"{0}\"", sv.Escape());
+        }
+        else if (value is bool bv)
+        {
+            return bv ? "true" : "false";
         }
         else if (value is object[] o)
         {
-            return $"[{string.Join(", ", o)}]";
+            return $"[{string.Join(", ", o.Select(ToString))}]";
         }
         else
         {
