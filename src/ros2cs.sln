@@ -7,6 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ros2cs", "ros2cs\ros2cs.csp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rosidl.Generator.CSharp", "Rosidl.Generator.CSharp\Rosidl.Generator.CSharp.csproj", "{138D9F54-C105-4143-B46E-6317438CABEE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodegenTests", "CodegenTests\CodegenTests.csproj", "{5BC70342-0B39-4DD5-8557-C09CD84943B5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rosidl.Runtime", "Rosidl.Runtime\Rosidl.Runtime.csproj", "{0931B83C-BC6B-422F-BCB0-A7D783A3F97B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{138D9F54-C105-4143-B46E-6317438CABEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{138D9F54-C105-4143-B46E-6317438CABEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{138D9F54-C105-4143-B46E-6317438CABEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5BC70342-0B39-4DD5-8557-C09CD84943B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BC70342-0B39-4DD5-8557-C09CD84943B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BC70342-0B39-4DD5-8557-C09CD84943B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BC70342-0B39-4DD5-8557-C09CD84943B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0931B83C-BC6B-422F-BCB0-A7D783A3F97B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0931B83C-BC6B-422F-BCB0-A7D783A3F97B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0931B83C-BC6B-422F-BCB0-A7D783A3F97B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0931B83C-BC6B-422F-BCB0-A7D783A3F97B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
