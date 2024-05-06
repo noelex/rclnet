@@ -360,7 +360,7 @@ execution of the continuation can be precisely controlled using `runContinuation
 ### Install dependencies
 The following instruction assumes that you've already installed ROS 2 foxy or humble in your system.
 
-You'll need .NET 7.0 SDK to build and run the examples, see instructions 
+You'll need .NET 8.0 SDK to build and run the examples, see instructions 
 [here](https://learn.microsoft.com/dotnet/core/install/linux-ubuntu).
 
 Make sure you have all dependencies installed by running:
