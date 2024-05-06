@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>ros2cs</AssemblyName>
     <PackAsTool>true</PackAsTool>
+    <DefaultItemExcludes>$(DefaultItemExcludes);TestOutput\**\*.cs</DefaultItemExcludes>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -398,7 +398,7 @@ public class CSharpCodeGenerator
             try
             {
                 var root = XDocument.Load(packageXml);
-                if (root.Element("package")!.Element("member_of_group")?.Value != "rosidl_interface_packages")
+                if (root.Element("package")!.Element("name")?.Value != Path.GetFileName(packageRoot))
                 {
                     return false;
                 }

@@ -340,8 +340,7 @@ public class MsgParser
         var type = CreateFieldType(package, declaration);
         if (IsConstantField(declaration.Identifier))
         {
-            if (type is PrimitiveTypeMetadata p &&
-                !(p.ValueType is PrimitiveTypes.Bool or PrimitiveTypes.Float32 or PrimitiveTypes.Float64 or PrimitiveTypes.String or PrimitiveTypes.WString))
+            if (type is PrimitiveTypeMetadata p)
             {
                 return CreateConstantField(p, declaration, comments);
             }
