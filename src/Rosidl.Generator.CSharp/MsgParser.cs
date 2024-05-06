@@ -456,7 +456,7 @@ public class MsgParser
         {
             var ret = p.ValueType is not PrimitiveTypes.String and not PrimitiveTypes.WString ?
                 value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(x => ParseValue(p, x)).ToArray()
+                    .Select(x => ParseValue(p, x.Trim())).ToArray()
                 : ExtractStringTokens(value).Select(x => ParseString(x)).ToArray();
 
             if (typeHint.Length != null && typeHint.Length != ret.Length)
