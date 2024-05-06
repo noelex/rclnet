@@ -2,8 +2,7 @@
   "profiles": {
     "Run Tests": {
       "commandName": "Project",
-      "commandLineArgs": "tests.spec",
-      "workingDirectory": "$(ProjectDir)"
+      "commandLineArgs": "$(SolutionDir)\\CodegenTests\\ros2cs.spec"
     },
     "Windows": {
       "commandName": "Project"

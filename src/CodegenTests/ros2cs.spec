@@ -1,6 +1,6 @@
-output ./TestOutput
+output .
 namespace Rosidl.Test.Messages
 
-from-directory tests
+from-directory packages
 
 include test_interface_files
