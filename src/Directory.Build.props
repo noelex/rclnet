@@ -9,22 +9,16 @@
 	<RepositoryUrl>https://github.com/noelex/rclnet.git</RepositoryUrl>
 	<Authors>noelex@outlook.jp</Authors>
 	<Company />
-	<Copyright>Copyright (c) 2023, noelex@outlook.jp</Copyright>
+	<Copyright>Copyright (c) 2022-2024, noelex@outlook.jp</Copyright>
 	<PackageTags>ros, ros2, rcl, rosidl, ros2cs, rclnet</PackageTags>
   <SignAssembly>true</SignAssembly>
   <AssemblyOriginatorKeyFile>$(ProjectDir)..\SigningKey.snk</AssemblyOriginatorKeyFile>
   <PublicSign>True</PublicSign>
+  <PackageReadmeFile>README.md</PackageReadmeFile>
+  <PackageLicenseFile>LICENSE</PackageLicenseFile>
 </PropertyGroup>
 	<ItemGroup >
-		<None Include="$(ProjectDir)..\..\README.md">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-			<Visible>false</Visible>
-		</None>
-		<None Include="$(ProjectDir)..\..\LICENSE">
-			<Pack>True</Pack>
-			<PackagePath>\</PackagePath>
-			<Visible>false</Visible>
-		</None>
+		<None Include="$(ProjectDir)..\..\README.md" Pack="True" PackagePath="\" Visible="False" />
+		<None Include="$(ProjectDir)..\..\LICENSE" Pack="True" PackagePath="\" Visible="False" />
 	</ItemGroup>
 </Project>
