@@ -196,7 +196,7 @@ public class MsgParser
     private MessageMetadata ParseMessage(string package, string subFolder, string name, Statement[] lines)
     {
         if (lines.OfType<Seperator>().Any())
-            throw new FormatException("Seperator is not allowed in message definition.");
+            throw new FormatException("Separator is not allowed in message definition.");
 
         var fileComments = ExtractFileComments(lines);
         return new(package, subFolder, name, fileComments, ExtractFields(package, lines, lines.OfType<FieldDeclaration>()));
@@ -207,7 +207,7 @@ public class MsgParser
         var seperators = lines.OfType<Seperator>();
         if (seperators.Count() != 1)
         {
-            throw new FormatException("Service definition requires exactly one seperator.");
+            throw new FormatException("Service definition requires exactly one separator.");
         }
 
         var fileComments = ExtractFileComments(lines);
@@ -233,12 +233,12 @@ public class MsgParser
 
             # The actual request content sent or received
             # This field is only set if the event type is REQUEST_SENT or REQUEST_RECEIVED,
-            # and the introspection feauture is configured to include payload data.
+            # and the introspection feature is configured to include payload data.
             {package}/{subdir}/{name}_Request[<=1] request
 
             # The actual response content sent or received
             # This field is only set if the event type is RESPONSE_SENT or RESPONSE_RECEIVED,
-            # and the introspection feauture is configured to include payload data.
+            # and the introspection feature is configured to include payload data.
             {package}/{subdir}/{name}_Response[<=1] response
             """);
         var msg = ParseMessage(package, subdir, name, statements);
@@ -247,16 +247,16 @@ public class MsgParser
 
     private ActionMetadata ParseAction(string package, string subFolder, string name, Statement[] lines)
     {
-        var seperators = lines.OfType<Seperator>().ToArray();
-        if (seperators.Length != 2)
+        var separators = lines.OfType<Seperator>().ToArray();
+        if (separators.Length != 2)
         {
-            throw new FormatException("Service definition requires exactly one seperator.");
+            throw new FormatException("Service definition requires exactly one separator.");
         }
 
         var fileComments = ExtractFileComments(lines);
 
-        var sepIndex1 = Array.IndexOf(lines, seperators[0]);
-        var sepIndex2 = Array.LastIndexOf(lines, seperators[1]);
+        var sepIndex1 = Array.IndexOf(lines, separators[0]);
+        var sepIndex2 = Array.LastIndexOf(lines, separators[1]);
 
         var goalStatements = lines[0..sepIndex1];
         var resultStatements = lines[(sepIndex1 + 1)..sepIndex2];
@@ -293,26 +293,26 @@ public class MsgParser
     public ComplexTypeMetadata Parse(string package, string name, string inputString, string? subFolder = null)
     {
         var statements = ReadStatements(inputString);
-        var seperators = statements.OfType<Seperator>().Count();
-        return seperators switch
+        var separators = statements.OfType<Seperator>().Count();
+        return separators switch
         {
             0 => ParseMessage(package, subFolder ?? "msg", name, statements),
             1 => ParseService(package, subFolder ?? "srv", name, statements),
             2 => ParseAction(package, subFolder ?? "action", name, statements),
-            _ => throw new FormatException($"Unexpected count of seperators. Expecting 0, 1 or 2, received {seperators}.")
+            _ => throw new FormatException($"Unexpected count of separators. Expecting 0, 1 or 2, received {separators}.")
         };
     }
 
     public ComplexTypeMetadata Parse(string package, string name, Stream inputStream, bool leaveOpen = false, string? subFolder = null)
     {
         var statements = ReadStatements(inputStream, leaveOpen);
-        var seperators = statements.OfType<Seperator>().Count();
-        return seperators switch
+        var separators = statements.OfType<Seperator>().Count();
+        return separators switch
         {
             0 => ParseMessage(package, subFolder ?? "msg", name, statements),
             1 => ParseService(package, subFolder ?? "srv", name, statements),
             2 => ParseAction(package, subFolder ?? "action", name, statements),
-            _ => throw new FormatException($"Unexpected count of seperators. Expecting 0, 1 or 2, received {seperators}.")
+            _ => throw new FormatException($"Unexpected count of separators. Expecting 0, 1 or 2, received {separators}.")
         };
     }
 
@@ -343,14 +343,14 @@ public class MsgParser
             if (type is PrimitiveTypeMetadata p &&
                 !(p.ValueType is PrimitiveTypes.Bool or PrimitiveTypes.Float32 or PrimitiveTypes.Float64 or PrimitiveTypes.String or PrimitiveTypes.WString))
             {
-                return CreateField(p, declaration, comments);
+                return CreateConstantField(p, declaration, comments);
             }
 
             throw new FormatException($"Invalid constant value type '{type}'.");
         }
         else if (IsVariablField(declaration.Identifier))
         {
-            return CreateField(type, declaration, comments);
+            return CreateVariableField(type, declaration, comments);
         }
 
         throw new FormatException($"Invalid field identifier '{declaration.Identifier}'.");
@@ -392,25 +392,13 @@ public class MsgParser
         return declaration.IsArray ? new ArrayTypeMetadata(metadata, declaration.ArrayLength, declaration.IsUpperBounded) : metadata;
     }
 
-    private ConstantFieldMetadata CreateField(PrimitiveTypeMetadata typeHint, FieldDeclaration declaration, string[] comments)
+    private ConstantFieldMetadata CreateConstantField(PrimitiveTypeMetadata typeHint, FieldDeclaration declaration, string[] comments)
     {
-        object val = typeHint.ValueType switch
-        {
-            PrimitiveTypes.Int8 => sbyte.Parse(declaration.Value),
-            PrimitiveTypes.Int16 => short.Parse(declaration.Value),
-            PrimitiveTypes.Int32 => int.Parse(declaration.Value),
-            PrimitiveTypes.Int64 => long.Parse(declaration.Value),
-            PrimitiveTypes.UInt8 => byte.Parse(declaration.Value),
-            PrimitiveTypes.UInt16 => ushort.Parse(declaration.Value),
-            PrimitiveTypes.UInt32 => uint.Parse(declaration.Value),
-            PrimitiveTypes.UInt64 => ulong.Parse(declaration.Value),
-            _ => throw new FormatException($"Invalid constant value type '{typeHint.ValueType}'.")
-        };
-
+        object val = CreatePrimitiveValue(typeHint, declaration.Value);
         return new ConstantFieldMetadata(typeHint, declaration.Identifier, val, comments);
     }
 
-    private VariableFieldMetadata CreateField(TypeMetadata typeHint, FieldDeclaration declaration, string[] comments)
+    private VariableFieldMetadata CreateVariableField(TypeMetadata typeHint, FieldDeclaration declaration, string[] comments)
     {
         if (string.IsNullOrEmpty(declaration.Value))
         {
@@ -420,28 +408,33 @@ public class MsgParser
         return new VariableFieldMetadata(typeHint, declaration.Identifier, ParseValue(typeHint, declaration.Value), comments);
     }
 
+    private object CreatePrimitiveValue(PrimitiveTypeMetadata typeHint, string value)
+    {
+        return typeHint.ValueType switch
+        {
+            PrimitiveTypes.Int8 => sbyte.Parse(value),
+            PrimitiveTypes.Int16 => short.Parse(value),
+            PrimitiveTypes.Int32 => int.Parse(value),
+            PrimitiveTypes.Int64 => long.Parse(value),
+            PrimitiveTypes.UInt8 => byte.Parse(value),
+            PrimitiveTypes.UInt16 => ushort.Parse(value),
+            PrimitiveTypes.UInt32 => uint.Parse(value),
+            PrimitiveTypes.UInt64 => ulong.Parse(value),
+            PrimitiveTypes.Float32 => float.Parse(value),
+            PrimitiveTypes.Float64 => double.Parse(value),
+            PrimitiveTypes.String or PrimitiveTypes.WString => ParseString(value),
+            PrimitiveTypes.Bool when value is "0" or "false" => false,
+            PrimitiveTypes.Bool when value is "1" or "true" => true,
+            PrimitiveTypes.Bool => throw new FormatException($"Unexpected boolean value '{value}'."),
+            _ => throw new FormatException($"Invalid primitive type '{typeHint.ValueType}'.")
+        };
+    }
+
     private object ParseValue(TypeMetadata typeHint, string value)
     {
         if (typeHint is PrimitiveTypeMetadata p)
         {
-            return p.ValueType switch
-            {
-                PrimitiveTypes.Int8 => sbyte.Parse(value),
-                PrimitiveTypes.Int16 => short.Parse(value),
-                PrimitiveTypes.Int32 => int.Parse(value),
-                PrimitiveTypes.Int64 => long.Parse(value),
-                PrimitiveTypes.UInt8 => byte.Parse(value),
-                PrimitiveTypes.UInt16 => ushort.Parse(value),
-                PrimitiveTypes.UInt32 => uint.Parse(value),
-                PrimitiveTypes.UInt64 => ulong.Parse(value),
-                PrimitiveTypes.Float32 => float.Parse(value),
-                PrimitiveTypes.Float64 => double.Parse(value),
-                PrimitiveTypes.String or PrimitiveTypes.WString => ParseString(value),
-                PrimitiveTypes.Bool when value is "0" or "false" => false,
-                PrimitiveTypes.Bool when value is "1" or "true" => true,
-                PrimitiveTypes.Bool => throw new FormatException($"Unexpected boolean value '{value}'."),
-                _ => throw new FormatException($"Invalid primitive type '{p.ValueType}'.")
-            };
+            return CreatePrimitiveValue(p, value);
         }
         else if (typeHint is ArrayTypeMetadata a)
         {
