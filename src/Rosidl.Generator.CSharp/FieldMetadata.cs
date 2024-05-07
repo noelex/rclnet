@@ -4,14 +4,9 @@ public abstract record FieldMetadata(
     TypeMetadata Type,
     string Name,
     string[] Comments
-);
-
-public record VariableFieldMetadata(TypeMetadata Type, string Name, object? DefaultValue, string[] Comments) : FieldMetadata(Type, Name, Comments)
+)
 {
-    public override string ToString()
-        => DefaultValue is null ? $"{Type} {Name}" : $"{Type} {Name} {ToString(DefaultValue)}";
-
-    private static string ToString(object value)
+    protected static string ToString(object value)
     {
         if (value is string sv)
         {
@@ -32,8 +27,15 @@ public record VariableFieldMetadata(TypeMetadata Type, string Name, object? Defa
     }
 }
 
+public record VariableFieldMetadata(TypeMetadata Type, string Name, object? DefaultValue, string[] Comments) : FieldMetadata(Type, Name, Comments)
+{
+    public override string ToString()
+        => DefaultValue is null ? $"{Type} {Name}" : $"{Type} {Name} {ToString(DefaultValue)}";
+
+}
+
 public record ConstantFieldMetadata(TypeMetadata Type, string Name, object Value, string[] Comments) : FieldMetadata(Type, Name, Comments)
 {
     public override string ToString()
-        => $"{Type} {Name} = {Value}";
+        => $"{Type} {Name} = {ToString(Value)}";
 }

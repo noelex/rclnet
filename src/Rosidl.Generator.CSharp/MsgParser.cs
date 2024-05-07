@@ -175,7 +175,7 @@ public class MsgParser
                 inlineComment = input[(commentStart + 1)..];
             }
 
-            input = input[..commentStart];
+            input = input[..commentStart].Trim();
         }
 
         return inlineComment?.Trim();
