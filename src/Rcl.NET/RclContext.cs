@@ -48,6 +48,23 @@ public sealed class RclContext : IRclContext
 
     unsafe static RclContext()
     {
+        if (!RosEnvironment.IsSupported(RosEnvironment.Distribution))
+        {
+            string message;
+            if (RosEnvironment.Distribution == string.Empty)
+            {
+                message =
+                    "No ROS distribution detected. This usually indicates that either ROS is not installed on the system yet, " +
+                    "or you have not sourced the setup files of an installed ROS distribution.";
+            }
+            else
+            {
+                message = $"ROS distribution '{RosEnvironment.Distribution}' is not supported.";
+            }
+
+            throw new NotSupportedException(message);
+        }
+
         var lib = NativeLibrary.Load("rcutils", System.Reflection.Assembly.GetExecutingAssembly(), null);
         var isInitialized = Unsafe.AsRef<bool>(NativeLibrary.GetExport(lib, "g_rcutils_logging_initialized").ToPointer());
         if (!isInitialized)
@@ -69,23 +86,6 @@ public sealed class RclContext : IRclContext
     /// </param>
     public unsafe RclContext(string[] args, IRclLoggerFactory? loggerFactory = null, bool useSynchronizationContext = false)
     {
-        if (!RosEnvironment.IsSupported(RosEnvironment.Distribution))
-        {
-            string message;
-            if (RosEnvironment.Distribution == string.Empty)
-            {
-                message =
-                    "No ROS distribution detected. This usually indicates that either ROS is not installed on the system yet, " +
-                    "or you have not sourced the setup files of an installed ROS distribution.";
-            }
-            else
-            {
-                message = $"ROS distribution '{RosEnvironment.Distribution}' is not supported.";
-            }
-
-            throw new NotSupportedException(message);
-        }
-
         _rclSyncContext = new RclSynchronizationContext(this);
         _context = new SafeContextHandle(args);
 
