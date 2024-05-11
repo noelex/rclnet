@@ -162,8 +162,8 @@ public class ActionBuildContext
             new(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_FeedbackMessage", Metadata.Comments,
             new VariableFieldMetadata[]
             {
-                new(UuidType, "goal_id", null, Array.Empty<string>()),
-                new(Feedback.Metadata.Ref(), "feedback", null, Array.Empty<string>()),
+                new(UuidType, "goal_id", null, null, Array.Empty<string>()),
+                new(Feedback.Metadata.Ref(), "feedback", null, null, Array.Empty<string>()),
             }),
             Options, MessageType.ActionFeedbackMessage, this);
     }
@@ -173,12 +173,12 @@ public class ActionBuildContext
         return new ServiceBuildContext(
             new ServiceMetadata(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_SendGoal", Metadata.Comments,
             new[] {
-                new VariableFieldMetadata(UuidType, "goal_id", null, Array.Empty<string>()),
-                new VariableFieldMetadata(Goal.Metadata.Ref(), "goal", null, Array.Empty<string>())
+                new VariableFieldMetadata(UuidType, "goal_id", null, null, Array.Empty<string>()),
+                new VariableFieldMetadata(Goal.Metadata.Ref(), "goal", null, null, Array.Empty<string>())
             },
             new[] {
-                new VariableFieldMetadata(new PrimitiveTypeMetadata(PrimitiveTypes.Bool, null), "accepted", null, Array.Empty<string>()),
-                new VariableFieldMetadata(TimeType, "stamp", null, Array.Empty<string>())
+                new VariableFieldMetadata(new PrimitiveTypeMetadata(PrimitiveTypes.Bool, null), "accepted", null, null, Array.Empty<string>()),
+                new VariableFieldMetadata(TimeType, "stamp", null, null, Array.Empty<string>())
             },
             parser.EmitServiceEventFields(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_SendGoal")
             ), Options, ServiceType.ActionSendGoal, this);
@@ -189,11 +189,11 @@ public class ActionBuildContext
         return new ServiceBuildContext(
             new ServiceMetadata(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_GetResult", Metadata.Comments,
             new[] {
-                new VariableFieldMetadata(UuidType, "goal_id", null, Array.Empty<string>())
+                new VariableFieldMetadata(UuidType, "goal_id", null,null, Array.Empty<string>())
             },
             new[] {
-                new VariableFieldMetadata(new PrimitiveTypeMetadata(PrimitiveTypes.Int8, null), "status", null, Array.Empty<string>()),
-                new VariableFieldMetadata(Result.Metadata.Ref(), "result", null, Array.Empty<string>())
+                new VariableFieldMetadata(new PrimitiveTypeMetadata(PrimitiveTypes.Int8, null), "status", null, null, Array.Empty<string>()),
+                new VariableFieldMetadata(Result.Metadata.Ref(), "result", null, null, Array.Empty<string>())
             },
             parser.EmitServiceEventFields(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_GetResult")
             ), Options, ServiceType.ActionGetResult, this);

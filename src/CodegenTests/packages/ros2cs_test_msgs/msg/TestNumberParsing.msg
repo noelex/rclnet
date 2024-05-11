@@ -1,0 +1,25 @@
+uint8 HEX_UINT8_CONST = 0xab
+uint16 HEX_UINT16_CONST = 0xabcd
+uint32 HEX_UINT32_CONST = 0xABCD1234
+uint64 HEX_UINT64_CONST = 0xABCD1234CDEF4321
+
+int8 HEX_INT8_CONST = 0xab
+int16 HEX_INT16_CONST = 0xabcd
+int32 HEX_INT32_CONST = 0xABCD1234
+int64 HEX_INT64_CONST = 0xABCD1234CDEF4321
+
+uint8 hex_int8_val 0x7F
+uint16 hex_int16_val 0x7FFF
+uint32 hex_int32_val 0x7FFFFFFF
+uint64 hex_int64_val 0x7FFFFFFFFFFFFFFF
+
+int8 hex_uint8_val 0x80
+int16 hex_uint16_val 0x8000
+int32 hex_uint32_val 0x80000000
+int64 hex_uint64_val 0x8000000000000000
+
+float32 FLOAT32_EXP_CONST = -3.4028235e+38
+float64 FLOAT64_EXP_CONST = -1.7976931348623157e+308
+
+float32 float32_exp_val 1e-45
+float64 float64_exp_val 5e-324

@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -328,7 +329,7 @@ public class MsgParser
             }
             catch (Exception e)
             {
-                throw new FormatException($"Unable to parse field defined as '{field}': " + e.Message, e);
+                throw new FormatException($"Unable to parse field defined as '{field}' in '{package}': " + e.Message, e);
             }
         }
 
@@ -394,31 +395,31 @@ public class MsgParser
     private ConstantFieldMetadata CreateConstantField(PrimitiveTypeMetadata typeHint, FieldDeclaration declaration, string[] comments)
     {
         object val = CreatePrimitiveValue(typeHint, declaration.Value);
-        return new ConstantFieldMetadata(typeHint, declaration.Identifier, val, comments);
+        return new ConstantFieldMetadata(typeHint, declaration.Identifier, val, declaration.Value, comments);
     }
 
     private VariableFieldMetadata CreateVariableField(TypeMetadata typeHint, FieldDeclaration declaration, string[] comments)
     {
         if (string.IsNullOrEmpty(declaration.Value))
         {
-            return new VariableFieldMetadata(typeHint, declaration.Identifier, null, comments);
+            return new VariableFieldMetadata(typeHint, declaration.Identifier, null, null, comments);
         }
 
-        return new VariableFieldMetadata(typeHint, declaration.Identifier, ParseValue(typeHint, declaration.Value), comments);
+        return new VariableFieldMetadata(typeHint, declaration.Identifier, ParseValue(typeHint, declaration.Value), declaration.Value, comments);
     }
 
     private object CreatePrimitiveValue(PrimitiveTypeMetadata typeHint, string value)
     {
         return typeHint.ValueType switch
         {
-            PrimitiveTypes.Int8 => sbyte.Parse(value),
-            PrimitiveTypes.Int16 => short.Parse(value),
-            PrimitiveTypes.Int32 => int.Parse(value),
-            PrimitiveTypes.Int64 => long.Parse(value),
-            PrimitiveTypes.UInt8 => byte.Parse(value),
-            PrimitiveTypes.UInt16 => ushort.Parse(value),
-            PrimitiveTypes.UInt32 => uint.Parse(value),
-            PrimitiveTypes.UInt64 => ulong.Parse(value),
+            PrimitiveTypes.Int8 => value.StartsWith("0x") ? sbyte.Parse(value[2..], NumberStyles.HexNumber) : sbyte.Parse(value),
+            PrimitiveTypes.Int16 => value.StartsWith("0x") ? short.Parse(value[2..], NumberStyles.HexNumber) : short.Parse(value),
+            PrimitiveTypes.Int32 => value.StartsWith("0x") ? int.Parse(value[2..], NumberStyles.HexNumber) : int.Parse(value),
+            PrimitiveTypes.Int64 => value.StartsWith("0x") ? long.Parse(value[2..], NumberStyles.HexNumber) : long.Parse(value),
+            PrimitiveTypes.UInt8 => value.StartsWith("0x") ? byte.Parse(value[2..], NumberStyles.HexNumber) : byte.Parse(value),
+            PrimitiveTypes.UInt16 => value.StartsWith("0x") ? ushort.Parse(value[2..], NumberStyles.HexNumber) : ushort.Parse(value),
+            PrimitiveTypes.UInt32 => value.StartsWith("0x") ? uint.Parse(value[2..], NumberStyles.HexNumber) : uint.Parse(value),
+            PrimitiveTypes.UInt64 => value.StartsWith("0x") ? ulong.Parse(value[2..], NumberStyles.HexNumber) : ulong.Parse(value),
             PrimitiveTypes.Float32 => float.Parse(value),
             PrimitiveTypes.Float64 => double.Parse(value),
             PrimitiveTypes.String or PrimitiveTypes.WString => ParseString(value),

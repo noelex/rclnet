@@ -27,15 +27,15 @@ public abstract record FieldMetadata(
     }
 }
 
-public record VariableFieldMetadata(TypeMetadata Type, string Name, object? DefaultValue, string[] Comments) : FieldMetadata(Type, Name, Comments)
+public record VariableFieldMetadata(TypeMetadata Type, string Name, object? DefaultValue, string? DefaultValueLiteral, string[] Comments) : FieldMetadata(Type, Name, Comments)
 {
     public override string ToString()
-        => DefaultValue is null ? $"{Type} {Name}" : $"{Type} {Name} {ToString(DefaultValue)}";
+        => DefaultValueLiteral is null ? $"{Type} {Name}" : $"{Type} {Name} {DefaultValueLiteral}";
 
 }
 
-public record ConstantFieldMetadata(TypeMetadata Type, string Name, object Value, string[] Comments) : FieldMetadata(Type, Name, Comments)
+public record ConstantFieldMetadata(TypeMetadata Type, string Name, object Value, string ValueLiteral, string[] Comments) : FieldMetadata(Type, Name, Comments)
 {
     public override string ToString()
-        => $"{Type} {Name} = {ToString(Value)}";
+        => $"{Type} {Name} = {ValueLiteral}";
 }
