@@ -371,7 +371,7 @@ rosdep install -i --from-paths examples
 ### Run with `dotnet run`
 Now you can run example projects using `dotnet run`, e.g.
 ```
-dotnet run examples/turtle_rotate
+dotnet run --project examples/turtle_rotate
 ```
 
 ### Run with `ros2 run`
