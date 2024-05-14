@@ -164,9 +164,25 @@ public class MessageClassBuilder
                         builder.AppendLine("    }");
                         builder.AppendLine("    else");
                         builder.AppendLine("    {");
-                        builder.AppendLine($"        {_variables[i].PropertyName} = {_variables[i].DefaultValueLiteral};");
-                        builder.AppendLine("    }");
+                        builder.AppendLine($"        {_variables[i].PropertyName} = new {GetTypeName(arrType.ElementType)}[{arraySize}];");
 
+
+                        if (arrType.ElementType is PrimitiveTypeMetadata prim && prim.ValueType is PrimitiveTypes.String or PrimitiveTypes.WString)
+                        {
+                            builder.AppendLine($"        for (int __i = 0; __i < {arraySize}; __i++)");
+                            builder.AppendLine("        {");
+                            builder.AppendLine($"            {_variables[i].PropertyName}[__i] = \"\";");
+                            builder.AppendLine("        }");
+                        }
+                        else if (arrType.ElementType is ComplexTypeMetadata ct)
+                        {
+                            builder.AppendLine($"        for (int __i = 0; __i < {arraySize}; __i++)");
+                            builder.AppendLine("        {");
+                            builder.AppendLine($"           {_variables[i].PropertyName}[__i] = new {GetTypeName(arrType.ElementType)}();");
+                            builder.AppendLine("        }");
+                        }
+
+                        builder.AppendLine("    }");
                         if (i < _variables.Length - 1)
                         {
                             builder.AppendLine();
