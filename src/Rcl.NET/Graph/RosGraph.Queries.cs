@@ -81,7 +81,7 @@ public partial class RosGraph
     public async Task<bool> TryWatchAsync(Func<RosGraph, RosGraphEvent?, object?, bool> watcher,
         TimeSpan timeout, object? state, CancellationToken cancellationToken = default)
     {
-        await Owner.Context.YieldIfNotCurrent();
+        await _node.Context.YieldIfNotCurrent();
 
         if (watcher(this, null, state))
         {

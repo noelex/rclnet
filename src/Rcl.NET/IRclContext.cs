@@ -35,7 +35,7 @@ public interface IRclContext : IDisposable, IAsyncDisposable
     IRclNode CreateNode(string name, string @namespace = "/", NodeOptions? options = null);
 
     /// <summary>
-    /// Creates an ROS node with specified <see cref="RclClock"/>.
+    /// Creates an ROS node with specified <see cref="IRclClock"/>.
     /// </summary>
     /// <remarks>
     /// <see cref="IRclNode"/> created by this method will use the clock specified by <paramref name="clockOverride"/> as its internal clock,
@@ -50,11 +50,11 @@ public interface IRclContext : IDisposable, IAsyncDisposable
     /// </para>
     /// </remarks>
     /// <param name="name">Name of the node.</param>
-    /// <param name="clockOverride">The <see cref="RclClock"/> to be used to override clock settings.</param>
+    /// <param name="clockOverride">The <see cref="IRclClock"/> to be used to override clock settings.</param>
     /// <param name="namespace">Namespace of the node.</param>
     /// <param name="options">Other options to be used when creating the node.</param>
     /// <returns></returns>
-    IRclNode CreateNode(string name, RclClock clockOverride, string @namespace = "/", NodeOptions? options = null);
+    IRclNode CreateNode(string name, IRclClock clockOverride, string @namespace = "/", NodeOptions? options = null);
 
     /// <summary>
     /// Creates a timer with specified period.
@@ -62,7 +62,7 @@ public interface IRclContext : IDisposable, IAsyncDisposable
     /// <param name="clock">Clock to be used. The clock must be created by current context.</param>
     /// <param name="period">Period of the timer.</param>
     /// <returns>An <see cref="IRclTimer"/> object can be used for listening and controlling the timer.</returns>
-    IRclTimer CreateTimer(RclClock clock, TimeSpan period);
+    IRclTimer CreateTimer(IRclClock clock, TimeSpan period);
 
     /// <summary>
     /// Creates a timer with specified period using <see cref="RclClock.SteadyClock"/>.

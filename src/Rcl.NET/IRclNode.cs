@@ -14,12 +14,12 @@ public interface IRclNode : IRclObject
     /// <summary>
     /// Gets the <see cref="IRclContext"/> object which the node belongs.
     /// </summary>
-    RclContext Context { get; }
+    IRclContext Context { get; }
 
     /// <summary>
     /// The <see cref="RclClock"/> used by services hosted in current <see cref="IRclNode"/>.
     /// </summary>
-    RclClock Clock { get; }
+    IRclClock Clock { get; }
 
     /// <summary>
     /// Gets an <see cref="IParameterService"/> for accessing parameters in the scope of the node.

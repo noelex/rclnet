@@ -95,6 +95,10 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         }
     }
 
+    IRclContext IRclNode.Context => Context;
+
+    IRclClock IRclNode.Clock => Clock;
+
     private async Task GraphBuilder(RclGuardConditionImpl graphSignal, CancellationToken cancellationToken)
     {
         await Context.YieldIfNotCurrent();

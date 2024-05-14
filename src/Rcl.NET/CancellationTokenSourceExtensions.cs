@@ -89,7 +89,7 @@ public static class CancellationTokenSourceExtensions
     private const string ReusableTimerPoolFeature = nameof(ReusableTimerPoolFeature);
 
     /// <summary>
-    /// Cancel the <see cref="CancellationTokenSource"/> after specific period of time, measured with <see cref="RclClock"/> specified by <paramref name="clock"/>.
+    /// Cancel the <see cref="CancellationTokenSource"/> after specific period of time, measured with <see cref="IRclClock"/> specified by <paramref name="clock"/>.
     /// </summary>
     /// <param name="source">The <see cref="CancellationTokenSource"/> to be canceled when the delay expires.</param>
     /// <param name="timeout">
@@ -101,17 +101,17 @@ public static class CancellationTokenSourceExtensions
     /// </para>
     /// </param>
     /// <param name="clock">
-    /// An <see cref="RclClock"/> used for measuring the countdown time.
+    /// An <see cref="IRclClock"/> used for measuring the countdown time.
     /// </param>
     /// <param name="context">
-    /// The <see cref="RclContext"/> for registering the wait operation.
+    /// The <see cref="IRclContext"/> for registering the wait operation.
     /// </param>
     /// <returns>
-    /// A <see cref="TimeoutRegistration"/> for unregistering the operation from the <see cref="RclContext"/>.
+    /// A <see cref="TimeoutRegistration"/> for unregistering the operation from the <see cref="IRclContext"/>.
     /// </returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public static TimeoutRegistration CancelAfter(
-        this CancellationTokenSource source, TimeSpan timeout, RclClock clock, RclContext context)
+        this CancellationTokenSource source, TimeSpan timeout, IRclClock clock, IRclContext context)
     {
         if (timeout < Timeout.InfiniteTimeSpan)
         {
@@ -129,15 +129,20 @@ public static class CancellationTokenSourceExtensions
             return TimeoutRegistration.Empty;
         }
 
-        var pool = context.GetOrAddFeature<ObjectPool<ReusableTimer>>(ReusableTimerPoolFeature, x => new());
+        if (clock is not RclClock rclClock || context is not RclContext rclContext)
+        {
+            throw new NotSupportedException("CancelAfter supports only RclClock and RclContext.");
+        }
+
+        var pool = rclContext.GetOrAddFeature<ObjectPool<ReusableTimer>>(ReusableTimerPoolFeature, x => new());
         var timer = pool.Rent();
-        timer.Start(source, context, clock.Impl, timeout);
+        timer.Start(source, rclContext, rclClock.Impl, timeout);
 
         return new TimeoutRegistration(pool, timer);
     }
 
     /// <summary>
-    /// Cancel the <see cref="CancellationTokenSource"/> after specific period of time, measured with <see cref="RclClock"/> specified by <paramref name="clock"/>.
+    /// Cancel the <see cref="CancellationTokenSource"/> after specific period of time, measured with <see cref="IRclClock"/> specified by <paramref name="clock"/>.
     /// </summary>
     /// <param name="source">The <see cref="CancellationTokenSource"/> to be canceled when the delay expires.</param>
     /// <param name="timeoutMilliseconds">
@@ -151,9 +156,9 @@ public static class CancellationTokenSourceExtensions
     /// <param name="clock"></param>
     /// <param name="context"></param>
     /// <returns>
-    /// A <see cref="TimeoutRegistration"/> for unregistering the operation from the <see cref="RclContext"/>.
+    /// A <see cref="TimeoutRegistration"/> for unregistering the operation from the <see cref="IRclContext"/>.
     /// </returns>
-    public static TimeoutRegistration CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, RclClock clock, RclContext context)
+    public static TimeoutRegistration CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, IRclClock clock, IRclContext context)
         => source.CancelAfter(TimeSpan.FromMilliseconds(timeoutMilliseconds), clock, context);
 
     /// <summary>
@@ -172,7 +177,7 @@ public static class CancellationTokenSourceExtensions
     /// An <see cref="IRclNode"/> which provides the clock for measuring the countdown time.
     /// </param>
     /// <returns>
-    /// A <see cref="TimeoutRegistration"/> for unregistering the operation from the <see cref="RclContext"/>.
+    /// A <see cref="TimeoutRegistration"/> for unregistering the operation from the <see cref="IRclContext"/>.
     /// </returns>
     public static TimeoutRegistration CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, IRclNode node)
         => source.CancelAfter(timeoutMilliseconds, node.Clock, node.Context);
@@ -191,7 +196,7 @@ public static class CancellationTokenSourceExtensions
     /// </param>
     /// <param name="node">An <see cref="IRclNode"/> which provides the clock for measuring the countdown time.</param>
     /// <returns>
-    /// A <see cref="TimeoutRegistration"/> for unregistering the operation from the <see cref="RclContext"/>.
+    /// A <see cref="TimeoutRegistration"/> for unregistering the operation from the <see cref="IRclContext"/>.
     /// </returns>
     public static TimeoutRegistration CancelAfter(this CancellationTokenSource source, TimeSpan timeout, IRclNode node)
         => source.CancelAfter(timeout, node.Clock, node.Context);

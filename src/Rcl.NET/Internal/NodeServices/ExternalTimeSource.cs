@@ -9,14 +9,14 @@ class ExternalTimeSource : IDisposable
 {
     private const string UseSimTime = "use_sim_time";
 
-    private readonly IRclNode _node;
+    private readonly RclNodeImpl _node;
     private readonly QosProfile _qos;
     private readonly IDisposable _reg;
 
     private bool _overrideEnabled;
     private IRclNativeSubscription? _subscription;
 
-    public ExternalTimeSource(IRclNode node, QosProfile clockQoS)
+    public ExternalTimeSource(RclNodeImpl node, QosProfile clockQoS)
     {
         _node = node;
         _qos = clockQoS;

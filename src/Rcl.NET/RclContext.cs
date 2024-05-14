@@ -163,9 +163,14 @@ public sealed class RclContext : IRclContext
     public IRclGuardCondition CreateGuardCondition() => new RclGuardConditionImpl(this);
 
     /// <inheritdoc/>
-    public IRclTimer CreateTimer(RclClock clock, TimeSpan period)
+    public IRclTimer CreateTimer(IRclClock clock, TimeSpan period)
     {
-        return new RclTimer(this, clock.Impl, period);
+        if (clock is not RclClock rclClock)
+        {
+            throw new NotSupportedException("CreateTimer supports only RclClock.");
+        }
+
+        return new RclTimer(this, rclClock.Impl, period);
     }
 
     /// <inheritdoc/>
@@ -176,8 +181,15 @@ public sealed class RclContext : IRclContext
         => new RclNodeImpl(this, name, @namespace, null, options);
 
     /// <inheritdoc/>
-    public IRclNode CreateNode(string name, RclClock clockOverride, string @namespace = "/", NodeOptions? options = null)
-        => new RclNodeImpl(this, name, @namespace, clockOverride, options);
+    public IRclNode CreateNode(string name, IRclClock clockOverride, string @namespace = "/", NodeOptions? options = null)
+    {
+        if (clockOverride is not RclClock clock)
+        {
+            throw new NotSupportedException("CreateNode supports only RclClock.");
+        }
+
+        return new RclNodeImpl(this, name, @namespace, clock, options);
+    }
 
     /// <inheritdoc/>
     public YieldAwaiter Yield()
