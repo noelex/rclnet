@@ -182,16 +182,37 @@ public class MsgParser
         return inlineComment?.Trim();
     }
 
-    private static Statement[] ReadStatements(Stream stream, bool leaveOpen)
+    private static Statement[] ReadStatements(Stream stream, bool leaveOpen, string package, string? subfolder, string name)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8, true, 1024, leaveOpen: leaveOpen);
-        return Parse(reader).ToArray();
+        return ReadStatements(reader, package, subfolder, name);
     }
 
-    private static Statement[] ReadStatements(string input)
+    private static Statement[] ReadStatements(string input, string package, string? subfolder, string name)
     {
         using var reader = new StringReader(input);
-        return Parse(reader).ToArray();
+        return ReadStatements(reader, package, subfolder, name);
+    }
+
+    private static Statement[] ReadStatements(TextReader input, string package, string? subfolder, string name)
+    {
+        var statements = Parse(input).ToArray();
+
+        var sb = new StringBuilder();
+        foreach (var error in statements.OfType<Error>())
+        {
+            sb.AppendLine();
+            sb.Append(" - ");
+            sb.Append(error.message);
+        }
+
+        if (sb.Length > 0)
+        {
+            var msgName = string.IsNullOrEmpty(subfolder) ? $"{package}/{name}" : $"{package}/{subfolder}/{name}";
+            throw new FormatException($"Unable to parse '{msgName}': {sb}");
+        }
+
+        return statements;
     }
 
     private MessageMetadata ParseMessage(string package, string subFolder, string name, Statement[] lines)
@@ -241,7 +262,7 @@ public class MsgParser
             # This field is only set if the event type is RESPONSE_SENT or RESPONSE_RECEIVED,
             # and the introspection feature is configured to include payload data.
             {package}/{subdir}/{name}_Response[<=1] response
-            """);
+            """, package, subdir, name);
         var msg = ParseMessage(package, subdir, name, statements);
         return msg.Fields;
     }
@@ -277,23 +298,23 @@ public class MsgParser
     }
 
     public ActionMetadata ParseAction(string package, string subFolder, string name, string inputString)
-        => ParseAction(package, subFolder, name, ReadStatements(inputString));
+        => ParseAction(package, subFolder, name, ReadStatements(inputString, package, subFolder, name));
 
     public ServiceMetadata ParseService(string package, string subFolder, string name, Stream inputStream, bool leaveOpen = false)
-        => ParseService(package, subFolder, name, ReadStatements(inputStream, leaveOpen));
+        => ParseService(package, subFolder, name, ReadStatements(inputStream, leaveOpen, package, subFolder, name));
 
     public ServiceMetadata ParseService(string package, string subFolder, string name, string inputString)
-        => ParseService(package, subFolder, name, ReadStatements(inputString));
+        => ParseService(package, subFolder, name, ReadStatements(inputString, package, subFolder, name));
 
     public MessageMetadata ParseMessage(string package, string subFolder, string name, Stream inputStream, bool leaveOpen = false)
-        => ParseMessage(package, subFolder, name, ReadStatements(inputStream, leaveOpen));
+        => ParseMessage(package, subFolder, name, ReadStatements(inputStream, leaveOpen, package, subFolder, name));
 
     public MessageMetadata ParseMessage(string package, string subFolder, string name, string inputString)
-        => ParseMessage(package, subFolder, name, ReadStatements(inputString));
+        => ParseMessage(package, subFolder, name, ReadStatements(inputString, package, subFolder, name));
 
     public ComplexTypeMetadata Parse(string package, string name, string inputString, string? subFolder = null)
     {
-        var statements = ReadStatements(inputString);
+        var statements = ReadStatements(inputString, package, subFolder, name);
         var separators = statements.OfType<Seperator>().Count();
         return separators switch
         {
@@ -306,7 +327,7 @@ public class MsgParser
 
     public ComplexTypeMetadata Parse(string package, string name, Stream inputStream, bool leaveOpen = false, string? subFolder = null)
     {
-        var statements = ReadStatements(inputStream, leaveOpen);
+        var statements = ReadStatements(inputStream, leaveOpen, package, subFolder, name);
         var separators = statements.OfType<Seperator>().Count();
         return separators switch
         {
