@@ -23,7 +23,15 @@ record Comment(string Content) : Statement;
 
 record InlineComment(string Content) : Comment(Content);
 
-record FieldDeclaration(string Type, string Identifier, string Value, bool IsArray, int? ArrayLength, string? InlineComment, bool IsUpperBounded) : Statement;
+record FieldDeclaration(
+    string Type,
+    string Identifier,
+    string Value,
+    bool IsArray,
+    int? ArrayLength,
+    string? InlineComment,
+    bool IsUpperBounded,
+    int? ElementBoundSize) : Statement;
 
 public class MsgParser
 {
@@ -34,7 +42,7 @@ public class MsgParser
         = new(@"^([A-Za-z]+[A-Za-z0-9_/]*[A-Za-z0-9_]*)(\[(<=)?(\d*)\])?\s+([A-Za-z]+[A-Za-z0-9_]*)(\s+(.+))?$");
 
     private static readonly Regex StringFieldPattern
-        = new(@"^(wstring|string)(<=(\d+))?\s+([A-Za-z]+[A-Za-z0-9_]*)(\s+(.+))?$");
+        = new(@"^(wstring|string)(<=(\d+))?(\[(<=)?(\d*)\])?\s+([A-Za-z]+[A-Za-z0-9_]*)(\s+(.+))?$");
 
     private readonly Dictionary<string, PrimitiveTypeMetadata> _primitiveTypeCache = new()
     {
@@ -90,8 +98,8 @@ public class MsgParser
                     else
                     {
                         var match = ConstantFieldPattern.Match(line);
-                        string type, identifier, value, arrayIndex = "";
-                        bool isArray = false, isUpperBounded = false;
+                        string type, identifier, value, arrayIndex = "", elementIndex = "";
+                        bool isArray = false, isUpperBounded = false, isElementBounded = false;
                         if (match.Success)
                         {
                             type = match.Groups[1].Value;
@@ -121,16 +129,22 @@ public class MsgParser
                                 }
 
                                 type = match.Groups[1].Value;
-                                arrayIndex = match.Groups[3].Value;
-                                isUpperBounded = arrayIndex.Length > 0;
-                                identifier = match.Groups[4].Value;
-                                value = match.Groups[6].Value.Trim();
+                                elementIndex = match.Groups[3].Value;
+                                isElementBounded = elementIndex.Length > 0;
+                                arrayIndex = match.Groups[6].Value;
+                                isUpperBounded = match.Groups[5].Length > 0;
+                                identifier = match.Groups[7].Value;
+                                value = match.Groups[9].Value.Trim();
                             }
                         }
 
                         var inlineComment = ExtractInlineComment(ref value);
-                        yield return new FieldDeclaration(type, identifier, value, isArray,
-                            string.IsNullOrEmpty(arrayIndex) ? null : int.Parse(arrayIndex), inlineComment, isUpperBounded);
+                        yield return new FieldDeclaration(
+                            type, identifier, value, isArray,
+                            string.IsNullOrEmpty(arrayIndex) ? null : int.Parse(arrayIndex),
+                            inlineComment,
+                            isUpperBounded,
+                            isElementBounded ? int.Parse(elementIndex) : null);
                     }
                 }
             }
@@ -289,28 +303,6 @@ public class MsgParser
             ExtractFields(package, lines, feedbackStatements),
             ExtractFields(package, lines, resultStatements));
     }
-
-    public ActionMetadata ParseAction(string package, string subFolder, string name, Stream inputStream, bool leaveOpen = false)
-    {
-        using var reader = new StreamReader(inputStream, Encoding.UTF8, true, 1024, leaveOpen: leaveOpen);
-        var statements = Parse(reader).ToArray();
-        return ParseAction(package, subFolder, name, statements);
-    }
-
-    public ActionMetadata ParseAction(string package, string subFolder, string name, string inputString)
-        => ParseAction(package, subFolder, name, ReadStatements(inputString, package, subFolder, name));
-
-    public ServiceMetadata ParseService(string package, string subFolder, string name, Stream inputStream, bool leaveOpen = false)
-        => ParseService(package, subFolder, name, ReadStatements(inputStream, leaveOpen, package, subFolder, name));
-
-    public ServiceMetadata ParseService(string package, string subFolder, string name, string inputString)
-        => ParseService(package, subFolder, name, ReadStatements(inputString, package, subFolder, name));
-
-    public MessageMetadata ParseMessage(string package, string subFolder, string name, Stream inputStream, bool leaveOpen = false)
-        => ParseMessage(package, subFolder, name, ReadStatements(inputStream, leaveOpen, package, subFolder, name));
-
-    public MessageMetadata ParseMessage(string package, string subFolder, string name, string inputString)
-        => ParseMessage(package, subFolder, name, ReadStatements(inputString, package, subFolder, name));
 
     public ComplexTypeMetadata Parse(string package, string name, string inputString, string? subFolder = null)
     {
