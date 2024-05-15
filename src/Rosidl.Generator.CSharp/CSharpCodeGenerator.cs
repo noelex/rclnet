@@ -531,10 +531,10 @@ public class CSharpCodeGenerator
         foreach (var f in fields)
         {
             if (f.Type is ComplexTypeMetadata cm &&
-                !packages.ContainsKey(cm.Package) &&
-                !missingDependencies.Contains(cm.Package))
+                !packages.ContainsKey(cm.Id.Package) &&
+                !missingDependencies.Contains(cm.Id.Package))
             {
-                missingDependencies.Add(cm.Package);
+                missingDependencies.Add(cm.Id.Package);
             }
         }
     }

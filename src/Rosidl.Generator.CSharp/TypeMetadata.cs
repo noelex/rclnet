@@ -17,6 +17,14 @@ public enum PrimitiveTypes
     WString
 }
 
+public record MessageIdentifier(string Package, string? SubFolder, string Name)
+{
+    public override string ToString()
+    {
+        return SubFolder == null ? $"{Package}/{Name}" : $"{Package}/{SubFolder}/{Name}";
+    }
+}
+
 public abstract record TypeMetadata;
 
 public record PrimitiveTypeMetadata(PrimitiveTypes ValueType, int? MaxLength) : TypeMetadata
@@ -33,62 +41,52 @@ public record ArrayTypeMetadata(
     public override string ToString() => IsUpperBounded ? $"{ElementType}[<={Length}]" : $"{ElementType}[{Length}]";
 }
 
-public record ComplexTypeMetadata(string Package, string SubFolder, string Name) : TypeMetadata
+public record ComplexTypeMetadata(MessageIdentifier Id) : TypeMetadata
 {
     public override string ToString()
     {
-        return string.IsNullOrEmpty(SubFolder) ?
-            $"{Package}/{Name}" : $"{Package}/{SubFolder}/{Name}";
+        return Id.ToString();
     }
 }
 
 public record MessageMetadata(
-    string Package,
-    string SubFolder,
-    string Name,
+    MessageIdentifier Id,
     string[] Comments,
     IReadOnlyCollection<FieldMetadata> Fields
-) : ComplexTypeMetadata(Package, SubFolder, Name)
+) : ComplexTypeMetadata(Id)
 {
     public override string ToString()
     {
-        return string.IsNullOrEmpty(SubFolder) ?
-            $"{Package}/{Name}" : $"{Package}/{SubFolder}/{Name}";
+        return base.ToString();
     }
 
-    public ComplexTypeMetadata Ref() => new(Package, SubFolder, Name);
+    public ComplexTypeMetadata Ref() => new(Id);
 }
 
 public record ServiceMetadata(
-    string Package,
-    string SubFolder,
-    string Name,
+    MessageIdentifier Id,
     string[] Comments,
     IReadOnlyCollection<FieldMetadata> RequestFields,
     IReadOnlyCollection<FieldMetadata> ResponseFields,
     IReadOnlyCollection<FieldMetadata> EventFields
-) : ComplexTypeMetadata(Package, SubFolder, Name)
+) : ComplexTypeMetadata(Id)
 {
     public override string ToString()
     {
-        return string.IsNullOrEmpty(SubFolder) ?
-            $"{Package}/{Name}" : $"{Package}/{SubFolder}/{Name}";
+        return base.ToString();
     }
 }
 
 public record ActionMetadata(
-    string Package,
-    string SubFolder,
-    string Name,
+    MessageIdentifier Id,
     string[] Comments,
     IReadOnlyCollection<FieldMetadata> GoalFields,
     IReadOnlyCollection<FieldMetadata> FeedbackFields,
     IReadOnlyCollection<FieldMetadata> ResultFields
-) : ComplexTypeMetadata(Package, SubFolder, Name)
+) : ComplexTypeMetadata(Id)
 {
     public override string ToString()
     {
-        return string.IsNullOrEmpty(SubFolder) ?
-            $"{Package}/{Name}" : $"{Package}/{SubFolder}/{Name}";
+        return base.ToString();
     }
 }

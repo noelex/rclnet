@@ -123,18 +123,18 @@ public class MessageBuildContext
         PrivStructSequenceName = Options.ResolveMessagePrivStructSequenceName(this, Metadata);
         PrivStructSequenceNameFullyQualified = GetMessagePrivStructSequenceReferenceName(Metadata);
 
-        GeneratorLibraryName = Metadata.Package + "__rosidl_generator_c";
-        TypeSupportLibraryName = Metadata.Package + "__rosidl_typesupport_c";
+        GeneratorLibraryName = Metadata.Id.Package + "__rosidl_generator_c";
+        TypeSupportLibraryName = Metadata.Id.Package + "__rosidl_typesupport_c";
     }
 
     public string GetNativeMessageFunctionSymbol(string function)
     {
-        return $"{Metadata.Package}__{Metadata.SubFolder}__{Metadata.Name}__{function}";
+        return $"{Metadata.Id.Package}__{Metadata.Id.SubFolder}__{Metadata.Id.Name}__{function}";
     }
 
     public string GetNativeSequenceFunctionSymbol(string function)
     {
-        return $"{Metadata.Package}__{Metadata.SubFolder}__{Metadata.Name}__Sequence__{function}";
+        return $"{Metadata.Id.Package}__{Metadata.Id.SubFolder}__{Metadata.Id.Name}__Sequence__{function}";
     }
 
 
@@ -145,8 +145,8 @@ public class MessageBuildContext
     /// <returns></returns>
     private string GetNamespace(ComplexTypeMetadata metadata)
     {
-        var ns = Options.ResolveNamespace(metadata.Package);
-        return $"{ns}.{Options.ResolvePackageName(metadata.Package)}";
+        var ns = Options.ResolveNamespace(metadata.Id.Package);
+        return $"{ns}.{Options.ResolvePackageName(metadata.Id.Package)}";
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public class MessageBuildContext
             _ => throw new NotImplementedException()
         };
 
-        var ns = metadata.Package is null
+        var ns = metadata.Id.Package is null
             ? GetNamespace(Metadata) : GetNamespace(metadata);
 
         return $"global::{ns}.{className}";

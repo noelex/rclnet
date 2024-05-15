@@ -30,8 +30,31 @@ record FieldDeclaration(
     bool IsArray,
     int? ArrayLength,
     string? InlineComment,
-    bool IsUpperBounded,
-    int? ElementBoundSize) : Statement;
+    bool IsArrayBounded,
+    int? ElementBoundSize,
+    bool IsConstant) : Statement
+{
+    public override string ToString()
+    {
+        var type = Type;
+        if (ElementBoundSize != null)
+        {
+            type += $"<={ElementBoundSize}";
+        }
+        if (IsArray)
+        {
+            if (ArrayLength == null)
+            {
+                type += "[]";
+            }
+            else
+            {
+                type += $"[{(IsArrayBounded ? "<=" : "")}{ArrayLength}]";
+            }
+        }
+        return string.IsNullOrWhiteSpace(Value) ? $"{type} {Identifier}" : $"{type} {Identifier}{(IsConstant ? " =" : "")} {Value}";
+    }
+}
 
 public class MsgParser
 {
@@ -99,12 +122,13 @@ public class MsgParser
                     {
                         var match = ConstantFieldPattern.Match(line);
                         string type, identifier, value, arrayIndex = "", elementIndex = "";
-                        bool isArray = false, isUpperBounded = false, isElementBounded = false;
+                        bool isArray = false, isArrayBounded = false, isElementBounded = false, isConstant = false;
                         if (match.Success)
                         {
                             type = match.Groups[1].Value;
                             identifier = match.Groups[2].Value;
                             value = match.Groups[3].Value.Trim();
+                            isConstant = true;
                         }
                         else
                         {
@@ -115,7 +139,7 @@ public class MsgParser
                                 type = match.Groups[1].Value;
                                 identifier = match.Groups[5].Value;
                                 value = match.Groups[7].Value.Trim();
-                                isUpperBounded = !string.IsNullOrEmpty(match.Groups[3].Value);
+                                isArrayBounded = !string.IsNullOrEmpty(match.Groups[3].Value);
                                 arrayIndex = match.Groups[4].Value;
                                 isArray = !string.IsNullOrEmpty(match.Groups[2].Value);
                             }
@@ -131,8 +155,11 @@ public class MsgParser
                                 type = match.Groups[1].Value;
                                 elementIndex = match.Groups[3].Value;
                                 isElementBounded = elementIndex.Length > 0;
+
+                                isArray = match.Groups[4].Length > 0;
+                                isArrayBounded = match.Groups[5].Length > 0;
                                 arrayIndex = match.Groups[6].Value;
-                                isUpperBounded = match.Groups[5].Length > 0;
+
                                 identifier = match.Groups[7].Value;
                                 value = match.Groups[9].Value.Trim();
                             }
@@ -143,8 +170,9 @@ public class MsgParser
                             type, identifier, value, isArray,
                             string.IsNullOrEmpty(arrayIndex) ? null : int.Parse(arrayIndex),
                             inlineComment,
-                            isUpperBounded,
-                            isElementBounded ? int.Parse(elementIndex) : null);
+                            isArrayBounded,
+                            isElementBounded ? int.Parse(elementIndex) : null,
+                            isConstant);
                     }
                 }
             }
@@ -196,19 +224,19 @@ public class MsgParser
         return inlineComment?.Trim();
     }
 
-    private static Statement[] ReadStatements(Stream stream, bool leaveOpen, string package, string? subfolder, string name)
+    private static Statement[] ReadStatements(Stream stream, bool leaveOpen, MessageIdentifier id)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8, true, 1024, leaveOpen: leaveOpen);
-        return ReadStatements(reader, package, subfolder, name);
+        return ReadStatements(reader, id);
     }
 
-    private static Statement[] ReadStatements(string input, string package, string? subfolder, string name)
+    private static Statement[] ReadStatements(string input, MessageIdentifier id)
     {
         using var reader = new StringReader(input);
-        return ReadStatements(reader, package, subfolder, name);
+        return ReadStatements(reader, id);
     }
 
-    private static Statement[] ReadStatements(TextReader input, string package, string? subfolder, string name)
+    private static Statement[] ReadStatements(TextReader input, MessageIdentifier id)
     {
         var statements = Parse(input).ToArray();
 
@@ -222,23 +250,22 @@ public class MsgParser
 
         if (sb.Length > 0)
         {
-            var msgName = string.IsNullOrEmpty(subfolder) ? $"{package}/{name}" : $"{package}/{subfolder}/{name}";
-            throw new FormatException($"Unable to parse '{msgName}': {sb}");
+            throw new FormatException($"Unable to parse '{id}': {sb}");
         }
 
         return statements;
     }
 
-    private MessageMetadata ParseMessage(string package, string subFolder, string name, Statement[] lines)
+    private MessageMetadata ParseMessage(MessageIdentifier id, Statement[] lines)
     {
         if (lines.OfType<Seperator>().Any())
             throw new FormatException("Separator is not allowed in message definition.");
 
         var fileComments = ExtractFileComments(lines);
-        return new(package, subFolder, name, fileComments, ExtractFields(package, lines, lines.OfType<FieldDeclaration>()));
+        return new(id, fileComments, ExtractFields(id, lines, lines.OfType<FieldDeclaration>()));
     }
 
-    private ServiceMetadata ParseService(string package, string subFolder, string name, Statement[] lines)
+    private ServiceMetadata ParseService(MessageIdentifier id, Statement[] lines)
     {
         var seperators = lines.OfType<Seperator>();
         if (seperators.Count() != 1)
@@ -254,13 +281,13 @@ public class MsgParser
         var requestStatements = lines[0..sepIndex];
         var responseStatements = lines[(sepIndex + 1)..];
 
-        return new(package, subFolder, name, fileComments,
-            ExtractFields(package, lines, requestStatements),
-            ExtractFields(package, lines, responseStatements),
-            EmitServiceEventFields(package, subFolder, name));
+        return new(id, fileComments,
+            ExtractFields(id, lines, requestStatements),
+            ExtractFields(id, lines, responseStatements),
+            EmitServiceEventFields(id));
     }
 
-    internal IReadOnlyCollection<FieldMetadata> EmitServiceEventFields(string package, string subdir, string name)
+    internal IReadOnlyCollection<FieldMetadata> EmitServiceEventFields(MessageIdentifier id)
     {
         var statements = ReadStatements($"""
             # Event info
@@ -270,18 +297,18 @@ public class MsgParser
             # The actual request content sent or received
             # This field is only set if the event type is REQUEST_SENT or REQUEST_RECEIVED,
             # and the introspection feature is configured to include payload data.
-            {package}/{subdir}/{name}_Request[<=1] request
+            {id}_Request[<=1] request
 
             # The actual response content sent or received
             # This field is only set if the event type is RESPONSE_SENT or RESPONSE_RECEIVED,
             # and the introspection feature is configured to include payload data.
-            {package}/{subdir}/{name}_Response[<=1] response
-            """, package, subdir, name);
-        var msg = ParseMessage(package, subdir, name, statements);
-        return msg.Fields;
+            {id}_Response[<=1] response
+            """, id);
+        var metadata = ParseMessage(id, statements);
+        return metadata.Fields;
     }
 
-    private ActionMetadata ParseAction(string package, string subFolder, string name, Statement[] lines)
+    private ActionMetadata ParseAction(MessageIdentifier id, Statement[] lines)
     {
         var separators = lines.OfType<Seperator>().ToArray();
         if (separators.Length != 2)
@@ -298,39 +325,39 @@ public class MsgParser
         var resultStatements = lines[(sepIndex1 + 1)..sepIndex2];
         var feedbackStatements = lines[(sepIndex2 + 1)..];
 
-        return new(package, subFolder, name, fileComments,
-            ExtractFields(package, lines, goalStatements),
-            ExtractFields(package, lines, feedbackStatements),
-            ExtractFields(package, lines, resultStatements));
+        return new(id, fileComments,
+            ExtractFields(id, lines, goalStatements),
+            ExtractFields(id, lines, feedbackStatements),
+            ExtractFields(id, lines, resultStatements));
     }
 
     public ComplexTypeMetadata Parse(string package, string name, string inputString, string? subFolder = null)
     {
-        var statements = ReadStatements(inputString, package, subFolder, name);
+        var statements = ReadStatements(inputString, new(package, subFolder, name));
         var separators = statements.OfType<Seperator>().Count();
         return separators switch
         {
-            0 => ParseMessage(package, subFolder ?? "msg", name, statements),
-            1 => ParseService(package, subFolder ?? "srv", name, statements),
-            2 => ParseAction(package, subFolder ?? "action", name, statements),
+            0 => ParseMessage(new(package, subFolder ?? "msg", name), statements),
+            1 => ParseService(new(package, subFolder ?? "srv", name), statements),
+            2 => ParseAction(new(package, subFolder ?? "action", name), statements),
             _ => throw new FormatException($"Unexpected count of separators. Expecting 0, 1 or 2, received {separators}.")
         };
     }
 
     public ComplexTypeMetadata Parse(string package, string name, Stream inputStream, bool leaveOpen = false, string? subFolder = null)
     {
-        var statements = ReadStatements(inputStream, leaveOpen, package, subFolder, name);
+        var statements = ReadStatements(inputStream, leaveOpen, new(package, subFolder, name));
         var separators = statements.OfType<Seperator>().Count();
         return separators switch
         {
-            0 => ParseMessage(package, subFolder ?? "msg", name, statements),
-            1 => ParseService(package, subFolder ?? "srv", name, statements),
-            2 => ParseAction(package, subFolder ?? "action", name, statements),
+            0 => ParseMessage(new(package, subFolder ?? "msg", name), statements),
+            1 => ParseService(new(package, subFolder ?? "srv", name), statements),
+            2 => ParseAction(new(package, subFolder ?? "action", name), statements),
             _ => throw new FormatException($"Unexpected count of separators. Expecting 0, 1 or 2, received {separators}.")
         };
     }
 
-    private IReadOnlyCollection<FieldMetadata> ExtractFields(string package, Statement[] lines, IEnumerable<Statement> statements)
+    private IReadOnlyCollection<FieldMetadata> ExtractFields(MessageIdentifier id, Statement[] lines, IEnumerable<Statement> statements)
     {
         var list = new List<FieldMetadata>();
         foreach (var field in statements.OfType<FieldDeclaration>())
@@ -338,20 +365,20 @@ public class MsgParser
             var comments = ExtractFieldComments(lines, field);
             try
             {
-                list.Add(CreateField(package, field, comments));
+                list.Add(CreateField(id, field, comments));
             }
             catch (Exception e)
             {
-                throw new FormatException($"Unable to parse field defined as '{field}' in '{package}': " + e.Message, e);
+                throw new FormatException($"Unable to parse field defined as '{field}' in '{id}': " + e.Message, e);
             }
         }
 
         return new ReadOnlyCollection<FieldMetadata>(list);
     }
 
-    private FieldMetadata CreateField(string package, FieldDeclaration declaration, string[] comments)
+    private FieldMetadata CreateField(MessageIdentifier id, FieldDeclaration declaration, string[] comments)
     {
-        var type = CreateFieldType(package, declaration);
+        var type = CreateFieldType(id, declaration);
         if (IsConstantField(declaration.Identifier))
         {
             if (type is PrimitiveTypeMetadata p)
@@ -366,32 +393,34 @@ public class MsgParser
             return CreateVariableField(type, declaration, comments);
         }
 
-        throw new FormatException($"Invalid field identifier '{declaration.Identifier}'.");
+        throw new FormatException($"Invalid field {(declaration.IsConstant ? "constant" : "variable")} identifier '{declaration.Identifier}'.");
     }
 
-    private TypeMetadata CreateFieldType(string package, FieldDeclaration declaration)
+    private TypeMetadata CreateFieldType(MessageIdentifier id, FieldDeclaration declaration)
     {
         TypeMetadata metadata;
 
         // Special case for string with upper boundary
-        if (declaration.IsUpperBounded && declaration.Type == "string" && !declaration.IsArray)
+        if (declaration.Type == "string" && declaration.ElementBoundSize != null)
         {
-            return new PrimitiveTypeMetadata(PrimitiveTypes.String, declaration.ArrayLength);
+            var elementType = new PrimitiveTypeMetadata(PrimitiveTypes.String, declaration.ElementBoundSize);
+            return declaration.IsArray ? new ArrayTypeMetadata(elementType, declaration.ArrayLength, declaration.IsArrayBounded) : elementType;
         }
-        else if (declaration.IsUpperBounded && declaration.Type == "wstring" && !declaration.IsArray)
+        else if (declaration.Type == "wstring" && declaration.ElementBoundSize != null)
         {
-            return new PrimitiveTypeMetadata(PrimitiveTypes.WString, declaration.ArrayLength);
+            var elementType = new PrimitiveTypeMetadata(PrimitiveTypes.WString, declaration.ElementBoundSize);
+            return declaration.IsArray ? new ArrayTypeMetadata(elementType, declaration.ArrayLength, declaration.IsArrayBounded) : elementType;
         }
 
         if (!_primitiveTypeCache.TryGetValue(declaration.Type, out var t))
         {
             var fullName = declaration.Type.Contains('/')
-                ? declaration.Type : $"{package}/msg/{declaration.Type}";
+                ? declaration.Type : $"{id.Package}/msg/{declaration.Type}";
             if (!_complexTypeCache.TryGetValue(fullName, out var type))
             {
                 var parts = fullName.Split('/');
                 var subdir = parts.Length == 3 ? parts[1] : "msg";
-                type = new ComplexTypeMetadata(parts[0], subdir, parts[^1]);
+                type = new ComplexTypeMetadata(new MessageIdentifier(parts[0], subdir, parts[^1]));
                 _complexTypeCache[fullName] = type;
             }
 
@@ -402,7 +431,7 @@ public class MsgParser
             metadata = t;
         }
 
-        return declaration.IsArray ? new ArrayTypeMetadata(metadata, declaration.ArrayLength, declaration.IsUpperBounded) : metadata;
+        return declaration.IsArray ? new ArrayTypeMetadata(metadata, declaration.ArrayLength, declaration.IsArrayBounded) : metadata;
     }
 
     private ConstantFieldMetadata CreateConstantField(PrimitiveTypeMetadata typeHint, FieldDeclaration declaration, string[] comments)
@@ -435,7 +464,7 @@ public class MsgParser
             PrimitiveTypes.UInt64 => value.StartsWith("0x") ? ulong.Parse(value[2..], NumberStyles.HexNumber) : ulong.Parse(value),
             PrimitiveTypes.Float32 => float.Parse(value),
             PrimitiveTypes.Float64 => double.Parse(value),
-            PrimitiveTypes.String or PrimitiveTypes.WString => ParseString(value),
+            PrimitiveTypes.String or PrimitiveTypes.WString => ParseString(value, typeHint.MaxLength),
             PrimitiveTypes.Bool when value is "0" or "false" => false,
             PrimitiveTypes.Bool when value is "1" or "true" => true,
             PrimitiveTypes.Bool => throw new FormatException($"Unexpected boolean value '{value}'."),
@@ -470,11 +499,25 @@ public class MsgParser
             var ret = p.ValueType is not PrimitiveTypes.String and not PrimitiveTypes.WString ?
                 value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(x => ParseValue(p, x.Trim())).ToArray()
-                : ExtractStringTokens(value).Select(x => ParseString(x)).ToArray();
+                : ExtractStringTokens(value).Select(x => ParseString(x, p.MaxLength)).ToArray();
 
-            if (typeHint.Length != null && typeHint.Length != ret.Length)
+            // Check size of the array
+            if (typeHint.Length != null)
             {
-                throw new FormatException($"Default value of type '{typeHint}' requires {typeHint.Length} elements, but {ret.Length} found.");
+                if (!typeHint.IsUpperBounded)
+                {
+                    if (typeHint.Length != ret.Length)
+                    {
+                        throw new FormatException($"Default value of type '{typeHint}' requires {typeHint.Length} elements, but {ret.Length} found.");
+                    }
+                }
+                else
+                {
+                    if (ret.Length > typeHint.Length)
+                    {
+                        throw new FormatException($"Length of the default value of type '{typeHint}' exceeds the limit of {typeHint.Length}.");
+                    }
+                }
             }
 
             return ret;
@@ -536,7 +579,7 @@ public class MsgParser
         }
     }
 
-    private static string ParseString(string input)
+    private static string ParseString(string input, int? maxLength)
     {
         char delim;
         if (input[0] is '\'' && input[^1] is '\'')
@@ -552,7 +595,7 @@ public class MsgParser
             throw new FormatException($"Invalid string literal with unexpected delimiter: {input}");
         }
 
-        return input[1..^1]
+        var result = input[1..^1]
             .Replace(@"\t", "\t")
             .Replace(@"\n", "\n")
             .Replace(@"\r", "\r")
@@ -560,6 +603,13 @@ public class MsgParser
             .Replace(@"\b", "\b")
             .Replace(@"\\", "\\")
             .Replace($@"\{delim}", delim.ToString());
+
+        if (maxLength != null && result.Length > maxLength)
+        {
+            throw new FormatException($"Length of the string '{result}' exceeds the limit of {maxLength}.");
+        }
+
+        return result;
     }
 
     private static bool IsConstantField(string identifier)

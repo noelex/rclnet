@@ -27,13 +27,13 @@ public class GeneratorOptions
 
     public Func<ServiceBuildContext, ServiceMetadata, string> ResolveServiceClassName { get; set; } = (ctx, s) => ctx.Type switch
     {
-        ServiceType.Plain => s.Name + "Service",
+        ServiceType.Plain => s.Id.Name + "Service",
         ServiceType.ActionSendGoal => ((ActionBuildContext)ctx.ParentContext!).ClassName + "SendGoalService",
         ServiceType.ActionGetResult => ((ActionBuildContext)ctx.ParentContext!).ClassName + "GetResultService",
         _ => throw new NotImplementedException()
     };
 
-    public Func<ActionBuildContext, ActionMetadata, string> ResolveActionClassName { get; set; } = (ctx, s) => s.Name + "Action";
+    public Func<ActionBuildContext, ActionMetadata, string> ResolveActionClassName { get; set; } = (ctx, s) => s.Id.Name + "Action";
 
     public Func<MessageBuildContext, ComplexTypeMetadata, string> ResolveMessageClassName { get; set; } = (ctx, metadata) =>
         {
@@ -45,15 +45,15 @@ public class GeneratorOptions
                 {
                     var parentContext = (ServiceBuildContext)ctx.ParentContext!;
 
-                    if (metadata.Package == parentContext.Metadata.Package
-                        && metadata.SubFolder == parentContext.Metadata.SubFolder
-                        && metadata.Name.StartsWith(parentContext.Metadata.Name))
+                    if (metadata.Id.Package == parentContext.Metadata.Id.Package
+                        && metadata.Id.SubFolder == parentContext.Metadata.Id.SubFolder
+                        && metadata.Id.Name.StartsWith(parentContext.Metadata.Id.Name))
                     {
-                        if (metadata.Name.LastIndexOf("_Request") == parentContext.Metadata.Name.Length)
+                        if (metadata.Id.Name.LastIndexOf("_Request") == parentContext.Metadata.Id.Name.Length)
                         {
                             return parentContext.ClassName + "Request";
                         }
-                        else if (metadata.Name.LastIndexOf("_Response") == parentContext.Metadata.Name.Length)
+                        else if (metadata.Id.Name.LastIndexOf("_Response") == parentContext.Metadata.Id.Name.Length)
                         {
                             return parentContext.ClassName + "Response";
                         }
@@ -64,11 +64,11 @@ public class GeneratorOptions
                    ctx.ParentContext is ActionBuildContext)
                 {
                     var parentContext = (ActionBuildContext)ctx.ParentContext!;
-                    if (metadata.Package == parentContext.Metadata.Package
-                        && metadata.SubFolder == parentContext.Metadata.SubFolder
-                        && metadata.Name.StartsWith(parentContext.Metadata.Name))
+                    if (metadata.Id.Package == parentContext.Metadata.Id.Package
+                        && metadata.Id.SubFolder == parentContext.Metadata.Id.SubFolder
+                        && metadata.Id.Name.StartsWith(parentContext.Metadata.Id.Name))
                     {
-                        if (metadata.Name.LastIndexOf("_Feedback") == parentContext.Metadata.Name.Length)
+                        if (metadata.Id.Name.LastIndexOf("_Feedback") == parentContext.Metadata.Id.Name.Length)
                         {
                             return parentContext.ClassName + "Feedback";
                         }
@@ -79,20 +79,20 @@ public class GeneratorOptions
                     serviceContext.ParentContext is ActionBuildContext actionContext)
                 {
                     var parentContext = actionContext;
-                    if (metadata.Package == parentContext.Metadata.Package
-                        && metadata.SubFolder == parentContext.Metadata.SubFolder
-                        && metadata.Name.StartsWith(parentContext.Metadata.Name))
+                    if (metadata.Id.Package == parentContext.Metadata.Id.Package
+                        && metadata.Id.SubFolder == parentContext.Metadata.Id.SubFolder
+                        && metadata.Id.Name.StartsWith(parentContext.Metadata.Id.Name))
                     {
                         if (ctx.Type == MessageType.ServiceResponse)
                         {
-                            if (metadata.Name.LastIndexOf("_Result") == parentContext.Metadata.Name.Length)
+                            if (metadata.Id.Name.LastIndexOf("_Result") == parentContext.Metadata.Id.Name.Length)
                             {
                                 return parentContext.ClassName + "Result";
                             }
                         }
                         else if (ctx.Type == MessageType.ServiceRequest)
                         {
-                            if (metadata.Name.LastIndexOf("_Goal") == parentContext.Metadata.Name.Length)
+                            if (metadata.Id.Name.LastIndexOf("_Goal") == parentContext.Metadata.Id.Name.Length)
                             {
                                 return parentContext.ClassName + "Goal";
                             }
@@ -104,7 +104,7 @@ public class GeneratorOptions
             return metadata is MessageMetadata
             ? ctx.Type switch
             {
-                MessageType.Plain => metadata.Name,
+                MessageType.Plain => metadata.Id.Name,
                 MessageType.ServiceRequest => ((ServiceBuildContext)ctx.ParentContext!).ClassName + "Request",
                 MessageType.ServiceResponse => ((ServiceBuildContext)ctx.ParentContext!).ClassName + "Response",
                 MessageType.ServiceEvent => ((ServiceBuildContext)ctx.ParentContext!).ClassName + "Event",
@@ -114,7 +114,7 @@ public class GeneratorOptions
                 MessageType.ActionFeedbackMessage => ((ActionBuildContext)ctx.ParentContext!).ClassName + "FeedbackMessage",
                 _ => throw new NotImplementedException()
             }
-            : metadata.Name;
+            : metadata.Id.Name;
         };
 
     public Func<MessageBuildContext, ComplexTypeMetadata, string> ResolveMessagePrivStructName { get; set; } = (ctx, metadata) => "Priv";

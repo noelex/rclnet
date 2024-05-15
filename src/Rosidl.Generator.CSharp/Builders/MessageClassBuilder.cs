@@ -441,9 +441,24 @@ public class MessageClassBuilder
                 {
                     prop.SetBody = (w, e) =>
                     {
+                        var isArray = metadata.Type is ArrayTypeMetadata;
                         w.WriteLine(string.Format("""
-                            {0} = value.Length <= {1} ? value : throw new global::System.ArgumentException("Size of the array or string '{2}' must be less or equal than {1}.");
-                            """, backingFieldName, size, propName));
+                            {0} = value.Length <= {1} ? value : throw new global::System.ArgumentException("Size of the {3} '{2}' must be less or equal than {1}.");
+                            """, backingFieldName, size, propName, isArray ? "array" : "string"));
+
+                        // Bound check for bounded strings
+                        if (metadata.Type is ArrayTypeMetadata arr &&
+                            arr.ElementType is PrimitiveTypeMetadata el &&
+                            el.ValueType is PrimitiveTypes.String or PrimitiveTypes.WString &&
+                            el.MaxLength != null)
+                        {
+                            w.WriteLine(string.Format("for (int __i = 0; __i < value.Length; __i++)"));
+                            w.WriteLine("{");
+                            w.WriteLine(string.Format("    if (value[__i].Length > {0}) " +
+                                "throw new global::System.ArgumentException($\"Length of the string at index {{__i}} in the given array exceeds the limit of {0}.\");",
+                                el.MaxLength));
+                            w.WriteLine("}");
+                        }
                     };
                 }
             }
@@ -613,7 +628,7 @@ public class MessageClassBuilder
                 return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Message);
 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.TypeSupportLibraryName}}", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__{{_context.Metadata.Package}}__{{_context.Metadata.SubFolder}}__{{_context.Metadata.Name}}")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.TypeSupportLibraryName}}", EntryPoint = "rosidl_typesupport_c__get_message_type_support_handle__{{_context.Metadata.Id.Package}}__{{_context.Metadata.Id.SubFolder}}__{{_context.Metadata.Id.Name}}")]
                 static extern nint _PInvoke();
                 """);
         };

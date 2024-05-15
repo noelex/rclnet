@@ -40,7 +40,7 @@ public class ServiceClassBuilder
             m.Attributes.Add(Attributes.GeneratedCode);
         }
 
-        var items= new CSharpElement[]
+        var items = new CSharpElement[]
         {
             cls,
             new MessageClassBuilder(_context.Request).Build(null, isInternal),
@@ -94,7 +94,7 @@ public class ServiceClassBuilder
                 return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Service);
 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.Request.TypeSupportLibraryName}}", EntryPoint = "rosidl_typesupport_c__get_service_type_support_handle__{{_context.Metadata.Package}}__{{_context.Metadata.SubFolder}}__{{_context.Metadata.Name}}")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.Request.TypeSupportLibraryName}}", EntryPoint = "rosidl_typesupport_c__get_service_type_support_handle__{{_context.Metadata.Id.Package}}__{{_context.Metadata.Id.SubFolder}}__{{_context.Metadata.Id.Name}}")]
                 static extern nint _PInvoke();
                 """);
         };
@@ -153,15 +153,15 @@ public class ServiceBuildContext
         ClassName = options.ResolveServiceClassName(this, metadata);
 
         Request = new(
-            new(metadata.Package, metadata.SubFolder, metadata.Name + "_Request", metadata.Comments, metadata.RequestFields),
+            new(metadata.Id with { Name = metadata.Id.Name + "_Request" }, metadata.Comments, metadata.RequestFields),
             options, MessageType.ServiceRequest, this);
 
         Response = new(
-            new(metadata.Package, metadata.SubFolder, metadata.Name + "_Response", metadata.Comments, metadata.ResponseFields),
+            new(metadata.Id with { Name = metadata.Id.Name + "_Response" }, metadata.Comments, metadata.ResponseFields),
             options, MessageType.ServiceResponse, this);
 
         Event = new(
-            new(metadata.Package, metadata.SubFolder, metadata.Name + "_Event", metadata.Comments, metadata.EventFields),
+            new(metadata.Id with { Name = metadata.Id.Name + "_Event" }, metadata.Comments, metadata.EventFields),
             options, MessageType.ServiceEvent, this);
     }
 }

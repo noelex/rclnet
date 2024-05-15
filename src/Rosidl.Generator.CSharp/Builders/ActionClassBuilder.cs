@@ -86,7 +86,7 @@ public class ActionClassBuilder
                 return new global::Rosidl.Runtime.TypeSupportHandle(_PInvoke(), global::Rosidl.Runtime.HandleType.Action);
 
                 [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
-                [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.Goal.TypeSupportLibraryName}}", EntryPoint = "rosidl_typesupport_c__get_action_type_support_handle__{{_context.Metadata.Package}}__{{_context.Metadata.SubFolder}}__{{_context.Metadata.Name}}")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.Goal.TypeSupportLibraryName}}", EntryPoint = "rosidl_typesupport_c__get_action_type_support_handle__{{_context.Metadata.Id.Package}}__{{_context.Metadata.Id.SubFolder}}__{{_context.Metadata.Id.Name}}")]
                 static extern nint _PInvoke();
                 """);
         };
@@ -112,8 +112,8 @@ public class ActionClassBuilder
 
 public class ActionBuildContext
 {
-    private static readonly ComplexTypeMetadata UuidType = new ComplexTypeMetadata("unique_identifier_msgs", "msg", "UUID");
-    private static readonly ComplexTypeMetadata TimeType = new ComplexTypeMetadata("builtin_interfaces", "msg", "Time");
+    private static readonly ComplexTypeMetadata UuidType = new ComplexTypeMetadata(new("unique_identifier_msgs", "msg", "UUID"));
+    private static readonly ComplexTypeMetadata TimeType = new ComplexTypeMetadata(new("builtin_interfaces", "msg", "Time"));
 
     public MessageBuildContext Goal { get; }
 
@@ -140,15 +140,15 @@ public class ActionBuildContext
         ClassName = options.ResolveActionClassName(this, metadata);
 
         Goal = new(
-            new(metadata.Package, metadata.SubFolder, metadata.Name + "_Goal", metadata.Comments, metadata.GoalFields),
+            new(metadata.Id with { Name = metadata.Id.Name + "_Goal" }, metadata.Comments, metadata.GoalFields),
             options, MessageType.ActionGoal, this);
 
         Result = new(
-            new(metadata.Package, metadata.SubFolder, metadata.Name + "_Result", metadata.Comments, metadata.ResultFields),
+            new(metadata.Id with { Name = metadata.Id.Name + "_Result" }, metadata.Comments, metadata.ResultFields),
             options, MessageType.ActionResult, this);
 
         Feedback = new(
-            new(metadata.Package, metadata.SubFolder, metadata.Name + "_Feedback", metadata.Comments, metadata.FeedbackFields),
+            new(metadata.Id with { Name = metadata.Id.Name + "_Feedback" }, metadata.Comments, metadata.FeedbackFields),
             options, MessageType.ActionFeedback, this);
 
         FeedbackMessage = GenerateFeedbackMessage();
@@ -159,7 +159,7 @@ public class ActionBuildContext
     public MessageBuildContext GenerateFeedbackMessage()
     {
         return new(
-            new(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_FeedbackMessage", Metadata.Comments,
+            new(Metadata.Id with { Name = Metadata.Id.Name + "_FeedbackMessage" }, Metadata.Comments,
             new VariableFieldMetadata[]
             {
                 new(UuidType, "goal_id", null, null, Array.Empty<string>()),
@@ -170,8 +170,9 @@ public class ActionBuildContext
 
     private ServiceBuildContext GenerateSendGoal(MsgParser parser)
     {
+        var id = Metadata.Id with { Name = Metadata.Id.Name + "_SendGoal" };
         return new ServiceBuildContext(
-            new ServiceMetadata(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_SendGoal", Metadata.Comments,
+            new ServiceMetadata(id, Metadata.Comments,
             new[] {
                 new VariableFieldMetadata(UuidType, "goal_id", null, null, Array.Empty<string>()),
                 new VariableFieldMetadata(Goal.Metadata.Ref(), "goal", null, null, Array.Empty<string>())
@@ -180,14 +181,15 @@ public class ActionBuildContext
                 new VariableFieldMetadata(new PrimitiveTypeMetadata(PrimitiveTypes.Bool, null), "accepted", null, null, Array.Empty<string>()),
                 new VariableFieldMetadata(TimeType, "stamp", null, null, Array.Empty<string>())
             },
-            parser.EmitServiceEventFields(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_SendGoal")
+            parser.EmitServiceEventFields(id)
             ), Options, ServiceType.ActionSendGoal, this);
     }
 
     private ServiceBuildContext GenerateGetResult(MsgParser parser)
     {
+        var id = Metadata.Id with { Name = Metadata.Id.Name + "_GetResult" };
         return new ServiceBuildContext(
-            new ServiceMetadata(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_GetResult", Metadata.Comments,
+            new ServiceMetadata(id, Metadata.Comments,
             new[] {
                 new VariableFieldMetadata(UuidType, "goal_id", null,null, Array.Empty<string>())
             },
@@ -195,7 +197,7 @@ public class ActionBuildContext
                 new VariableFieldMetadata(new PrimitiveTypeMetadata(PrimitiveTypes.Int8, null), "status", null, null, Array.Empty<string>()),
                 new VariableFieldMetadata(Result.Metadata.Ref(), "result", null, null, Array.Empty<string>())
             },
-            parser.EmitServiceEventFields(Metadata.Package, Metadata.SubFolder, Metadata.Name + "_GetResult")
+            parser.EmitServiceEventFields(id)
             ), Options, ServiceType.ActionGetResult, this);
     }
 }
