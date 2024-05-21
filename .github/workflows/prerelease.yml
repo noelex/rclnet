@@ -1,7 +1,7 @@
 name: prerelease
 on:
   release:
-    branches: [main, release/*]
+    branches: [main, devel, release/*]
     types:
       - prereleased
 jobs:
