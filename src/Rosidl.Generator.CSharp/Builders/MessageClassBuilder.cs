@@ -40,6 +40,9 @@ public class MessageClassBuilder
         cls.Members.Add(EmitFullConstructor());
         cls.Members.Add(EmitRefConstructor());
 
+        if (_variables.Any())
+            cls.Members.Add(EmitDefaultConstructor());
+
         foreach (var c in EmitConstants())
             cls.Members.Add(c);
 
@@ -353,6 +356,48 @@ public class MessageClassBuilder
                     throw new NotSupportedException();
             }
         }
+    }
+
+    /// <summary>
+    /// Emits the default constructor for a message type.
+    /// </summary>
+    /// <remarks>Creates exact the same output like <see cref="EmitFullConstructor"/> when the message has no variables/arguments.
+    ///  So do not call <see cref="EmitDefaultConstructor"/> in those cases.
+    ///  Otherwise constructors without arguments are generated twice.</remarks>
+    /// <returns>The constructed <see cref="CSharpFreeMember"/>.</returns>
+    private CSharpFreeMember EmitDefaultConstructor()
+    {
+        var builder = new StringBuilder();
+        builder
+            .AppendLine($"""
+            /// <summary>
+            /// Create a new instance of <see cref="{_context.ClassName}"/> with fields initialized to default values.
+            /// </summary>
+            """)
+            .AppendLine($"""
+            [{Attributes.DebuggerNonUserCode}]
+            [{Attributes.GeneratedCode}]
+            """);
+
+        builder
+            .AppendFormat("public {0}(){1}", _context.ClassName, _variables.Any() ? string.Empty : " { }")
+            .AppendLine();
+
+        if (_variables.Any())
+        {
+            builder.AppendLine("{");
+
+            for (var i = 0; i < _variables.Length; i++)
+            {
+                builder
+                    .AppendFormat("    {0} = {1};", _variables[i].PropertyName, _variables[i].DefaultValueLiteral)
+                    .AppendLine();
+            }
+
+            builder.AppendLine("}");
+        }
+
+        return new CSharpFreeMember() { Text = builder.ToString() };
     }
 
     private CSharpField[] EmitConstants()
