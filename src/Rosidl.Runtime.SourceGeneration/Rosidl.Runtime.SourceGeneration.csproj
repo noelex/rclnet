@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
-		<LangVersion>11</LangVersion>
+		<LangVersion>13</LangVersion>
 		<IsRoslynComponent>true</IsRoslynComponent>
 		<AnalyzerLanguage>cs</AnalyzerLanguage>
 		<IsPackable>false</IsPackable>
