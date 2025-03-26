@@ -47,6 +47,11 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Setup .NET 9.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.0.x
+
       - name: Build
         working-directory: src/Rcl.NET.Tests
         run: |
@@ -118,6 +123,11 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 8.0.x
+
+      - name: Setup .NET 9.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.0.x
 
       - name: Build
         working-directory: src/Rcl.NET.Tests
