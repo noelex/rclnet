@@ -60,7 +60,7 @@ public static class LoggingExtensions
     public static void LogError(this IRclLogger logger, string? message,
         [CallerFilePath] string file = "", [CallerMemberName] string functionName = "", [CallerLineNumber] int lineNumber = 0)
     {
-        logger.Log(LogSeverity.Debug, message, file, functionName, lineNumber);
+        logger.Log(LogSeverity.Error, message, file, functionName, lineNumber);
     }
 
     /// <summary>
@@ -77,4 +77,3 @@ public static class LoggingExtensions
         logger.Log(LogSeverity.Fatal, message, file, functionName, lineNumber);
     }
 }
-
