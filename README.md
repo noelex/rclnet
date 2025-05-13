@@ -35,6 +35,7 @@ rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowin
 Supported .NET Versions:
 - .NET 7
 - .NET 8
+- .NET 9
 
 Supported ROS 2 Distributions:
 - Iron Irwini
