@@ -9,6 +9,7 @@ jobs:
   ubuntu:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         ros_distribution:
           - foxy
@@ -79,6 +80,7 @@ jobs:
   windows:
     runs-on: windows-latest
     strategy:
+      fail-fast: false
       matrix:
         ros_distribution:
           - foxy
