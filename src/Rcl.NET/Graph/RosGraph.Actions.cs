@@ -35,6 +35,7 @@ public partial class RosGraph : IGraphBuilder
 
         foreach (var action in _actions.Values)
         {
+            offset = 0;
             foreach (var client in _totalActionClients)
             {
                 if (client.Action == action)
