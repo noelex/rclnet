@@ -27,6 +27,8 @@
     <ProjectReference Include="..\Rcl.NET\Rcl.NET.csproj" />
   </ItemGroup>
 
+	<Import Project="..\Rcl.NET\build_files\gen.ros2cs.props"/>
+
   <ItemGroup>
     <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
