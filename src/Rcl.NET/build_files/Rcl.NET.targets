@@ -1,0 +1,25 @@
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<Target Name="GenerateInterfaces_ros2cs" BeforeTargets="BeforeCompile">
+
+		<PropertyGroup Condition="'$(Ros2csExe)' == ''">
+			<Ros2csExe>$(MSBuildThisFileDirectory)\..\..\tools\$(TargetFramework)\ros2cs\ros2cs.exe</Ros2csExe>
+		</PropertyGroup>
+		
+		<PropertyGroup>
+			<Ros2csSpecFile>$(MSBuildProjectDirectory)\ros2cs.spec</Ros2csSpecFile>
+			<Ros2csCommand>&quot;$(Ros2csExe)&quot; -o $(IntermediateOutputPath)\Interfaces $(Ros2csSpecFile)</Ros2csCommand>
+		</PropertyGroup>
+		
+		<Message Text="Ros2csSpec: $(Ros2csSpecFile)" Importance="high"/>
+
+		<Message Text="Ros2csExe: $(Ros2csCommand)" Importance="high" />
+
+		<Exec Command="$(Ros2csCommand)" WorkingDirectory="$(IntermediateOutputPath)"/>
+	</Target>
+
+	<Target Name="CleanGenerated_ros2cs" BeforeTargets="Clean">
+		<RemoveDir Directories="$(IntermediateOutputPath)\Interfaces" />
+	</Target>
+
+</Project>

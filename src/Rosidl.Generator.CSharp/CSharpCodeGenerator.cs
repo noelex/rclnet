@@ -1,13 +1,17 @@
 ﻿using CppAst.CodeGen.Common;
 using CppAst.CodeGen.CSharp;
 using Rosidl.Generator.CSharp.Builders;
+using System.IO;
 using System.Xml.Linq;
 using Zio;
 using Zio.FileSystems;
 
 namespace Rosidl.Generator.CSharp;
 
-record Message(string Package, string SubFolder, string Name, string Path);
+record Message(string Package, string SubFolder, string Name, string Path)
+{
+    public ComplexTypeMetadata? Metadata { get; internal set; }
+}
 
 record Package(string Name, Message[] Messages);
 
@@ -208,29 +212,31 @@ public class CSharpCodeGenerator
         opts.ResolvePackageName =
             x => spec.PackageMapping.TryGetValue(x, out var ns) ? ns : originalMapper(x);
 
+        IEnumerable<Package> pkgs = [];
         if (spec.UseAmentIndex)
         {
-            var path = Environment.GetEnvironmentVariable("AMENT_PREFIX_PATH");
-            if (path != null)
+            var amentPrefixes = Environment.GetEnvironmentVariable("AMENT_PREFIX_PATH");
+            if (!string.IsNullOrWhiteSpace(amentPrefixes))
             {
-                foreach (var p in path.Split(Path.PathSeparator).Reverse())
-                {
-                    Console.WriteLine("Searching in directory: " + p);
-                    foreach (var pkg in LoadPackages(Path.Combine(p, "share"))) packages[pkg.Name] = pkg;
-                }
+                pkgs = amentPrefixes.Split([Path.PathSeparator], StringSplitOptions.RemoveEmptyEntries)
+                    .SelectMany(p =>
+                    {
+                        Console.WriteLine("Searching in directory: " + p);
+                        return LoadPackages(Path.Combine(p, "share"));
+                    });
             }
         }
 
-        foreach (var p in spec.SourceDirectories)
-        {
-            var path = p;
-            if (!Path.IsPathRooted(path))
+        packages = spec.SourceDirectories
+            .Select(p => !Path.IsPathRooted(p) ? Path.GetFullPath(Path.Combine(baseDir, p)) : p)
+            .SelectMany(p =>
             {
-                path = Path.GetFullPath(Path.Combine(baseDir, path));
-            }
-            Console.WriteLine("Searching in directory: " + path);
-            foreach (var pkg in LoadPackages(path)) packages[pkg.Name] = pkg;
-        }
+                Console.WriteLine("Searching in directory: " + p);
+                return LoadPackages(p);
+            })
+            .Union(pkgs)
+            .GroupBy(p => p.Name).Select(g => g.First()) // Take the first package with the same name
+            .ToDictionary(p => p.Name, p => p);
 
         if (spec.Includes.Count == 0) spec.Includes.AddRange(packages.Keys);
 
@@ -280,7 +286,8 @@ public class CSharpCodeGenerator
         {
             foreach (var msg in cand.Messages)
             {
-                var metadata = parser.Parse(cand.Name, msg.Name, File.ReadAllText(msg.Path), msg.SubFolder);
+                //var metadata = parser.Parse(cand.Name, msg.Name, File.ReadAllText(msg.Path), msg.SubFolder);
+                var metadata = msg.Metadata;
 
                 var packageName = opts.ResolvePackageName(cand.Name);
                 var dir = Path.Combine(outputDir, packageName);
@@ -293,7 +300,7 @@ public class CSharpCodeGenerator
                         Directory.CreateDirectory(dir);
                     var ctx = new ActionBuildContext(action, opts, parser);
                     code = new ActionClassBuilder(ctx)
-                        .Build($"{msg.Name}.cs", spec.IsInternal, spec.EnableServiceIntrospection, spec.EnableActionDetails);
+                        .Build($"{msg.Name}.g.cs", spec.IsInternal, spec.EnableServiceIntrospection, spec.EnableActionDetails);
                 }
                 else if (metadata is ServiceMetadata service)
                 {
@@ -302,7 +309,7 @@ public class CSharpCodeGenerator
                         Directory.CreateDirectory(dir);
                     var ctx = new ServiceBuildContext(service, opts);
                     code = new ServiceClassBuilder(ctx)
-                        .Build($"{msg.Name}.cs", spec.IsInternal, spec.EnableServiceIntrospection);
+                        .Build($"{msg.Name}.g.cs", spec.IsInternal, spec.EnableServiceIntrospection);
                 }
                 else
                 {
@@ -311,7 +318,7 @@ public class CSharpCodeGenerator
                         Directory.CreateDirectory(dir);
                     var ctx = new MessageBuildContext((MessageMetadata)metadata, opts);
                     code = new MessageClassBuilder(ctx)
-                        .Build($"{msg.Name}.cs", spec.IsInternal);
+                        .Build($"{msg.Name}.g.cs", spec.IsInternal);
                 }
                 var file = (CSharpGeneratedFile)code;
 
@@ -409,18 +416,17 @@ public class CSharpCodeGenerator
             }
 
             var packageName = Path.GetFileNameWithoutExtension(packageRoot);
-            var subdirs = Directory.GetDirectories(packageRoot);
-            var results = new List<Message>();
-            foreach (var dir in subdirs)
-            {
-                var type = Path.GetFileName(dir);
-                if (type is "msg" or "action" or "srv")
-                {
-                    results.AddRange(GetMessages(packageName, type, dir));
-                }
-            }
-
-
+            var results = Directory.GetDirectories(packageRoot)
+                .Where(x => Path.GetFileName(x) is "msg" or "action" or "srv")
+                .SelectMany(Directory.EnumerateFiles)
+                .Where(f => f.EndsWith("msg") || f.EndsWith("action") || f.EndsWith("srv"))
+                .Select(p =>
+                { 
+                    var file = Path.GetFileNameWithoutExtension(p);
+                    var subFolder = Path.GetFileName(Path.GetDirectoryName(p));
+                    return new Message(packageName, subFolder, file, p);
+                })
+                .ToList();
 
             var duplicates = new List<Message>();
             foreach (var msg in results)
@@ -458,17 +464,6 @@ public class CSharpCodeGenerator
             p = new Package(packageName, results.ToArray());
             return true;
         }
-
-        IEnumerable<Message> GetMessages(string packageName, string subFolder, string path)
-        {
-            var msgFiles = Directory.GetFiles(path).Where(x => !x.EndsWith(".idl"));
-            var results = new List<Message>();
-            foreach (var file in msgFiles)
-            {
-                var msgName = Path.GetFileNameWithoutExtension(file);
-                yield return new(packageName, subFolder, msgName, file);
-            }
-        }
     }
 
     private static List<string> ResolveDependencies(Dictionary<string, Package> packages, ParseSpec spec)
@@ -481,6 +476,7 @@ public class CSharpCodeGenerator
             foreach (var msg in cand.Messages)
             {
                 var metadata = parser.Parse(cand.Name, msg.Name, File.ReadAllText(msg.Path), msg.SubFolder);
+                msg.Metadata = metadata;
                 if (metadata is MessageMetadata m)
                 {
                     ResolveFields(packages, m.Fields, missing);

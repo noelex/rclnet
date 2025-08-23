@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net7.0;net8.0;net9.0</TargetFrameworks>
+	  <OutputType>library</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -42,8 +43,35 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
   </ItemGroup>
+	
+	<ItemGroup>
+		<ProjectReference Include="..\Rosidl.Runtime\Rosidl.Runtime.csproj" />
+		<ProjectReference Include="..\ros2cs\ros2cs.csproj">
+			<ExcludeAssets>all</ExcludeAssets>
+		</ProjectReference>
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Rosidl.Runtime\Rosidl.Runtime.csproj" />
-  </ItemGroup>
+	<PropertyGroup>
+		<Ros2csDir>$(MSBuildThisFileDirectory)\..\ros2cs\bin\$(Configuration)\$(TargetFramework)\</Ros2csDir>
+		<Ros2csExe>$(Ros2csDir)\ros2cs.exe</Ros2csExe>
+	</PropertyGroup>
+	<ItemGroup>
+		<Content Include="$(Ros2csDir)\*" Link="tools\ros2cs\%(RecursiveDir)%(Filename)%(Extension)" />
+		<TfmSpecificPackageFile Include="$(Ros2csDir)\*" Pack="true">
+			<PackagePath>tools\$(TargetFramework)\ros2cs\</PackagePath>
+		</TfmSpecificPackageFile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<TfmSpecificPackageFile Include="build_files\Rcl.NET.props" Pack="true">
+			<PackagePath>build\$(TargetFramework)\</PackagePath>
+		</TfmSpecificPackageFile>
+		<TfmSpecificPackageFile Include="build_files\Rcl.NET.targets" Pack="true">
+			<PackagePath>build\$(TargetFramework)\</PackagePath>
+		</TfmSpecificPackageFile>
+	</ItemGroup>
+
+	<Import Project="build_files\Rcl.NET.props" />
+	<Import Project="build_files\Rcl.NET.targets" />
+
 </Project>
