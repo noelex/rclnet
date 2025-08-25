@@ -1,24 +1,43 @@
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	
+	<Target Name="CheckAmentPrefixPath" BeforeTargets="GenerateInterfaces_ros2cs">
+	  <Warning
+		Condition="'$(AMENT_PREFIX_PATH)' == ''" Code="RCL0002"
+		Text="'AMENT_PREFIX_PATH' Property is not set or empty. ROS 2 packages may not be found." />
+	</Target>
 
-	<Target Name="GenerateInterfaces_ros2cs" BeforeTargets="BeforeCompile">
+	<Target Name="GenerateInterfaces_ros2cs" BeforeTargets="CoreCompile">
 
 		<PropertyGroup Condition="'$(Ros2csExe)' == ''">
-			<Ros2csExe>$(MSBuildThisFileDirectory)\..\..\tools\$(TargetFramework)\ros2cs\ros2cs.exe</Ros2csExe>
+			<Ros2csExe>$(MSBuildThisFileDirectory)\..\..\tools\$(TargetFramework)\ros2cs\ros2cs.dll</Ros2csExe>
 		</PropertyGroup>
 		
 		<PropertyGroup>
 			<Ros2csSpecFile>$(MSBuildProjectDirectory)\ros2cs.spec</Ros2csSpecFile>
-			<Ros2csCommand>&quot;$(Ros2csExe)&quot; -o $(IntermediateOutputPath)\Interfaces $(Ros2csSpecFile)</Ros2csCommand>
+			<Ros2csCommand>dotnet &quot;$(Ros2csExe)&quot; -o $(IntermediateOutputPath)\Interfaces &quot;$(Ros2csSpecFile)&quot;</Ros2csCommand>
 		</PropertyGroup>
 		
-		<Message Text="Ros2csSpec: $(Ros2csSpecFile)" Importance="high"/>
+		<Message Text="Ros2csSpec: $(Ros2csSpecFile)"/>
 
-		<Message Text="Ros2csExe: $(Ros2csCommand)" Importance="high" />
+		<Message Text="Ros2csCmd: $(Ros2csCommand)"/>
 
-		<Exec Command="$(Ros2csCommand)" WorkingDirectory="$(IntermediateOutputPath)"/>
+		<Exec Command="$(Ros2csCommand)" WorkingDirectory="$(MSBuildProjectDirectory)"
+			ConsoleToMSBuild="true" IgnoreExitCode="true">
+			
+			<Output TaskParameter="ConsoleOutput" ItemName="Ros2csOutput"/>
+			<Output TaskParameter="ExitCode" PropertyName="Ros2csExitCode"/>
+		</Exec>
+		
+		<Error Condition="'$(Ros2csExitCode)' != '0'" 
+			Text="ros2cs failed with exit code $(Ros2csExitCode):&#x0A;@(Ros2csOutput->'%(Identity)', '&#x0A;')" />
+
+		<ItemGroup>
+			<Compile Remove="@(Ros2csGenFiles)"/>
+			<Compile Include="$(IntermediateOutputPath)\Interfaces\**\*.g.cs"/>
+		</ItemGroup>
 	</Target>
 
-	<Target Name="CleanGenerated_ros2cs" BeforeTargets="Clean">
+	<Target Name="CleanGenerated_ros2cs" BeforeTargets="CoreClean">
 		<RemoveDir Directories="$(IntermediateOutputPath)\Interfaces" />
 	</Target>
 

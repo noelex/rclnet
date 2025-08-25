@@ -1,0 +1,30 @@
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<Target Name="Get_ros2cs" 
+			BeforeTargets="GenerateInterfaces_ros2cs"
+			Condition="'$(ContinuousIntegrationBuild)' != 'true'" >
+		
+		<MSBuild Projects="$(MSBuildProjectDirectory)\..\ros2cs\ros2cs.csproj"
+		  		 Targets="Build"
+		  		 Condition="'$(BuildingInsideVisualStudio)' != 'true'"
+		  		 Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)"
+				/>
+
+		<PropertyGroup>
+			<Ros2csDir>$(MSBuildProjectDirectory)\..\ros2cs\bin\$(Configuration)\$(TargetFramework)\</Ros2csDir>
+			<Ros2csExe>$(Ros2csDir)\ros2cs.dll</Ros2csExe>
+		</PropertyGroup>
+
+		<Error Condition="!Exists('$(Ros2csExe)')"
+			   Code="CI0001" File="$(MSBuildProjectDirectory)\..\ros2cs\ros2cs.csproj"
+			   Text="ros2cs executable not found. This is not CI build, build 'ros2cs' first."/>
+
+		<ItemGroup>
+			<TfmSpecificPackageFile Include="$(Ros2csDir)\*">
+				<PackagePath>tools\$(TargetFramework)\ros2cs\</PackagePath>
+			</TfmSpecificPackageFile>
+		</ItemGroup>
+
+	</Target>
+
+</Project>

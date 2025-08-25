@@ -1,7 +1,9 @@
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
 	<ItemGroup>
-		<Compile Include="$(IntermediateOutputPath)\Interfaces\**\*.cs">
+		<Ros2csGenFiles Include="$(IntermediateOutputPath)\Interfaces\**\*.g.cs" />
+		
+		<Compile Include="$(IntermediateOutputPath)\Interfaces\**\*.g.cs">
 			<Link>Interfaces\%(RecursiveDir)%(Filename)%(Extension)</Link>
 		</Compile>
 	</ItemGroup>

@@ -46,11 +46,26 @@
 	
 	<ItemGroup>
 		<ProjectReference Include="..\Rosidl.Runtime\Rosidl.Runtime.csproj" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(ContinuousIntegrationBuild)' != 'true'">
 		<ProjectReference Include="..\ros2cs\ros2cs.csproj">
-			<ExcludeAssets>all</ExcludeAssets>
+			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
 		</ProjectReference>
 	</ItemGroup>
 
-	<Import Project="build_files\gen.ros2cs.props" />
+	<ItemGroup>
+		<TfmSpecificPackageFile Include="build_files\Rcl.NET.props">
+			<PackagePath>build\$(TargetFramework)\</PackagePath>
+		</TfmSpecificPackageFile>
+		<TfmSpecificPackageFile Include="build_files\Rcl.NET.targets">
+			<PackagePath>build\$(TargetFramework)\</PackagePath>
+		</TfmSpecificPackageFile>
+	</ItemGroup>
+
+	<Import Project="build_files\gen.ros2cs.targets" />
+
+	<Import Project="build_files\Rcl.NET.props" />
+	<Import Project="build_files\Rcl.NET.targets" />
 
 </Project>
