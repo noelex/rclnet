@@ -98,7 +98,7 @@ partial class ParameterService : IParameterService, IDisposable
         {
             return &((RclFoxy.rcl_node_options_t*)handle)->arguments;
         }
-        else if (RosEnvironment.IsHumble || RosEnvironment.IsIron)
+        else if (RosEnvironment.IsHumble || RosEnvironment.IsIron || RosEnvironment.IsJazzy)
         {
             return &((RclHumble.rcl_node_options_t*)handle)->arguments;
         }

@@ -30,6 +30,7 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
                     case RosEnvironment.Foxy: InitFoxy(namePtr, nsPtr, context, options); break;
                     case RosEnvironment.Humble:
                     case RosEnvironment.Iron:
+                    case RosEnvironment.Jazzy:
                         InitHumbleOrLater(namePtr, nsPtr, context, options);
                         break;
                     default: throw new NotImplementedException();
