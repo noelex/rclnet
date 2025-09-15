@@ -121,14 +121,14 @@ static class InteropHelpers
             IPAddress address;
             fixed (byte* addr = ep.internet_address)
             {
-                var str = CreatePooledString(addr, 48)!;
+                var str = CreateString(addr, 48)!;
                 if (string.IsNullOrEmpty(str))
                 {
                     address = IPAddress.None;
                 }
                 else
                 {
-                    address = IPAddress.Parse(CreatePooledString(addr, 48)!);
+                    address = IPAddress.Parse(str);
                 }
             }
 
@@ -138,12 +138,12 @@ static class InteropHelpers
 
         return results;
 
-        static string CreatePooledString(byte* buffer, int maxLength)
+        static string CreateString(byte* buffer, int maxLength)
         {
             var i = 0;
             while (i < maxLength && buffer[i] != '\0') i++;
 
-            return StringMarshal.CreatePooledString(buffer, i)!;
+            return StringMarshal.CreateString(buffer, i)!;
         }
     }
 }
