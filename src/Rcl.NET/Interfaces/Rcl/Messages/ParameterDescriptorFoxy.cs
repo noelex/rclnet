@@ -103,10 +103,10 @@ namespace Rosidl.Messages.Rcl
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public ParameterDescriptorFoxy(in Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.Name = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Name.AsSpan(), textEncoding);
+            this.Name = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.Name.AsSpan(), textEncoding);
             this.Type = priv.Type;
-            this.Description = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Description.AsSpan(), textEncoding);
-            this.AdditionalConstraints = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.AdditionalConstraints.AsSpan(), textEncoding);
+            this.Description = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.Description.AsSpan(), textEncoding);
+            this.AdditionalConstraints = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.AdditionalConstraints.AsSpan(), textEncoding);
             this.ReadOnly = priv.ReadOnly;
         
             this.FloatingPointRange = new global::Rosidl.Messages.Rcl.FloatingPointRange[priv.FloatingPointRange.Size];
