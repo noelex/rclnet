@@ -2,6 +2,7 @@
 
 namespace Rcl.NET.Tests;
 
+[Collection("Sequential")]
 public class ParameterServiceTests
 {
     [Fact]

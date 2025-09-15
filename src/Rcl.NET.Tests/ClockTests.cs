@@ -4,6 +4,7 @@ using System.Diagnostics;
 
 namespace Rcl.NET.Tests;
 
+[Collection("Sequential")]
 public class ClockTests
 {
     private static async Task GenerateClockAsync(double scale = 1.0, CancellationToken cancellationToken = default)
@@ -34,10 +35,16 @@ public class ClockTests
         }
     }
 
+    public static IEnumerable<object[]> Cases =>
+        new List<object[]>
+        {
+            new object[] { 0.5, 100, 200, 100 },
+            new object[] { 1.0, 100, 100, 100 },
+            new object[] { 2.0, 200, 100, 100 }
+        };
+
     [SkippableTheory]
-    [InlineData(0.5, 100, 200, 100)]
-    [InlineData(1, 100, 100, 100)]
-    [InlineData(2, 200, 100, 100)]
+    [MemberData(nameof(Cases))]
     public async Task TestCancellationTokenSourceWithRosClock(double scale, int rosTime, int actualTime, double tol)
     {
         Skip.If(TestConfig.GitHubActions,
@@ -74,15 +81,16 @@ public class ClockTests
     }
 
     [SkippableTheory]
-    [InlineData(0.5, 100, 200, 100)]
-    [InlineData(1, 100, 100, 100)]
-    [InlineData(2, 200, 100, 100)]
+    [MemberData(nameof(Cases))]
     public async Task CancelWithOverrideClock(double scale, int rosTime, int actualTime, double tol)
     {
         Skip.If(TestConfig.GitHubActions,
             "Skipping clock tests when running by GitHub Actions because it's nearly impossible to meet the timing criteria.");
 
         using var clockCancellation = new CancellationTokenSource();
+
+        /// Xunit test parallelization makes it impossible to get correct results here. 
+        /// If you need correct results, please modify CI to make them run sequentially.
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
 
         var task = GenerateClockAsync(scale, clockCancellation.Token);

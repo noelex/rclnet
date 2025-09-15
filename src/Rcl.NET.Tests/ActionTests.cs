@@ -3,13 +3,19 @@ using Rosidl.Messages.Tf2;
 
 namespace Rcl.NET.Tests;
 
+[Collection("Sequential")]
 public class ActionTests
 {
+    public static IEnumerable<object[]> Cases1 =>
+        new List<object[]>
+        {
+            new object[] { 0 },
+            new object[] { 50 },
+            new object[] { 100 },
+            new object[] { 500 }
+        };
     [Theory]
-    [InlineData(0)]
-    [InlineData(50)]
-    [InlineData(100)]
-    [InlineData(500)]
+    [MemberData(nameof(Cases1))]
     public async Task SendGoalAsyncTimeout(int timeoutMs)
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
@@ -192,9 +198,15 @@ public class ActionTests
         Assert.Equal(ActionGoalStatus.Unknown, result.Status);
     }
 
+    public static IEnumerable<object[]> Cases2 =>
+        new List<object[]>
+        {
+            new object[] { true },
+            new object[] { false},
+        };
+
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
+    [MemberData(nameof(Cases2))]
     public async Task ActionFeedbacks(bool useAsyncFeedback)
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);

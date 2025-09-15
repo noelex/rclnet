@@ -3,14 +3,19 @@ using Xunit.Abstractions;
 
 namespace Rcl.NET.Tests;
 
+[Collection("Sequential")]
 public class ThreadSafetyTests
 {
     private static readonly int s_concurrency = Environment.ProcessorCount;
-
+    public static IEnumerable<object[]> Cases =>
+        new List<object[]>
+        {
+            new object[] { RclClockType.Steady },
+            new object[] { RclClockType.System },
+            new object[] { RclClockType.Ros }
+        };
     [Theory]
-    [InlineData(RclClockType.Steady)]
-    [InlineData(RclClockType.System)]
-    [InlineData(RclClockType.Ros)]
+    [MemberData(nameof(Cases))]
     public async Task ConcurrentTimerCreationAndDisposal_MultipleContexts(RclClockType clockType)
     {
         await Task.WhenAll(
@@ -29,9 +34,7 @@ public class ThreadSafetyTests
     }
 
     [Theory]
-    [InlineData(RclClockType.Steady)]
-    [InlineData(RclClockType.System)]
-    [InlineData(RclClockType.Ros)]
+    [MemberData(nameof(Cases))]
     public async Task ConcurrentTimerCreationAndDisposal_SingleContext(RclClockType clockType)
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);

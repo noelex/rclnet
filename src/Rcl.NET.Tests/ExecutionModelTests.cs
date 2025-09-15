@@ -1,4 +1,7 @@
 ﻿namespace Rcl.NET.Tests;
+
+
+[Collection("Sequential")]
 public class ExecutionModelTests
 {
     [Fact]

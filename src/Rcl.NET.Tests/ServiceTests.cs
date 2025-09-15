@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace Rcl.NET.Tests;
 
+[Collection("Sequential")]
 public class ServiceTests
 {
     private const int RequestTimeout = 10_000, ServerOnlineTimeout = 1000;
@@ -276,10 +277,14 @@ public class ServiceTests
             x.Publishers.First().Type == eventType), 1000);
         Assert.True(success);
     }
-
+    public static IEnumerable<object[]> Cases =>
+           new List<object[]>
+           {
+            new object[] { ServiceIntrospectionState.MetadataOnly },
+            new object[] { ServiceIntrospectionState.Full         },
+           };
     [SkippableTheory]
-    [InlineData(ServiceIntrospectionState.MetadataOnly)]
-    [InlineData(ServiceIntrospectionState.Full)]
+    [MemberData(nameof(Cases))]
     public async Task PerformServiceIntrospection(ServiceIntrospectionState state)
     {
         Skip.If(!RosEnvironment.IsSupported(RosEnvironment.Iron), "Service introspection is only supported on iron and later.");
@@ -320,7 +325,7 @@ public class ServiceTests
         Assert.Equal(client.Gid, new(MemoryMarshal.Cast<sbyte, byte>(events[ServiceEventInfo.REQUEST_SENT].Info.ClientGid)));
         Assert.Equal(client.Gid, new(MemoryMarshal.Cast<sbyte, byte>(events[ServiceEventInfo.RESPONSE_RECEIVED].Info.ClientGid)));
 
-        if(state == ServiceIntrospectionState.Full)
+        if (state == ServiceIntrospectionState.Full)
         {
             Assert.Single(events[ServiceEventInfo.REQUEST_SENT].Request);
             Assert.Empty(events[ServiceEventInfo.REQUEST_SENT].Response);

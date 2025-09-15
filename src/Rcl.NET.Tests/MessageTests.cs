@@ -3,6 +3,7 @@ using System.Text;
 
 namespace Rcl.NET.Tests;
 
+[Collection("Sequential")]
 public class MessageTests
 {
     [Fact]

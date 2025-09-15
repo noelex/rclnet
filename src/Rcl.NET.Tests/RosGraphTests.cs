@@ -5,6 +5,7 @@ using Xunit.Abstractions;
 
 namespace Rcl.NET.Tests;
 
+[Collection("Sequential")]
 public class RosGraphTests
 {
     [Fact]
@@ -36,11 +37,11 @@ public class RosGraphTests
         {
             cts.Cancel();
             await Task.WhenAny(t);
-        }        
+        }
 
         // Wait until node disappears
-        await node.Graph.TryWatchAsync((graph, e) => 
-            graph.Nodes.All(x=>x.Name.FullyQualifiedName != fullyQualifiedName), 5000);
+        await node.Graph.TryWatchAsync((graph, e) =>
+            graph.Nodes.All(x => x.Name.FullyQualifiedName != fullyQualifiedName), 5000);
 
         isOnline = await node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 0);
         Assert.False(isOnline);
@@ -163,7 +164,7 @@ public class RosGraphTests
 
         var topic = "/" + NameGenerator.GenerateTopicName();
 
-        var watcher = node.Graph.TryWatchAsync((graph, e) => 
+        var watcher = node.Graph.TryWatchAsync((graph, e) =>
             graph.Topics.FirstOrDefault(x => x.Name == topic)?.Publishers?.Any() == true, -1);
         using var cts = new CancellationTokenSource();
 

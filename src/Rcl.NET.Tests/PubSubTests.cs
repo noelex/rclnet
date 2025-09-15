@@ -5,6 +5,7 @@ using Rosidl.Messages.Builtin;
 using Xunit;
 using Xunit.Abstractions;
 
+[Collection("Sequential")]
 public class PubSubTests
 {
     [Fact]
@@ -274,12 +275,16 @@ public class PubSubTests
             return result;
         }
     }
-
+    public static IEnumerable<object[]> Cases =>
+            new List<object[]>
+            {
+            new object[] { "    "},
+            new object[] { ""    },
+            new object[] { "\t"  },
+            new object[] { null  }
+            };
     [Theory]
-    [InlineData("    ")]
-    [InlineData("")]
-    [InlineData("\t")]
-    [InlineData(null)]
+    [MemberData(nameof(Cases))]
     public void ContentFilteredOptionsEmptyExpression(string expression)
     {
         Assert.Throws<ArgumentException>(() => new ContentFilterOptions(expression));
