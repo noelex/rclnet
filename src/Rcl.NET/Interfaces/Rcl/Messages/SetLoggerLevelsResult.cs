@@ -70,7 +70,7 @@ namespace Rosidl.Messages.Rcl
         public SetLoggerLevelsResult(in Priv priv, global::System.Text.Encoding textEncoding)
         {
             this.Successful = priv.Successful;
-            this.Reason = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Reason.AsSpan(), textEncoding);
+            this.Reason = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.Reason.AsSpan(), textEncoding);
         }
         
         

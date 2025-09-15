@@ -71,7 +71,7 @@ namespace Rosidl.Messages.Rcl
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Rosidl.Runtime.Generator.CSharp", "1.0.0")]
         public Parameter(in Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.Name = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Name.AsSpan(), textEncoding);
+            this.Name = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.Name.AsSpan(), textEncoding);
             this.Value = new global::Rosidl.Messages.Rcl.ParameterValue(in priv.Value, textEncoding);
         }
         

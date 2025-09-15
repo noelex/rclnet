@@ -90,7 +90,7 @@ namespace Rosidl.Messages.Rcl
         public ParameterEvent(in Priv priv, global::System.Text.Encoding textEncoding)
         {
             this.Stamp = new global::Rosidl.Messages.Builtin.Time(in priv.Stamp, textEncoding);
-            this.Node = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Node.AsSpan(), textEncoding);
+            this.Node = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.Node.AsSpan(), textEncoding);
         
             this.NewParameters = new global::Rosidl.Messages.Rcl.Parameter[priv.NewParameters.Size];
             var NewParameters_span = priv.NewParameters.AsSpan();

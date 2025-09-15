@@ -112,10 +112,10 @@ namespace Rosidl.Messages.Rcl
         {
             this.Stamp = new global::Rosidl.Messages.Builtin.Time(in priv.Stamp, textEncoding);
             this.Level = priv.Level;
-            this.Name = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Name.AsSpan(), textEncoding);
-            this.Msg = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Msg.AsSpan(), textEncoding);
-            this.File = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.File.AsSpan(), textEncoding);
-            this.Function = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Function.AsSpan(), textEncoding);
+            this.Name = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.Name.AsSpan(), textEncoding);
+            this.Msg = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.Msg.AsSpan(), textEncoding);
+            this.File = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.File.AsSpan(), textEncoding);
+            this.Function = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.Function.AsSpan(), textEncoding);
             this.Line = priv.Line;
         }
         

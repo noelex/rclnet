@@ -125,7 +125,7 @@ namespace Rosidl.Messages.Rcl
             this.BoolValue = priv.BoolValue;
             this.IntegerValue = priv.IntegerValue;
             this.DoubleValue = priv.DoubleValue;
-            this.StringValue = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.StringValue.AsSpan(), textEncoding);
+            this.StringValue = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.StringValue.AsSpan(), textEncoding);
             this.ByteArrayValue = priv.ByteArrayValue.AsSpan().ToArray();
             this.BoolArrayValue = priv.BoolArrayValue.AsSpan().ToArray();
             this.IntegerArrayValue = priv.IntegerArrayValue.AsSpan().ToArray();
@@ -135,7 +135,7 @@ namespace Rosidl.Messages.Rcl
             var StringArrayValue_span = priv.StringArrayValue.AsSpan();
             for (int i = 0; i < this.StringArrayValue.Length; i++)
             {
-                this.StringArrayValue[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(StringArrayValue_span[i].AsSpan(), textEncoding);
+                this.StringArrayValue[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(StringArrayValue_span[i].AsSpan(), textEncoding);
             }
         }
         

@@ -92,7 +92,7 @@ namespace Rosidl.Messages.Rcl
             var Names_span = priv.Names.AsSpan();
             for (int __i = 0; __i < this.Names.Length; __i++)
             {
-                this.Names[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(Names_span[__i].AsSpan(), textEncoding);
+                this.Names[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(Names_span[__i].AsSpan(), textEncoding);
             }
         }
         

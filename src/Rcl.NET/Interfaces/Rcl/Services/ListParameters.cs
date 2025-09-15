@@ -100,7 +100,7 @@ namespace Rosidl.Messages.Rcl
             var Prefixes_span = priv.Prefixes.AsSpan();
             for (int i = 0; i < this.Prefixes.Length; i++)
             {
-                this.Prefixes[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(Prefixes_span[i].AsSpan(), textEncoding);
+                this.Prefixes[i] = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(Prefixes_span[i].AsSpan(), textEncoding);
             }
         
             this.Depth = priv.Depth;

@@ -69,7 +69,7 @@ namespace Rosidl.Messages.Rcl
         [global::System.CodeDom.Compiler.GeneratedCodeAttribute("ros2cs", "1.0.0+866072750999979fa04a21d1d2f84d5346ef2c35")]
         public LoggerLevel(in Priv priv, global::System.Text.Encoding textEncoding)
         {
-            this.Name = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.Name.AsSpan(), textEncoding);
+            this.Name = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.Name.AsSpan(), textEncoding);
             this.Level = priv.Level;
         }
         
