@@ -121,8 +121,20 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     public void Resize(int n)
         => ThrowIfNonSuccess(TryResize(ref this, n));
 
-    /// <inheritdoc/>
-    public override string ToString() => StringMarshal.CreatePooledString(AsSpan());
+    /// <summary>
+    /// Convert the content of the string buffer to a <see ref="String"/>.
+    /// </summary>
+    /// <remarks>The string created by this method is not pooled.</remarks>
+    public override string ToString() => ToString(false);
+
+    /// <summary>
+    /// Convert the content of the string buffer to a <see ref="String"/>.
+    /// </summary>
+    /// <param name="pooled">Whether to pool the created string.</param>
+    public string ToString(bool pooled)
+    {
+        return pooled ? StringMarshal.CreatePooledString(AsSpan()) : StringMarshal.CreateString(AsSpan());
+    }
 
 @else@
     /// <summary>
@@ -145,8 +157,20 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     public void CopyFrom(ReadOnlySpan<char> str)
         => CopyFrom(str, Encoding.UTF8);
     
-    /// <inheritdoc/>
-    public override string ToString() => StringMarshal.CreatePooledString(_data, Size);
+    /// <summary>
+    /// Convert the content of the string buffer to a <see ref="String"/> using UTF-8 encoding.
+    /// </summary>
+    /// <remarks>The string created by this method is not pooled.</remarks>
+    public override string ToString() => ToString(false);
+
+    /// <summary>
+    /// Convert the content of the string buffer to a <see ref="String"/> using UTF-8 encoding.
+    /// </summary>
+    /// <param name="pooled">Whether to pool the created string.</param>
+    public string ToString(bool pooled)
+    {
+        return pooled ? StringMarshal.CreatePooledString(_data, Size) : StringMarshal.CreateString(_data, Size);
+    }
 
 @endif@
     /// <inheritdoc/>

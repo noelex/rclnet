@@ -243,11 +243,11 @@ public class MessageClassBuilder
             switch (field.Metadata.Type)
             {
                 case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String:
-                    writer.AppendLine($"    this.{fieldName} = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}.AsSpan(), textEncoding);");
+                    writer.AppendLine($"    this.{fieldName} = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.{fieldName}.AsSpan(), textEncoding);");
                     previousLineIsBlank = false;
                     break;
                 case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.WString:
-                    writer.AppendLine($"    this.{fieldName} = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}.AsSpan());");
+                    writer.AppendLine($"    this.{fieldName} = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.{fieldName}.AsSpan());");
                     previousLineIsBlank = false;
                     break;
                 case PrimitiveTypeMetadata prim:
@@ -270,11 +270,11 @@ public class MessageClassBuilder
                                 writer.AppendLine("    {");
                                 if (prim.ValueType is PrimitiveTypes.String)
                                 {
-                                    writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}[__i].AsSpan(), textEncoding);");
+                                    writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.{fieldName}[__i].AsSpan(), textEncoding);");
                                 }
                                 else
                                 {
-                                    writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString(priv.{fieldName}[__i].AsSpan());");
+                                    writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreateString(priv.{fieldName}[__i].AsSpan());");
                                 }
                                 writer.AppendLine("    }");
                                 if (!isLast)
@@ -317,11 +317,11 @@ public class MessageClassBuilder
                                 writer.AppendLine("    {");
                                 if (prim.ValueType is PrimitiveTypes.String)
                                 {
-                                    writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString({fieldName}_span[__i].AsSpan(), textEncoding);");
+                                    writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreateString({fieldName}_span[__i].AsSpan(), textEncoding);");
                                 }
                                 else
                                 {
-                                    writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreatePooledString({fieldName}_span[__i].AsSpan());");
+                                    writer.AppendLine($"        this.{fieldName}[__i] = global::Rosidl.Runtime.Interop.StringMarshal.CreateString({fieldName}_span[__i].AsSpan());");
                                 }
                                 writer.AppendLine("    }");
                                 if (!isLast)
