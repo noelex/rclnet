@@ -39,8 +39,13 @@ static class MessageIntrospection
         {
             return new HumbleMessageIntrospection(typesupport);
         }
+        else if (RosEnvironment.IsJazzy)
+        {
+            return new JazzyMessageIntrospection((MessageTypeSupport_Jazzy*)typesupport);
+        }
         else
         {
+
             throw new NotSupportedException();
         }
     }
@@ -57,6 +62,10 @@ static class MessageIntrospection
         else if (RosEnvironment.IsHumble || RosEnvironment.IsIron)
         {
             return new HumbleMessageIntrospection(messageMembers);
+        }
+        else if (RosEnvironment.IsJazzy)
+        {
+            return new JazzyMessageIntrospection((MessageMembers_Jazzy*)messageMembers);
         }
         else
         {

@@ -2,6 +2,11 @@
   "version": "1",
   "environments": [
     {
+      "name": "WSL - Jazzy",
+      "type": "wsl",
+      "wslDistribution": "Ubuntu-24.04"
+    },
+    {
       "name": "WSL - Humble",
       "type": "wsl",
       "wslDistribution": "Ubuntu-22.04"
@@ -25,6 +30,11 @@
       "name": "Container - Iron",
       "type": "docker",
       "dockerFile": "Rcl.NET.Tests/iron.Dockerfile"
+    },
+    {
+      "name": "Container - Jazzy",
+      "type": "docker",
+      "dockerFile": "Rcl.NET.Tests/jazzy.Dockerfile"
     }
   ]
 }

@@ -280,6 +280,7 @@ public class CSharpCodeGenerator
         {
             foreach (var msg in cand.Messages)
             {
+                if (msg.Path.EndsWith(".json")) continue;
                 var metadata = parser.Parse(cand.Name, msg.Name, File.ReadAllText(msg.Path), msg.SubFolder);
 
                 var packageName = opts.ResolvePackageName(cand.Name);
@@ -480,6 +481,7 @@ public class CSharpCodeGenerator
         {
             foreach (var msg in cand.Messages)
             {
+                if (msg.Path.EndsWith(".json")) continue;
                 var metadata = parser.Parse(cand.Name, msg.Name, File.ReadAllText(msg.Path), msg.SubFolder);
                 if (metadata is MessageMetadata m)
                 {
