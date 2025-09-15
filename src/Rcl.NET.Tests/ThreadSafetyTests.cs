@@ -16,8 +16,32 @@ public class ThreadSafetyTests
         };
     [Theory]
     [MemberData(nameof(Cases))]
+    public async Task ConcurrentTimerCreationAndDisposal_MultiNode(RclClockType clockType)
+    {
+        //Skip.If(TestConfig.GitHubActions,
+        //    "Skipping MultipleContexts.");
+
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        await Task.WhenAll(
+            Enumerable.Range(0, s_concurrency)
+            .Select(x => Random.Shared.Next(1, 5))
+            .Select(CreateContextAndTestTimerAsync)
+        );
+
+        async Task CreateContextAndTestTimerAsync(int timeout)
+        {
+            using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+
+            await CreateTimerWaitAndDisposeAsync(node, clockType, timeout);
+        }
+    }
+    [Theory]
+    [MemberData(nameof(Cases))]
     public async Task ConcurrentTimerCreationAndDisposal_MultipleContexts(RclClockType clockType)
     {
+        Skip.If(TestConfig.GitHubActions,
+            "Skipping MultipleContexts.");
+
         await Task.WhenAll(
             Enumerable.Range(0, s_concurrency)
             .Select(x => Random.Shared.Next(1, 5))
