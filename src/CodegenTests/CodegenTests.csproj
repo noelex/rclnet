@@ -14,4 +14,7 @@
     <ProjectReference Include="..\Rosidl.Runtime\Rosidl.Runtime.csproj" />
   </ItemGroup>
 
+  <Import Project="$(SolutionDir)\build\ros2cs.targets" />
+  <Import Project="$(SolutionDir)\build\Rcl.NET.props" />
+  <Import Project="$(SolutionDir)\build\Rcl.NET.targets" />
 </Project>
