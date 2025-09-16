@@ -53,6 +53,12 @@
     <None Include="build\Rcl.NET.targets" Pack="True" PackagePath="build" Visible="False" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ros2cs\ros2cs.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+
   <Import Project="build\ros2cs.targets" />
   <Import Project="build\Rcl.NET.props" />
   <Import Project="build\Rcl.NET.targets" />
