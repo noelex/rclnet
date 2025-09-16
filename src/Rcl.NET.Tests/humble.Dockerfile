@@ -8,7 +8,7 @@ RUN apt-get update \
        wget \
     && apt-get autoremove -y \
     && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/lib/apt/lists/*
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh  \
     && chmod +x ./dotnet-install.sh \
     && ./dotnet-install.sh --channel 9.0 --runtime dotnet \

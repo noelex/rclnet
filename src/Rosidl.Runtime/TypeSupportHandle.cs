@@ -75,6 +75,9 @@ public readonly struct TypeSupportHandle
 
 }
 
+/// <summary>
+/// A typed wrapper of native type support handle for jazzy and above.
+/// </summary>
 public readonly struct TypeSupportHandle_Jazzy
 {
     private readonly nint _handle;

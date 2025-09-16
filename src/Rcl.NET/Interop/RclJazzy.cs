@@ -4,5 +4,5 @@ using static Rcl.Interop.RclHumble;
 
 namespace Rcl.Interop;
 
-/// Same typedef with iron
+// Same typedef with iron
 using RclJazzy = RclIron;

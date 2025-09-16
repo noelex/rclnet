@@ -30,8 +30,9 @@ public unsafe static class RosEnvironment
     /// ROS 2 Iron Irwini.
     /// </summary>
     public const string Iron = "iron";
+
     /// <summary>
-    /// ROS 2 Jazzy.
+    /// ROS 2 Jazzy Jalisco.
     /// </summary>
     public const string Jazzy = "jazzy";
 
