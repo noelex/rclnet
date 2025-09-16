@@ -6,7 +6,8 @@ output ./Interfaces
 
 internal
 
-from-ament-index
+from-directory ../../modules/rcl_interfaces
+from-directory ../../modules
 
 include rcl_interfaces
 include action_msgs

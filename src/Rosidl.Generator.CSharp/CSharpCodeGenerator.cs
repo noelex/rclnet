@@ -294,7 +294,7 @@ public class CSharpCodeGenerator
                         Directory.CreateDirectory(dir);
                     var ctx = new ActionBuildContext(action, opts, parser);
                     code = new ActionClassBuilder(ctx)
-                        .Build($"{msg.Name}.cs", spec.IsInternal, spec.EnableServiceIntrospection, spec.EnableActionDetails);
+                        .Build($"{msg.Name}.g.cs", spec.IsInternal, spec.EnableServiceIntrospection, spec.EnableActionDetails);
                 }
                 else if (metadata is ServiceMetadata service)
                 {
@@ -303,7 +303,7 @@ public class CSharpCodeGenerator
                         Directory.CreateDirectory(dir);
                     var ctx = new ServiceBuildContext(service, opts);
                     code = new ServiceClassBuilder(ctx)
-                        .Build($"{msg.Name}.cs", spec.IsInternal, spec.EnableServiceIntrospection);
+                        .Build($"{msg.Name}.g.cs", spec.IsInternal, spec.EnableServiceIntrospection);
                 }
                 else
                 {
@@ -312,7 +312,7 @@ public class CSharpCodeGenerator
                         Directory.CreateDirectory(dir);
                     var ctx = new MessageBuildContext((MessageMetadata)metadata, opts);
                     code = new MessageClassBuilder(ctx)
-                        .Build($"{msg.Name}.cs", spec.IsInternal);
+                        .Build($"{msg.Name}.g.cs", spec.IsInternal);
                 }
                 var file = (CSharpGeneratedFile)code;
 
