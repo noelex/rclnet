@@ -1,3 +1,19 @@
 [submodule "src/CodegenTests/packages/test_interface_files"]
 	path = src/CodegenTests/packages/test_interface_files
 	url = https://github.com/ros2/test_interface_files
+[submodule "modules/rcl_interfaces"]
+	path = modules/rcl_interfaces
+	url = https://github.com/ros2/rcl_interfaces
+	branch = jazzy
+[submodule "modules/unique_identifier_msgs"]
+	path = modules/unique_identifier_msgs
+	url = https://github.com/ros2/unique_identifier_msgs
+	branch = jazzy
+[submodule "modules/common_interfaces"]
+	path = modules/common_interfaces
+	url = https://github.com/ros2/common_interfaces
+	branch = jazzy
+[submodule "modules/geometry2"]
+	path = modules/geometry2
+	url = https://github.com/ros2/geometry2
+	branch = jazzy
