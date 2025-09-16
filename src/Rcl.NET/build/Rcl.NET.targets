@@ -1,0 +1,40 @@
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Target Name="GenerateInterfaces_ros2cs" BeforeTargets="CoreCompile">
+
+    <PropertyGroup Condition="'$(Ros2csExe)' == ''">
+      <Ros2csExe>$(MSBuildThisFileDirectory)\..\tools\net6.0\ros2cs\ros2cs.dll</Ros2csExe>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <DefaultRos2csSpecFile>$(MSBuildProjectDirectory)\ros2cs.spec</DefaultRos2csSpecFile>
+      <Ros2csOutputDir Condition="$(Ros2csOutputDir) == ''">Ros2csGeneratedInterfaces</Ros2csOutputDir>
+      <Ros2csSpecFile Condition="$(Ros2csSpecFile) == '' and Exists('$(DefaultRos2csSpecFile)')">$(DefaultRos2csSpecFile)</Ros2csSpecFile>
+      <Ros2csCommand>dotnet &quot;$(Ros2csExe)&quot; -o $(IntermediateOutputPath)\$(Ros2csOutputDir) &quot;$(Ros2csSpecFile)&quot;</Ros2csCommand>
+    </PropertyGroup>
+
+    <Message Text="Ros2csSpec: $(Ros2csSpecFile)"/>
+
+    <Message Text="Ros2csCmd: $(Ros2csCommand)"/>
+
+    <Exec Command="$(Ros2csCommand)" WorkingDirectory="$(MSBuildProjectDirectory)"
+			ConsoleToMSBuild="true" IgnoreExitCode="true" Condition="'$(Ros2csSpecFile)' != ''">
+
+      <Output TaskParameter="ConsoleOutput" ItemName="Ros2csOutput"/>
+      <Output TaskParameter="ExitCode" PropertyName="Ros2csExitCode"/>
+    </Exec>
+
+    <Error Condition="'$(Ros2csSpecFile)' != '' and '$(Ros2csExitCode)' != '0'"
+			Text="ros2cs failed with exit code $(Ros2csExitCode):&#x0A;@(Ros2csOutput->'%(Identity)', '&#x0A;')" />
+
+    <ItemGroup>
+      <Compile Remove="@(Ros2csGenFiles)"/>
+      <Compile Include="$(IntermediateOutputPath)\$(Ros2csOutputDir)\**\*.g.cs"/>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CleanGenerated_ros2cs" BeforeTargets="CoreClean">
+    <RemoveDir Directories="$(IntermediateOutputPath)\$(Ros2csOutputDir)" />
+  </Target>
+
+</Project>
