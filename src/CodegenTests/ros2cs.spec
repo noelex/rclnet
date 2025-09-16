@@ -1,4 +1,3 @@
-output ./Generated
 namespace Rosidl.Test.Messages
 
 from-directory packages

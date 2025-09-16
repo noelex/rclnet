@@ -2,8 +2,6 @@
 # ros2cs this file on humble and manually make a backward
 # compatible copy of ParameterDescriptor and friends is required.
 
-output ./Interfaces
-
 internal
 
 from-directory ../../modules/rcl_interfaces

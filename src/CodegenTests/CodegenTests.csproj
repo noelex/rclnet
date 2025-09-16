@@ -8,13 +8,14 @@
     <SignAssembly>false</SignAssembly>
     <PublicSign>false</PublicSign>
     <IsPackable>false</IsPackable>
+    <Ros2csOutputDir>Generated</Ros2csOutputDir>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Rosidl.Runtime\Rosidl.Runtime.csproj" />
   </ItemGroup>
 
-  <Import Project="$(SolutionDir)\build\ros2cs.targets" />
-  <Import Project="$(SolutionDir)\build\Rcl.NET.props" />
-  <Import Project="$(SolutionDir)\build\Rcl.NET.targets" />
+  <Import Project="$(MSBuildProjectDirectory)\..\build\ros2cs.targets" />
+  <Import Project="$(MSBuildProjectDirectory)\..\build\Rcl.NET.props" />
+  <Import Project="$(MSBuildProjectDirectory)\..\build\Rcl.NET.targets" />
 </Project>

@@ -1,5 +1,3 @@
-output ./Interfaces
-
 internal
 service-introspection on
 action-details on

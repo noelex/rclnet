@@ -1,0 +1,11 @@
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<ItemGroup>
+		<Ros2csGenFiles Include="$(IntermediateOutputPath)\$(Ros2csOutputDir)\**\*.g.cs" />
+
+		<Compile Include="$(IntermediateOutputPath)\$(Ros2csOutputDir)\**\*.g.cs">
+			<Link>$(Ros2csOutputDir)\%(RecursiveDir)%(Filename)%(Extension)</Link>
+		</Compile>
+	</ItemGroup>
+
+</Project>

@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>Rcl</RootNamespace>
+    <Ros2csOutputDir>Interfaces</Ros2csOutputDir>
   </PropertyGroup>
 
 	<PropertyGroup>
@@ -62,7 +63,7 @@
     </TfmSpecificPackageFile>
   </ItemGroup>
 
-  <Import Project="$(SolutionDir)\build\ros2cs.targets" />
-  <Import Project="$(SolutionDir)\build\Rcl.NET.props" />
-  <Import Project="$(SolutionDir)\build\Rcl.NET.targets" />
+  <Import Project="$(MSBuildProjectDirectory)\..\build\ros2cs.targets" />
+  <Import Project="$(MSBuildProjectDirectory)\..\build\Rcl.NET.props" />
+  <Import Project="$(MSBuildProjectDirectory)\..\build\Rcl.NET.targets" />
 </Project>
