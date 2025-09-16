@@ -51,7 +51,6 @@ jobs:
           dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ src/Rosidl.Runtime
           dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ src/Rcl.NET
           dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ src/ros2cs
-          dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ templates
       
       - name: Publish NugGet Package
         working-directory: bin
