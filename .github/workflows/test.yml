@@ -15,6 +15,7 @@ jobs:
           - foxy
           - humble
           - iron
+          - jazzy
         include:
           - ros_distribution: foxy
             docker_image: ros:foxy-ros-base
