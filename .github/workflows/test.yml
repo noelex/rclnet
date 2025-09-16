@@ -29,6 +29,8 @@ jobs:
       image: ${{ matrix.docker_image }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: true
 
       - name: Install additional ROS dependencies
         run: |
@@ -103,6 +105,8 @@ jobs:
             ros_archive: https://github.com/ros2/ros2/releases/download/release-foxy-20230620/ros2-foxy-20230620-windows-release-amd64.zip
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: true
   
       - name: Install dependencies
         run: |
