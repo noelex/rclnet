@@ -89,8 +89,6 @@ jobs:
           - humble
           - iron
         include:
-          - ros_distribution: jazzy
-            ros_archive: https://github.com/ros2/ros2/releases/download/release-jazzy-20250820/ros2-jazzy-20250820-windows-release-amd64.zip
           - ros_distribution: iron
             ros_archive: https://github.com/ros2/ros2/releases/download/release-iron-20241204/ros2-iron-20241204-windows-release-amd64.zip
           - ros_distribution: humble

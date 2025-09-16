@@ -220,8 +220,9 @@ unsafe readonly struct MessageMembers_Jazzy
     public readonly sbyte* MessageName;
     public readonly uint MemberCount;
     public readonly ulong SizeOf;
-    public readonly bool has_any_key_member_;
+    public readonly bool HasAnyKeyMember;
     public readonly void* Members;
+
     /// <summary>
     /// void (* init_function)(void *, enum rosidl_runtime_c__message_initialization);
     /// </summary>

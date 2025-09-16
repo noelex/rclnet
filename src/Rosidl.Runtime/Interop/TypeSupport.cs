@@ -47,9 +47,9 @@ public unsafe readonly struct MessageTypeSupport_Jazzy
     public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<MessageTypeSupport_Jazzy*, sbyte*, MessageTypeSupport_Jazzy*> Handler;
 
     // Keep memory layout consistent
-    public readonly IntPtr get_type_hash_func;
-    public readonly IntPtr get_type_description_func;
-    public readonly IntPtr get_type_description_sources_func;
+    internal readonly IntPtr get_type_hash_func;
+    internal readonly IntPtr get_type_description_func;
+    internal readonly IntPtr get_type_description_sources_func;
 }
 
 /// <summary>
@@ -97,14 +97,14 @@ public unsafe readonly struct ServiceTypeSupport_Jazzy
 
 
     // Keep memory layout consistent
-    public readonly IntPtr request_typesupport;
-    public readonly IntPtr response_typesupport;
-    public readonly IntPtr event_typesupport;
-    public readonly IntPtr event_message_create_handle_function;
-    public readonly IntPtr event_message_destroy_handle_function;
-    public readonly IntPtr get_type_hash_func;
-    public readonly IntPtr get_type_description_func;
-    public readonly IntPtr get_type_description_sources_func;
+    internal readonly IntPtr request_typesupport;
+    internal readonly IntPtr response_typesupport;
+    internal readonly IntPtr event_typesupport;
+    internal readonly IntPtr event_message_create_handle_function;
+    internal readonly IntPtr event_message_destroy_handle_function;
+    internal readonly IntPtr get_type_hash_func;
+    internal readonly IntPtr get_type_description_func;
+    internal readonly IntPtr get_type_description_sources_func;
 }
 
 /// <summary>
@@ -171,7 +171,7 @@ public unsafe readonly struct ActionTypeSupport_Jazzy
     public readonly MessageTypeSupport* StatusMessage;
 
     // Keep memory layout consistent
-    public readonly IntPtr get_type_hash_func;
-    public readonly IntPtr get_type_description_func;
-    public readonly IntPtr get_type_description_sources_func;
+    internal readonly IntPtr get_type_hash_func;
+    internal readonly IntPtr get_type_description_func;
+    internal readonly IntPtr get_type_description_sources_func;
 }
