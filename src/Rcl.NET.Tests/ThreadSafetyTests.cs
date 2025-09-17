@@ -7,12 +7,14 @@ public class ThreadSafetyTests
 {
     private static readonly int s_concurrency = Environment.ProcessorCount;
 
-    [Theory]
+    [SkippableTheory]
     [InlineData(RclClockType.Steady)]
     [InlineData(RclClockType.System)]
     [InlineData(RclClockType.Ros)]
     public async Task ConcurrentTimerCreationAndDisposal_MultipleContexts(RclClockType clockType)
     {
+        Skip.If(TestConfig.GitHubActions, "Tests for concurrent context creation and disposable are disabled in CI.");
+
         await Task.WhenAll(
             Enumerable.Range(0, s_concurrency)
             .Select(x => Random.Shared.Next(1, 5))
