@@ -96,24 +96,42 @@ jobs:
           - foxy
           - humble
           - iron
+          - jazzy
         include:
+          - ros_distribution: jazzy
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-jazzy-20250820/ros2-jazzy-20250820-windows-release-amd64.zip
+            is_legacy_distro: false
           - ros_distribution: iron
             ros_archive: https://github.com/ros2/ros2/releases/download/release-iron-20241204/ros2-iron-20241204-windows-release-amd64.zip
+            is_legacy_distro: true
           - ros_distribution: humble
             ros_archive: https://github.com/ros2/ros2/releases/download/release-humble-20241205/ros2-humble-20241205-windows-release-amd64.zip
+            is_legacy_distro: true
           - ros_distribution: foxy
             ros_archive: https://github.com/ros2/ros2/releases/download/release-foxy-20230620/ros2-foxy-20230620-windows-release-amd64.zip
+            is_legacy_distro: true
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: true
   
-      - name: Install dependencies
+      - name: Install dependencies (Legacy)
+        if: ${{ matrix.is_legacy_distro }}
         run: |
           reg add HKCU\SOFTWARE\Kitware\CMake /f
           Invoke-WebRequest -Uri https://github.com/ros2/choco-packages/releases/download/2022-03-15/tinyxml2.6.0.0.nupkg -OutFile tinyxml2.6.0.0.nupkg
           choco install --limit-output --no-progress -y -s . tinyxml2
           choco install --limit-output --no-progress -y openssl --version 1.1.1.2100
+
+      - name: Install dependencies
+        if: ${{ !matrix.is_legacy_distro }}
+        run: |
+          Set-ExecutionPolicy ByPass
+          irm https://pixi.sh/install.ps1 -OutFile install.ps1
+          iex install.ps1
+          irm https://raw.githubusercontent.com/ros2/ros2/refs/heads/jazzy/pixi.toml -OutFile pixi.toml
+          refreshenv
+          pixi install
 
       - name: Restore cached ROS installation
         id: ros-cache
@@ -154,7 +172,8 @@ jobs:
           dotnet nuget locals all --clear
           dotnet build -c Release
 
-      - name: Test (fastrtps)
+      - name: Test (fastrtps) (Legacy)
+        if: ${{ matrix.is_legacy_distro }}
         shell: cmd
         working-directory: src/Rcl.NET.Tests
         env:
@@ -162,7 +181,8 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: refreshenv && c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
-      - name: Test (cyclonedds)
+      - name: Test (cyclonedds) (Legacy)
+        if: ${{ matrix.is_legacy_distro }}
         shell: cmd
         working-directory: src/Rcl.NET.Tests
         env:
@@ -170,6 +190,29 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: refreshenv && c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
+      - name: Test (fastrtps)
+        if: ${{ !matrix.is_legacy_distro }}
+        shell: cmd
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+          ROS_LOCALHOST_ONLY: 0
+        run: |
+            pixi shell
+            call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+            dotnet test -c Release --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+
+      - name: Test (cyclonedds)
+        if: ${{ !matrix.is_legacy_distro }}
+        shell: cmd
+        working-directory: src/Rcl.NET.Tests
+        env:
+          RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+          ROS_LOCALHOST_ONLY: 0
+        run: |
+            pixi shell
+            call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+            dotnet test -c Release --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
   #test_macos:
   #  runs-on: macos-latest
   #  strategy:
