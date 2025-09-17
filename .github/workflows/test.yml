@@ -133,7 +133,7 @@ jobs:
           Set-ExecutionPolicy ByPass
           irm -useb https://pixi.sh/install.ps1 | iex
           irm https://raw.githubusercontent.com/ros2/ros2/refs/heads/jazzy/pixi.toml -OutFile pixi.toml
-          refreshenv
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
           pixi install
 
       - name: Restore cached ROS installation
