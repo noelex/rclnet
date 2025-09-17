@@ -1,6 +1,11 @@
 # rclnet
 rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.
 
+## What's New in 2.0
+ - ROS2 Jazzy Support by @AlrayQiu ([#39](https://github.com/noelex/rclnet/pull/39))
+ - Simplified message generation workflow by @ha-ves ([#38](https://github.com/noelex/rclnet/pull/38))
+ - String pooling are now disabled by default.
+
 ## Features
 - Completely asynchronous and `async`/`await` friendly.
 - Flexible asynchronous scheduling control to fit rclnet into existing applications.
