@@ -100,7 +100,7 @@ jobs:
           - ros_distribution: iron
             ros_archive: https://github.com/ros2/ros2/releases/download/release-iron-20241204/ros2-iron-20241204-windows-release-amd64.zip
           - ros_distribution: humble
-            ros_archive: https://github.com/ros2/ros2/releases/download/release-humble-20250721/ros2-humble-20250721-windows-release-amd64.zip
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-humble-20241205/ros2-humble-20241205-windows-release-amd64.zip
           - ros_distribution: foxy
             ros_archive: https://github.com/ros2/ros2/releases/download/release-foxy-20230620/ros2-foxy-20230620-windows-release-amd64.zip
     steps:
