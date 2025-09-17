@@ -76,9 +76,7 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-          dotnet test -c Release -f net7.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m 
-          dotnet test -c Release -f net8.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m 
-          dotnet test -c Release -f net9.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m 
+          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds)
         working-directory: src/Rcl.NET.Tests
@@ -87,9 +85,7 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-          dotnet test -c Release -f net7.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m 
-          dotnet test -c Release -f net8.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m 
-          dotnet test -c Release -f net9.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m 
+          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
   windows:
     runs-on: windows-latest
@@ -185,9 +181,7 @@ jobs:
         run: |
           refreshenv
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
-          dotnet test -c Release -f net7.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
-          dotnet test -c Release -f net8.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
-          dotnet test -c Release -f net9.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds) (Legacy)
         if: ${{ matrix.is_legacy_distro }}
@@ -199,9 +193,7 @@ jobs:
         run: |
           refreshenv
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
-          dotnet test -c Release -f net7.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
-          dotnet test -c Release -f net8.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
-          dotnet test -c Release -f net9.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (fastrtps)
         if: ${{ !matrix.is_legacy_distro }}
@@ -214,9 +206,7 @@ jobs:
           refreshenv
           pixi shell
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
-          dotnet test -c Release -f net7.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
-          dotnet test -c Release -f net8.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
-          dotnet test -c Release -f net9.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds)
         if: ${{ !matrix.is_legacy_distro }}
@@ -229,9 +219,7 @@ jobs:
           refreshenv
           pixi shell
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
-          dotnet test -c Release -f net7.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
-          dotnet test -c Release -f net8.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
-          dotnet test -c Release -f net9.0 --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
   #test_macos:
   #  runs-on: macos-latest
