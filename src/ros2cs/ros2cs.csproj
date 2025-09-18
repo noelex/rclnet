@@ -8,6 +8,7 @@
     <AssemblyName>ros2cs</AssemblyName>
     <PackAsTool>true</PackAsTool>
     <DefaultItemExcludes>$(DefaultItemExcludes);TestOutput\**\*.cs</DefaultItemExcludes>
+    <RollForward>Major</RollForward>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -3,8 +3,6 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [main, release/*]
-  push:
-    branches: [main, release/*]
 jobs:
   ubuntu:
     runs-on: ubuntu-latest
