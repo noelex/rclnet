@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net7.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+	  <OutputType>library</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -48,24 +49,15 @@
     <ProjectReference Include="..\Rosidl.Runtime\Rosidl.Runtime.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="build\Rcl.NET.props" Pack="True" PackagePath="build" Visible="False" />
-    <None Include="build\Rcl.NET.targets" Pack="True" PackagePath="build" Visible="False" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\ros2cs\ros2cs.csproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-  </ItemGroup>
-
-  <Import Project="build\ros2cs.targets" />
   <Import Project="build\Rcl.NET.props" />
+	<!-- TODO: only generate changed interface packages, 
+				because generating many packages can take considerably long time,
+				maybe not here but maybe by ros2cs generator code -->
   <Import Project="build\Rcl.NET.targets" />
 
-  <ItemGroup Condition="'$(_IsPacking)' == 'true'">
-    <None Include="$(MSBuildProjectDirectory)\..\ros2cs\bin\$(Configuration)\net6.0\publish\*"
-      Pack="True"
-      PackagePath="tools\net6.0\ros2cs\"/>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="build\Rcl.NET.props" Pack="True" PackagePath="build" />
+		<None Include="build\Rcl.NET.targets" Pack="True" PackagePath="build" />
+	</ItemGroup>
+
 </Project>

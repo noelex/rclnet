@@ -1,0 +1,53 @@
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<Target Name="CheckIsPackingSingleTfm" BeforeTargets="DispatchToInnerBuilds" Condition="'$(IsPackingSingleTfm)' == 'true'">
+		<Error Condition="'$(DesiredTfm)' == ''"
+			   Text="When packing a single TFM, you must specify TargetFramework property, e.g., /p:TargetFramework=net8.0" />
+	</Target>
+	
+	<Target Name="_ExcludeTargetFramework" AfterTargets="_GetTargetFrameworksOutput" BeforeTargets="_WalkEachTargetPerFramework"
+			DependsOnTargets="TfmPackageVersion"
+			Condition="'$(DesiredTfm)' != '' AND '$(IsPackingSingleTfm)' == 'true'">
+		<ItemGroup>
+			<_FrameworksWithSuppressedDependencies Include="@(_TargetFrameworks)" Condition="'%(_TargetFrameworks.Identity)' != '$(DesiredTfm)'" />
+			<_TargetFrameworks Remove="@(_TargetFrameworks)" Condition="'%(_TargetFrameworks.Identity)' != '$(DesiredTfm)'" />
+		</ItemGroup>
+		<Message Importance="high" Text="Removed TargetFrameworks: @(_FrameworksWithSuppressedDependencies, ', '); Remaining TargetFramework: @(_TargetFrameworks, ', '); PackageVersion: $(PackageVersion)" />
+	</Target>
+
+	<PropertyGroup>
+		<GetPackageVersionDependsOn>
+			$(GetPackageVersionDependsOn);TfmPackageVersion
+		</GetPackageVersionDependsOn>
+	</PropertyGroup>
+	<Target Name="TfmPackageVersion">
+		<PropertyGroup>
+			<!--Extract digit after 'net' and before the dot (e.g., 'net8.0' -> '8')-->
+			<TfmMajor>$([System.Text.RegularExpressions.Regex]::Match('$(DesiredTfm)', '^net(\d+)').Groups[1].Value)</TfmMajor>
+			<Version Condition="'$(TfmMajor)' != ''">$(TfmMajor).$(Version)</Version>
+			<PackageVersion>$(Version)</PackageVersion>
+		</PropertyGroup>
+
+		<!--<PropertyGroup Condition="'$(IsPackingSingleTfm)' == 'true'">
+			<PackageId Condition="'$(PackageId)' != ''">$(PackageId).Single</PackageId>
+		</PropertyGroup>-->
+	</Target>
+
+
+
+	<Target Name="Get_ros2cs" BeforeTargets="$(GetRos2csPropsDependsOn)">
+
+		<MSBuild Projects="$(MSBuildThisFileDirectory)\ros2cs\ros2cs.csproj"
+		  		 Targets="Publish"
+		  		 Properties="Configuration=$(Configuration);TargetFramework=$(Ros2csFramework);Version=$(Version)"
+				/>
+
+		<PropertyGroup>
+			<Ros2csDir>$(MSBuildThisFileDirectory)\ros2cs\bin\$(Configuration)\$(Ros2csFramework)\publish</Ros2csDir>
+			<Ros2csExe>&quot;$(Ros2csDir)\ros2cs.dll&quot;</Ros2csExe>
+		</PropertyGroup>
+
+		<Message Text="Using ros2cs from $(Ros2csExe)"/>
+	</Target>
+
+</Project>

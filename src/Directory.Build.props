@@ -12,11 +12,20 @@
 	<Copyright>Copyright (c) 2022-2025, noelex@outlook.jp</Copyright>
 	<PackageTags>ros, ros2, rcl, rosidl, ros2cs, rclnet</PackageTags>
   <SignAssembly>true</SignAssembly>
-  <AssemblyOriginatorKeyFile>$(ProjectDir)..\SigningKey.snk</AssemblyOriginatorKeyFile>
+  <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)\SigningKey.snk</AssemblyOriginatorKeyFile>
   <PublicSign>True</PublicSign>
 </PropertyGroup>
-	<ItemGroup >
-		<None Include="$(ProjectDir)..\..\README.md" Pack="True" PackagePath="\" Visible="False" />
-		<None Include="$(ProjectDir)..\..\LICENSE" Pack="True" PackagePath="\" Visible="False" />
+	<ItemGroup>
+		<None Include="$(MSBuildThisFileDirectory)..\README.md" Pack="True" PackagePath="\" Visible="False" />
+		<None Include="$(MSBuildThisFileDirectory)..\LICENSE" Pack="True" PackagePath="\" Visible="False" />
 	</ItemGroup>
+
+	<PropertyGroup>
+		<Ros2csFramework>net9.0</Ros2csFramework>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(IsPackingSingleTfm)' == 'true'">
+		<DesiredTfm Condition="'$(DesiredTfm)' == ''">$(TargetFramework)</DesiredTfm>
+		<Version Condition="'$(Version)' == ''">1.0.0</Version>
+	</PropertyGroup>
 </Project>

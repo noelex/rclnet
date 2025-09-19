@@ -1,60 +1,65 @@
-name: release
+name: NuGet Package
+
 on:
+  workflow_dispatch:
+    inputs:
+      release-type:
+        description: 'Select release type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - prerelease
   release:
-    branches: [main, release/*]
-    types:
-      - released
+    types: [released, prereleased]
+    branches:
+      - main
+      - devel
+      - release/*
+
 jobs:
   publish:
-    name: Release on ${{ matrix.os }}
-    environment: Release
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
+    name: "${{ github.event.inputs.release-type || (github.event.release.prerelease && 'Pre-release') || 'Release' }} on ${{ matrix.os }}"
+    environment: "${{ github.event.inputs.release-type == 'prerelease' || github.event.release.prerelease && 'Pre-release' || 'Release' }}"
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           submodules: true
         
-      - name: Setup .NET 9.0
-        uses: actions/setup-dotnet@v3
+      - name: Setup latest .NET SDK
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 9.0.x
 
-      - name: Setup .NET 8.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 8.0.x
-  
-      - name: Setup .NET 7.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 7.0.x
-
-      - name: Setup .NET 6.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 6.0.x
-
-      - name: Build
+      - name: Dotnet Restore
         run: |
-          dotnet nuget locals all --clear
-          dotnet restore templates
-          dotnet build -p:Version=${GITHUB_REF#refs/tags/v} -c Release src/rclnet.sln
-          dotnet build -p:Version=${GITHUB_REF#refs/tags/v} -c Release src/ros2cs.sln
-
+          dotnet restore templates/
+          dotnet restore src/rclnet.sln
+          dotnet restore src/ros2cs.sln
+          
       - name: Update Template Package Reference
         working-directory: templates/templates
         run: sed -i -E "s/(Version=\").+(\")/\1${GITHUB_REF#refs/tags/v}\2/" ros2-msg/Company.MessageLibrary1.csproj ros2-node/Company.Node1.csproj
 
-      - name: Pack
+      - name: Package Projects
         run: |
-          dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ src/Rosidl.Runtime
-          dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ src/Rcl.NET
-          dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ src/ros2cs
+          dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release -o bin/ src/Rosidl.Runtime
+          dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release -o bin/ src/Rcl.NET
+          dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release -o bin/ src/ros2cs
       
-      - name: Publish NugGet Package
+      - name: Upload packages to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: bin/*.*nupkg
+          prerelease: ${{ github.event.inputs.release-type == 'prerelease' || github.event.release.prerelease }}
+          
+      - name: Publish NuGet Package
         working-directory: bin
         run: |
           dotnet nuget push *.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
