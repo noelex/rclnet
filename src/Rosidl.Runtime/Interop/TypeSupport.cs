@@ -29,7 +29,7 @@ public unsafe readonly struct MessageTypeSupport
 /// Contains rosidl message type support data
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-public unsafe readonly struct MessageTypeSupport_Jazzy
+internal unsafe readonly struct MessageTypeSupport_Jazzy
 {
     /// <summary>
     /// String identifier for the type_support.
@@ -78,7 +78,7 @@ public unsafe readonly struct ServiceTypeSupport
 /// Contains rosidl service type support data
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-public unsafe readonly struct ServiceTypeSupport_Jazzy
+internal unsafe readonly struct ServiceTypeSupport_Jazzy
 {
     /// <summary>
     /// String identifier for the type_support.
@@ -143,7 +143,7 @@ public unsafe readonly struct ActionTypeSupport
 /// Contains rosidl action type support data
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
-public unsafe readonly struct ActionTypeSupport_Jazzy
+internal unsafe readonly struct ActionTypeSupport_Jazzy
 {
     /// <summary>
     /// The native type support handle of the goal service.

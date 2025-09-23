@@ -41,11 +41,10 @@ static class MessageIntrospection
         }
         else if (RosEnvironment.IsJazzy)
         {
-            return new JazzyMessageIntrospection((MessageTypeSupport_Jazzy*)typesupport);
+            return new JazzyMessageIntrospection(typesupport);
         }
         else
         {
-
             throw new NotSupportedException();
         }
     }

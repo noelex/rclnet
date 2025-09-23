@@ -11,11 +11,11 @@ internal unsafe class JazzyMessageIntrospection : IMessageIntrospection
     private readonly MessageMember_Jazzy* _members;
 
     public JazzyMessageIntrospection(TypeSupportHandle typeSupport)
-        : this((MessageTypeSupport_Jazzy*)typeSupport.GetMessageTypeSupport())
+        : this(typeSupport.GetMessageTypeSupport())
     {
     }
 
-    public JazzyMessageIntrospection(MessageTypeSupport_Jazzy* ts)
+    public JazzyMessageIntrospection(MessageTypeSupport* ts)
     {
         fixed (byte* id = TypeSupportIdentifier.Introspection)
         {
