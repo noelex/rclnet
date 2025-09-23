@@ -112,6 +112,86 @@ ros2cs /path/to/ros2cs.spec
 
 `ros2cs` tools also supports overriding directives defined in the spec file. You can run `ros2cs --help` for more details.
 
+## API Usage Showcase
+### Subscribing
+```csharp
+await using var ctx = new RclContext(args);
+using var node = ctx.CreateNode("hellow_world");
+using var sub = node.CreateSubscription<Twist>("/cmd_vel");
+await foreach (Twist msg in sub.ReadAllAsync())
+{
+    ...
+}
+```
+### Publishing
+```csharp
+using var pub = node.CreatePublisher<Vector3>("/vec");
+pub.Publish(new Vector3(x: 1, y: 2, z: 3));
+```
+### Handling Service Calls
+```csharp
+using var server = node.CreateService<
+    EmptyService,
+    EmptyServiceRequest,
+    EmptyServiceResponse>("/vec",
+        (request, state) =>
+        {
+            return new EmptyServiceResponse();
+        });
+await Task.Delay(-1);
+```
+### Calling Services
+```csharp
+using var client = node.CreateClient<
+    EmptyService,
+    EmptyServiceRequest,
+    EmptyServiceResponse>("/vec");
+await client.InvokeAsync(new EmptyServiceRequest());
+``` 
+### Monitoring ROS Graph Changes
+```csharp
+node.Graph
+    .OfType<NodeAppearedEvent>()
+    .Subscribe(x =>
+    {
+        Console.WriteLine($"Node {x.Node.Name} is online.");
+    });
+
+await node.Graph.WaitForServiceServerAsync("/my/service");
+```
+### Calling Action Servers
+```csharp
+using var client = node.CreateActionClient<
+    SpinAction,
+    SpinActionGoal,
+    SpinActionResult,
+    SpinActionFeedback>("/spin");
+
+using var goal = await client.SendGoalAsync(
+        new SpinActionGoal(targetYaw: Math.PI));
+
+await foreach (var feedback in goal.ReadFeedbacksAsync())
+{
+    Console.WriteLine(feedback.AngularDistanceTraveled);
+}
+
+var result = await goal.GetResultAsync();
+```
+### Zero (Managed Heap) Allocation APIs
+```csharp
+using var sub = node.CreateNativeSubscription<Twist>("/cmd_vel");
+await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
+{
+    using (msg) ProcessMessage(msg);
+
+    static void ProcessMessage(RosMessageBuffer buffer)
+    {
+        ref var twist = ref buffer.AsRef<Twist.Priv>();
+        ...
+    }
+}
+```
+
 ## Asynchronous Execution Model
 Unlike rclcpp and rclpy, rclnet doesn't have the concept of executors. Each `RclContext` runs its
 own event loop for waiting on signals and dispatching callbacks, which is essentialy a single-threaded
@@ -260,84 +340,4 @@ source install/setup.bash
 To run an example node, use `ros2 run`, e.g.
 ```
 ros2 run graph_monitor graph_monitor
-```
-
-## Showcase
-### Subscribing
-```csharp
-await using var ctx = new RclContext(args);
-using var node = ctx.CreateNode("hellow_world");
-using var sub = node.CreateSubscription<Twist>("/cmd_vel");
-await foreach (Twist msg in sub.ReadAllAsync())
-{
-    ...
-}
-```
-### Publishing
-```csharp
-using var pub = node.CreatePublisher<Vector3>("/vec");
-pub.Publish(new Vector3(x: 1, y: 2, z: 3));
-```
-### Handling Service Calls
-```csharp
-using var server = node.CreateService<
-    EmptyService,
-    EmptyServiceRequest,
-    EmptyServiceResponse>("/vec",
-        (request, state) =>
-        {
-            return new EmptyServiceResponse();
-        });
-await Task.Delay(-1);
-```
-### Calling Services
-```csharp
-using var client = node.CreateClient<
-    EmptyService,
-    EmptyServiceRequest,
-    EmptyServiceResponse>("/vec");
-await client.InvokeAsync(new EmptyServiceRequest());
-``` 
-### Monitoring ROS Graph Changes
-```csharp
-node.Graph
-    .OfType<NodeAppearedEvent>()
-    .Subscribe(x =>
-    {
-        Console.WriteLine($"Node {x.Node.Name} is online.");
-    });
-
-await node.Graph.WaitForServiceServerAsync("/my/service");
-```
-### Calling Action Servers
-```csharp
-using var client = node.CreateActionClient<
-    SpinAction,
-    SpinActionGoal,
-    SpinActionResult,
-    SpinActionFeedback>("/spin");
-
-using var goal = await client.SendGoalAsync(
-        new SpinActionGoal(targetYaw: Math.PI));
-
-await foreach (var feedback in goal.ReadFeedbacksAsync())
-{
-    Console.WriteLine(feedback.AngularDistanceTraveled);
-}
-
-var result = await goal.GetResultAsync();
-```
-### Zero (Managed Heap) Allocation APIs
-```csharp
-using var sub = node.CreateNativeSubscription<Twist>("/cmd_vel");
-await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
-{
-    using (msg) ProcessMessage(msg);
-
-    static void ProcessMessage(RosMessageBuffer buffer)
-    {
-        ref var twist = ref buffer.AsRef<Twist.Priv>();
-        ...
-    }
-}
 ```
