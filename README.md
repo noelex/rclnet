@@ -4,7 +4,7 @@ rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowin
 ## What's New in 2.0
  - ROS2 Jazzy Support by @AlrayQiu ([#39](https://github.com/noelex/rclnet/pull/39))
  - Simplified message generation workflow by @ha-ves ([#38](https://github.com/noelex/rclnet/pull/38))
- - String pooling are now disabled by default.
+ - String pooling is now disabled by default
 
 ## Features
 - Completely asynchronous and `async`/`await` friendly.
@@ -38,15 +38,14 @@ rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowin
 
 ## Supported Platforms
 Supported .NET Versions:
-- .NET 7
 - .NET 8
 - .NET 9
 
 Supported ROS 2 Distributions:
+- Jazzy Jalisco
 - Iron Irwini
 - Humble Hawksbill
 - Foxy Fitzroy
-- Jazzy Jalisco
 
 Supported Operating Systems:
 - Ubuntu
@@ -61,6 +60,8 @@ dotnet add package Rcl.NET
 ```
 
 ## Generating Messages
+
+### Preparation
 rclnet does not ship with message definitions. In order to communicate with other ROS 2 nodes,
 you need to generate messages first.
 
@@ -84,7 +85,31 @@ To generate messages, you also need to add a `ros2cs.spec` file to somewhere in 
 A `ros2cs.spec` file contains configurations such as output directory and where to find packages,
 see [here](https://github.com/noelex/rclnet/blob/main/src/ros2cs/ros2cs.spec) for detailed explanations.
 
+### Generating messages using automated codegen
 Now simply build the project and message definitions should appear in a directory named `Ros2csGeneratedInterfaces`.
+
+The path to the spec file and output directory can also be customized using `Ros2csSpecFile` and `Ros2csOutputDir` MSBuild property, e.g.:
+```xml
+<PropertyGroup>
+  <Ros2csSpecFile>path/to/spec/file</Ros2csSpecFile>
+  <Ros2csOutputDir>MyInterfaces</Ros2csOutputDir>
+</PropertyGroup>
+```
+
+Please note that when using automated codegen, there's no need to specify `output` directive in the spec file as it's automatically determined during build.
+
+### Generating messages using `ros2cs` tool
+First install `ros2cs` tool using NuGet package manager:
+```
+dotnet tool install -g ros2cs
+```
+
+Now you should be able to generate messages for the spec file:
+```
+ros2cs /path/to/ros2cs.spec
+```
+
+`ros2cs` tools also supports overriding directives defined in the spec file. You can run `ros2cs --help` for more details.
 
 ## Asynchronous Execution Model
 Unlike rclcpp and rclpy, rclnet doesn't have the concept of executors. Each `RclContext` runs its
