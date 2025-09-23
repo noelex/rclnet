@@ -10,8 +10,8 @@ internal unsafe class JazzyMessageIntrospection : IMessageIntrospection
     private readonly MessageMembers_Jazzy* _typesupport;
     private readonly MessageMember_Jazzy* _members;
 
-    public JazzyMessageIntrospection(TypeSupportHandle_Jazzy typeSupport)
-        : this(typeSupport.GetMessageTypeSupport())
+    public JazzyMessageIntrospection(TypeSupportHandle typeSupport)
+        : this((MessageTypeSupport_Jazzy*)typeSupport.GetMessageTypeSupport())
     {
     }
 
