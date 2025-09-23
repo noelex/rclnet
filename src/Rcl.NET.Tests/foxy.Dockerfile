@@ -7,8 +7,13 @@ RUN echo "from urllib import request\nrequest.urlretrieve('https://packages.micr
        ros-foxy-rmw-cyclonedds-cpp \
        ros-foxy-rmw-fastrtps-cpp \
        ros-foxy-tf2-msgs \
-       dotnet-runtime-7.0 \
-       dotnet-runtime-8.0 \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
+RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh  \
+    && chmod +x ./dotnet-install.sh \
+    && ./dotnet-install.sh --channel 10.0 --runtime dotnet \
+    && ./dotnet-install.sh --channel 9.0 --runtime dotnet \
+    && ./dotnet-install.sh --channel 8.0 --runtime dotnet
+ENV DOTNET_ROOT=/root/.dotnet
+ENV PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
