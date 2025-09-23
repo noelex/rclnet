@@ -28,6 +28,10 @@ internal class RcutilsLogger : IRclLogger
         [CallerFilePath] string file = "", [CallerMemberName] string functionName = "", [CallerLineNumber] int lineNumber = 0)
     {
         message ??= "";
+        if (message.Contains('%'))
+        {
+            message = message.Replace("%", "%%");
+        }
 
         var bufferSize =
                 InteropHelpers.GetUtf8BufferSize(_name) +

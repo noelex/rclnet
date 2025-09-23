@@ -110,7 +110,7 @@ Now you should be able to generate messages for the spec file:
 ros2cs /path/to/ros2cs.spec
 ```
 
-`ros2cs` tools also supports overriding directives defined in the spec file. You can run `ros2cs --help` for more details.
+`ros2cs` tool also supports overriding directives defined in the spec file. You can run `ros2cs --help` for more details.
 
 ## API Usage Showcase
 ### Subscribing
