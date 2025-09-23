@@ -2,6 +2,7 @@
 rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.
 
 ## What's New in 2.0
+ - Minimum support .NET version changed to 8.0
  - ROS2 Jazzy Support by @AlrayQiu ([#39](https://github.com/noelex/rclnet/pull/39))
  - Simplified message generation workflow by @ha-ves ([#38](https://github.com/noelex/rclnet/pull/38))
  - String pooling is now disabled by default
@@ -69,7 +70,7 @@ Message definitions are .NET classes / structs, you can either include messages 
 which runs as an ROS 2 node, or compile separately in another library.
 
 Projects containing messages will have to meet the following requirements:
-- `Rcl.NET` NuGet package is installed.
+- `Rcl.NET` (or `Rosidl.Runtime` if you are not using automated codegen) NuGet package is installed.
 - `AllowUnsafeBlocks` is set to `true`. This can be done by adding the following lines to the `.csproj` file:
     ```xml
     <PropertyGroup>
