@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net7.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -43,29 +43,26 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
   </ItemGroup>
+	
+	<ItemGroup>
+		<ProjectReference Include="..\Rosidl.Runtime\Rosidl.Runtime.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Rosidl.Runtime\Rosidl.Runtime.csproj" />
-  </ItemGroup>
+	<Import Project="build\Rcl.NET.props" />
+	<!-- TODO: only generate changed interface packages, 
+				because generating many packages can take considerably long time,
+				maybe not here but maybe by ros2cs generator code -->
+    <Import Project="build\Rcl.NET.targets" />
 
-  <ItemGroup>
-    <None Include="build\Rcl.NET.props" Pack="True" PackagePath="build" Visible="False" />
-    <None Include="build\Rcl.NET.targets" Pack="True" PackagePath="build" Visible="False" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\ros2cs\ros2cs.csproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-  </ItemGroup>
-
-  <Import Project="build\ros2cs.targets" />
-  <Import Project="build\Rcl.NET.props" />
-  <Import Project="build\Rcl.NET.targets" />
-
-  <ItemGroup Condition="'$(_IsPacking)' == 'true'">
-    <None Include="$(MSBuildProjectDirectory)\..\ros2cs\bin\$(Configuration)\net6.0\publish\*"
-      Pack="True"
-      PackagePath="tools\net6.0\ros2cs\"/>
-  </ItemGroup>
+	<PropertyGroup>
+		<Ros2csSourcePublish>$(MSBuildProjectDirectory)\..\ros2cs\bin\$(Configuration)\$(Ros2csBundleTfm)\publish</Ros2csSourcePublish>
+	</PropertyGroup>
+	<ItemGroup Condition="'$(_IsPacking)' == 'true'">
+		<None Include="build\Rcl.NET.props" Pack="True" PackagePath="build" />
+		<None Include="build\Rcl.NET.targets" Pack="True" PackagePath="build" />
+		<None Include="$(Ros2csSourcePublish)\*.dll;$(Ros2csSourcePublish)\ros2cs.runtimeconfig.json;$(Ros2csSourcePublish)\ros2cs.deps.json"
+			  Pack="True" PackagePath="tools\$(Ros2csBundleTfm)\ros2cs\" />
+	</ItemGroup>
+	
+	<!-- ../Directory.Build.props & .targets are also imported to gather the source ros2cs -->
 </Project>

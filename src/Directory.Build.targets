@@ -1,0 +1,24 @@
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<PropertyGroup>
+		<GetRos2csPropsDependsOn>
+			$(GetRos2csPropsDependsOn);Get_ros2cs
+		</GetRos2csPropsDependsOn>
+	</PropertyGroup>
+	
+	<Target Name="Get_ros2cs">
+
+		<MSBuild Projects="$(MSBuildThisFileDirectory)\ros2cs\ros2cs.csproj"
+		  		 Targets="Publish"
+		  		 Properties="Configuration=$(Configuration);TargetFramework=$(Ros2csBundleTfm);Version=$(Version)"
+				/>
+
+		<PropertyGroup>
+			<Ros2csDir>$(MSBuildThisFileDirectory)\ros2cs\bin\$(Configuration)\$(Ros2csBundleTfm)\publish</Ros2csDir>
+			<Ros2csExe>&quot;$(Ros2csDir)\ros2cs.dll&quot;</Ros2csExe>
+		</PropertyGroup>
+
+		<Message Text="[$(MSBuildProjectName), Source Build] Using ros2cs from $(Ros2csExe)"/>
+	</Target>
+
+</Project>

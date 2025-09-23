@@ -1,40 +1,70 @@
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-  <Target Name="GenerateInterfaces_ros2cs" BeforeTargets="CoreCompile">
+	<PropertyGroup>
+		<GenerateInterfaces_ros2csDependsOn>
+			$(GenerateInterfaces_ros2csDependsOn);GetRos2csProps
+		</GenerateInterfaces_ros2csDependsOn>
+	</PropertyGroup>
 
-    <PropertyGroup Condition="'$(Ros2csExe)' == ''">
-      <Ros2csExe>$(MSBuildThisFileDirectory)\..\tools\net6.0\ros2cs\ros2cs.dll</Ros2csExe>
-    </PropertyGroup>
+	<Target Name="GenerateInterfaces_ros2cs" BeforeTargets="BeforeCompile;CoreCompile" 
+			DependsOnTargets="$(GenerateInterfaces_ros2csDependsOn)"
+			Inputs="$(Ros2csSpecFile)" Outputs="$(IntermediateOutputPath)\$(Ros2csOutputDir)\ros2cs.spec.cache">
 
-    <PropertyGroup>
-      <DefaultRos2csSpecFile>$(MSBuildProjectDirectory)\ros2cs.spec</DefaultRos2csSpecFile>
-      <Ros2csOutputDir Condition="$(Ros2csOutputDir) == ''">Ros2csGeneratedInterfaces</Ros2csOutputDir>
-      <Ros2csSpecFile Condition="$(Ros2csSpecFile) == '' and Exists('$(DefaultRos2csSpecFile)')">$(DefaultRos2csSpecFile)</Ros2csSpecFile>
-      <Ros2csCommand>dotnet &quot;$(Ros2csExe)&quot; -o $(IntermediateOutputPath)\$(Ros2csOutputDir) &quot;$(Ros2csSpecFile)&quot;</Ros2csCommand>
-    </PropertyGroup>
+		<Message Text="Ros2csSpec: $(Ros2csSpecFile)"/>
 
-    <Message Text="Ros2csSpec: $(Ros2csSpecFile)"/>
+		<Message Text="Ros2csCmd: $(Ros2csCommand)"/>
 
-    <Message Text="Ros2csCmd: $(Ros2csCommand)"/>
+		<Exec Command="$(Ros2csCommand)" WorkingDirectory="$(MSBuildProjectDirectory)"
+			  ConsoleToMSBuild="true" IgnoreExitCode="true" Condition="'$(Ros2csSpecFile)' != ''">
+			
+			<Output TaskParameter="ConsoleOutput" ItemName="Ros2csOutput"/>
+			<Output TaskParameter="ExitCode" PropertyName="Ros2csExitCode"/>
+		</Exec>
+		
+		<Error Condition="'$(Ros2csSpecFile)' != '' and '$(Ros2csExitCode)' != '0'"
+			   Text="'$(Ros2csCommand)' failed with exit code $(Ros2csExitCode):&#x0A;@(Ros2csOutput->'%(Identity)', '&#x0A;')" />
 
-    <Exec Command="$(Ros2csCommand)" WorkingDirectory="$(MSBuildProjectDirectory)"
-			ConsoleToMSBuild="true" IgnoreExitCode="true" Condition="'$(Ros2csSpecFile)' != ''">
+		<Copy SourceFiles="$(Ros2csSpecFile)" 
+			  DestinationFiles="$(IntermediateOutputPath)\$(Ros2csOutputDir)\ros2cs.spec.cache" 
+			  SkipUnchangedFiles="true" 
+			  Condition="'$(Ros2csSpecFile)' != ''"/>
+		
+		<ItemGroup>
+			<Compile Remove="@(Ros2csGenFiles)" />
+			<Compile Include="$(IntermediateOutputPath)\$(Ros2csOutputDir)\**\*.g.cs"/>
+		</ItemGroup>
+	</Target>
 
-      <Output TaskParameter="ConsoleOutput" ItemName="Ros2csOutput"/>
-      <Output TaskParameter="ExitCode" PropertyName="Ros2csExitCode"/>
-    </Exec>
 
-    <Error Condition="'$(Ros2csSpecFile)' != '' and '$(Ros2csExitCode)' != '0'"
-			Text="ros2cs failed with exit code $(Ros2csExitCode):&#x0A;@(Ros2csOutput->'%(Identity)', '&#x0A;')" />
+	<PropertyGroup>
+		<CleanGenerated_ros2csDependsOn>
+			$(CleanGenerated_ros2csDependsOn);GetRos2csProps
+		</CleanGenerated_ros2csDependsOn>
+	</PropertyGroup>
 
-    <ItemGroup>
-      <Compile Remove="@(Ros2csGenFiles)"/>
-      <Compile Include="$(IntermediateOutputPath)\$(Ros2csOutputDir)\**\*.g.cs"/>
-    </ItemGroup>
-  </Target>
+	<Target Name="CleanGenerated_ros2cs" BeforeTargets="CoreClean" DependsOnTargets="$(CleanGenerated_ros2csDependsOn)">
+		<RemoveDir Directories="$(IntermediateOutputPath)\$(Ros2csOutputDir)" />
+	</Target>
 
-  <Target Name="CleanGenerated_ros2cs" BeforeTargets="CoreClean">
-    <RemoveDir Directories="$(IntermediateOutputPath)\$(Ros2csOutputDir)" />
-  </Target>
+
+	<Target Name="GetRos2csProps" DependsOnTargets="$(GetRos2csPropsDependsOn)">
+		<PropertyGroup>
+			<DefaultRos2csSpecFile>$(MSBuildProjectDirectory)\ros2cs.spec</DefaultRos2csSpecFile>
+			<Ros2csSpecFile Condition="$(Ros2csSpecFile) == '' and Exists('$(DefaultRos2csSpecFile)')">$(DefaultRos2csSpecFile)</Ros2csSpecFile>
+
+			<Ros2csCommand>dotnet $(Ros2csExe.Trim()) $(Ros2csArgs.Trim()) -o &quot;$(IntermediateOutputPath)\$(Ros2csOutputDir.Trim())&quot; &quot;$(Ros2csSpecFile.Trim())&quot;</Ros2csCommand>
+		</PropertyGroup>
+	</Target>
+
+
+	<Target Name="CheckAmentPrefixPath" AfterTargets="GetRos2csProps">
+		<ReadLinesFromFile File="$(Ros2csSpecFile)">
+			<Output TaskParameter="Lines" ItemName="Ros2csSpecFileLines"/>
+		</ReadLinesFromFile>
+
+		<Warning Code="RCL0002" File="$(Ros2csSpecFile)"
+				 Condition="'$(AMENT_PREFIX_PATH)' == '' AND @(Ros2csSpecFileLines->AnyHaveMetadataValue('Identity', 'from-ament-index'))"
+				 Text="'from-ament-index' option is specified in ros2cs.spec file but 'AMENT_PREFIX_PATH' Property or Environment Variable is not set/empty. ROS 2 interface packages may not be found." />
+	</Target>
 
 </Project>
