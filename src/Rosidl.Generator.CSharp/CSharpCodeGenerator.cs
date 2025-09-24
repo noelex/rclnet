@@ -260,7 +260,7 @@ public class CSharpCodeGenerator
         var unresolved = new List<string>();
         while (true)
         {
-            var deps = ResolveDependencies(inclPkgs, rawPkgs, spec);
+            var deps = ResolveDependencies(inclPkgs, spec);
             if (deps.Count == 0 || deps.All(unresolved.Contains)) break;
 
             foreach (var dep in deps)
@@ -531,9 +531,14 @@ public class CSharpCodeGenerator
             }
             return false;
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Unable to get git commit hash for package at '{packageRoot}': {ex.Message}");
+            return false;
+        }
     }
 
-    private static List<string> ResolveDependencies(Dictionary<string, Package> inclPkgs, Dictionary<string, string> rawPkgs, ParseSpec spec)
+    private static List<string> ResolveDependencies(Dictionary<string, Package> inclPkgs, ParseSpec spec)
     {
         var missing = new List<string>();
 
@@ -548,12 +553,12 @@ public class CSharpCodeGenerator
 
                 if (metadata is MessageMetadata m)
                 {
-                    ResolveFields(rawPkgs, m.Fields, missing);
+                    ResolveFields(inclPkgs, m.Fields, missing);
                 }
                 else if (metadata is ServiceMetadata s)
                 {
-                    ResolveFields(rawPkgs, s.RequestFields, missing);
-                    ResolveFields(rawPkgs, s.ResponseFields, missing);
+                    ResolveFields(inclPkgs, s.RequestFields, missing);
+                    ResolveFields(inclPkgs, s.ResponseFields, missing);
 
                     if (spec.EnableServiceIntrospection)
                     {
@@ -562,9 +567,9 @@ public class CSharpCodeGenerator
                 }
                 else if (metadata is ActionMetadata a)
                 {
-                    ResolveFields(rawPkgs, a.GoalFields, missing);
-                    ResolveFields(rawPkgs, a.ResultFields, missing);
-                    ResolveFields(rawPkgs, a.FeedbackFields, missing);
+                    ResolveFields(inclPkgs, a.GoalFields, missing);
+                    ResolveFields(inclPkgs, a.ResultFields, missing);
+                    ResolveFields(inclPkgs, a.FeedbackFields, missing);
 
                     if (spec.EnableServiceIntrospection)
                     {
@@ -584,14 +589,14 @@ public class CSharpCodeGenerator
 
         void Requires(string package)
         {
-            if (!rawPkgs.ContainsKey(package) && !missing.Contains(package))
+            if (!inclPkgs.ContainsKey(package) && !missing.Contains(package))
             {
                 missing.Add(package);
             }
         }
     }
 
-    private static void ResolveFields(Dictionary<string, string> packages, IEnumerable<FieldMetadata> fields, List<string> missingDependencies)
+    private static void ResolveFields(Dictionary<string, Package> packages, IEnumerable<FieldMetadata> fields, List<string> missingDependencies)
     {
         foreach (var f in fields)
         {
