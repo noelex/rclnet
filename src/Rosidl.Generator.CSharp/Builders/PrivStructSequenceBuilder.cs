@@ -100,9 +100,8 @@ public class PrivStructSequenceBuilder
     private static CSharpMethod EmitTryInitialize(MethodBuildContext context, Func<string, string> symbolResolver)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("TryInitialize")
         {
-            Name = "TryInitialize",
             Visibility = CSharpVisibility.Public,
             Modifiers = CSharpModifiers.Static,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Bool)
@@ -130,9 +129,8 @@ public class PrivStructSequenceBuilder
 
     private static CSharpMethod EmitAsSpan(MethodBuildContext context)
     {
-        return new CSharpMethod()
+        return new CSharpMethod("AsSpan")
         {
-            Name = "AsSpan",
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpFreeType($"System.Span<{context.MessageContext.PrivStructName}>"),
             Body = (writer, element) =>
@@ -144,9 +142,8 @@ public class PrivStructSequenceBuilder
 
     private static CSharpMethod EmitCopyFromSpan(MethodBuildContext context)
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("CopyFrom")
         {
-            Name = "CopyFrom",
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
         };

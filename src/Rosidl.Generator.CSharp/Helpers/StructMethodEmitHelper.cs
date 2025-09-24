@@ -7,9 +7,8 @@ internal static class StructMethodEmitHelper
 {
     public static CSharpMethod EmitThrowIfNonSuccess(this MethodBuildContext context)
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("ThrowIfNonSuccess")
         {
-            Name = "ThrowIfNonSuccess",
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
         };
@@ -38,9 +37,8 @@ internal static class StructMethodEmitHelper
     public static CSharpMethod EmitCopyFromStructRef(this MethodBuildContext context)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("CopyFrom")
         {
-            Name = "CopyFrom",
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
         };
@@ -60,9 +58,8 @@ internal static class StructMethodEmitHelper
     public static CSharpMethod EmitCopyFromStruct(this MethodBuildContext context)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("CopyFrom")
         {
-            Name = "CopyFrom",
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
         };
@@ -82,9 +79,8 @@ internal static class StructMethodEmitHelper
     public static CSharpMethod EmitCopyFromPointer(this MethodBuildContext context)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("CopyFrom")
         {
-            Name = "CopyFrom",
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
         };
@@ -190,9 +186,8 @@ internal static class StructMethodEmitHelper
     public static CSharpMethod EmitTypedEquals(this MethodBuildContext context)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("Equals")
         {
-            Name = "Equals",
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Bool)
         };
@@ -290,9 +285,8 @@ internal static class StructMethodEmitHelper
     public static CSharpMethod EmitDispose(this MethodBuildContext context)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("Dispose")
         {
-            Name = "Dispose",
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
         };
@@ -310,9 +304,8 @@ internal static class StructMethodEmitHelper
     public static CSharpMethod EmitTryCopyRef(this MethodBuildContext context)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("TryCopy")
         {
-            Name = "TryCopy",
             Visibility = CSharpVisibility.Private,
             Modifiers = CSharpModifiers.Static,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Bool)

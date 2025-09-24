@@ -31,7 +31,7 @@ public class MessageClassBuilder
 
         cls.Modifiers |= CSharpModifiers.Unsafe;
 
-        cls.AddTypeSupportAttribute(_context.Metadata.ToString());
+        cls.AddTypeSupportAttribute(_context.Metadata);
         cls.AddTypeSupportInterface(_context);
 
         cls.Members.Add(EmitTypeSupportNameProperty());
@@ -514,9 +514,8 @@ public class MessageClassBuilder
 
     private CSharpMethod EmitCreateFrom()
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("CreateFrom")
         {
-            Name = "CreateFrom",
             Modifiers = CSharpModifiers.Static,
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpFreeType("global::Rosidl.Runtime.IMessage")
@@ -534,9 +533,8 @@ public class MessageClassBuilder
 
     private CSharpMethod EmitUnsafeCreate()
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("UnsafeCreate")
         {
-            Name = "UnsafeCreate",
             Modifiers = CSharpModifiers.Static,
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpFreeType("nint")
@@ -551,9 +549,8 @@ public class MessageClassBuilder
 
     private CSharpMethod EmitUnsafeInitialize()
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("UnsafeInitialize")
         {
-            Name = "UnsafeInitialize",
             Modifiers = CSharpModifiers.Static,
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Bool)
@@ -573,9 +570,8 @@ public class MessageClassBuilder
 
     private CSharpMethod EmitUnsafeFinalize()
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("UnsafeFinalize")
         {
-            Name = "UnsafeFinalize",
             Modifiers = CSharpModifiers.Static,
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
@@ -595,9 +591,8 @@ public class MessageClassBuilder
 
     private CSharpMethod EmitUnsafeInitializeSequence()
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("UnsafeInitializeSequence")
         {
-            Name = "UnsafeInitializeSequence",
             Modifiers = CSharpModifiers.Static,
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Bool)
@@ -618,9 +613,8 @@ public class MessageClassBuilder
 
     private CSharpMethod EmitUnsafeFinalizeSequence()
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("UnsafeFinalizeSequence")
         {
-            Name = "UnsafeFinalizeSequence",
             Modifiers = CSharpModifiers.Static,
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
@@ -640,9 +634,8 @@ public class MessageClassBuilder
 
     private CSharpMethod EmitUnsafeDestroy()
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("UnsafeDestroy")
         {
-            Name = "UnsafeDestroy",
             Modifiers = CSharpModifiers.Static,
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
@@ -659,9 +652,8 @@ public class MessageClassBuilder
 
     private CSharpMethod EmitGetTypeSupportHandle()
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("GetTypeSupportHandle")
         {
-            Name = "GetTypeSupportHandle",
             Modifiers = CSharpModifiers.Static,
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpFreeType("global::Rosidl.Runtime.TypeSupportHandle")
@@ -698,9 +690,8 @@ public class MessageClassBuilder
 
     private CSharpMethod EmitWriteTo()
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("WriteTo")
         {
-            Name = "WriteTo",
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
         };
@@ -717,9 +708,8 @@ public class MessageClassBuilder
 
     private CSharpMethod EmitWriteToRef()
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("WriteTo")
         {
-            Name = "WriteTo",
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
         };

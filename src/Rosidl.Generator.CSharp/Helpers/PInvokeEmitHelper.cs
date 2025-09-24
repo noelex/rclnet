@@ -9,9 +9,8 @@ internal static class PInvokeEmitHelper
     public static CSharpMethod EmitFinalize(this MethodBuildContext context, Func<string, string> symbolResolver)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("Finalize")
         {
-            Name = "Finalize",
             Visibility = CSharpVisibility.Public,
             Modifiers = CSharpModifiers.Static,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
@@ -39,9 +38,8 @@ internal static class PInvokeEmitHelper
     public static CSharpMethod EmitTryCopy(this MethodBuildContext context, Func<string, string> symbolResolver)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("TryCopy")
         {
-            Name = "TryCopy",
             Visibility = CSharpVisibility.Private,
             Modifiers = CSharpModifiers.Static,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Bool)
@@ -67,9 +65,8 @@ internal static class PInvokeEmitHelper
     public static CSharpMethod EmitAreEqual(this MethodBuildContext context, Func<string, string> symbolResolver)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("AreEqual")
         {
-            Name = "AreEqual",
             Visibility = CSharpVisibility.Private,
             Modifiers = CSharpModifiers.Static,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Bool)
@@ -98,9 +95,8 @@ internal static class PInvokeEmitHelper
     public static CSharpMethod EmitCreate(this MethodBuildContext context, Func<string, string> symbolResolver)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("Create")
         {
-            Name = "Create",
             Visibility = CSharpVisibility.Public,
             Modifiers = CSharpModifiers.Static,
             ReturnType = new CSharpPointerType(context.StructType)
@@ -123,9 +119,8 @@ internal static class PInvokeEmitHelper
     public static CSharpMethod EmitDestroy(this MethodBuildContext context, Func<string, string> symbolResolver)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("Destroy")
         {
-            Name = "Destroy",
             Visibility = CSharpVisibility.Public,
             Modifiers = CSharpModifiers.Static,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)

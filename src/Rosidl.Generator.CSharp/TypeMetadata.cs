@@ -43,6 +43,8 @@ public record ArrayTypeMetadata(
 
 public record ComplexTypeMetadata(MessageIdentifier Id) : TypeMetadata
 {
+    public string? Version { get; internal set; }
+
     public override string ToString()
     {
         return Id.ToString();

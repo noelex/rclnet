@@ -1,21 +1,26 @@
 ﻿using CppAst.CodeGen.Common;
 using CppAst.CodeGen.CSharp;
+using LibGit2Sharp;
 using Rosidl.Generator.CSharp.Builders;
+using System.Text;
 using System.Xml.Linq;
 using Zio;
 using Zio.FileSystems;
 
 namespace Rosidl.Generator.CSharp;
 
-record Message(string Package, string SubFolder, string Name, string Path);
+record Message(string Package, string SubFolder, string Name, string Path, string? Version)
+{
+    public ComplexTypeMetadata? Metadata { get; internal set; }
+}
 
 record Package(string Name, Message[] Messages);
 
 class ParseSpec
 {
-    public Dictionary<string, string> NamespaceMapping { get; } = new();
+    public Dictionary<string, string> NamespaceMapping { get; } = [];
 
-    public Dictionary<string, string> PackageMapping { get; } = new();
+    public Dictionary<string, string> PackageMapping { get; } = [];
 
     public bool UseAmentIndex { get; }
 
@@ -23,11 +28,11 @@ class ParseSpec
 
     public string? OutputDirectory { get; }
 
-    public List<string> SourceDirectories { get; } = new();
+    public List<string> SourceDirectories { get; } = [];
 
-    public List<string> Includes { get; } = new();
+    public List<string> Includes { get; } = [];
 
-    public List<string> Excludes { get; } = new();
+    public List<string> Excludes { get; } = [];
 
     public bool IsInternal { get; } = false;
 
@@ -38,9 +43,10 @@ class ParseSpec
     public string? SpecFile { get; }
 
     public bool IgnoreMissing { get; } = false;
+    internal static readonly char[] _optSeparator = [' '];
 
     public ParseSpec(string specFile)
-        : this(new CommandlineOption[] { new("", specFile) })
+        : this([new("", specFile)])
     {
     }
 
@@ -63,8 +69,8 @@ class ParseSpec
             var lines = File.ReadAllLines(specFile);
             foreach (var line in lines.Select(x => x.Trim()))
             {
-                if (line.StartsWith("#") || line.Length == 0) continue;
-                var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                if (line.StartsWith('#') || line.Length == 0) continue;
+                var parts = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
                 var directive = parts[0];
                 switch (directive)
                 {
@@ -143,10 +149,10 @@ class ParseSpec
                     SourceDirectories.Add(opt.Value!);
                     break;
                 case "include":
-                    Includes.AddRange(opt.Value!.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+                    Includes.AddRange(opt.Value!.Split(_optSeparator, StringSplitOptions.RemoveEmptyEntries));
                     break;
                 case "exclude":
-                    Excludes.AddRange(opt.Value!.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+                    Excludes.AddRange(opt.Value!.Split(_optSeparator, StringSplitOptions.RemoveEmptyEntries));
                     break;
                 case "map-namespace":
                     var mapping = opt.Value!.Split(':');
@@ -173,9 +179,12 @@ public class CSharpCodeGenerator
     {
         try
         {
-            var spec = new ParseSpec(CommandlineOptionParser.Parse(args));
+            var opts = CommandlineOptionParser.Parse(args);
+            var spec = new ParseSpec(opts);
             var baseDir = spec.SpecFile != null ? Path.GetDirectoryName(Path.GetFullPath(spec.SpecFile))! : Environment.CurrentDirectory;
-            return Generate(spec, baseDir);
+            return Generate(spec, baseDir, 
+                string.Equals(opts.FirstOrDefault(o => string.Equals(o.Name, "details-file", StringComparison.OrdinalIgnoreCase))?.Value
+                        ?? "no", "yes", StringComparison.OrdinalIgnoreCase));
         }
         catch (Exception ex)
         {
@@ -191,7 +200,7 @@ public class CSharpCodeGenerator
         Generate(spec, baseDir);
     }
 
-    private static int Generate(ParseSpec spec, string baseDir)
+    private static int Generate(ParseSpec spec, string baseDir, bool detailed = false)
     {
         var packages = new Dictionary<string, Package>();
         var outputDir = spec.OutputDirectory ?? baseDir;
@@ -200,37 +209,43 @@ public class CSharpCodeGenerator
             outputDir = Path.GetFullPath(Path.Combine(baseDir, outputDir));
         }
 
-        var opts = new GeneratorOptions();
-        opts.RootNamespace = spec.DefaultRootNamespace;
+        var opts = new GeneratorOptions
+        {
+            RootNamespace = spec.DefaultRootNamespace
+        };
         opts.ResolveNamespace =
             x => spec.NamespaceMapping.TryGetValue(x, out var ns) ? ns : opts.RootNamespace;
         var originalMapper = opts.ResolvePackageName;
         opts.ResolvePackageName =
             x => spec.PackageMapping.TryGetValue(x, out var ns) ? ns : originalMapper(x);
 
+        IEnumerable<Package> pkgs = [];
         if (spec.UseAmentIndex)
         {
-            var path = Environment.GetEnvironmentVariable("AMENT_PREFIX_PATH");
-            if (path != null)
+            var amentPrefixes = Environment.GetEnvironmentVariable("AMENT_PREFIX_PATH");
+            if (!string.IsNullOrWhiteSpace(amentPrefixes))
             {
-                foreach (var p in path.Split(Path.PathSeparator).Reverse())
-                {
-                    Console.WriteLine("Searching in directory: " + p);
-                    foreach (var pkg in LoadPackages(Path.Combine(p, "share"))) packages[pkg.Name] = pkg;
-                }
+                pkgs = amentPrefixes.Split([Path.PathSeparator], StringSplitOptions.RemoveEmptyEntries)
+                    .SelectMany(p =>
+                    {
+                        var shrPath = Path.Combine(p, "share");
+                        Console.WriteLine("Searching in directory: " + shrPath);
+                        return LoadPackages(shrPath);
+                    });
             }
         }
 
-        foreach (var p in spec.SourceDirectories)
-        {
-            var path = p;
-            if (!Path.IsPathRooted(path))
+        packages = spec.SourceDirectories
+            .Select(p => !Path.IsPathRooted(p) ? Path.GetFullPath(Path.Combine(baseDir, p)) : p)
+            .SelectMany(p =>
             {
-                path = Path.GetFullPath(Path.Combine(baseDir, path));
-            }
-            Console.WriteLine("Searching in directory: " + path);
-            foreach (var pkg in LoadPackages(path)) packages[pkg.Name] = pkg;
-        }
+                Console.WriteLine("Searching in directory: " + p);
+                return LoadPackages(p);
+            })
+            .Union(pkgs)
+            // Take the first package with the same name, SourceDirectories takes precedence.
+            .GroupBy(p => p.Name).Select(g => g.First()) 
+            .ToDictionary(p => p.Name, p => p);
 
         if (spec.Includes.Count == 0) spec.Includes.AddRange(packages.Keys);
 
@@ -274,14 +289,21 @@ public class CSharpCodeGenerator
             return 1;
         }
 
+        if (detailed)
+        {
+            var inputsF = string.Join(Environment.NewLine, 
+                packages.Values.SelectMany(p => p.Messages.Select(m => m.Path)));
+            File.WriteAllText(Path.Combine(outputDir, "sources.g.inputs"), inputsF);
+        }
+
+        var outputsF = new StringBuilder();
         var parser = new MsgParser();
         using var fs = new MemoryFileSystem();
         foreach (var cand in packages.Values)
         {
             foreach (var msg in cand.Messages)
             {
-                if (msg.Path.EndsWith(".json")) continue;
-                var metadata = parser.Parse(cand.Name, msg.Name, File.ReadAllText(msg.Path), msg.SubFolder);
+                var metadata = msg.Metadata;
 
                 var packageName = opts.ResolvePackageName(cand.Name);
                 var dir = Path.Combine(outputDir, packageName);
@@ -305,19 +327,29 @@ public class CSharpCodeGenerator
                     code = new ServiceClassBuilder(ctx)
                         .Build($"{msg.Name}.g.cs", spec.IsInternal, spec.EnableServiceIntrospection);
                 }
-                else
+                else if (metadata is MessageMetadata message)
                 {
                     dir = Path.Combine(dir, "Messages");
                     if (!Directory.Exists(dir))
                         Directory.CreateDirectory(dir);
-                    var ctx = new MessageBuildContext((MessageMetadata)metadata, opts);
+                    var ctx = new MessageBuildContext(message, opts);
                     code = new MessageClassBuilder(ctx)
                         .Build($"{msg.Name}.g.cs", spec.IsInternal);
                 }
+                else
+                {
+                    throw new NotSupportedException($"Unsupported interface '{packageName}/{msg.Name}' with type: {metadata?.GetType().FullName ?? "<Unknown>"}");
+                }
+
                 var file = (CSharpGeneratedFile)code;
 
-                var pth = Path.Combine(dir, file.FilePath.ToString());
-                Console.WriteLine($"Converting {metadata} to {pth} ...");
+                var genpath = Path.Combine(dir, file.FilePath.ToString());
+
+                var validVer = string.IsNullOrWhiteSpace(metadata.Version) ? null : $" (v{metadata.Version})";
+                Console.WriteLine($"Converting {msg.Path}{validVer} to {genpath}");
+
+                if (detailed)
+                    outputsF.AppendLine(genpath);
 
                 var filePath = "/" + file.FilePath;
                 try
@@ -327,13 +359,13 @@ public class CSharpCodeGenerator
                     file.DumpTo(cw);
                     var w = fs.ReadAllLines(filePath);
 
-                    if (File.Exists(pth) && File.ReadAllLines(pth).SequenceEqual(w))
+                    if (File.Exists(genpath) && File.ReadAllLines(genpath).SequenceEqual(w))
                     {
                         // Don't touch the file if unchanged.
                         continue;
                     }
 
-                    File.WriteAllLines(pth, w);
+                    File.WriteAllLines(genpath, w);
                 }
                 finally
                 {
@@ -341,6 +373,9 @@ public class CSharpCodeGenerator
                 }
             }
         }
+        
+        if (detailed)
+            File.WriteAllText(Path.Combine(outputDir, "sources.g.outputs"), outputsF.ToString());
 
         PrintStats(false);
         return 0;
@@ -351,7 +386,7 @@ public class CSharpCodeGenerator
             Console.WriteLine($"{(aborted ? "Found" : "Processed")} {packages.Count} package(s), " +
                 $"{packages.SelectMany(x => x.Value.Messages).Count()} message definition(s) total.");
 
-            if (resolved.Except(spec.Excludes).Count() > 0)
+            if (resolved.Except(spec.Excludes).Any())
             {
                 Console.WriteLine();
                 Console.WriteLine("The following package(s) were automatically included as dependencies:");
@@ -395,11 +430,15 @@ public class CSharpCodeGenerator
             var packageXml = Path.Combine(packageRoot, "package.xml");
 
             if (!File.Exists(packageXml)) return false;
-
+            
+            XElement pkgXml;
+            string packageName;
             try
             {
-                var root = XDocument.Load(packageXml);
-                if (root.Element("package")!.Element("name")?.Value != Path.GetFileName(packageRoot))
+                pkgXml = XDocument.Load(packageXml).Element("package")!;
+                packageName = pkgXml.Element("name")!.Value;
+                if (!string.Equals(packageName, Path.GetFileName(packageRoot),
+                    StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
                 }
@@ -409,19 +448,26 @@ public class CSharpCodeGenerator
                 return false;
             }
 
-            var packageName = Path.GetFileNameWithoutExtension(packageRoot);
-            var subdirs = Directory.GetDirectories(packageRoot);
-            var results = new List<Message>();
-            foreach (var dir in subdirs)
-            {
-                var type = Path.GetFileName(dir);
-                if (type is "msg" or "action" or "srv")
-                {
-                    results.AddRange(GetMessages(packageName, type, dir));
-                }
-            }
+            var pkgver = pkgXml.Element("version")?.Value;
+            _ = TryGetGitCommitHash(packageRoot, out var gitsha);
+            
+            var ver = !string.IsNullOrEmpty(pkgver) && !string.IsNullOrEmpty(gitsha)
+                ? pkgver + "+" + gitsha
+                : !string.IsNullOrEmpty(pkgver) ? pkgver
+                : !string.IsNullOrEmpty(gitsha) ? gitsha
+                : null;
 
-
+            var results = Directory.GetDirectories(packageRoot)
+                .Where(x => Path.GetFileName(x) is "msg" or "action" or "srv")
+                .SelectMany(Directory.EnumerateFiles)
+                .Where(f => f.EndsWith("msg") || f.EndsWith("action") || f.EndsWith("srv"))
+                .Select(msgPath =>
+                { 
+                    var file = Path.GetFileNameWithoutExtension(msgPath);
+                    var subFolder = Path.GetFileName(Path.GetDirectoryName(msgPath))!;
+                    return new Message(packageName, subFolder, file, msgPath, ver);
+                })
+                .ToList();
 
             var duplicates = new List<Message>();
             foreach (var msg in results)
@@ -441,7 +487,7 @@ public class CSharpCodeGenerator
                 void Dedup(string postfix)
                 {
                     var endsHere = msg.Path.LastIndexOf(postfix);
-                    var srvName = Path.GetFileName(msg.Path.Substring(0, endsHere));
+                    var srvName = Path.GetFileName(msg.Path[..endsHere]);
                     if (results.Any(x => x.Name == srvName))
                     {
                         duplicates.Add(msg);
@@ -456,19 +502,31 @@ public class CSharpCodeGenerator
 
             if (results.Count == 0) return false;
 
-            p = new Package(packageName, results.ToArray());
+            p = new Package(packageName, [.. results]);
             return true;
         }
+    }
 
-        IEnumerable<Message> GetMessages(string packageName, string subFolder, string path)
+    private static bool TryGetGitCommitHash(string packageRoot, out string? sha1, int? recurseNum = 3)
+    {
+        sha1 = null;
+        try
         {
-            var msgFiles = Directory.GetFiles(path).Where(x => !x.EndsWith(".idl"));
-            var results = new List<Message>();
-            foreach (var file in msgFiles)
+            sha1 = new Repository(packageRoot).Head.Tip.Sha;
+            return true;
+        }
+        catch (RepositoryNotFoundException)
+        {
+            // .git not found in current path, recurse upwards
+            if (recurseNum.HasValue && recurseNum.Value > 0)
             {
-                var msgName = Path.GetFileNameWithoutExtension(file);
-                yield return new(packageName, subFolder, msgName, file);
+                var parent = Directory.GetParent(packageRoot);
+                if (parent != null)
+                {
+                    return TryGetGitCommitHash(parent.FullName, out sha1, recurseNum - 1);
+                }
             }
+            return false;
         }
     }
 
@@ -483,6 +541,9 @@ public class CSharpCodeGenerator
             {
                 if (msg.Path.EndsWith(".json")) continue;
                 var metadata = parser.Parse(cand.Name, msg.Name, File.ReadAllText(msg.Path), msg.SubFolder);
+                metadata.Version = msg.Version;
+                msg.Metadata = metadata;
+
                 if (metadata is MessageMetadata m)
                 {
                     ResolveFields(packages, m.Fields, missing);

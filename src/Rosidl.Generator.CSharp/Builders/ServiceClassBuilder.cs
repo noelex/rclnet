@@ -21,7 +21,7 @@ public class ServiceClassBuilder
         }
 
         cls.AddComments(_context.Metadata);
-        cls.AddTypeSupportAttribute(_context.Metadata.ToString());
+        cls.AddTypeSupportAttribute(_context.Metadata);
         cls.Modifiers |= CSharpModifiers.Unsafe;
         cls.BaseTypes.Add(new CSharpFreeType($"global::Rosidl.Runtime.IService<{_context.Request.ClassName}, {_context.Response.ClassName}>"));
 
@@ -80,9 +80,8 @@ public class ServiceClassBuilder
 
     private CSharpMethod EmitGetTypeSupportHandle()
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("GetTypeSupportHandle")
         {
-            Name = "GetTypeSupportHandle",
             Modifiers = CSharpModifiers.Static,
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpFreeType("global::Rosidl.Runtime.TypeSupportHandle")
@@ -155,13 +154,16 @@ public class ServiceBuildContext
         Request = new(
             new(metadata.Id with { Name = metadata.Id.Name + "_Request" }, metadata.Comments, metadata.RequestFields),
             options, MessageType.ServiceRequest, this);
+        Request.Metadata.Version = metadata.Version;
 
         Response = new(
             new(metadata.Id with { Name = metadata.Id.Name + "_Response" }, metadata.Comments, metadata.ResponseFields),
             options, MessageType.ServiceResponse, this);
+        Response.Metadata.Version = metadata.Version;
 
         Event = new(
             new(metadata.Id with { Name = metadata.Id.Name + "_Event" }, metadata.Comments, metadata.EventFields),
             options, MessageType.ServiceEvent, this);
+        Event.Metadata.Version = metadata.Version;
     }
 }
