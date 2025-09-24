@@ -219,49 +219,56 @@ public class CSharpCodeGenerator
         opts.ResolvePackageName =
             x => spec.PackageMapping.TryGetValue(x, out var ns) ? ns : originalMapper(x);
 
-        IEnumerable<Package> pkgs = [];
+        IEnumerable<string> pkgs = [];
         if (spec.UseAmentIndex)
         {
-            var amentPrefixes = Environment.GetEnvironmentVariable("AMENT_PREFIX_PATH");
-            if (!string.IsNullOrWhiteSpace(amentPrefixes))
+            var amentPrefixes = Environment.GetEnvironmentVariable("AMENT_PREFIX_PATH")?
+                                           .Split([Path.PathSeparator], StringSplitOptions.RemoveEmptyEntries);
+            if (amentPrefixes?.Length > 0)
             {
-                pkgs = amentPrefixes.Split([Path.PathSeparator], StringSplitOptions.RemoveEmptyEntries)
+                pkgs = amentPrefixes
                     .SelectMany(p =>
                     {
                         var shrPath = Path.Combine(p, "share");
                         Console.WriteLine("Searching in directory: " + shrPath);
-                        return LoadPackages(shrPath);
+                        return Directory.GetDirectories(shrPath);
                     });
             }
         }
 
-        packages = spec.SourceDirectories
+        var rawPkgs = spec.SourceDirectories
             .Select(p => !Path.IsPathRooted(p) ? Path.GetFullPath(Path.Combine(baseDir, p)) : p)
             .SelectMany(p =>
             {
                 Console.WriteLine("Searching in directory: " + p);
-                return LoadPackages(p);
+                return Directory.GetDirectories(p);
             })
-            .Union(pkgs)
-            // Take the first package with the same name, SourceDirectories takes precedence.
-            .GroupBy(p => p.Name).Select(g => g.First()) 
-            .ToDictionary(p => p.Name, p => p);
+            .Reverse() // Reverse so latest found from SourceDirectories takes precedence
+            .Union(pkgs).Where(ValidPkgDir)
+            .Select(p => (Path.GetFileName(p), p))
+            .GroupBy(p => p.Item1).Select(g => g.First()) // Only use the latest found package
+            .ToDictionary(x => x.Item1, x => x.p);
 
-        if (spec.Includes.Count == 0) spec.Includes.AddRange(packages.Keys);
+        if (spec.Includes.Count == 0) spec.Includes.AddRange(rawPkgs.Select(p => p.Key));
 
-        var includedPackages = packages.Where(x => spec.Includes.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+        var inclPkgs = rawPkgs.Where(x => spec.Includes.Contains(x.Key))
+                                      .Select(x => (x.Key, TryLoadPackage(x.Value, out var p) ? p : null))
+                                      .Where(x => x.Item2 is not null)
+                                      .ToDictionary(x => x.Key, x => x.Item2!);
+        
         var resolved = new List<string>();
         var unresolved = new List<string>();
         while (true)
         {
-            var deps = ResolveDependencies(includedPackages, spec);
+            var deps = ResolveDependencies(inclPkgs, rawPkgs, spec);
             if (deps.Count == 0 || deps.All(unresolved.Contains)) break;
 
             foreach (var dep in deps)
             {
-                if (packages.TryGetValue(dep, out var pkg))
+                if (rawPkgs.TryGetValue(dep, out var pkgPath)
+                    && TryLoadPackage(pkgPath, out var pkg))
                 {
-                    includedPackages[dep] = pkg;
+                    inclPkgs[dep] = pkg;
                     resolved.Add(dep);
                 }
                 else
@@ -271,7 +278,7 @@ public class CSharpCodeGenerator
             }
         }
 
-        packages = includedPackages;
+        packages = inclPkgs;
 
         if (spec.Excludes.Count > 0)
         {
@@ -291,6 +298,7 @@ public class CSharpCodeGenerator
 
         if (detailed)
         {
+            Directory.CreateDirectory(outputDir);
             var inputsF = string.Join(Environment.NewLine, 
                 packages.Values.SelectMany(p => p.Messages.Select(m => m.Path)));
             File.WriteAllText(Path.Combine(outputDir, "sources.g.inputs"), inputsF);
@@ -412,99 +420,94 @@ public class CSharpCodeGenerator
                 Console.WriteLine("Source generation is aborted due to missing package(s).");
             }
         }
+    }
 
-        IEnumerable<Package> LoadPackages(string directory)
+    private static bool TryLoadPackage(string packageRoot, out Package p)
+    {
+        p = null!;
+        var packageXml = Path.Combine(packageRoot, "package.xml");
+
+        if (!File.Exists(packageXml)) return false;
+
+        XElement pkgXml;
+        string packageName;
+        try
         {
-            foreach (var dir in Directory.GetDirectories(directory))
-            {
-                if (TryLoadPackage(dir, out var p))
-                {
-                    yield return p;
-                }
-            }
-        }
-
-        bool TryLoadPackage(string packageRoot, out Package p)
-        {
-            p = null!;
-            var packageXml = Path.Combine(packageRoot, "package.xml");
-
-            if (!File.Exists(packageXml)) return false;
-            
-            XElement pkgXml;
-            string packageName;
-            try
-            {
-                pkgXml = XDocument.Load(packageXml).Element("package")!;
-                packageName = pkgXml.Element("name")!.Value;
-                if (!string.Equals(packageName, Path.GetFileName(packageRoot),
-                    StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-            }
-            catch
+            pkgXml = XDocument.Load(packageXml).Element("package")!;
+            packageName = pkgXml.Element("name")!.Value;
+            if (!string.Equals(packageName, Path.GetFileName(packageRoot),
+                StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
-
-            var pkgver = pkgXml.Element("version")?.Value;
-            _ = TryGetGitCommitHash(packageRoot, out var gitsha);
-            
-            var ver = !string.IsNullOrEmpty(pkgver) && !string.IsNullOrEmpty(gitsha)
-                ? pkgver + "+" + gitsha
-                : !string.IsNullOrEmpty(pkgver) ? pkgver
-                : !string.IsNullOrEmpty(gitsha) ? gitsha
-                : null;
-
-            var results = Directory.GetDirectories(packageRoot)
-                .Where(x => Path.GetFileName(x) is "msg" or "action" or "srv")
-                .SelectMany(Directory.EnumerateFiles)
-                .Where(f => f.EndsWith("msg") || f.EndsWith("action") || f.EndsWith("srv"))
-                .Select(msgPath =>
-                { 
-                    var file = Path.GetFileNameWithoutExtension(msgPath);
-                    var subFolder = Path.GetFileName(Path.GetDirectoryName(msgPath))!;
-                    return new Message(packageName, subFolder, file, msgPath, ver);
-                })
-                .ToList();
-
-            var duplicates = new List<Message>();
-            foreach (var msg in results)
-            {
-                if (msg.SubFolder == "srv")
-                {
-                    if (msg.Path.EndsWith("_Response.msg"))
-                    {
-                        Dedup("_Response.msg");
-                    }
-                    else if (msg.Path.EndsWith("_Request.msg"))
-                    {
-                        Dedup("_Request.msg");
-                    }
-                }
-
-                void Dedup(string postfix)
-                {
-                    var endsHere = msg.Path.LastIndexOf(postfix);
-                    var srvName = Path.GetFileName(msg.Path[..endsHere]);
-                    if (results.Any(x => x.Name == srvName))
-                    {
-                        duplicates.Add(msg);
-                    }
-                }
-            }
-
-            foreach (var dup in duplicates)
-            {
-                results.Remove(dup);
-            }
-
-            if (results.Count == 0) return false;
-
-            p = new Package(packageName, [.. results]);
-            return true;
         }
+        catch
+        {
+            return false;
+        }
+
+        var pkgver = pkgXml.Element("version")?.Value;
+        _ = TryGetGitCommitHash(packageRoot, out var gitsha);
+
+        var ver = !string.IsNullOrEmpty(pkgver) && !string.IsNullOrEmpty(gitsha)
+            ? pkgver + "+" + gitsha
+            : !string.IsNullOrEmpty(pkgver) ? pkgver
+            : !string.IsNullOrEmpty(gitsha) ? gitsha
+            : null;
+
+        var results = Directory.GetDirectories(packageRoot)
+            .Where(x => Path.GetFileName(x) is "msg" or "action" or "srv")
+            .SelectMany(Directory.EnumerateFiles)
+            .Where(f => f.EndsWith("msg") || f.EndsWith("action") || f.EndsWith("srv"))
+            .Select(msgPath =>
+            {
+                var file = Path.GetFileNameWithoutExtension(msgPath);
+                var subFolder = Path.GetFileName(Path.GetDirectoryName(msgPath))!;
+                return new Message(packageName, subFolder, file, msgPath, ver);
+            })
+            .ToList();
+
+        var duplicates = new List<Message>();
+        foreach (var msg in results)
+        {
+            if (msg.SubFolder == "srv")
+            {
+                if (msg.Path.EndsWith("_Response.msg"))
+                {
+                    Dedup("_Response.msg");
+                }
+                else if (msg.Path.EndsWith("_Request.msg"))
+                {
+                    Dedup("_Request.msg");
+                }
+            }
+
+            void Dedup(string postfix)
+            {
+                var endsHere = msg.Path.LastIndexOf(postfix);
+                var srvName = Path.GetFileName(msg.Path[..endsHere]);
+                if (results.Any(x => x.Name == srvName))
+                {
+                    duplicates.Add(msg);
+                }
+            }
+        }
+
+        foreach (var dup in duplicates)
+        {
+            results.Remove(dup);
+        }
+
+        if (results.Count == 0) return false;
+
+        p = new Package(packageName, [.. results]);
+        return true;
+    }
+
+    private static bool ValidPkgDir(string path)
+    {
+        var packageXml = Path.Combine(path, "package.xml");
+        return File.Exists(packageXml);
     }
 
     private static bool TryGetGitCommitHash(string packageRoot, out string? sha1, int? recurseNum = 3)
@@ -530,28 +533,27 @@ public class CSharpCodeGenerator
         }
     }
 
-    private static List<string> ResolveDependencies(Dictionary<string, Package> packages, ParseSpec spec)
+    private static List<string> ResolveDependencies(Dictionary<string, Package> inclPkgs, Dictionary<string, string> rawPkgs, ParseSpec spec)
     {
         var missing = new List<string>();
 
         var parser = new MsgParser();
-        foreach (var cand in packages.Values)
+        foreach (var cand in inclPkgs.Values)
         {
             foreach (var msg in cand.Messages)
             {
-                if (msg.Path.EndsWith(".json")) continue;
                 var metadata = parser.Parse(cand.Name, msg.Name, File.ReadAllText(msg.Path), msg.SubFolder);
                 metadata.Version = msg.Version;
                 msg.Metadata = metadata;
 
                 if (metadata is MessageMetadata m)
                 {
-                    ResolveFields(packages, m.Fields, missing);
+                    ResolveFields(rawPkgs, m.Fields, missing);
                 }
                 else if (metadata is ServiceMetadata s)
                 {
-                    ResolveFields(packages, s.RequestFields, missing);
-                    ResolveFields(packages, s.ResponseFields, missing);
+                    ResolveFields(rawPkgs, s.RequestFields, missing);
+                    ResolveFields(rawPkgs, s.ResponseFields, missing);
 
                     if (spec.EnableServiceIntrospection)
                     {
@@ -560,9 +562,9 @@ public class CSharpCodeGenerator
                 }
                 else if (metadata is ActionMetadata a)
                 {
-                    ResolveFields(packages, a.GoalFields, missing);
-                    ResolveFields(packages, a.ResultFields, missing);
-                    ResolveFields(packages, a.FeedbackFields, missing);
+                    ResolveFields(rawPkgs, a.GoalFields, missing);
+                    ResolveFields(rawPkgs, a.ResultFields, missing);
+                    ResolveFields(rawPkgs, a.FeedbackFields, missing);
 
                     if (spec.EnableServiceIntrospection)
                     {
@@ -582,14 +584,14 @@ public class CSharpCodeGenerator
 
         void Requires(string package)
         {
-            if (!packages.ContainsKey(package) && !missing.Contains(package))
+            if (!rawPkgs.ContainsKey(package) && !missing.Contains(package))
             {
                 missing.Add(package);
             }
         }
     }
 
-    private static void ResolveFields(Dictionary<string, Package> packages, IEnumerable<FieldMetadata> fields, List<string> missingDependencies)
+    private static void ResolveFields(Dictionary<string, string> packages, IEnumerable<FieldMetadata> fields, List<string> missingDependencies)
     {
         foreach (var f in fields)
         {

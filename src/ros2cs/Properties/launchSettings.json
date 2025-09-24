@@ -2,7 +2,7 @@
   "profiles": {
     "Run Tests": {
       "commandName": "Project",
-      "commandLineArgs": "$(ProjectDir)..\\CodegenTests\\ros2cs.spec"
+      "commandLineArgs": "-df -o $(IntermediateOutputPath)\\Generated $(ProjectDir)..\\CodegenTests\\ros2cs.spec"
     },
     "Windows": {
       "commandName": "Project"
