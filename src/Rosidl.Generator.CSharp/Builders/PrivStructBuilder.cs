@@ -215,9 +215,8 @@ public class PrivStructBuilder
     private static CSharpMethod EmitTryInitialize(MethodBuildContext context, Func<string, string> symbolResolver)
     {
         var structType = context.StructType;
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("TryInitialize")
         {
-            Name = "TryInitialize",
             Visibility = CSharpVisibility.Public,
             Modifiers = CSharpModifiers.Static,
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Bool)

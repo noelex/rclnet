@@ -2,13 +2,13 @@
   "profiles": {
     "Run Tests": {
       "commandName": "Project",
-      "commandLineArgs": "$(SolutionDir)\\CodegenTests\\ros2cs.spec"
+      "commandLineArgs": "-df -o $(IntermediateOutputPath)\\Generated $(ProjectDir)..\\CodegenTests\\ros2cs.spec"
     },
     "Windows": {
       "commandName": "Project"
     },
     "WSL : Foxy": {
-      "commandName": "WSL",
+      "commandName": "WSL2",
       "environmentVariables": {
         "ROS_DISTRO": "foxy",
         "ROS_LOCALHOST_ONLY": "0",
@@ -20,7 +20,7 @@
       "distributionName": "Ubuntu-20.04"
     },
     "WSL : Humble": {
-      "commandName": "WSL",
+      "commandName": "WSL2",
       "environmentVariables": {
         "ROS_DISTRO": "humble",
         "ROS_LOCALHOST_ONLY": "0",

@@ -21,7 +21,7 @@ public class ActionClassBuilder
             cls.Visibility = CSharpVisibility.Internal;
         }
 
-        cls.AddTypeSupportAttribute(_context.Metadata.ToString());
+        cls.AddTypeSupportAttribute(_context.Metadata);
         cls.AddComments(_context.Metadata);
 
         cls.Modifiers |= CSharpModifiers.Unsafe;
@@ -72,9 +72,8 @@ public class ActionClassBuilder
 
     private CSharpMethod EmitGetTypeSupportHandle()
     {
-        var method = new CSharpMethod()
+        var method = new CSharpMethod("GetTypeSupportHandle")
         {
-            Name = "GetTypeSupportHandle",
             Modifiers = CSharpModifiers.Static,
             Visibility = CSharpVisibility.Public,
             ReturnType = new CSharpFreeType("global::Rosidl.Runtime.TypeSupportHandle")
@@ -142,14 +141,17 @@ public class ActionBuildContext
         Goal = new(
             new(metadata.Id with { Name = metadata.Id.Name + "_Goal" }, metadata.Comments, metadata.GoalFields),
             options, MessageType.ActionGoal, this);
+        Goal.Metadata.Version = metadata.Version;
 
         Result = new(
             new(metadata.Id with { Name = metadata.Id.Name + "_Result" }, metadata.Comments, metadata.ResultFields),
             options, MessageType.ActionResult, this);
+        Result.Metadata.Version = metadata.Version;
 
         Feedback = new(
             new(metadata.Id with { Name = metadata.Id.Name + "_Feedback" }, metadata.Comments, metadata.FeedbackFields),
             options, MessageType.ActionFeedback, this);
+        Feedback.Metadata.Version = metadata.Version;
 
         FeedbackMessage = GenerateFeedbackMessage();
         SendGoal = GenerateSendGoal(parser);

@@ -14,9 +14,12 @@ internal static class Extensions
 
         return false;
     }
-    public static void AddTypeSupportAttribute(this CSharpClass cls, string name)
+
+    public static void AddTypeSupportAttribute(this CSharpClass cls, ComplexTypeMetadata metadata)
     {
-        cls.Attributes.Add(new CSharpFreeAttribute($"global::Rosidl.Runtime.TypeSupportAttribute(\"{name}\")"));
+        var name = metadata.ToString();
+        var ver = string.IsNullOrWhiteSpace(metadata.Version) ? string.Empty : $", \"{metadata.Version}\"";
+        cls.Attributes.Add(new CSharpFreeAttribute($"global::Rosidl.Runtime.TypeSupportAttribute(\"{name}\"{ver})"));
     }
 
     public static void AddTypeSupportInterface(this CSharpClass cls, MessageBuildContext context)

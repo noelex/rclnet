@@ -5,7 +5,8 @@ using System.Reflection;
 
 if (args.Length == 1 && args[0] is "-v" or "--version")
 {
-    Console.WriteLine(FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion);
+    Console.WriteLine(typeof(Program).Assembly
+        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion);
     return 0;
 }
 
@@ -61,6 +62,13 @@ OPTIONS:
         unless missing packages are excluded explicitly using 'exclude' option.
         Enabling this option forces ros2cs to generate code even if some packages are missing.
 
+        This option is disabled by default.
+
+    -df,
+    --details-file
+        Generate a details file 'sources.g.inputs' and 'generated.g.outputs' containing paths
+        of all input packages and generated files.
+        
         This option is disabled by default.
 
     -o,

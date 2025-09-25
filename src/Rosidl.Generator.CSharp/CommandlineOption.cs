@@ -16,6 +16,8 @@ class CommandlineOptionParser
         new OptionDefinition("from-ament-index", new[]{ "--from-ament-index", "--no-ament-index" }, IsFlag: true),
         new OptionDefinition("ignore-missing", new[]{ "--ignore-missing", "--no-ignore-missing" }, IsFlag: true),
 
+        new OptionDefinition("details-file", [ "-df", "--details-file" ], IsFlag: true),
+
         new OptionDefinition("namespace", new[]{ "-n", "--namespace" }),
         new OptionDefinition("output", new[]{ "-o", "--output" }),
 

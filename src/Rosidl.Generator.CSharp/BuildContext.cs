@@ -21,7 +21,8 @@ static class Attributes
 
     public static readonly CSharpAttribute GeneratedCode
         = new CSharpFreeAttribute($"global::System.CodeDom.Compiler.GeneratedCodeAttribute(\"ros2cs\", " +
-            $"\"{FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion}\")");
+            $"\"{typeof(Attributes).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
+                .InformationalVersion}\")");
 }
 
 public record VariableFieldInfo(
