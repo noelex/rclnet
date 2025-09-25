@@ -41,16 +41,6 @@ jobs:
           rosdep update --include-eol-distros
           rosdep install -i -y --from-paths src/Rcl.NET.Tests
 
-      - name: Setup .NET 6.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 6.0.x
-
-      - name: Setup .NET 7.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 7.0.x
-
       - name: Setup .NET 8.0
         uses: actions/setup-dotnet@v3
         with:
@@ -60,6 +50,11 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 9.0.x
+
+      - name: Setup .NET 10.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 10.0.x
 
       - name: Build
         working-directory: src/Rcl.NET.Tests
@@ -143,16 +138,6 @@ jobs:
           Invoke-WebRequest -Uri ${{ matrix.ros_archive }} -OutFile ros2-release.zip
           Expand-Archive -Path ros2-release.zip c:/dev/${{ matrix.ros_distribution }}
 
-      - name: Setup .NET 6.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 6.0.x
-
-      - name: Setup .NET 7.0
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: 7.0.x
-
       - name: Setup .NET 8.0
         uses: actions/setup-dotnet@v3
         with:
@@ -162,6 +147,11 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 9.0.x
+
+      - name: Setup .NET 10.0
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 10.0.x
 
       - name: Build
         working-directory: src/Rcl.NET.Tests
