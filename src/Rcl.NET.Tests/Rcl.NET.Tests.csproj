@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net7.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -28,11 +28,13 @@
     <ProjectReference Include="..\Rcl.NET\Rcl.NET.csproj" />
   </ItemGroup>
 
+	<Import Project="..\Rcl.NET\build\Rcl.NET.props"/>
+	<Import Project="..\Rcl.NET\build\Rcl.NET.targets"/>
+
+	<!-- ../Directory.Build.props & .targets are also imported to gather the source ros2cs -->
+	
   <ItemGroup>
     <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <Import Project="$(MSBuildProjectDirectory)\..\Rcl.NET\build\Rcl.NET.targets" />
-  <Import Project="$(MSBuildProjectDirectory)\..\Rcl.NET\build\Rcl.NET.props" />
-  <Import Project="$(MSBuildProjectDirectory)\..\Rcl.NET\build\ros2cs.targets" />
 </Project>

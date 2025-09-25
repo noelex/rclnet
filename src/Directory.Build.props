@@ -12,11 +12,11 @@
 	<Copyright>Copyright (c) 2022-2025, noelex@outlook.jp</Copyright>
 	<PackageTags>ros, ros2, rcl, rosidl, ros2cs, rclnet</PackageTags>
   <SignAssembly>true</SignAssembly>
-  <AssemblyOriginatorKeyFile>$(ProjectDir)..\SigningKey.snk</AssemblyOriginatorKeyFile>
+  <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)\SigningKey.snk</AssemblyOriginatorKeyFile>
   <PublicSign>True</PublicSign>
 </PropertyGroup>
-	<ItemGroup >
-		<None Include="$(ProjectDir)..\..\README.md" Pack="True" PackagePath="\" Visible="False" />
-		<None Include="$(ProjectDir)..\..\LICENSE" Pack="True" PackagePath="\" Visible="False" />
+	<ItemGroup>
+		<None Include="$(MSBuildThisFileDirectory)..\README.md" Pack="True" PackagePath="\" Visible="False" />
+		<None Include="$(MSBuildThisFileDirectory)..\LICENSE" Pack="True" PackagePath="\" Visible="False" />
 	</ItemGroup>
 </Project>

@@ -2,17 +2,17 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>ros2cs</AssemblyName>
-    <PackAsTool>true</PackAsTool>
     <DefaultItemExcludes>$(DefaultItemExcludes);TestOutput\**\*.cs</DefaultItemExcludes>
     <RollForward>Major</RollForward>
   </PropertyGroup>
 
   <PropertyGroup>
-    <ToolCommandName>ros2cs</ToolCommandName>
+	  <PackAsTool>true</PackAsTool>
+	  <ToolCommandName>ros2cs</ToolCommandName>
     <PackageId>ros2cs</PackageId>
     <Description>
       <![CDATA[Generates C# source codes from ROS2 interface definitions for use with rclnet.]]>

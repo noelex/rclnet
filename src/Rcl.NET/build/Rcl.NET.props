@@ -1,9 +1,15 @@
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+	<PropertyGroup>
+		<Ros2csOutputDir Condition="$(Ros2csOutputDir) == ''">Ros2csGeneratedInterfaces</Ros2csOutputDir>
+		<Ros2csBundleTfm>net8.0</Ros2csBundleTfm>
+		<Ros2csExe Condition="'$(Ros2csExe)' == ''">$(MSBuildThisFileDirectory)\..\tools\$(Ros2csBundleTfm)\ros2cs\ros2cs.dll</Ros2csExe>
+	</PropertyGroup>
+	
 	<ItemGroup>
 		<Ros2csGenFiles Include="$(IntermediateOutputPath)\$(Ros2csOutputDir)\**\*.g.cs" />
 
-		<Compile Include="$(IntermediateOutputPath)\$(Ros2csOutputDir)\**\*.g.cs">
+		<Compile Include="@(Ros2csGenFiles)">
 			<Link>$(Ros2csOutputDir)\%(RecursiveDir)%(Filename)%(Extension)</Link>
 		</Compile>
 	</ItemGroup>
