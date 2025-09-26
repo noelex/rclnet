@@ -14,6 +14,7 @@ jobs:
           - humble
           - iron
           - jazzy
+          - kilted
         include:
           - ros_distribution: foxy
             docker_image: ros:foxy-ros-base
@@ -23,6 +24,8 @@ jobs:
             docker_image: ros:iron-ros-base
           - ros_distribution: jazzy
             docker_image: ros:jazzy-ros-base
+          - ros_distribution: kilted
+            docker_image: ros:kilted-ros-base
     container:
       image: ${{ matrix.docker_image }}
     steps:
@@ -90,7 +93,11 @@ jobs:
           - humble
           - iron
           - jazzy
+          - kilted
         include:
+          - ros_distribution: kilted
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-kilted-20250728/ros2-kilted-20250728-windows-release-amd64.zip
+            is_legacy_distro: false
           - ros_distribution: jazzy
             ros_archive: https://github.com/ros2/ros2/releases/download/release-jazzy-20250820/ros2-jazzy-20250820-windows-release-amd64.zip
             is_legacy_distro: false
