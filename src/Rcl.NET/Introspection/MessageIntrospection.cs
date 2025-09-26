@@ -39,7 +39,7 @@ static class MessageIntrospection
         {
             return new HumbleMessageIntrospection(typesupport);
         }
-        else if (RosEnvironment.IsJazzy)
+        else if (RosEnvironment.IsJazzy || RosEnvironment.IsKilted)
         {
             return new JazzyMessageIntrospection(typesupport);
         }
@@ -62,7 +62,7 @@ static class MessageIntrospection
         {
             return new HumbleMessageIntrospection(messageMembers);
         }
-        else if (RosEnvironment.IsJazzy)
+        else if (RosEnvironment.IsJazzy || RosEnvironment.IsKilted)
         {
             return new JazzyMessageIntrospection((MessageMembers_Jazzy*)messageMembers);
         }

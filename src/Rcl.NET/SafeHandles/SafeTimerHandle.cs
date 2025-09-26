@@ -1,4 +1,4 @@
-using Rosidl.Messages.Rosgraph;
+using Rcl.Interop;
 
 namespace Rcl.SafeHandles;
 
@@ -10,15 +10,24 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
         SafeContextHandle context, SafeClockHandle clock, long period)
     {
         _clock = clock;
-        * Object = rcl_get_zero_initialized_timer();
+        *Object = rcl_get_zero_initialized_timer();
 
         try
         {
             using (ScopedLock.Lock(ref _clock.SyncRoot))
             {
-                RclException.ThrowIfNonSuccess(
-                    rcl_timer_init(Object, clock.Object, context.Object,
-                      period, null, RclAllocator.Default.Object));
+                if (RosEnvironment.IsSupported(RosEnvironment.Jazzy))
+                {
+                    RclException.ThrowIfNonSuccess(
+                        RclJazzy.rcl_timer_init2(Object, clock.Object, context.Object,
+                          period, null, RclAllocator.Default.Object, true));
+                }
+                else
+                {
+                    RclException.ThrowIfNonSuccess(
+                        rcl_timer_init(Object, clock.Object, context.Object,
+                          period, null, RclAllocator.Default.Object));
+                }
                 _clock.AddTimerRef();
             }
         }

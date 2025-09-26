@@ -31,6 +31,7 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
                     case RosEnvironment.Humble:
                     case RosEnvironment.Iron:
                     case RosEnvironment.Jazzy:
+                    case RosEnvironment.Kilted:
                         InitHumbleOrLater(namePtr, nsPtr, context, options);
                         break;
                     default: throw new NotImplementedException();

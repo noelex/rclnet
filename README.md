@@ -3,7 +3,8 @@ rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowin
 
 ## What's New in 2.0
  - Added support for .NET 10 and changed minimum supported .NET version to 8.0
- - ROS2 Jazzy Support by @AlrayQiu ([#39](https://github.com/noelex/rclnet/pull/39))
+ - ROS 2 Kilted Support
+ - ROS 2 Jazzy Support by @AlrayQiu ([#39](https://github.com/noelex/rclnet/pull/39))
  - Simplified message generation workflow by @ha-ves ([#38](https://github.com/noelex/rclnet/pull/38))
  - String pooling is now disabled by default
 
@@ -48,6 +49,7 @@ Supported ROS 2 Distributions:
 - Humble Hawksbill
 - Iron Irwini
 - Jazzy Jalisco
+- Kilted Kaiju
 
 Supported Operating Systems:
 - Ubuntu
