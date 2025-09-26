@@ -201,6 +201,7 @@ jobs:
         run: |
           refreshenv && ^
           pixi shell --manifest-path "c:/dev/${{ matrix.ros_distribution }}/" && ^
+          pixi list && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
@@ -214,6 +215,7 @@ jobs:
         run: |
           refreshenv && ^
           pixi shell --manifest-path "c:/dev/${{ matrix.ros_distribution }}/" && ^
+          pixi list && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
