@@ -71,7 +71,7 @@ jobs:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
           ROS_LOCALHOST_ONLY: 0
         run: |
-          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh && \
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds)
@@ -80,7 +80,7 @@ jobs:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
           ROS_LOCALHOST_ONLY: 0
         run: |
-          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh && \
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
   windows:
@@ -174,8 +174,8 @@ jobs:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
           ROS_LOCALHOST_ONLY: 0
         run: |
-          refreshenv
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          refreshenv && ^
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds) (Legacy)
@@ -186,8 +186,8 @@ jobs:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
           ROS_LOCALHOST_ONLY: 0
         run: |
-          refreshenv
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          refreshenv && ^
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (fastrtps)
@@ -198,9 +198,9 @@ jobs:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
           ROS_LOCALHOST_ONLY: 0
         run: |
-          refreshenv
-          pixi shell
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          refreshenv && ^
+          pixi shell && ^
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds)
@@ -211,9 +211,9 @@ jobs:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
           ROS_LOCALHOST_ONLY: 0
         run: |
-          refreshenv
-          pixi shell
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          refreshenv && ^
+          pixi shell && ^
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
   #test_macos:
