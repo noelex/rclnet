@@ -35,6 +35,11 @@
       "name": "Container - Jazzy",
       "type": "docker",
       "dockerFile": "Rcl.NET.Tests/jazzy.Dockerfile"
+    },
+    {
+      "name": "Container - Kilted",
+      "type": "docker",
+      "dockerFile": "Rcl.NET.Tests/kilted.Dockerfile"
     }
   ]
 }
