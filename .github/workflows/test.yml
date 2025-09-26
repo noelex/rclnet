@@ -125,10 +125,11 @@ jobs:
 
       - name: Install dependencies
         if: ${{ !matrix.is_legacy_distro }}
+        working-directory: c:/dev/${{ matrix.ros_distribution }}/
         run: |
           Set-ExecutionPolicy ByPass
           irm -useb https://pixi.sh/install.ps1 | iex
-          irm https://raw.githubusercontent.com/ros2/ros2/refs/heads/jazzy/pixi.toml -OutFile pixi.toml
+          irm https://raw.githubusercontent.com/ros2/ros2/refs/heads/${{ matrix.ros_distribution }}/pixi.toml -OutFile pixi.toml
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
           pixi install
 
@@ -199,7 +200,7 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: |
           refreshenv && ^
-          pixi shell && ^
+          pixi shell --manifest-path "c:/dev/${{ matrix.ros_distribution }}/" && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
@@ -212,7 +213,7 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: |
           refreshenv && ^
-          pixi shell && ^
+          pixi shell --manifest-path "c:/dev/${{ matrix.ros_distribution }}/" && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
