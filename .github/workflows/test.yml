@@ -136,12 +136,24 @@ jobs:
           choco install --limit-output --no-progress -y -s . tinyxml2
           choco install --limit-output --no-progress -y openssl --version 1.1.1.2100
 
-      - name: Install dependencies
+      - name: Install Pixi
         if: ${{ !matrix.is_legacy_distro }}
-        working-directory: c:/dev/${{ matrix.ros_distribution }}/
         run: |
           Set-ExecutionPolicy ByPass
           irm -useb https://pixi.sh/install.ps1 | iex
+
+      - name: Restore cached Pixi dependencies
+        if: ${{ !matrix.is_legacy_distro }}
+        id: pixi-cache
+        uses: actions/cache@v3
+        with:
+          path: c:/dev/pixi/
+          key: pixi-${{ matrix.ros_distribution }}
+
+      - name: Install dependencies
+        if: ${{ !matrix.is_legacy_distro }}
+        working-directory: c:/dev/pixi/
+        run: |
           irm https://raw.githubusercontent.com/ros2/ros2/refs/heads/${{ matrix.ros_distribution }}/pixi.toml -OutFile pixi.toml
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
           pixi install
@@ -200,8 +212,8 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: |
           refreshenv && ^
-          pixi run --manifest-path "c:/dev/${{ matrix.ros_distribution }}/" ^
-          "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
+          pixi run --manifest-path "c:/dev/pixi/" ^
+          "c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
 
       - name: Test (cyclonedds)
@@ -213,8 +225,8 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: |
           refreshenv && ^
-          pixi run --manifest-path "c:/dev/${{ matrix.ros_distribution }}/" ^
-          "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
+          pixi run --manifest-path "c:/dev/pixi/" ^
+          "c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
 
   #test_macos:
