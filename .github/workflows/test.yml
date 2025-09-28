@@ -214,8 +214,7 @@ jobs:
         run: |
           refreshenv && ^
           pixi run --manifest-path "c:/dev/pixi/" ^
-          "c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
-          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
 
       - name: Test (cyclonedds)
         if: ${{ !matrix.is_legacy_distro }}
@@ -227,8 +226,7 @@ jobs:
         run: |
           refreshenv && ^
           pixi run --manifest-path "c:/dev/pixi/" ^
-          "c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
-          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
 
   #test_macos:
   #  runs-on: macos-latest
