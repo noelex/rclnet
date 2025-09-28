@@ -152,8 +152,9 @@ jobs:
 
       - name: Install dependencies
         if: ${{ !matrix.is_legacy_distro }}
-        working-directory: c:/dev/pixi/
         run: |
+          mkdir c:/dev/pixi/
+          cd c:/dev/pixi/
           irm https://raw.githubusercontent.com/ros2/ros2/refs/heads/${{ matrix.ros_distribution }}/pixi.toml -OutFile pixi.toml
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
           pixi install
