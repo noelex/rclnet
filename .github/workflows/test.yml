@@ -14,6 +14,7 @@ jobs:
           - humble
           - iron
           - jazzy
+          - kilted
         include:
           - ros_distribution: foxy
             docker_image: ros:foxy-ros-base
@@ -23,6 +24,8 @@ jobs:
             docker_image: ros:iron-ros-base
           - ros_distribution: jazzy
             docker_image: ros:jazzy-ros-base
+          - ros_distribution: kilted
+            docker_image: ros:kilted-ros-base
     container:
       image: ${{ matrix.docker_image }}
     steps:
@@ -68,7 +71,7 @@ jobs:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
           ROS_LOCALHOST_ONLY: 0
         run: |
-          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh && \
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds)
@@ -77,7 +80,7 @@ jobs:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
           ROS_LOCALHOST_ONLY: 0
         run: |
-          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh && \
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
   windows:
@@ -90,7 +93,11 @@ jobs:
           - humble
           - iron
           - jazzy
+          - kilted
         include:
+          - ros_distribution: kilted
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-kilted-20250728/ros2-kilted-20250728-windows-release-amd64.zip
+            is_legacy_distro: false
           - ros_distribution: jazzy
             ros_archive: https://github.com/ros2/ros2/releases/download/release-jazzy-20250820/ros2-jazzy-20250820-windows-release-amd64.zip
             is_legacy_distro: false
@@ -107,23 +114,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: true
-  
-      - name: Install dependencies (Legacy)
-        if: ${{ matrix.is_legacy_distro }}
-        run: |
-          reg add HKCU\SOFTWARE\Kitware\CMake /f
-          Invoke-WebRequest -Uri https://github.com/ros2/choco-packages/releases/download/2022-03-15/tinyxml2.6.0.0.nupkg -OutFile tinyxml2.6.0.0.nupkg
-          choco install --limit-output --no-progress -y -s . tinyxml2
-          choco install --limit-output --no-progress -y openssl --version 1.1.1.2100
-
-      - name: Install dependencies
-        if: ${{ !matrix.is_legacy_distro }}
-        run: |
-          Set-ExecutionPolicy ByPass
-          irm -useb https://pixi.sh/install.ps1 | iex
-          irm https://raw.githubusercontent.com/ros2/ros2/refs/heads/jazzy/pixi.toml -OutFile pixi.toml
-          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-          pixi install
 
       - name: Restore cached ROS installation
         id: ros-cache
@@ -137,6 +127,37 @@ jobs:
         run: |
           Invoke-WebRequest -Uri ${{ matrix.ros_archive }} -OutFile ros2-release.zip
           Expand-Archive -Path ros2-release.zip c:/dev/${{ matrix.ros_distribution }}
+
+      - name: Install dependencies (Legacy)
+        if: ${{ matrix.is_legacy_distro }}
+        run: |
+          reg add HKCU\SOFTWARE\Kitware\CMake /f
+          Invoke-WebRequest -Uri https://github.com/ros2/choco-packages/releases/download/2022-03-15/tinyxml2.6.0.0.nupkg -OutFile tinyxml2.6.0.0.nupkg
+          choco install --limit-output --no-progress -y -s . tinyxml2
+          choco install --limit-output --no-progress -y openssl --version 1.1.1.2100
+
+      - name: Install Pixi
+        if: ${{ !matrix.is_legacy_distro }}
+        run: |
+          Set-ExecutionPolicy ByPass
+          irm -useb https://pixi.sh/install.ps1 | iex
+
+      - name: Restore cached Pixi dependencies
+        if: ${{ !matrix.is_legacy_distro }}
+        id: pixi-cache
+        uses: actions/cache@v3
+        with:
+          path: c:/dev/pixi/
+          key: pixi-${{ matrix.ros_distribution }}
+
+      - name: Install dependencies
+        if: ${{ !matrix.is_legacy_distro }}
+        run: |
+          mkdir c:/dev/pixi/
+          cd c:/dev/pixi/
+          irm https://raw.githubusercontent.com/ros2/ros2/refs/heads/${{ matrix.ros_distribution }}/pixi.toml -OutFile pixi.toml
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+          pixi install
 
       - name: Setup .NET 8.0
         uses: actions/setup-dotnet@v3
@@ -167,8 +188,8 @@ jobs:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
           ROS_LOCALHOST_ONLY: 0
         run: |
-          refreshenv
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          refreshenv && ^
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds) (Legacy)
@@ -179,8 +200,8 @@ jobs:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
           ROS_LOCALHOST_ONLY: 0
         run: |
-          refreshenv
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
+          refreshenv && ^
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (fastrtps)
@@ -191,10 +212,9 @@ jobs:
           RMW_IMPLEMENTATION: rmw_fastrtps_cpp
           ROS_LOCALHOST_ONLY: 0
         run: |
-          refreshenv
-          pixi shell
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
-          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          refreshenv && ^
+          pixi run --manifest-path "c:/dev/pixi/" ^
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
 
       - name: Test (cyclonedds)
         if: ${{ !matrix.is_legacy_distro }}
@@ -204,10 +224,9 @@ jobs:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
           ROS_LOCALHOST_ONLY: 0
         run: |
-          refreshenv
-          pixi shell
-          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat
-          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          refreshenv && ^
+          pixi run --manifest-path "c:/dev/pixi/" ^
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
 
   #test_macos:
   #  runs-on: macos-latest
