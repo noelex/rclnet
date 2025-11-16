@@ -6,9 +6,9 @@
 		</GenerateInterfaces_ros2csDependsOn>
 	</PropertyGroup>
 
-	<Target Name="GenerateInterfaces_ros2cs" BeforeTargets="BeforeCompile;CoreCompile" 
+	<Target Name="GenerateInterfaces_ros2cs" BeforeTargets="DispatchToInnerBuilds;BeforeCompile;CoreCompile" 
 			DependsOnTargets="$(GenerateInterfaces_ros2csDependsOn)"
-			Inputs="$(Ros2csSpecFile)" Outputs="$(IntermediateOutputPath)\$(Ros2csOutputDir)\ros2cs.spec.cache">
+			Inputs="$(Ros2csSpecFile)" Outputs="$(BaseIntermediateOutputPath)$(Ros2csOutputDir)\ros2cs.spec.cache">
 
 		<Message Text="Ros2csSpec: $(Ros2csSpecFile)"/>
 
@@ -25,13 +25,13 @@
 			   Text="'$(Ros2csCommand)' failed with exit code $(Ros2csExitCode):&#x0A;@(Ros2csOutput->'%(Identity)', '&#x0A;')" />
 
 		<Copy SourceFiles="$(Ros2csSpecFile)" 
-			  DestinationFiles="$(IntermediateOutputPath)\$(Ros2csOutputDir)\ros2cs.spec.cache" 
+			  DestinationFiles="$(BaseIntermediateOutputPath)$(Ros2csOutputDir)\ros2cs.spec.cache" 
 			  SkipUnchangedFiles="true" 
 			  Condition="'$(Ros2csSpecFile)' != ''"/>
 		
 		<ItemGroup>
 			<Compile Remove="@(Ros2csGenFiles)" />
-			<Compile Include="$(IntermediateOutputPath)\$(Ros2csOutputDir)\**\*.g.cs"/>
+			<Compile Include="$(BaseIntermediateOutputPath)$(Ros2csOutputDir)\**\*.g.cs"/>
 		</ItemGroup>
 	</Target>
 
@@ -42,8 +42,9 @@
 		</CleanGenerated_ros2csDependsOn>
 	</PropertyGroup>
 
-	<Target Name="CleanGenerated_ros2cs" BeforeTargets="CoreClean" DependsOnTargets="$(CleanGenerated_ros2csDependsOn)">
-		<RemoveDir Directories="$(IntermediateOutputPath)\$(Ros2csOutputDir)" />
+	<Target Name="CleanGenerated_ros2cs" BeforeTargets="CoreClean" DependsOnTargets="$(CleanGenerated_ros2csDependsOn)"
+			Condition="'$(TargetFrameworks)' == '' OR '$(TargetFramework)' == $(TargetFrameworks.Split(';')[0])">
+		<RemoveDir Directories="$(BaseIntermediateOutputPath)$(Ros2csOutputDir)" ContinueOnError="true" />
 	</Target>
 
 
@@ -52,7 +53,7 @@
 			<DefaultRos2csSpecFile>$(MSBuildProjectDirectory)\ros2cs.spec</DefaultRos2csSpecFile>
 			<Ros2csSpecFile Condition="$(Ros2csSpecFile) == '' and Exists('$(DefaultRos2csSpecFile)')">$(DefaultRos2csSpecFile)</Ros2csSpecFile>
 
-			<Ros2csCommand>dotnet $(Ros2csExe.Trim()) $(Ros2csArgs.Trim()) -o &quot;$(IntermediateOutputPath)\$(Ros2csOutputDir.Trim())&quot; &quot;$(Ros2csSpecFile.Trim())&quot;</Ros2csCommand>
+			<Ros2csCommand>dotnet $(Ros2csExe.Trim()) $(Ros2csArgs.Trim()) -o &quot;$(BaseIntermediateOutputPath)$(Ros2csOutputDir.Trim())&quot; &quot;$(Ros2csSpecFile.Trim())&quot;</Ros2csCommand>
 		</PropertyGroup>
 	</Target>
 

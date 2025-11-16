@@ -7,7 +7,7 @@
 	</PropertyGroup>
 	
 	<ItemGroup>
-		<Ros2csGenFiles Include="$(IntermediateOutputPath)\$(Ros2csOutputDir)\**\*.g.cs" />
+		<Ros2csGenFiles Include="$(BaseIntermediateOutputPath)$(Ros2csOutputDir)\**\*.g.cs" />
 
 		<Compile Include="@(Ros2csGenFiles)">
 			<Link>$(Ros2csOutputDir)\%(RecursiveDir)%(Filename)%(Extension)</Link>
