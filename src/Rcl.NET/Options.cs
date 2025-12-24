@@ -1,10 +1,10 @@
-﻿using Rcl.Interop;
+﻿using Rcl.Graph;
+using Rcl.Interop;
 using Rcl.Parameters;
 using Rcl.Qos;
 using Rcl.Runtime;
 using System.Text;
 using System.Threading.Channels;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Rcl;
 
@@ -105,6 +105,9 @@ public record NodeOptions
     /// Defaults to <see langword="false"/>.
     /// </para>
     /// </param>
+    /// <param name="graphEventFilter">
+    /// Selectively receive graph events from other nodes based on this predicate function when updating the <see cref="RosGraph"/> associated with this node.
+    /// </param>
     public NodeOptions(
         string[]? arguments = null,
         [SupportedDistribution(RosEnvironment.Foxy)]
@@ -116,7 +119,8 @@ public record NodeOptions
         [SupportedSinceDistribution(RosEnvironment.Humble)]
         QosProfile? rosOutQos = null,
         IDictionary<string, Variant>? parameterOverrides = null,
-        bool declareParameterFromOverrides = false)
+        bool declareParameterFromOverrides = false,
+        Func<NodeName, bool>? graphEventFilter = null)
     {
         if (domaindId != null)
         {
@@ -137,6 +141,7 @@ public record NodeOptions
         RosOutQos = rosOutQos ?? QosProfile.RosOut;
         ParameterOverrides = parameterOverrides;
         DeclareParameterFromOverrides = declareParameterFromOverrides;
+        GraphEventFilter = graphEventFilter;
     }
 
     /// <summary>
@@ -219,6 +224,14 @@ public record NodeOptions
     /// Defaults to <see langword="false"/>.
     /// </remarks>
     public bool DeclareParameterFromOverrides { get; }
+
+    /// <summary>
+    /// Selectively receive graph events from other nodes based on this predicate function when updating the <see cref="RosGraph"/> associated with this node.
+    /// </summary>
+    /// <remarks>
+    /// Defaults to <see langword="null"/>, meaning all nodes' events are received.
+    /// </remarks>
+    public Func<NodeName, bool>? GraphEventFilter { get; }
 
     /// <summary>
     /// Gets a <see cref="NodeOptions"/> instance with all options set to default values.

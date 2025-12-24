@@ -60,8 +60,9 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         _newSubscribers = new(), _removedSubscribers = new();
 
     private readonly IList[] _cleanupTargets;
+    private readonly Func<NodeName, bool> _nodeFilter;
 
-    internal RosGraph(RclNodeImpl node)
+    internal RosGraph(RclNodeImpl node, Func<NodeName, bool> nodeFilter)
     {
         _node = node;
         _cleanupTargets = new IList[]
@@ -83,6 +84,8 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             _totalActionClients, _newActionClients, _removedActionClients,
             _totalActionServers, _newActionServers, _removedActionServers
         };
+
+        _nodeFilter = nodeFilter;
     }
 
     /// <summary>
@@ -183,7 +186,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                     StringMarshal.CreatePooledString((byte*)names.data[i])!,
                     StringMarshal.CreatePooledString((byte*)namespaces.data[i])!);
 
-                if (!_nodes.TryGetValue(name, out var node))
+                if (_nodeFilter(name) && !_nodes.TryGetValue(name, out var node))
                 {
                     var enclave = StringMarshal.CreatePooledString((byte*)enclaves.data[i])!;
                     _nodes[name] = node = new RosNode(name, enclave);

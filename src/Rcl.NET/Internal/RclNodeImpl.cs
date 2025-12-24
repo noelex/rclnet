@@ -40,7 +40,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         FullyQualifiedName = StringMarshal.CreatePooledString(rcl_node_get_fully_qualified_name(Handle.Object))!;
         Logger = context.CreateLogger(StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object))!);
 
-        _graph = new(this);
+        _graph = new(this, Options.GraphEventFilter ?? (static _ => true));
         _graphSignal = new RclGuardConditionImpl(context,
             new(rcl_node_get_graph_guard_condition(Handle.Object)));
         _ = GraphBuilder(_graphSignal, _cts.Token);
