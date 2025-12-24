@@ -58,7 +58,7 @@
 	</Target>
 
 
-	<Target Name="CheckAmentPrefixPath" AfterTargets="GetRos2csProps">
+	<Target Name="CheckAmentPrefixPath" AfterTargets="GetRos2csProps" Condition="'$(Ros2csSpecFile)' != ''">
 		<ReadLinesFromFile File="$(Ros2csSpecFile)">
 			<Output TaskParameter="Lines" ItemName="Ros2csSpecFileLines"/>
 		</ReadLinesFromFile>
