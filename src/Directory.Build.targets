@@ -6,7 +6,7 @@
         </GetRos2csPropsDependsOn>
     </PropertyGroup>
 
-    <Target Name="Get_ros2cs">
+    <Target Name="Get_ros2cs" Condition="'$(IsRos2csCleaning)' != 'true'">
         <MSBuild Projects="$(MSBuildThisFileDirectory)\ros2cs\ros2cs.csproj"
                  Targets="Restore" 
                  RemoveProperties="TargetFramework"
@@ -15,6 +15,7 @@
         <MSBuild Projects="$(MSBuildThisFileDirectory)\ros2cs\ros2cs.csproj"
                  Targets="Publish"
                  Properties="Configuration=$(Configuration);TargetFramework=$(Ros2csBundleTfm);Version=$(Version)"
+				 RemoveProperties="BuildingInsideVisualStudio"
                 />
 
         <PropertyGroup>
@@ -24,5 +25,12 @@
 
         <Message Text="[$(MSBuildProjectName), Source Build] Using ros2cs from $(Ros2csExe)"/>
     </Target>
+
+
+	<Target Name="SetCleaningProps" BeforeTargets="$(CleanGenerated_ros2csDependsOn)">
+		<PropertyGroup>
+			<IsRos2csCleaning>true</IsRos2csCleaning>
+		</PropertyGroup>
+	</Target>
 
 </Project>
