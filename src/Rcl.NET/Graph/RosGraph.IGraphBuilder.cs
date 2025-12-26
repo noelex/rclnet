@@ -1,3 +1,6 @@
+using System.Buffers;
+using System.Runtime.InteropServices;
+
 namespace Rcl.Graph;
 
 public partial class RosGraph
@@ -24,7 +27,9 @@ public partial class RosGraph
 
     void IGraphBuilder.OnEnumerateServiceServer(RosServiceEndPoint server)
     {
-        _totalServers.Add(server);
+        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalServers, server.Service, out _);
+        endpoints ??= new();
+        endpoints.Add(server);
     }
 
     void IGraphBuilder.OnAddServiceClient(RosServiceEndPoint client)
@@ -39,7 +44,9 @@ public partial class RosGraph
 
     void IGraphBuilder.OnEnumerateServiceClient(RosServiceEndPoint client)
     {
-        _totalClients.Add(client);
+        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalClients, client.Service, out _);
+        endpoints ??= new();
+        endpoints.Add(client);
     }
 
     void IGraphBuilder.OnAddPublisher(RosTopicEndPoint publisher)
@@ -54,7 +61,9 @@ public partial class RosGraph
 
     void IGraphBuilder.OnEnumeratePublisher(RosTopicEndPoint publisher)
     {
-        _totalPublications.Add(publisher);
+        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalPublications, publisher.Node, out _);
+        endpoints ??= new();
+        endpoints.Add(publisher);
     }
 
     void IGraphBuilder.OnAddSubscriber(RosTopicEndPoint subscriber)
@@ -69,6 +78,38 @@ public partial class RosGraph
 
     void IGraphBuilder.OnEnumerateSubscriber(RosTopicEndPoint subscriber)
     {
-        _totalSubscriptions.Add(subscriber);
+        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalSubscriptions, subscriber.Node, out _);
+        endpoints ??= new();
+        endpoints.Add(subscriber);
+    }
+
+    private class PoolingList<T> : IDisposable
+    {
+        private T[] _data;
+        private int _count = 0;
+
+        public PoolingList(int capacity = 8)
+        {
+            _data = ArrayPool<T>.Shared.Rent(capacity);
+        }
+
+        public void Add(T item)
+        {
+            if (_count >= _data.Length)
+            {
+                var newData = ArrayPool<T>.Shared.Rent(_data.Length * 2);
+                Array.Copy(_data, newData, _data.Length);
+                ArrayPool<T>.Shared.Return(_data);
+                _data = newData;
+            }
+            _data[_count++] = item;
+        }
+
+        public Span<T> AsSpan() => _data.AsSpan(0, _count);
+
+        public void Dispose()
+        {
+            ArrayPool<T>.Shared.Return(_data);
+        }
     }
 }

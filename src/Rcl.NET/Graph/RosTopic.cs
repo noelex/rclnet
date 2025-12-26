@@ -38,7 +38,7 @@ public class RosTopic
 
     internal void UpdatePublishers(
         IGraphBuilder builder,
-        ReadOnlySpan<TopicEndPointData> endpoints,
+        ReadOnlySpan<TopicEndPointDataRef> endpoints,
         IDictionary<NodeName, RosNode> nodes)
     {
         UpdateEndPoints(builder, TopicEndPointType.Publisher, endpoints, nodes);
@@ -46,7 +46,7 @@ public class RosTopic
 
     internal void UpdateSubscribers(
         IGraphBuilder builder,
-        ReadOnlySpan<TopicEndPointData> endpoints,
+        ReadOnlySpan<TopicEndPointDataRef> endpoints,
         IDictionary<NodeName, RosNode> nodes)
     {
         UpdateEndPoints(builder, TopicEndPointType.Subscriber, endpoints, nodes);
@@ -55,7 +55,7 @@ public class RosTopic
     private void UpdateEndPoints(
         IGraphBuilder builder,
         TopicEndPointType type,
-        ReadOnlySpan<TopicEndPointData> endpoints,
+        ReadOnlySpan<TopicEndPointDataRef> endpoints,
         IDictionary<NodeName, RosNode> nodes)
     {
         var dest = type == TopicEndPointType.Publisher ? _publishers : _subscribers;
@@ -64,13 +64,14 @@ public class RosTopic
             // Endpoints may establish before node establishes.
             // If this happends, simply ignore it here and add the endpoint
             // when node is established.
-            if (!dest.TryGetValue(ep.Id, out _) &&
+            var id = ep.Id;
+            if (!dest.TryGetValue(id, out _) &&
                 nodes.TryGetValue(ep.Node, out var node))
             {
                 var endpoint = new RosTopicEndPoint(
-                   ep.Id, this, node, type, ep.Type, ep.QosProfile);
+                   id, this, node, type, ep.Type, ep.QosProfile);
 
-                dest[ep.Id] = endpoint;
+                dest[id] = endpoint;
                 if (type is TopicEndPointType.Publisher)
                 {
                     builder.OnAddPublisher(endpoint);

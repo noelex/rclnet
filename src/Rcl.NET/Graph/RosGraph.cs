@@ -41,9 +41,9 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     private readonly ConcurrentDictionary<string, RosTopic> _topics = new();
     private readonly ConcurrentDictionary<string, RosService> _services = new();
 
-    private readonly List<RosTopicEndPoint>
+    private readonly Dictionary<RosNode, PoolingList<RosTopicEndPoint>>
         _totalPublications = new(), _totalSubscriptions = new();
-    private readonly List<RosServiceEndPoint>
+    private readonly Dictionary<RosService, PoolingList<RosServiceEndPoint>>
         _totalServers = new(), _totalClients = new();
 
     private readonly List<RosNode>
@@ -68,9 +68,6 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         _cleanupTargets = new IList[]
         {
             _newNodes,_removedNodes,
-
-            _totalPublications, _totalSubscriptions,
-            _totalServers, _totalClients,
 
             _newServices,_removedServices,
             _newServers,_removedServers,
@@ -132,19 +129,22 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     private void RelationshipFixup()
     {
-        foreach (var g in _totalPublications.GroupBy(x => x.Node))
+        foreach (var (node, endpoints) in _totalPublications)
         {
-            g.Key.ResetPublishers(g);
+            node.ResetPublishers(endpoints.AsSpan());
         }
-        foreach (var g in _totalSubscriptions.GroupBy(x => x.Node))
+        foreach (var (node, endpoints) in _totalSubscriptions)
         {
-            g.Key.ResetSubscribers(g);
+            node.ResetSubscribers(endpoints.AsSpan());
         }
 
-        foreach (var svc in _services.Values)
+        foreach (var (svc, endpoints) in _totalServers)
         {
-            svc.ResetClients(_totalClients.Where(x => x.Service == svc));
-            svc.ResetServers(_totalServers.Where(x => x.Service == svc));
+            svc.ResetServers(endpoints.AsSpan());
+        }
+        foreach (var (svc, endpoints) in _totalClients)
+        {
+            svc.ResetClients(endpoints.AsSpan());
         }
 
         foreach (var (k, v) in _services)
@@ -163,6 +163,18 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         {
             list.Clear();
         }
+
+        foreach (var v in _totalPublications.Values) v.Dispose();
+        _totalPublications.Clear();
+
+        foreach (var v in _totalSubscriptions.Values) v.Dispose();
+        _totalSubscriptions.Clear();
+
+        foreach (var v in _totalServers.Values) v.Dispose();
+        _totalServers.Clear();
+
+        foreach (var v in _totalClients.Values) v.Dispose();
+        _totalClients.Clear();
     }
 
     private unsafe void BuildNodes()
@@ -285,8 +297,8 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                     // Notify topic to remove its topic endpoints
                     // so that publisher and subscriber events can be fired
                     // if the topic disappears from graph.
-                    s.UpdatePublishers(this, ReadOnlySpan<TopicEndPointData>.Empty, _nodes);
-                    s.UpdateSubscribers(this, ReadOnlySpan<TopicEndPointData>.Empty, _nodes);
+                    s.UpdatePublishers(this, ReadOnlySpan<TopicEndPointDataRef>.Empty, _nodes);
+                    s.UpdateSubscribers(this, ReadOnlySpan<TopicEndPointDataRef>.Empty, _nodes);
                 }
             }
             else
@@ -352,9 +364,11 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         var namePtr = nameBuffer.IsEmpty ? null : (byte*)Unsafe.AsPointer(ref nameBuffer[0]);
 
         var allocator = RclAllocator.Default.Object;
-        rmw_topic_endpoint_info_array_t endpoints;
-        var ironOrLater = RosEnvironment.IsSupported(RosEnvironment.Iron);
+        var accessor = RosEnvironment.IsSupported(RosEnvironment.Iron)
+            ? IronTopicEndPointDataAccessor.Instance
+            : TopicEndPointDataAccessor.Instance;
 
+        rmw_topic_endpoint_info_array_t endpoints;
         RclException.ThrowIfNonSuccess(
             rcl_get_publishers_info_by_topic(
                 _node.Handle.Object,
@@ -363,17 +377,20 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                 disableTopicNameDemangling,
                 &endpoints));
 
-        using (var items = SpanOwner<TopicEndPointData>.Allocate((int)endpoints.size.Value))
+        using (var items = SpanOwner<TopicEndPointDataRef>.Allocate((int)endpoints.size.Value))
         {
-            if (ironOrLater)
+            try
             {
-                CopyTopicEndpoints((RclIron.rmw_topic_endpoint_info_array_t*)&endpoints, items.Span, &allocator.Value);
+                for (var i = 0; i < (int)endpoints.size.Value; i++)
+                {
+                    items.Span[i] = new(&endpoints.info_array[i], accessor);
+                }
+                topic.UpdatePublishers(this, items.Span, _nodes);
             }
-            else
+            finally
             {
-                CopyTopicEndpoints(&endpoints, items.Span, &allocator.Value);
+                rmw_topic_endpoint_info_array_fini(&endpoints, &allocator.Value);
             }
-            topic.UpdatePublishers(this, items.Span, _nodes);
         }
 
         RclException.ThrowIfNonSuccess(
@@ -384,67 +401,20 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                 disableTopicNameDemangling,
                 &endpoints));
 
-        using (var items = SpanOwner<TopicEndPointData>.Allocate((int)endpoints.size.Value))
+        using (var items = SpanOwner<TopicEndPointDataRef>.Allocate((int)endpoints.size.Value))
         {
-            if (ironOrLater)
+            try
             {
-                CopyTopicEndpoints((RclIron.rmw_topic_endpoint_info_array_t*)&endpoints, items.Span, &allocator.Value);
+                for (var i = 0; i < (int)endpoints.size.Value; i++)
+                {
+                    items.Span[i] = new(&endpoints.info_array[i], accessor);
+                }
+                topic.UpdateSubscribers(this, items.Span, _nodes);
             }
-            else
+            finally
             {
-                CopyTopicEndpoints(&endpoints, items.Span, &allocator.Value);
+                rmw_topic_endpoint_info_array_fini(&endpoints, &allocator.Value);
             }
-            topic.UpdateSubscribers(this, items.Span, _nodes);
-        }
-    }
-
-    private unsafe void CopyTopicEndpoints(
-        rmw_topic_endpoint_info_array_t* src, Span<TopicEndPointData> dest, rcutils_allocator_t* allocator)
-    {
-        try
-        {
-            for (var i = 0; i < (int)src->size.Value; i++)
-            {
-                ref var item = ref src->info_array[i];
-                dest[i] = new(
-                    new(src->info_array[i].GetGidSpan()),
-                    StringMarshal.CreatePooledString(item.topic_type)!,
-                    new(
-                        StringMarshal.CreatePooledString(item.node_name)!,
-                        StringMarshal.CreatePooledString(item.node_namespace)!
-                    ),
-                    QosProfile.Create(in item.qos_profile)
-                );
-            }
-        }
-        finally
-        {
-            rmw_topic_endpoint_info_array_fini(src, allocator);
-        }
-    }
-
-    private unsafe void CopyTopicEndpoints(
-        RclIron.rmw_topic_endpoint_info_array_t* src, Span<TopicEndPointData> dest, rcutils_allocator_t* allocator)
-    {
-        try
-        {
-            for (var i = 0; i < (int)src->size.Value; i++)
-            {
-                ref var item = ref src->info_array[i];
-                dest[i] = new(
-                    new(item.GetGidSpan()),
-                    StringMarshal.CreatePooledString(item.topic_type)!,
-                    new(
-                        StringMarshal.CreatePooledString(item.node_name)!,
-                        StringMarshal.CreatePooledString(item.node_namespace)!
-                    ),
-                    QosProfile.Create(in item.qos_profile)
-                );
-            }
-        }
-        finally
-        {
-            rmw_topic_endpoint_info_array_fini(src, allocator);
         }
     }
 
@@ -466,6 +436,68 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         finally
         {
             rcl_names_and_types_fini(src);
+        }
+    }
+
+    private unsafe class TopicEndPointDataAccessor : ITopicEndPointDataAccessor
+    {
+        public static readonly TopicEndPointDataAccessor Instance = new();
+
+        public GraphId GetGraphId(void* data)
+        {
+            var item = (rmw_topic_endpoint_info_t*)data;
+            return new(item->GetGidSpan());
+        }
+
+        public string GetType(void* data)
+        {
+            var item = (rmw_topic_endpoint_info_t*)data;
+            return StringMarshal.CreatePooledString(item->topic_type)!;
+        }
+
+        public NodeName GetNodeName(void* data)
+        {
+            var item = (rmw_topic_endpoint_info_t*)data;
+            return new(
+                StringMarshal.CreatePooledString(item->node_name)!,
+                StringMarshal.CreatePooledString(item->node_namespace)!);
+        }
+
+        public QosProfile GetQosProfile(void* data)
+        {
+            var item = (rmw_topic_endpoint_info_t*)data;
+            return QosProfile.Create(in item->qos_profile);
+        }
+    }
+
+    private unsafe class IronTopicEndPointDataAccessor : ITopicEndPointDataAccessor
+    {
+        public static readonly TopicEndPointDataAccessor Instance = new();
+
+        public GraphId GetGraphId(void* data)
+        {
+            var item = (RclIron.rmw_topic_endpoint_info_t*)data;
+            return new(item->GetGidSpan());
+        }
+
+        public string GetType(void* data)
+        {
+            var item = (RclIron.rmw_topic_endpoint_info_t*)data;
+            return StringMarshal.CreatePooledString(item->topic_type)!;
+        }
+
+        public NodeName GetNodeName(void* data)
+        {
+            var item = (RclIron.rmw_topic_endpoint_info_t*)data;
+            return new(
+                StringMarshal.CreatePooledString(item->node_name)!,
+                StringMarshal.CreatePooledString(item->node_namespace)!);
+        }
+
+        public QosProfile GetQosProfile(void* data)
+        {
+            var item = (RclIron.rmw_topic_endpoint_info_t*)data;
+            return QosProfile.Create(in item->qos_profile);
         }
     }
 }

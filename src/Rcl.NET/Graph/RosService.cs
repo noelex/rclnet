@@ -35,13 +35,13 @@ public class RosService
     /// </summary>
     public IReadOnlyCollection<RosServiceEndPoint> Clients => _clients;
 
-    internal void ResetServers(IEnumerable<RosServiceEndPoint> servers)
+    internal void ResetServers(Span<RosServiceEndPoint> servers)
     {
         _servers.Clear();
         foreach (var item in servers) _servers.Add(item);
     }
 
-    internal void ResetClients(IEnumerable<RosServiceEndPoint> clients)
+    internal void ResetClients(Span<RosServiceEndPoint> clients)
     {
         _clients.Clear();
         foreach (var item in clients) _clients.Add(item);

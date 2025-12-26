@@ -88,13 +88,13 @@ public class RosNode
         ReadOnlySpan<NameWithType> discovered)
         => UpdateActionEndPoints(builder, ActionEndPointType.Client, discovered);
 
-    internal void ResetSubscribers(IEnumerable<RosTopicEndPoint> subscribers)
+    internal void ResetSubscribers(Span<RosTopicEndPoint> subscribers)
     {
         _subscribers.Clear();
         foreach (var item in subscribers) _subscribers.Add(item);
     }
 
-    internal void ResetPublishers(IEnumerable<RosTopicEndPoint> publishers)
+    internal void ResetPublishers(Span<RosTopicEndPoint> publishers)
     {
         _publishers.Clear();
         foreach (var item in publishers) _publishers.Add(item);
