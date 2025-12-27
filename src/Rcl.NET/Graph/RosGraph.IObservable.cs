@@ -1,22 +1,29 @@
-using System.Threading.Channels;
+using System.Runtime.CompilerServices;
 
 namespace Rcl.Graph;
 
 public partial class RosGraph
 {
-    private readonly Channel<RosGraphEvent> _channel = Channel.CreateBounded<RosGraphEvent>(new BoundedChannelOptions(1)
-    {
-        SingleWriter = true,
-        SingleReader = false,
-        AllowSynchronousContinuations = false,
-        FullMode = BoundedChannelFullMode.DropOldest
-    });
-
     /// <summary>
     /// Read all graph change events asynchronously.
     /// </summary>
     public IAsyncEnumerable<RosGraphEvent> ReadEventsAsync(CancellationToken cancellationToken = default)
-        => _channel.Reader.ReadAllAsync(cancellationToken);
+    {
+        if (!cancellationToken.CanBeCanceled)
+        {
+            return this.ToAsyncEnumerable();
+        }
+
+        return Impl(cancellationToken);
+
+        async IAsyncEnumerable<RosGraphEvent> Impl([EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            await foreach (var e in this.ToAsyncEnumerable().WithCancellation(cancellationToken))
+            {
+                yield return e;
+            }
+        }
+    }
 
     /// <summary>
     /// Subscribe to current <see cref="RosGraph"/> object to receive graph change events.
@@ -40,7 +47,6 @@ public partial class RosGraph
 
     internal void Complete()
     {
-        _channel.Writer.TryComplete();
         foreach (var obs in _observers.Values)
         {
             obs.OnCompleted();

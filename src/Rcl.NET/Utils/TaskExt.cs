@@ -1,0 +1,16 @@
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT License.
+// See the LICENSE file in the project root for more information. 
+
+namespace Rcl.Utils;
+
+internal static class TaskExt
+{
+    public static readonly TaskCompletionSource<bool> True;
+
+    static TaskExt()
+    {
+        True = new TaskCompletionSource<bool>();
+        True.SetResult(true);
+    }
+}

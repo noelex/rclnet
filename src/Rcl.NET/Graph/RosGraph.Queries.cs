@@ -13,7 +13,7 @@ public partial class RosGraph
         {
             if (action.Name == actionName)
             {
-                return action.Servers.Count > 0;
+                return action.ServerCount > 0;
             }
         }
 
@@ -31,7 +31,7 @@ public partial class RosGraph
         {
             if (service.Name == serviceName)
             {
-                return service.Servers.Count > 0;
+                return service.ServerCount > 0;
             }
         }
 

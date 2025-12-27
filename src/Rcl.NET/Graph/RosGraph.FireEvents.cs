@@ -10,7 +10,6 @@ public partial class RosGraph
             {
                 _observersEnumerator.Current.Value.OnNext(e);
             }
-            _channel.Writer.TryWrite(e);
             GraphChanged?.Invoke(e);
         }
         finally
