@@ -40,17 +40,13 @@ public partial class RosGraph
         }
     }
 
-    record struct IndexedEvent(int Index, int Class, RosGraphEvent Event) : IComparable<IndexedEvent>
-    {
-        public readonly int CompareTo(IndexedEvent other)
-        {
-            var classCompare = Class.CompareTo(other.Class);
-            return classCompare == 0 ? Index.CompareTo(other.Index) : classCompare;
-        }
-    }
-
     private void FireEvents()
     {
+        if (_observers.IsEmpty || GraphChanged == null)
+        {
+            return;
+        }
+
         var events = new PoolingList<IndexedEvent>();
         try
         {
@@ -75,6 +71,15 @@ public partial class RosGraph
         finally
         {
             events.Dispose();
+        }
+    }
+
+    record struct IndexedEvent(int Index, int Class, RosGraphEvent Event) : IComparable<IndexedEvent>
+    {
+        public readonly int CompareTo(IndexedEvent other)
+        {
+            var classCompare = Class.CompareTo(other.Class);
+            return classCompare == 0 ? Index.CompareTo(other.Index) : classCompare;
         }
     }
 
