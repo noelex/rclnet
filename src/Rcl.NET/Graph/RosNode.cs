@@ -10,16 +10,32 @@ public class RosNode
     private readonly ConcurrentDictionary<NameWithType, RosServiceEndPoint>
         _servers = new(), _clients = new();
 
-    private readonly ConcurrentBag<RosTopicEndPoint>
+    private readonly ConcurrentDictionary<RosTopicEndPoint, RosTopicEndPoint>
         _subscribers = new(), _publishers = new();
 
     private readonly ConcurrentDictionary<NameWithType, RosActionEndPoint>
         _actionServers = new(), _actionClients = new();
 
+    private readonly IEnumerator<KeyValuePair<NameWithType, RosServiceEndPoint>>
+        _serversEnumerator, _clientsEnumerator;
+
+    private readonly IEnumerator<KeyValuePair<NameWithType, RosActionEndPoint>>
+        _actionServersEnumerator, _actionClientsEnumerator;
+
+    private readonly IEnumerator<KeyValuePair<RosTopicEndPoint, RosTopicEndPoint>>
+        _subscribersEnumerator, _publishersEnumerator;
+
     internal RosNode(NodeName name, string enclave)
     {
         Name = name;
         Enclave = enclave;
+
+        _serversEnumerator = _servers.GetEnumerator();
+        _clientsEnumerator = _clients.GetEnumerator();
+        _actionServersEnumerator = _actionServers.GetEnumerator();
+        _actionClientsEnumerator = _actionClients.GetEnumerator();
+        _subscribersEnumerator = _subscribers.GetEnumerator();
+        _publishersEnumerator = _publishers.GetEnumerator();
     }
 
     /// <inheritdoc/>
@@ -51,12 +67,12 @@ public class RosNode
     /// <summary>
     /// Gets a list of <see cref="RosTopic"/> subscribers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosTopicEndPoint> Subscribers => _subscribers;
+    public IReadOnlyCollection<RosTopicEndPoint> Subscribers => (IReadOnlyCollection<RosTopicEndPoint>)_subscribers.Values;
 
     /// <summary>
     /// Gets a list of <see cref="RosTopic"/> publishers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosTopicEndPoint> Publishers => _publishers;
+    public IReadOnlyCollection<RosTopicEndPoint> Publishers => (IReadOnlyCollection<RosTopicEndPoint>)_publishers.Values;
 
     /// <summary>
     /// Gets a list of <see cref="RosAction"/> servers registered by current <see cref="RosNode"/>.
@@ -67,6 +83,14 @@ public class RosNode
     /// Gets a list of <see cref="RosAction"/> clients registered by current <see cref="RosNode"/>.
     /// </summary>
     public IReadOnlyCollection<RosActionEndPoint> ActionClients => (IReadOnlyCollection<RosActionEndPoint>)_actionClients.Values;
+
+    internal IEnumerator<KeyValuePair<RosTopicEndPoint, RosTopicEndPoint>> PublishersEnumerator => _publishersEnumerator;
+
+    internal IEnumerator<KeyValuePair<RosTopicEndPoint, RosTopicEndPoint>> SubscribersEnumerator => _subscribersEnumerator;
+
+    internal int PublisherCount => _publishers.Count;
+
+    internal int SubscriberCount => _subscribers.Count;
 
     internal void UpdateServers(
         IGraphBuilder builder,
@@ -90,14 +114,44 @@ public class RosNode
 
     internal void ResetSubscribers(Span<RosTopicEndPoint> subscribers)
     {
-        _subscribers.Clear();
-        foreach (var item in subscribers) _subscribers.Add(item);
+        try
+        {
+            while (_subscribersEnumerator.MoveNext())
+            {
+                var k = _subscribersEnumerator.Current.Key;
+                if (!subscribers.Contains(k))
+                {
+                    _publishers.Remove(k, out _);
+                }
+            }
+        }
+        finally
+        {
+            _subscribersEnumerator.Reset();
+        }
+
+        foreach (var item in subscribers) _subscribers[item] = item;
     }
 
     internal void ResetPublishers(Span<RosTopicEndPoint> publishers)
     {
-        _publishers.Clear();
-        foreach (var item in publishers) _publishers.Add(item);
+        try
+        {
+            while (_publishersEnumerator.MoveNext())
+            {
+                var k = _publishersEnumerator.Current.Key;
+                if (!publishers.Contains(k))
+                {
+                    _publishers.Remove(k, out _);
+                }
+            }
+        }
+        finally
+        {
+            _publishersEnumerator.Reset();
+        }
+
+        foreach (var item in publishers) _publishers[item] = item;
     }
 
     private void UpdateServiceEndPoints(
@@ -105,7 +159,9 @@ public class RosNode
         ServiceEndPointType type,
         ReadOnlySpan<NameWithType> discovered)
     {
-        var dest = type == ServiceEndPointType.Server ? _servers : _clients;
+        var (dest, destEnumerator) = type == ServiceEndPointType.Server
+            ? (_servers, _serversEnumerator)
+            : (_clients, _clientsEnumerator);
         foreach (var svc in discovered)
         {
             if (!dest.TryGetValue(svc, out var ep))
@@ -132,22 +188,30 @@ public class RosNode
             }
         }
 
-        foreach (var (k, _) in dest)
+        try
         {
-            if (discovered.IndexOf(k) < 0)
+            while (destEnumerator.MoveNext())
             {
-                if (dest.Remove(k, out var s))
+                var k = destEnumerator.Current.Key;
+                if (discovered.IndexOf(k) < 0)
                 {
-                    if (type == ServiceEndPointType.Server)
+                    if (dest.Remove(k, out var s))
                     {
-                        builder.OnRemoveServiceServer(s);
-                    }
-                    else
-                    {
-                        builder.OnRemoveServiceClient(s);
+                        if (type == ServiceEndPointType.Server)
+                        {
+                            builder.OnRemoveServiceServer(s);
+                        }
+                        else
+                        {
+                            builder.OnRemoveServiceClient(s);
+                        }
                     }
                 }
             }
+        }
+        finally
+        {
+            destEnumerator.Reset();
         }
     }
 
@@ -156,7 +220,9 @@ public class RosNode
         ActionEndPointType type,
         ReadOnlySpan<NameWithType> discovered)
     {
-        var dest = type == ActionEndPointType.Server ? _actionServers : _actionClients;
+        var (dest, destEnumerator) = type == ActionEndPointType.Server
+            ? (_actionServers, _actionServersEnumerator)
+            : (_actionClients, _actionClientsEnumerator);
         foreach (var svc in discovered)
         {
             if (!dest.TryGetValue(svc, out var ep))
@@ -183,22 +249,30 @@ public class RosNode
             }
         }
 
-        foreach (var (k, _) in dest)
+        try
         {
-            if (discovered.IndexOf(k) < 0)
+            while (destEnumerator.MoveNext())
             {
-                if (dest.Remove(k, out var s))
+                var k = destEnumerator.Current.Key;
+                if (discovered.IndexOf(k) < 0)
                 {
-                    if (type == ActionEndPointType.Server)
+                    if (dest.Remove(k, out var s))
                     {
-                        builder.OnRemoveActionServer(s);
-                    }
-                    else
-                    {
-                        builder.OnRemoveActionClient(s);
+                        if (type == ActionEndPointType.Server)
+                        {
+                            builder.OnRemoveActionServer(s);
+                        }
+                        else
+                        {
+                            builder.OnRemoveActionClient(s);
+                        }
                     }
                 }
             }
+        }
+        finally
+        {
+            destEnumerator.Reset();
         }
     }
 }

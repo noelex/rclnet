@@ -7,11 +7,14 @@ namespace Rcl.Graph;
 /// </summary>
 public class RosService
 {
-    private readonly ConcurrentBag<RosServiceEndPoint> _servers = new(), _clients = new();
+    private readonly ConcurrentDictionary<RosServiceEndPoint, RosServiceEndPoint> _servers = new(), _clients = new();
+    private readonly IEnumerator<KeyValuePair<RosServiceEndPoint, RosServiceEndPoint>> _serversEnumerator, _clientsEnumerator;
 
     internal RosService(string name)
     {
         Name = name;
+        _serversEnumerator = _servers.GetEnumerator();
+        _clientsEnumerator = _clients.GetEnumerator();
     }
 
     /// <summary>
@@ -28,22 +31,56 @@ public class RosService
     /// <summary>
     /// Gets a list of available ROS service servers registered with current <see cref="RosService"/>.
     /// </summary>
-    public IReadOnlyCollection<RosServiceEndPoint> Servers => _servers;
+    public IReadOnlyCollection<RosServiceEndPoint> Servers => (IReadOnlyCollection<RosServiceEndPoint>)_servers.Values;
 
     /// <summary>
     /// Gets a list of available ROS service clients registered with current <see cref="RosService"/>.
     /// </summary>
-    public IReadOnlyCollection<RosServiceEndPoint> Clients => _clients;
+    public IReadOnlyCollection<RosServiceEndPoint> Clients => (IReadOnlyCollection<RosServiceEndPoint>)_clients.Values;
+
+    internal int ServerCount => _servers.Count;
+
+    internal int ClientCount => _clients.Count;
 
     internal void ResetServers(Span<RosServiceEndPoint> servers)
     {
-        _servers.Clear();
-        foreach (var item in servers) _servers.Add(item);
+        try
+        {
+            while (_serversEnumerator.MoveNext())
+            {
+                var k = _serversEnumerator.Current.Key;
+                if (!servers.Contains(k))
+                {
+                    _servers.Remove(k, out _);
+                }
+            }
+        }
+        finally
+        {
+            _serversEnumerator.Reset();
+        }
+
+        foreach (var item in servers) _servers[item] = item;
     }
 
     internal void ResetClients(Span<RosServiceEndPoint> clients)
     {
-        _clients.Clear();
-        foreach (var item in clients) _clients.Add(item);
+        try
+        {
+            while (_clientsEnumerator.MoveNext())
+            {
+                var k = _clientsEnumerator.Current.Key;
+                if (!clients.Contains(k))
+                {
+                    _clients.Remove(k, out _);
+                }
+            }
+        }
+        finally
+        {
+            _clientsEnumerator.Reset();
+        }
+
+        foreach (var item in clients) _clients[item] = item;
     }
 }

@@ -9,10 +9,14 @@ public class RosTopic
 {
     private readonly ConcurrentDictionary<GraphId, RosTopicEndPoint>
         _publishers = new(), _subscribers = new();
+    private readonly IEnumerator<KeyValuePair<GraphId, RosTopicEndPoint>>
+        _publishersEnumerator, _subscribersEnumerator;
 
     internal RosTopic(string name)
     {
         Name = name;
+        _publishersEnumerator = _publishers.GetEnumerator();
+        _subscribersEnumerator = _subscribers.GetEnumerator();
     }
 
     /// <summary>
@@ -39,7 +43,7 @@ public class RosTopic
     internal void UpdatePublishers(
         IGraphBuilder builder,
         ReadOnlySpan<TopicEndPointDataRef> endpoints,
-        IDictionary<NodeName, RosNode> nodes)
+        ConcurrentDictionary<NodeName, RosNode> nodes)
     {
         UpdateEndPoints(builder, TopicEndPointType.Publisher, endpoints, nodes);
     }
@@ -47,7 +51,7 @@ public class RosTopic
     internal void UpdateSubscribers(
         IGraphBuilder builder,
         ReadOnlySpan<TopicEndPointDataRef> endpoints,
-        IDictionary<NodeName, RosNode> nodes)
+        ConcurrentDictionary<NodeName, RosNode> nodes)
     {
         UpdateEndPoints(builder, TopicEndPointType.Subscriber, endpoints, nodes);
     }
@@ -56,9 +60,11 @@ public class RosTopic
         IGraphBuilder builder,
         TopicEndPointType type,
         ReadOnlySpan<TopicEndPointDataRef> endpoints,
-        IDictionary<NodeName, RosNode> nodes)
+        ConcurrentDictionary<NodeName, RosNode> nodes)
     {
-        var dest = type == TopicEndPointType.Publisher ? _publishers : _subscribers;
+        var (dest, destEnumerator) = type == TopicEndPointType.Publisher
+            ? (_publishers, _publishersEnumerator)
+            : (_subscribers, _subscribersEnumerator);
         foreach (var ep in endpoints)
         {
             // Endpoints may establish before node establishes.
@@ -83,43 +89,51 @@ public class RosTopic
             }
         }
 
-        foreach (var (id, v) in dest)
+        try
         {
-            bool found = false;
-            foreach (var ep in endpoints)
+            while (destEnumerator.MoveNext())
             {
-                if (ep.Id == id)
+                var (id, v) = destEnumerator.Current;
+                bool found = false;
+                foreach (var ep in endpoints)
                 {
-                    found = true;
-                    break;
+                    if (ep.Id == id)
+                    {
+                        found = true;
+                        break;
+                    }
                 }
-            }
 
-            if (!found)
-            {
-                if (dest.Remove(id, out var s))
+                if (!found)
                 {
-                    if (type is TopicEndPointType.Publisher)
+                    if (dest.Remove(id, out var s))
                     {
-                        builder.OnRemovePublisher(s);
+                        if (type is TopicEndPointType.Publisher)
+                        {
+                            builder.OnRemovePublisher(s);
+                        }
+                        else
+                        {
+                            builder.OnRemoveSubscriber(s);
+                        }
                     }
-                    else
-                    {
-                        builder.OnRemoveSubscriber(s);
-                    }
-                }
-            }
-            else
-            {
-                if (type is TopicEndPointType.Publisher)
-                {
-                    builder.OnEnumeratePublisher(v);
                 }
                 else
                 {
-                    builder.OnEnumerateSubscriber(v);
+                    if (type is TopicEndPointType.Publisher)
+                    {
+                        builder.OnEnumeratePublisher(v);
+                    }
+                    else
+                    {
+                        builder.OnEnumerateSubscriber(v);
+                    }
                 }
             }
+        }
+        finally
+        {
+            destEnumerator.Reset();
         }
     }
 }

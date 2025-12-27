@@ -11,90 +11,126 @@ public partial class RosGraph : IGraphBuilder
 
     private readonly ConcurrentDictionary<string, RosAction> _actions = new();
 
-    private readonly List<RosAction> _newActions = new(), _removedActions = new();
+    private readonly Dictionary<RosAction, UpdateOp> _actionUpdates = new();
 
     private readonly List<RosActionEndPoint>
-        _totalActionClients = new(), _newActionClients = new(), _removedActionClients = new(),
-        _totalActionServers = new(), _newActionServers = new(), _removedActionServers = new();
+        _totalActionClients = new(), _totalActionServers = new();
+
+    private readonly Dictionary<RosActionEndPoint, UpdateOp>
+        _actionServerUpdates = new(), _actionClientUpdates = new();
+
+    private readonly IEnumerator<KeyValuePair<string, RosAction>> _actionsEnumerator;
 
     private void BuildActions()
     {
-        foreach (var node in _nodes.Values)
+        try
         {
-            using var sp = SpanOwner<NameWithType>.Allocate(Math.Max(node.Publishers.Count, node.Subscribers.Count));
-            var count = GetActionEndpointsByNode(node, sp.Span, true);
-            node.UpdateActionServers(this, sp.Span.Slice(0, count));
+            while (_nodesEnumerator.MoveNext())
+            {
+                var node = _nodesEnumerator.Current.Value;
+                using var sp = SpanOwner<NameWithType>.Allocate(Math.Max(node.PublisherCount, node.SubscriberCount));
+                var count = GetActionEndpointsByNode(node, sp.Span, true);
+                node.UpdateActionServers(this, sp.Span.Slice(0, count));
 
-            count = GetActionEndpointsByNode(node, sp.Span, false);
-            node.UpdateActionClients(this, sp.Span.Slice(0, count));
+                count = GetActionEndpointsByNode(node, sp.Span, false);
+                node.UpdateActionClients(this, sp.Span.Slice(0, count));
+            }
+        }
+        finally
+        {
+            _nodesEnumerator.Reset();
         }
 
-        var offset = 0;
+        int offset;
         using var temp = SpanOwner<RosActionEndPoint>.Allocate(
             Math.Max(_totalActionClients.Count, _totalActionServers.Count));
 
-        foreach (var action in _actions.Values)
+        try
         {
-            offset = 0;
-            foreach (var client in _totalActionClients)
+            while (_actionsEnumerator.MoveNext())
             {
-                if (client.Action == action)
+                var action = _actionsEnumerator.Current.Value;
+                offset = 0;
+                foreach (var client in _totalActionClients)
                 {
-                    temp.Span[offset++] = client;
+                    if (client.Action == action)
+                    {
+                        temp.Span[offset++] = client;
+                    }
                 }
-            }
-            action.ResetClients(temp.Span.Slice(0, offset));
+                action.ResetClients(temp.Span.Slice(0, offset));
 
-            offset = 0;
-            foreach (var server in _totalActionServers)
-            {
-                if (server.Action == action)
+                offset = 0;
+                foreach (var server in _totalActionServers)
                 {
-                    temp.Span[offset++] = server;
+                    if (server.Action == action)
+                    {
+                        temp.Span[offset++] = server;
+                    }
                 }
+                action.ResetServers(temp.Span.Slice(0, offset));
             }
-            action.ResetServers(temp.Span.Slice(0, offset));
+        }
+        finally
+        {
+            _actionsEnumerator.Reset();
         }
 
-        foreach (var (k, v) in _actions)
+        try
         {
-            if (v.Clients.Count == 0 && v.Servers.Count == 0)
+            while (_actionsEnumerator.MoveNext())
             {
-                _actions.Remove(k, out _);
-                _removedActions.Add(v);
+                var (k, v) = _actionsEnumerator.Current;
+                if (v.ClientCount == 0 && v.ServerCount == 0)
+                {
+                    _actions.Remove(k, out _);
+                    OnRemove(_actionUpdates, v);
+                }
             }
+        }
+        finally
+        {
+            _actionsEnumerator.Reset();
         }
     }
 
     private static int GetActionEndpointsByNode(RosNode node, Span<NameWithType> items, bool publishers)
     {
         var i = 0;
-        var target = publishers ? node.Publishers : node.Subscribers;
-        foreach (var sub in target)
+        var target = publishers ? node.PublishersEnumerator : node.SubscribersEnumerator;
+        try
         {
-            var nameidx = sub.Topic.Name.LastIndexOf(ActionFeedbackTopicSuffix);
-            var typeidx = sub.Type.LastIndexOf(ActionFeedbackTypeSuffix);
-
-            if (nameidx > 0 && nameidx + ActionFeedbackTopicSuffix.Length == sub.Topic.Name.Length &&
-                typeidx > 0 && typeidx + ActionFeedbackTypeSuffix.Length == sub.Type.Length)
+            while (target.MoveNext())
             {
-                var actionName = StringMarshal.CreatePooledString(sub.Topic.Name.AsSpan().Slice(0, nameidx));
-                var typeName = StringMarshal.CreatePooledString(sub.Type.AsSpan().Slice(0, typeidx));
+                var sub = target.Current.Key;
+                var nameidx = sub.Topic.Name.LastIndexOf(ActionFeedbackTopicSuffix);
+                var typeidx = sub.Type.LastIndexOf(ActionFeedbackTypeSuffix);
 
-                items[i++] = new(actionName, typeName);
+                if (nameidx > 0 && nameidx + ActionFeedbackTopicSuffix.Length == sub.Topic.Name.Length &&
+                    typeidx > 0 && typeidx + ActionFeedbackTypeSuffix.Length == sub.Type.Length)
+                {
+                    var actionName = StringMarshal.CreatePooledString(sub.Topic.Name.AsSpan().Slice(0, nameidx));
+                    var typeName = StringMarshal.CreatePooledString(sub.Type.AsSpan().Slice(0, typeidx));
+
+                    items[i++] = new(actionName, typeName);
+                }
             }
+        }
+        finally
+        {
+            target.Reset();
         }
         return i;
     }
 
     void IGraphBuilder.OnAddActionServer(RosActionEndPoint endpoint)
     {
-        _newActionServers.Add(endpoint);
+        OnAdd(_actionServerUpdates, endpoint);
     }
 
     void IGraphBuilder.OnRemoveActionServer(RosActionEndPoint endpoint)
     {
-        _removedActionServers.Add(endpoint);
+        OnRemove(_actionServerUpdates, endpoint);
     }
 
     void IGraphBuilder.OnEnumerateActionServer(RosActionEndPoint endpoint)
@@ -104,12 +140,12 @@ public partial class RosGraph : IGraphBuilder
 
     void IGraphBuilder.OnAddActionClient(RosActionEndPoint endpoint)
     {
-        _newActionClients.Add(endpoint);
+        OnAdd(_actionClientUpdates, endpoint);
     }
 
     void IGraphBuilder.OnRemoveActionClient(RosActionEndPoint endpoint)
     {
-        _removedActionClients.Add(endpoint);
+        OnRemove(_actionClientUpdates, endpoint);
     }
 
     void IGraphBuilder.OnEnumerateActionClient(RosActionEndPoint endpoint)
@@ -122,7 +158,7 @@ public partial class RosGraph : IGraphBuilder
         if (!_actions.TryGetValue(name, out var s))
         {
             _actions[name] = s = new(name);
-            _newActions.Add(s);
+            OnAdd(_actionUpdates, s);
         }
         return s;
     }

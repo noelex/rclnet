@@ -10,88 +10,90 @@ public partial class RosGraph
         if (!_services.TryGetValue(name, out var s))
         {
             _services[name] = s = new(name);
-            _newServices.Add(s);
+            OnAdd(_serviceUpdates, s);
         }
         return s;
     }
 
     void IGraphBuilder.OnAddServiceServer(RosServiceEndPoint server)
     {
-        _newServers.Add(server);
+        OnAdd(_serverUpdates, server);
     }
 
     void IGraphBuilder.OnRemoveServiceServer(RosServiceEndPoint server)
     {
-        _removedServers.Add(server);
+        OnRemove(_serverUpdates, server);
     }
 
     void IGraphBuilder.OnEnumerateServiceServer(RosServiceEndPoint server)
     {
-        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalServers, server.Service, out _);
-        endpoints ??= new();
+        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalServers, server.Service, out var found);
+        if (!found) endpoints = new();
         endpoints.Add(server);
     }
 
     void IGraphBuilder.OnAddServiceClient(RosServiceEndPoint client)
     {
-        _newClients.Add(client);
+        OnAdd(_clientUpdates, client);
     }
 
     void IGraphBuilder.OnRemoveServiceClient(RosServiceEndPoint client)
     {
-        _removedClients.Add(client);
+        OnRemove(_clientUpdates, client);
     }
 
     void IGraphBuilder.OnEnumerateServiceClient(RosServiceEndPoint client)
     {
-        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalClients, client.Service, out _);
-        endpoints ??= new();
+        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalClients, client.Service, out var found);
+        if (!found) endpoints = new();
         endpoints.Add(client);
     }
 
     void IGraphBuilder.OnAddPublisher(RosTopicEndPoint publisher)
     {
-        _newPublishers.Add(publisher);
+        OnAdd(_publisherUpdates, publisher);
     }
 
     void IGraphBuilder.OnRemovePublisher(RosTopicEndPoint publisher)
     {
-        _removedPublishers.Add(publisher);
+        OnRemove(_publisherUpdates, publisher);
     }
 
     void IGraphBuilder.OnEnumeratePublisher(RosTopicEndPoint publisher)
     {
-        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalPublications, publisher.Node, out _);
-        endpoints ??= new();
+        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalPublications, publisher.Node, out var found);
+        if (!found) endpoints = new();
         endpoints.Add(publisher);
     }
 
     void IGraphBuilder.OnAddSubscriber(RosTopicEndPoint subscriber)
     {
-        _newSubscribers.Add(subscriber);
+        OnAdd(_subscriberUpdates, subscriber);
     }
 
     void IGraphBuilder.OnRemoveSubscriber(RosTopicEndPoint subscriber)
     {
-        _removedSubscribers.Add(subscriber);
+        OnRemove(_subscriberUpdates, subscriber);
     }
 
     void IGraphBuilder.OnEnumerateSubscriber(RosTopicEndPoint subscriber)
     {
-        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalSubscriptions, subscriber.Node, out _);
-        endpoints ??= new();
+        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalSubscriptions, subscriber.Node, out var found);
+        if (!found) endpoints = new();
         endpoints.Add(subscriber);
     }
 
-    private class PoolingList<T> : IDisposable
+    private struct PoolingList<T> : IDisposable
     {
         private T[] _data;
         private int _count = 0;
 
-        public PoolingList(int capacity = 8)
+        public PoolingList()
         {
-            _data = ArrayPool<T>.Shared.Rent(capacity);
+            _data = ArrayPool<T>.Shared.Rent(8);
         }
+
+        public readonly int Count => _count;
 
         public void Add(T item)
         {
