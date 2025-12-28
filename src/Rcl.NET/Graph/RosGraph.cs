@@ -152,7 +152,8 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             while (_servicesEnumerator.MoveNext())
             {
                 var (k, v) = _servicesEnumerator.Current;
-                if (v.ClientCount == 0 && v.ServerCount == 0)
+                if ((!_totalServers.ContainsKey(v) && !_totalClients.ContainsKey(v)) || 
+                    (v.ClientCount == 0 && v.ServerCount == 0))
                 {
                     _services.Remove(k, out _);
                     OnRemove(_serviceUpdates, v);

@@ -42,11 +42,6 @@ public partial class RosGraph
 
     private void FireEvents()
     {
-        if (_observers.IsEmpty || GraphChanged == null)
-        {
-            return;
-        }
-
         var events = new PoolingList<IndexedEvent>();
         try
         {

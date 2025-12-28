@@ -121,7 +121,7 @@ public class RosNode
                 var k = _subscribersEnumerator.Current.Key;
                 if (!subscribers.Contains(k))
                 {
-                    _publishers.Remove(k, out _);
+                    _subscribers.Remove(k, out _);
                 }
             }
         }

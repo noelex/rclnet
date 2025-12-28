@@ -9,15 +9,7 @@ public partial class RosGraph
     /// <returns><see langword="true"/> if the action server is available, otherwise <see langword="false"/>.</returns>
     public bool IsActionServerAvailable(string actionName)
     {
-        foreach (var action in Actions)
-        {
-            if (action.Name == actionName)
-            {
-                return action.ServerCount > 0;
-            }
-        }
-
-        return false;
+        return _actions.TryGetValue(actionName, out var action) && action.ServerCount > 0;
     }
 
     /// <summary>
@@ -27,15 +19,7 @@ public partial class RosGraph
     /// <returns><see langword="true"/> if the service server is available, otherwise <see langword="false"/>.</returns>
     public bool IsServiceServerAvailable(string serviceName)
     {
-        foreach (var service in Services)
-        {
-            if (service.Name == serviceName)
-            {
-                return service.ServerCount > 0;
-            }
-        }
-
-        return false;
+        return _services.TryGetValue(serviceName, out var service) && service.ServerCount > 0;
     }
 
     /// <summary>
