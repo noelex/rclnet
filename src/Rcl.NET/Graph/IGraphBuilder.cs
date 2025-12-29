@@ -34,11 +34,7 @@ internal interface IGraphBuilder
 
     void OnRemovePublisher(RosTopicEndPoint publisher);
 
-    void OnEnumeratePublisher(RosTopicEndPoint publisher);
-
     void OnAddSubscriber(RosTopicEndPoint subscriber);
 
     void OnRemoveSubscriber(RosTopicEndPoint subscriber);
-
-    void OnEnumerateSubscriber(RosTopicEndPoint subscriber);
 }

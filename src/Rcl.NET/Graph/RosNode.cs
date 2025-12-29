@@ -112,6 +112,26 @@ public class RosNode
         ReadOnlySpan<NameWithType> discovered)
         => UpdateActionEndPoints(builder, ActionEndPointType.Client, discovered);
 
+    internal void RemoveSubscriber(RosTopicEndPoint subscriber)
+    {
+        _subscribers.Remove(subscriber, out _);
+    }
+
+    internal void RemovePublisher(RosTopicEndPoint publisher)
+    {
+        _publishers.Remove(publisher, out _);
+    }
+
+    internal void AddSubscriber(RosTopicEndPoint subscriber)
+    {
+        _subscribers[subscriber] = subscriber;
+    }
+
+    internal void AddPublisher(RosTopicEndPoint publisher)
+    {
+        _publishers[publisher] = publisher;
+    }
+
     internal void ResetSubscribers(Span<RosTopicEndPoint> subscribers)
     {
         try
@@ -166,7 +186,7 @@ public class RosNode
         {
             if (!dest.TryGetValue(svc, out var ep))
             {
-                dest[svc] = ep = new(this, ServiceEndPointType.Server, builder.GetOrAddService(svc.Name), svc.Type);
+                dest[svc] = ep = new(this, type, builder.GetOrAddService(svc.Name), svc.Type);
 
                 if (type == ServiceEndPointType.Server)
                 {
@@ -227,7 +247,7 @@ public class RosNode
         {
             if (!dest.TryGetValue(svc, out var ep))
             {
-                dest[svc] = ep = new(this, ActionEndPointType.Server, builder.GetOrAddAction(svc.Name), svc.Type);
+                dest[svc] = ep = new(this, type, builder.GetOrAddAction(svc.Name), svc.Type);
 
                 if (type == ActionEndPointType.Server)
                 {

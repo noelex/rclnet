@@ -43,7 +43,7 @@ public class RosTopic
     internal void UpdatePublishers(
         IGraphBuilder builder,
         ReadOnlySpan<TopicEndPointDataRef> endpoints,
-        ConcurrentDictionary<NodeName, RosNode> nodes)
+        ConcurrentDictionary<string, RosNode> nodes)
     {
         UpdateEndPoints(builder, TopicEndPointType.Publisher, endpoints, nodes);
     }
@@ -51,7 +51,7 @@ public class RosTopic
     internal void UpdateSubscribers(
         IGraphBuilder builder,
         ReadOnlySpan<TopicEndPointDataRef> endpoints,
-        ConcurrentDictionary<NodeName, RosNode> nodes)
+        ConcurrentDictionary<string, RosNode> nodes)
     {
         UpdateEndPoints(builder, TopicEndPointType.Subscriber, endpoints, nodes);
     }
@@ -60,7 +60,7 @@ public class RosTopic
         IGraphBuilder builder,
         TopicEndPointType type,
         ReadOnlySpan<TopicEndPointDataRef> endpoints,
-        ConcurrentDictionary<NodeName, RosNode> nodes)
+        ConcurrentDictionary<string, RosNode> nodes)
     {
         var (dest, destEnumerator) = type == TopicEndPointType.Publisher
             ? (_publishers, _publishersEnumerator)
@@ -72,7 +72,7 @@ public class RosTopic
             // when node is established.
             var id = ep.Id;
             if (!dest.TryGetValue(id, out _) &&
-                nodes.TryGetValue(ep.Node, out var node))
+                nodes.TryGetValue(ep.Node.FullyQualifiedName, out var node))
             {
                 var endpoint = new RosTopicEndPoint(
                    id, this, node, type, ep.Type, ep.QosProfile);
@@ -116,17 +116,6 @@ public class RosTopic
                         {
                             builder.OnRemoveSubscriber(s);
                         }
-                    }
-                }
-                else
-                {
-                    if (type is TopicEndPointType.Publisher)
-                    {
-                        builder.OnEnumeratePublisher(v);
-                    }
-                    else
-                    {
-                        builder.OnEnumerateSubscriber(v);
                     }
                 }
             }

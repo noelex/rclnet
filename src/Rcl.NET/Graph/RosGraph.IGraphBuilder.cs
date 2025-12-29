@@ -52,35 +52,25 @@ public partial class RosGraph
     void IGraphBuilder.OnAddPublisher(RosTopicEndPoint publisher)
     {
         OnAdd(_publisherUpdates, publisher);
+        publisher.Node.AddPublisher(publisher);
     }
 
     void IGraphBuilder.OnRemovePublisher(RosTopicEndPoint publisher)
     {
         OnRemove(_publisherUpdates, publisher);
-    }
-
-    void IGraphBuilder.OnEnumeratePublisher(RosTopicEndPoint publisher)
-    {
-        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalPublications, publisher.Node, out var found);
-        if (!found) endpoints = new();
-        endpoints.Add(publisher);
+        publisher.Node.RemovePublisher(publisher);
     }
 
     void IGraphBuilder.OnAddSubscriber(RosTopicEndPoint subscriber)
     {
         OnAdd(_subscriberUpdates, subscriber);
+        subscriber.Node.AddSubscriber(subscriber);
     }
 
     void IGraphBuilder.OnRemoveSubscriber(RosTopicEndPoint subscriber)
     {
         OnRemove(_subscriberUpdates, subscriber);
-    }
-
-    void IGraphBuilder.OnEnumerateSubscriber(RosTopicEndPoint subscriber)
-    {
-        ref var endpoints = ref CollectionsMarshal.GetValueRefOrAddDefault(_totalSubscriptions, subscriber.Node, out var found);
-        if (!found) endpoints = new();
-        endpoints.Add(subscriber);
+        subscriber.Node.RemoveSubscriber(subscriber);
     }
 
     private struct PoolingList<T> : IDisposable

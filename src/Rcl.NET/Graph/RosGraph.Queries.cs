@@ -29,15 +29,7 @@ public partial class RosGraph
     /// <returns><see langword="true"/> if the node is available, otherwise <see langword="false"/>.</returns>
     public bool IsNodeAvailable(string nodeName)
     {
-        foreach (var name in _nodes.Keys)
-        {
-            if (name.FullyQualifiedName == nodeName)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return _nodes.ContainsKey(nodeName);
     }
 
     #region WatchAsync

@@ -171,13 +171,14 @@ public class RosGraphTests
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
-        var serviceName = "/" + NameGenerator.GenerateServiceName();
+        var serviceName = "/" + NameGenerator.GenerateActionName();
 
         var serverAppearWatcher = node.Graph.TryWatchAsync(
             (graph, e) => graph.IsActionServerAvailable(serviceName), 1000);
         var serviceAppearWatcher = node.Graph.TryWatchAsync(
             (graph, e) => graph.Actions.Any(x => x.Name == serviceName), 1000);
 
+        await ctx.Yield();
         Task<bool> serverDisappearWatcher, serviceDisappearWatcher;
         {
             using var server = node.CreateActionServer<LookupTransformAction>(serviceName, new DummyActionServer());
@@ -198,34 +199,29 @@ public class RosGraphTests
     {
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
-
-        var serviceName = "/action_client_test";
+        var serviceName = "/" + NameGenerator.GenerateActionName();
 
         var clientAppearWatcher = node.Graph.TryWatchAsync(
             (graph, e) => e is ActionClientAppearedEvent s && s.ActionClient.Action.Name == serviceName, 1000);
         var serviceAppearWatcher = node.Graph.TryWatchAsync(
             (graph, e) => e is ActionAppearedEvent s && s.Action.Name == serviceName, 1000);
+        var clientDisappearWatcher = node.Graph.TryWatchAsync(
+           (graph, e) => e is ActionClientDisappearedEvent s && s.ActionClient.Action.Name == serviceName, 1000);
+        var serviceDisappearWatcher = node.Graph.TryWatchAsync(
+          (graph, e) => e is ActionDisappearedEvent s && s.Action.Name == serviceName, 1000);
 
         await ctx.Yield();
-        Task<bool> clientDisappearWatcher, serviceDisappearWatcher;
-        {
-            using var server = node.CreateActionClient<
+        using (var server = node.CreateActionClient<
                 LookupTransformAction,
                 LookupTransformActionGoal,
                 LookupTransformActionResult,
-                LookupTransformActionFeedback>(serviceName);
-
-            clientDisappearWatcher = node.Graph.TryWatchAsync(
-               (graph, e) => e is ActionClientDisappearedEvent s && s.ActionClient.Action.Name == serviceName, 1000);
-            serviceDisappearWatcher = node.Graph.TryWatchAsync(
-              (graph, e) => e is ActionDisappearedEvent s && s.Action.Name == serviceName, 1000);
-
+                LookupTransformActionFeedback>(serviceName))
+        {
             Assert.All(await Task.WhenAll(clientAppearWatcher, serviceAppearWatcher), Assert.True);
-
-
         }
 
-        Assert.All(await Task.WhenAll(clientDisappearWatcher, serviceDisappearWatcher), Assert.True);
+        Assert.True(await clientDisappearWatcher);
+        Assert.True(await serviceDisappearWatcher);
     }
 
     [Fact]

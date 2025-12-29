@@ -39,12 +39,10 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     private readonly ConcurrentDictionary<long, IObserver<RosGraphEvent>> _observers = new();
 
-    private readonly ConcurrentDictionary<NodeName, RosNode> _nodes = new();
+    private readonly ConcurrentDictionary<string, RosNode> _nodes = new();
     private readonly ConcurrentDictionary<string, RosTopic> _topics = new();
     private readonly ConcurrentDictionary<string, RosService> _services = new();
 
-    private readonly Dictionary<RosNode, PoolingList<RosTopicEndPoint>>
-        _totalPublications = new(), _totalSubscriptions = new();
     private readonly Dictionary<RosService, PoolingList<RosServiceEndPoint>>
         _totalServers = new(), _totalClients = new();
 
@@ -57,7 +55,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     private readonly IDictionary[] _cleanupTargets;
     private readonly Func<NodeName, bool> _nodeFilter;
 
-    private readonly IEnumerator<KeyValuePair<NodeName, RosNode>> _nodesEnumerator;
+    private readonly IEnumerator<KeyValuePair<string, RosNode>> _nodesEnumerator;
     private readonly IEnumerator<KeyValuePair<string, RosService>> _servicesEnumerator;
     private readonly IEnumerator<KeyValuePair<string, RosTopic>> _topicsEnumerator;
     private readonly IEnumerator<KeyValuePair<long, IObserver<RosGraphEvent>>> _observersEnumerator;
@@ -78,8 +76,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             _topicUpdates, _publisherUpdates, _subscriberUpdates,
             _actionUpdates, _actionServerUpdates, _actionClientUpdates,
 
-            _totalPublications, _totalSubscriptions,
-            _totalServers,_totalClients,
+            _totalServers, _totalClients,
     };
 
         _nodeFilter = nodeFilter;
@@ -129,15 +126,6 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     private void RelationshipFixup()
     {
-        foreach (var (node, endpoints) in _totalPublications)
-        {
-            node.ResetPublishers(endpoints.AsSpan());
-        }
-        foreach (var (node, endpoints) in _totalSubscriptions)
-        {
-            node.ResetSubscribers(endpoints.AsSpan());
-        }
-
         foreach (var (svc, endpoints) in _totalServers)
         {
             svc.ResetServers(endpoints.AsSpan());
@@ -174,8 +162,6 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     private void Cleanup()
     {
-        foreach (var v in _totalPublications.Values) v.Dispose();
-        foreach (var v in _totalSubscriptions.Values) v.Dispose();
         foreach (var v in _totalServers.Values) v.Dispose();
         foreach (var v in _totalClients.Values) v.Dispose();
 
@@ -201,22 +187,23 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
         try
         {
-            using var discoveredNodes = SpanOwner<NodeName>.Allocate((int)names.size.Value);
+            using var discoveredNodes = SpanOwner<string>.Allocate((int)names.size.Value);
 
             for (var i = 0; i < (int)names.size.Value; i++)
             {
                 var name = new NodeName(
                     StringMarshal.CreatePooledString((byte*)names.data[i])!,
                     StringMarshal.CreatePooledString((byte*)namespaces.data[i])!);
+                var fqn = name.FullyQualifiedName;
 
-                if (_nodeFilter(name) && !_nodes.TryGetValue(name, out var node))
+                if (_nodeFilter(name) && !_nodes.TryGetValue(fqn, out var node))
                 {
                     var enclave = StringMarshal.CreatePooledString((byte*)enclaves.data[i])!;
-                    _nodes[name] = node = new RosNode(name, enclave);
+                    _nodes[fqn] = node = new RosNode(name, enclave);
                     OnAdd(_nodeUpdates, node);
                 }
 
-                discoveredNodes.Span[i] = name;
+                discoveredNodes.Span[i] = fqn;
             }
 
             try
