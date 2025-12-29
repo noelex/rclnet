@@ -43,9 +43,6 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     private readonly ConcurrentDictionary<string, RosTopic> _topics = new();
     private readonly ConcurrentDictionary<string, RosService> _services = new();
 
-    private readonly Dictionary<RosService, PoolingList<RosServiceEndPoint>>
-        _totalServers = new(), _totalClients = new();
-
     private readonly Dictionary<RosNode, UpdateOp> _nodeUpdates = new();
     private readonly Dictionary<RosService, UpdateOp> _serviceUpdates = new();
     private readonly Dictionary<RosServiceEndPoint, UpdateOp> _serverUpdates = new(), _clientUpdates = new();
@@ -75,8 +72,6 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             _serviceUpdates, _serverUpdates, _clientUpdates,
             _topicUpdates, _publisherUpdates, _subscriberUpdates,
             _actionUpdates, _actionServerUpdates, _actionClientUpdates,
-
-            _totalServers, _totalClients,
     };
 
         _nodeFilter = nodeFilter;
@@ -113,7 +108,6 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         {
             BuildNodes();
             BuildTopics(disableTopicNameDemangling: false);
-            RelationshipFixup();
             BuildActions();
 
             FireEvents();
@@ -121,36 +115,6 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         finally
         {
             Cleanup();
-        }
-    }
-
-    private void RelationshipFixup()
-    {
-        foreach (var (svc, endpoints) in _totalServers)
-        {
-            svc.ResetServers(endpoints.AsSpan());
-        }
-        foreach (var (svc, endpoints) in _totalClients)
-        {
-            svc.ResetClients(endpoints.AsSpan());
-        }
-
-        try
-        {
-            while (_servicesEnumerator.MoveNext())
-            {
-                var (k, v) = _servicesEnumerator.Current;
-                if ((!_totalServers.ContainsKey(v) && !_totalClients.ContainsKey(v)) || 
-                    (v.ClientCount == 0 && v.ServerCount == 0))
-                {
-                    _services.Remove(k, out _);
-                    OnRemove(_serviceUpdates, v);
-                }
-            }
-        }
-        finally
-        {
-            _servicesEnumerator.Reset();
         }
     }
 
@@ -162,16 +126,10 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     private void Cleanup()
     {
-        foreach (var v in _totalServers.Values) v.Dispose();
-        foreach (var v in _totalClients.Values) v.Dispose();
-
         foreach (var list in _cleanupTargets)
         {
             list.Clear();
         }
-
-        _totalActionClients.Clear();
-        _totalActionServers.Clear();
     }
 
     private unsafe void BuildNodes()
@@ -228,6 +186,23 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                     {
                         BuildNode(node);
                     }
+                }
+
+                try
+                {
+                    while (_servicesEnumerator.MoveNext())
+                    {
+                        var (k, v) = _servicesEnumerator.Current;
+                        if (v.ClientCount == 0 && v.ServerCount == 0)
+                        {
+                            _services.Remove(k, out _);
+                            OnRemove(_serviceUpdates, v);
+                        }
+                    }
+                }
+                finally
+                {
+                    _servicesEnumerator.Reset();
                 }
             }
             finally

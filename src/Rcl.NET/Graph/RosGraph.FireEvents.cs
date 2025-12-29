@@ -1,3 +1,5 @@
+using System.Buffers;
+
 namespace Rcl.Graph;
 
 public partial class RosGraph
@@ -75,6 +77,38 @@ public partial class RosGraph
         {
             var classCompare = Class.CompareTo(other.Class);
             return classCompare == 0 ? Index.CompareTo(other.Index) : classCompare;
+        }
+    }
+
+    private struct PoolingList<T> : IDisposable
+    {
+        private T[] _data;
+        private int _count = 0;
+
+        public PoolingList()
+        {
+            _data = ArrayPool<T>.Shared.Rent(8);
+        }
+
+        public readonly int Count => _count;
+
+        public void Add(T item)
+        {
+            if (_count >= _data.Length)
+            {
+                var newData = ArrayPool<T>.Shared.Rent(_data.Length * 2);
+                Array.Copy(_data, newData, _data.Length);
+                ArrayPool<T>.Shared.Return(_data);
+                _data = newData;
+            }
+            _data[_count++] = item;
+        }
+
+        public Span<T> AsSpan() => _data.AsSpan(0, _count);
+
+        public void Dispose()
+        {
+            ArrayPool<T>.Shared.Return(_data);
         }
     }
 

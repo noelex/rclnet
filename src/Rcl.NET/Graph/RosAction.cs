@@ -8,14 +8,10 @@ namespace Rcl.Graph;
 public class RosAction
 {
     private readonly ConcurrentDictionary<RosActionEndPoint, RosActionEndPoint> _servers = new(), _clients = new();
-    private readonly IEnumerator<KeyValuePair<RosActionEndPoint, RosActionEndPoint>>
-        _serversEnumerator, _clientsEnumerator;
 
     internal RosAction(string name)
     {
         Name = name;
-        _serversEnumerator = _servers.GetEnumerator();
-        _clientsEnumerator = _clients.GetEnumerator();
     }
 
     /// <summary>
@@ -43,45 +39,23 @@ public class RosAction
 
     internal int ClientCount => _clients.Count;
 
-    internal void ResetServers(ReadOnlySpan<RosActionEndPoint> servers)
+    internal void RemoveServer(RosActionEndPoint ep)
     {
-        try
-        {
-            while (_serversEnumerator.MoveNext())
-            {
-                var k = _serversEnumerator.Current.Key;
-                if (!servers.Contains(k))
-                {
-                    _servers.Remove(k, out _);
-                }
-            }
-        }
-        finally
-        {
-            _serversEnumerator.Reset();
-        }
-
-        foreach (var ep in servers) _servers[ep] = ep;
+        _servers.Remove(ep, out _);
     }
 
-    internal void ResetClients(ReadOnlySpan<RosActionEndPoint> clients)
+    internal void RemoveClient(RosActionEndPoint ep)
     {
-        try
-        {
-            while (_clientsEnumerator.MoveNext())
-            {
-                var k = _clientsEnumerator.Current.Key;
-                if (!clients.Contains(k))
-                {
-                    _clients.Remove(k, out _);
-                }
-            }
-        }
-        finally
-        {
-            _clientsEnumerator.Reset();
-        }
+        _clients.Remove(ep, out _);
+    }
 
-        foreach (var ep in clients) _clients[ep] = ep;
+    internal void AddServer(RosActionEndPoint ep)
+    {
+        _servers[ep] = ep;
+    }
+
+    internal void AddClient(RosActionEndPoint ep)
+    {
+        _clients[ep] = ep;
     }
 }

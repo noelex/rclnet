@@ -8,13 +8,9 @@ internal interface IGraphBuilder
 
     void OnRemoveActionServer(RosActionEndPoint endpoint);
 
-    void OnEnumerateActionServer(RosActionEndPoint endpoint);
-
     void OnAddActionClient(RosActionEndPoint endpoint);
 
     void OnRemoveActionClient(RosActionEndPoint endpoint);
-
-    void OnEnumerateActionClient(RosActionEndPoint endpoint);
 
     RosAction GetOrAddAction(string name);
 
@@ -22,13 +18,9 @@ internal interface IGraphBuilder
 
     void OnRemoveServiceServer(RosServiceEndPoint server);
 
-    void OnEnumerateServiceServer(RosServiceEndPoint server);
-
     void OnAddServiceClient(RosServiceEndPoint client);
 
     void OnRemoveServiceClient(RosServiceEndPoint client);
-
-    void OnEnumerateServiceClient(RosServiceEndPoint client);
 
     void OnAddPublisher(RosTopicEndPoint publisher);
 

@@ -8,13 +8,10 @@ namespace Rcl.Graph;
 public class RosService
 {
     private readonly ConcurrentDictionary<RosServiceEndPoint, RosServiceEndPoint> _servers = new(), _clients = new();
-    private readonly IEnumerator<KeyValuePair<RosServiceEndPoint, RosServiceEndPoint>> _serversEnumerator, _clientsEnumerator;
 
     internal RosService(string name)
     {
         Name = name;
-        _serversEnumerator = _servers.GetEnumerator();
-        _clientsEnumerator = _clients.GetEnumerator();
     }
 
     /// <summary>
@@ -42,45 +39,23 @@ public class RosService
 
     internal int ClientCount => _clients.Count;
 
-    internal void ResetServers(Span<RosServiceEndPoint> servers)
+    internal void AddServer(RosServiceEndPoint server)
     {
-        try
-        {
-            while (_serversEnumerator.MoveNext())
-            {
-                var k = _serversEnumerator.Current.Key;
-                if (!servers.Contains(k))
-                {
-                    _servers.Remove(k, out _);
-                }
-            }
-        }
-        finally
-        {
-            _serversEnumerator.Reset();
-        }
-
-        foreach (var item in servers) _servers[item] = item;
+        _servers[server] = server;
     }
 
-    internal void ResetClients(Span<RosServiceEndPoint> clients)
+    internal void AddClient(RosServiceEndPoint client)
     {
-        try
-        {
-            while (_clientsEnumerator.MoveNext())
-            {
-                var k = _clientsEnumerator.Current.Key;
-                if (!clients.Contains(k))
-                {
-                    _clients.Remove(k, out _);
-                }
-            }
-        }
-        finally
-        {
-            _clientsEnumerator.Reset();
-        }
+        _clients[client] = client;
+    }
 
-        foreach (var item in clients) _clients[item] = item;
+    internal void RemoveServer(RosServiceEndPoint server)
+    {
+        _servers.Remove(server, out _);
+    }
+
+    internal void RemoveClient(RosServiceEndPoint client)
+    {
+        _clients.Remove(client, out _);
     }
 }

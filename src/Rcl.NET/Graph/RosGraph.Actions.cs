@@ -13,9 +13,6 @@ public partial class RosGraph : IGraphBuilder
 
     private readonly Dictionary<RosAction, UpdateOp> _actionUpdates = new();
 
-    private readonly List<RosActionEndPoint>
-        _totalActionClients = new(), _totalActionServers = new();
-
     private readonly Dictionary<RosActionEndPoint, UpdateOp>
         _actionServerUpdates = new(), _actionClientUpdates = new();
 
@@ -41,50 +38,15 @@ public partial class RosGraph : IGraphBuilder
             _nodesEnumerator.Reset();
         }
 
-        int offset;
-        using var temp = SpanOwner<RosActionEndPoint>.Allocate(
-            Math.Max(_totalActionClients.Count, _totalActionServers.Count));
-
         try
         {
             while (_actionsEnumerator.MoveNext())
             {
-                var action = _actionsEnumerator.Current.Value;
-                offset = 0;
-                foreach (var client in _totalActionClients)
-                {
-                    if (client.Action == action)
-                    {
-                        temp.Span[offset++] = client;
-                    }
-                }
-                action.ResetClients(temp.Span.Slice(0, offset));
-
-                offset = 0;
-                foreach (var server in _totalActionServers)
-                {
-                    if (server.Action == action)
-                    {
-                        temp.Span[offset++] = server;
-                    }
-                }
-                action.ResetServers(temp.Span.Slice(0, offset));
-            }
-        }
-        finally
-        {
-            _actionsEnumerator.Reset();
-        }
-
-        try
-        {
-            while (_actionsEnumerator.MoveNext())
-            {
-                var (k, v) = _actionsEnumerator.Current;
-                if (v.ClientCount == 0 && v.ServerCount == 0)
+                var (k, action) = _actionsEnumerator.Current;
+                if (action.ClientCount == 0 && action.ServerCount == 0)
                 {
                     _actions.Remove(k, out _);
-                    OnRemove(_actionUpdates, v);
+                    OnRemove(_actionUpdates, action);
                 }
             }
         }
@@ -126,31 +88,25 @@ public partial class RosGraph : IGraphBuilder
     void IGraphBuilder.OnAddActionServer(RosActionEndPoint endpoint)
     {
         OnAdd(_actionServerUpdates, endpoint);
+        endpoint.Action.AddServer(endpoint);
     }
 
     void IGraphBuilder.OnRemoveActionServer(RosActionEndPoint endpoint)
     {
         OnRemove(_actionServerUpdates, endpoint);
-    }
-
-    void IGraphBuilder.OnEnumerateActionServer(RosActionEndPoint endpoint)
-    {
-        _totalActionServers.Add(endpoint);
+        endpoint.Action.RemoveServer(endpoint);
     }
 
     void IGraphBuilder.OnAddActionClient(RosActionEndPoint endpoint)
     {
         OnAdd(_actionClientUpdates, endpoint);
+        endpoint.Action.AddClient(endpoint);
     }
 
     void IGraphBuilder.OnRemoveActionClient(RosActionEndPoint endpoint)
     {
         OnRemove(_actionClientUpdates, endpoint);
-    }
-
-    void IGraphBuilder.OnEnumerateActionClient(RosActionEndPoint endpoint)
-    {
-        _totalActionClients.Add(endpoint);
+        endpoint.Action.RemoveClient(endpoint);
     }
 
     RosAction IGraphBuilder.GetOrAddAction(string name)

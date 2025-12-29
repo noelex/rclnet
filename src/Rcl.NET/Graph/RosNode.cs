@@ -197,15 +197,6 @@ public class RosNode
                     builder.OnAddServiceClient(ep);
                 }
             }
-
-            if (type == ServiceEndPointType.Server)
-            {
-                builder.OnEnumerateServiceServer(ep);
-            }
-            else
-            {
-                builder.OnEnumerateServiceClient(ep);
-            }
         }
 
         try
@@ -257,15 +248,6 @@ public class RosNode
                 {
                     builder.OnAddActionClient(ep);
                 }
-            }
-
-            if (type == ActionEndPointType.Server)
-            {
-                builder.OnEnumerateActionServer(ep);
-            }
-            else
-            {
-                builder.OnEnumerateActionClient(ep);
             }
         }
 
