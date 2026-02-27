@@ -6,6 +6,8 @@ record struct NameWithType(string Name, string Type);
 
 unsafe interface ITopicEndPointDataAccessor
 {
+    void* GetInfoFromArray(void* array, int index);
+
     GraphId GetGraphId(void* data);
 
     string GetType(void* data);

@@ -353,7 +353,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         var namePtr = nameBuffer.IsEmpty ? null : (byte*)Unsafe.AsPointer(ref nameBuffer[0]);
 
         var allocator = RclAllocator.Default.Object;
-        var accessor = RosEnvironment.IsSupported(RosEnvironment.Iron)
+        ITopicEndPointDataAccessor accessor = RosEnvironment.IsSupported(RosEnvironment.Iron)
             ? IronTopicEndPointDataAccessor.Instance
             : TopicEndPointDataAccessor.Instance;
 
@@ -372,7 +372,8 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             {
                 for (var i = 0; i < (int)endpoints.size.Value; i++)
                 {
-                    items.Span[i] = new(&endpoints.info_array[i], accessor);
+                    // Access info_array through accessor to deal with layout difference between different distros.
+                    items.Span[i] = new(accessor.GetInfoFromArray(endpoints.info_array, i), accessor);
                 }
                 topic.UpdatePublishers(this, items.Span, _nodes);
             }
@@ -432,6 +433,11 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     {
         public static readonly TopicEndPointDataAccessor Instance = new();
 
+        public void* GetInfoFromArray(void* array, int index)
+        {
+            return &((rmw_topic_endpoint_info_t*)array)[index];
+        }
+
         public GraphId GetGraphId(void* data)
         {
             var item = (rmw_topic_endpoint_info_t*)data;
@@ -461,7 +467,12 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     private unsafe class IronTopicEndPointDataAccessor : ITopicEndPointDataAccessor
     {
-        public static readonly TopicEndPointDataAccessor Instance = new();
+        public static readonly IronTopicEndPointDataAccessor Instance = new();
+
+        public void* GetInfoFromArray(void* array, int index)
+        {
+            return &((RclIron.rmw_topic_endpoint_info_t*)array)[index];
+        }
 
         public GraphId GetGraphId(void* data)
         {
