@@ -397,7 +397,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             {
                 for (var i = 0; i < (int)endpoints.size.Value; i++)
                 {
-                    items.Span[i] = new(&endpoints.info_array[i], accessor);
+                    items.Span[i] = new(accessor.GetInfoFromArray(endpoints.info_array, i), accessor);
                 }
                 topic.UpdateSubscribers(this, items.Span, _nodes);
             }
