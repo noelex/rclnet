@@ -801,6 +801,7 @@ public class MessageClassBuilder
                         {
                             case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String:
                                 if (!previousLineIsBlank) writer.WriteLine();
+                                writer.WriteLine($"priv.{fieldName}.Dispose();");
                                 writer.WriteLine($"priv.{fieldName} = new global::Rosidl.Runtime.Interop.CStringSequence(this.{fieldName}.Length);");
                                 writer.WriteLine($"var {fieldName}_span = priv.{fieldName}.AsSpan();");
                                 writer.WriteLine($"for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
@@ -815,6 +816,7 @@ public class MessageClassBuilder
                                 break;
                             case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.WString:
                                 if (!previousLineIsBlank) writer.WriteLine();
+                                writer.WriteLine($"priv.{fieldName}.Dispose();");
                                 writer.WriteLine($"priv.{fieldName} = new global::Rosidl.Runtime.Interop.U16StringSequence(this.{fieldName}.Length);");
                                 writer.WriteLine($"var {fieldName}_span = priv.{fieldName}.AsSpan();");
                                 writer.WriteLine($"for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
