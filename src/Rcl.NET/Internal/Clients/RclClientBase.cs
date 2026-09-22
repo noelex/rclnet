@@ -5,6 +5,7 @@ using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
 
 namespace Rcl.Internal.Clients;
+
 internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 {
     private readonly TypeSupportHandle _typesupport;
@@ -48,7 +49,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     {
         RosEnvironment.Require(RosEnvironment.Iron, feature: "Service Introspection");
 
-        var opts = RclHumble.rcl_publisher_get_default_options();
+        var opts = RclIron.rcl_publisher_get_default_options();
         opts.qos = (qos ?? QosProfile.SystemDefault).ToRmwQosProfile();
 
         var ret = RclIron.rcl_client_configure_service_introspection(

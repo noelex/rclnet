@@ -174,4 +174,10 @@ internal unsafe static class RclFoxy
     /// </remarks>
     [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
     public static extern rcl_node_options_t rcl_node_get_default_options();
+
+    [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern rcl_publisher_options_t rcl_publisher_get_default_options();
+
+    [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    public static extern rcl_subscription_options_t rcl_subscription_get_default_options();
 }

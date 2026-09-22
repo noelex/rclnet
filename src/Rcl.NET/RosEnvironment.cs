@@ -14,7 +14,7 @@ internal enum VersionRequirement
 /// </summary>
 public unsafe static class RosEnvironment
 {
-    private static readonly string[] s_supportedDistributions = [Foxy, Humble, Iron, Jazzy, Kilted];
+    private static readonly string[] s_supportedDistributions = [Foxy, Humble, Iron, Jazzy, Kilted, Lyrical];
 
     /// <summary>
     /// ROS 2 Foxy Fitzroy.
@@ -42,6 +42,11 @@ public unsafe static class RosEnvironment
     public const string Kilted = "kilted";
 
     /// <summary>
+    /// ROS 2 Lyrical Luth.
+    /// </summary>
+    public const string Lyrical = "lyrical";
+
+    /// <summary>
     /// Gets whether the application is running in foxy.
     /// </summary>
     public static bool IsFoxy => Distribution == Foxy;
@@ -65,6 +70,11 @@ public unsafe static class RosEnvironment
     /// Gets whether the application is running in kilted.
     /// </summary>
     public static bool IsKilted => Distribution == Kilted;
+
+    /// <summary>
+    /// Gets whether the application is running in lyrical.
+    /// </summary>
+    public static bool IsLyrical => Distribution == Lyrical;
 
     /// <summary>
     /// Get the name of the rmw implementation being used.
