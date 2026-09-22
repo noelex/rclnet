@@ -75,6 +75,9 @@ OPTIONS:
         A path relative to the SPEC_FILE (if not specified, relative to current directory),
         or an absolute path can be used.
 
+    --abi=v1|v2|portable
+        Select the ROSIDL native ABI mode. The default is v1.
+
     -I,
     --from-directory=INCLUDE_DIR
         Read packages from specified root package directory containing one or more packages.

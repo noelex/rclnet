@@ -4,12 +4,14 @@ using Rosidl.Generator.CSharp.Helpers;
 namespace Rosidl.Generator.CSharp.Builders;
 public class PrivStructBuilder
 {
-    public static CSharpElement Build(MessageBuildContext context)
+    public static CSharpElement Build(MessageBuildContext context) => Build(context.NativeLayout);
+
+    internal static CSharpElement Build(NativeLayoutBuildContext context)
     {
         var methodContext = new PrivStructMethodBuildContext(context);
-        var structure = new CSharpStruct(context.PrivStructName);
+        var structure = new CSharpStruct(context.PrivName);
 
-        structure.AddCommentsForStruct(context.Metadata);
+        structure.AddCommentsForStruct(context.MessageContext.Metadata);
 
         structure.BaseTypes.Add(new CSharpFreeType($"global::System.IEquatable<{methodContext.StructType}>"));
         structure.BaseTypes.Add(new CSharpFreeType($"global::System.IDisposable"));
@@ -25,7 +27,7 @@ public class PrivStructBuilder
                 var arrayType = (ArrayTypeMetadata)variable.Metadata.Type;
                 if (arrayType.ElementType is PrimitiveTypeMetadata prim && prim.ValueType is not PrimitiveTypes.String and not PrimitiveTypes.WString)
                 {
-                    string typeName = context.GetPrimitiveTypeName(prim);
+                    string typeName = context.MessageContext.GetPrimitiveTypeName(prim);
                     structure.Members.Add(
                         new CSharpField("__" + variable.Name + $"[{variable.FixedSize}]")
                         {
@@ -35,11 +37,11 @@ public class PrivStructBuilder
                     var spanProp = new CSharpProperty(variable.Name)
                     {
                         Visibility = CSharpVisibility.Public,
-                        ReturnType = new CSharpFreeType($"global::System.Span<{context.GetPrimitiveTypeName(prim)}>")
+                        ReturnType = new CSharpFreeType($"global::System.Span<{context.MessageContext.GetPrimitiveTypeName(prim)}>")
                     }.AddComments(variable.Metadata);
                     spanProp.GetBody = (writer, element) =>
                     {
-                        writer.WriteLine($"fixed ({context.GetMessagePrivStructReferenceName(context.Metadata)}* __p = &this) return new (__p->__{variable.Name}, {variable.FixedSize});");
+                        writer.WriteLine($"fixed ({context.GetMessagePrivStructReferenceName(context.MessageContext.Metadata)}* __p = &this) return new (__p->__{variable.Name}, {variable.FixedSize});");
                     };
                     spanProp.Attributes.Add(Attributes.DebuggerNonUserCode);
                     spanProp.Attributes.Add(Attributes.GeneratedCode);
@@ -133,13 +135,13 @@ public class PrivStructBuilder
         s.Members.Add(context.EmitThrowIfNonSuccess());
     }
 
-    private static VariableField[] GetFields(MessageBuildContext context)
+    private static VariableField[] GetFields(NativeLayoutBuildContext context)
     {
-        return context.Metadata.Fields
+        return context.MessageContext.Metadata.Fields
             .OfType<VariableFieldMetadata>()
             .Select(x =>
             {
-                var name = context.GetNormalizedFieldName(x);
+                var name = context.MessageContext.GetNormalizedFieldName(x);
                 var type = GetFieldType(x.Type);
                 return new VariableField(name, type, x, x.Type is ArrayTypeMetadata at && !at.IsUpperBounded ? at.Length : null);
             })
@@ -166,7 +168,7 @@ public class PrivStructBuilder
             {
                 return $"global::Rosidl.Runtime.Interop.U16String";
             }
-            return context.GetPrimitiveTypeName(p);
+            return context.MessageContext.GetPrimitiveTypeName(p);
         }
 
         string GetArrayTypeName(ArrayTypeMetadata arrayType)
@@ -182,29 +184,8 @@ public class PrivStructBuilder
             }
             return arrayType.ElementType switch
             {
-                PrimitiveTypeMetadata primitiveType => GetPrimitiveSequenceTypeName(primitiveType),
+                PrimitiveTypeMetadata primitiveType => context.GetPrimitiveSequenceTypeName(primitiveType),
                 ComplexTypeMetadata complexType => context.GetMessagePrivStructSequenceReferenceName(complexType),
-                _ => throw new NotSupportedException(),
-            };
-        }
-
-        string GetPrimitiveSequenceTypeName(PrimitiveTypeMetadata p)
-        {
-            return p.ValueType switch
-            {
-                PrimitiveTypes.Bool => $"global::Rosidl.Runtime.Interop.BooleanSequence",
-                PrimitiveTypes.Float32 => $"global::Rosidl.Runtime.Interop.FloatSequence",
-                PrimitiveTypes.Float64 => $"global::Rosidl.Runtime.Interop.DoubleSequence",
-                PrimitiveTypes.Int16 => $"global::Rosidl.Runtime.Interop.Int16Sequence",
-                PrimitiveTypes.Int32 => $"global::Rosidl.Runtime.Interop.Int32Sequence",
-                PrimitiveTypes.Int64 => $"global::Rosidl.Runtime.Interop.Int64Sequence",
-                PrimitiveTypes.Int8 => $"global::Rosidl.Runtime.Interop.Int8Sequence",
-                PrimitiveTypes.UInt16 => $"global::Rosidl.Runtime.Interop.UInt16Sequence",
-                PrimitiveTypes.UInt32 => $"global::Rosidl.Runtime.Interop.UInt32Sequence",
-                PrimitiveTypes.UInt64 => $"global::Rosidl.Runtime.Interop.UInt64Sequence",
-                PrimitiveTypes.UInt8 => $"global::Rosidl.Runtime.Interop.UInt8Sequence",
-                PrimitiveTypes.String => $"global::Rosidl.Runtime.Interop.CStringSequence",
-                PrimitiveTypes.WString => $"global::Rosidl.Runtime.Interop.U16StringSequence",
                 _ => throw new NotSupportedException(),
             };
         }

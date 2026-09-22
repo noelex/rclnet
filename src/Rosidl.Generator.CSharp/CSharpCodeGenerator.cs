@@ -24,6 +24,8 @@ class ParseSpec
 
     public string DefaultRootNamespace { get; } = "Rosidl.Messages";
 
+    public RosidlAbiMode Abi { get; } = RosidlAbiMode.V1;
+
     public string? OutputDirectory { get; }
 
     public List<string> SourceDirectories { get; } = [];
@@ -41,7 +43,7 @@ class ParseSpec
     public string? SpecFile { get; }
 
     public bool IgnoreMissing { get; } = false;
-    internal static readonly char[] _optSeparator = [' '];
+    internal static readonly char[] s_optSeparator = [' '];
 
     public ParseSpec(string specFile)
         : this([new("", specFile)])
@@ -119,6 +121,13 @@ class ParseSpec
                             _ => throw new Exception($"'{parts[1]}' is not a valid value for 'action-details' directive."),
                         };
                         break;
+                    case "abi":
+                        if (parts.Length != 2)
+                        {
+                            throw new Exception("'abi' requires exactly one argument.");
+                        }
+                        Abi = ParseAbi(parts[1]);
+                        break;
                     case "map-package":
                         var p = parts[1].Split(':');
                         PackageMapping.Add(p[0], p[1]);
@@ -147,10 +156,10 @@ class ParseSpec
                     SourceDirectories.Add(opt.Value!);
                     break;
                 case "include":
-                    Includes.AddRange(opt.Value!.Split(_optSeparator, StringSplitOptions.RemoveEmptyEntries));
+                    Includes.AddRange(opt.Value!.Split(s_optSeparator, StringSplitOptions.RemoveEmptyEntries));
                     break;
                 case "exclude":
-                    Excludes.AddRange(opt.Value!.Split(_optSeparator, StringSplitOptions.RemoveEmptyEntries));
+                    Excludes.AddRange(opt.Value!.Split(s_optSeparator, StringSplitOptions.RemoveEmptyEntries));
                     break;
                 case "map-namespace":
                     var mapping = opt.Value!.Split(':');
@@ -162,12 +171,26 @@ class ParseSpec
                 case "action-details":
                     EnableActionDetails = opt.Value == "yes";
                     break;
+                case "abi":
+                    Abi = ParseAbi(opt.Value!);
+                    break;
                 case "map-package":
                     var p = opt.Value!.Split(':');
                     PackageMapping.Add(p[0], p[1]);
                     break;
             }
         }
+    }
+
+    private static RosidlAbiMode ParseAbi(string value)
+    {
+        return value switch
+        {
+            "v1" => RosidlAbiMode.V1,
+            "v2" => RosidlAbiMode.V2,
+            "portable" => RosidlAbiMode.Portable,
+            _ => throw new Exception($"'{value}' is not a valid value for 'abi'."),
+        };
     }
 }
 
@@ -209,7 +232,8 @@ public class CSharpCodeGenerator
 
         var opts = new GeneratorOptions
         {
-            RootNamespace = spec.DefaultRootNamespace
+            RootNamespace = spec.DefaultRootNamespace,
+            Abi = spec.Abi
         };
         opts.ResolveNamespace =
             x => spec.NamespaceMapping.TryGetValue(x, out var ns) ? ns : opts.RootNamespace;

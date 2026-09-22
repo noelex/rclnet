@@ -8,10 +8,12 @@ namespace Rosidl.Generator.CSharp.Builders;
 public class MessageClassBuilder
 {
     private readonly MessageBuildContext _context;
+    private readonly NativeLayoutBuildContext _nativeLayout;
     private readonly VariableFieldInfo[] _variables;
     public MessageClassBuilder(MessageBuildContext context)
     {
         _context = context;
+        _nativeLayout = context.NativeLayout;
         _variables = context.Metadata.Fields.OfType<VariableFieldMetadata>().Select(x =>
                 new VariableFieldInfo(x, GetTypeName(x.Type), context.Options.ResolveFieldName(context, x),
                 x.Name.ToCamelCase(), x.Type is ComplexTypeMetadata or ArrayTypeMetadata, GetValueLiteralOrDefault(x)))
@@ -60,8 +62,8 @@ public class MessageClassBuilder
         cls.Members.Add(EmitUnsafeInitializeSequence());
         cls.Members.Add(EmitUnsafeFinalizeSequence());
 
-        cls.Members.Add(PrivStructBuilder.Build(_context));
-        cls.Members.Add(PrivStructSequenceBuilder.Build(_context));
+        cls.Members.Add(PrivStructBuilder.Build(_nativeLayout));
+        cls.Members.Add(PrivStructSequenceBuilder.Build(_nativeLayout));
 
         foreach (var m in cls.Members.OfType<CSharpMethod>())
         {
@@ -218,13 +220,13 @@ public class MessageClassBuilder
 
         builder.AppendLine($"""
             /// <summary>
-            /// Create a new instance of <see cref="{_context.ClassName}"/>, and copy its data from the specified <see cref="{_context.PrivStructName}"/> structure.
+            /// Create a new instance of <see cref="{_context.ClassName}"/>, and copy its data from the specified <see cref="{_nativeLayout.PrivName}"/> structure.
             /// </summary>
-            /// <param name="priv">The <see cref="{_context.PrivStructName}"/> structure to be copied from.</param>
-            /// <param name="textEncoding">Text encoding of the strings in the <see cref="{_context.PrivStructName}"/> structure and its containing structures, if any.</param>
+            /// <param name="priv">The <see cref="{_nativeLayout.PrivName}"/> structure to be copied from.</param>
+            /// <param name="textEncoding">Text encoding of the strings in the <see cref="{_nativeLayout.PrivName}"/> structure and its containing structures, if any.</param>
             [{Attributes.DebuggerNonUserCode}]
             [{Attributes.GeneratedCode}]
-            public {_context.ClassName}(in Priv priv, global::System.Text.Encoding textEncoding)
+            public {_context.ClassName}(in {_nativeLayout.PrivName} priv, global::System.Text.Encoding textEncoding)
             """);
         builder.AppendLine("{");
 
@@ -526,7 +528,7 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
-            writer.WriteLine($"return new {_context.ClassName}(in global::System.Runtime.CompilerServices.Unsafe.AsRef<{_context.PrivStructName}>(data.ToPointer()), textEncoding);");
+            writer.WriteLine($"return new {_context.ClassName}(in global::System.Runtime.CompilerServices.Unsafe.AsRef<{_nativeLayout.PrivName}>(data.ToPointer()), textEncoding);");
         };
         return method;
     }
@@ -542,7 +544,7 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
-            writer.WriteLine($"return new({_context.PrivStructName}.Create());");
+            writer.WriteLine($"return new({_nativeLayout.PrivName}.Create());");
         };
         return method;
     }
@@ -561,9 +563,9 @@ public class MessageClassBuilder
         method.Body = (writer, element) =>
         {
 
-            writer.WriteLine($"return {_context.PrivStructName}" +
+            writer.WriteLine($"return {_nativeLayout.PrivName}" +
                 $".TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<" +
-                    $"{_context.PrivStructName}>(data.ToPointer()));");
+                    $"{_nativeLayout.PrivName}>(data.ToPointer()));");
         };
         return method;
     }
@@ -582,9 +584,9 @@ public class MessageClassBuilder
         method.Body = (writer, element) =>
         {
 
-            writer.WriteLine($"{_context.PrivStructName}" +
+            writer.WriteLine($"{_nativeLayout.PrivName}" +
                 $".Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<" +
-                    $"{_context.PrivStructName}>(data.ToPointer()));");
+                    $"{_nativeLayout.PrivName}>(data.ToPointer()));");
         };
         return method;
     }
@@ -604,9 +606,9 @@ public class MessageClassBuilder
         method.Body = (writer, element) =>
         {
 
-            writer.WriteLine($"return {_context.PrivStructSequenceName}" +
+            writer.WriteLine($"return {_nativeLayout.PrivSequenceName}" +
                 $".TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<" +
-                    $"{_context.PrivStructSequenceName}>(data.ToPointer()));");
+                    $"{_nativeLayout.PrivSequenceName}>(data.ToPointer()));");
         };
         return method;
     }
@@ -625,9 +627,9 @@ public class MessageClassBuilder
         method.Body = (writer, element) =>
         {
 
-            writer.WriteLine($"{_context.PrivStructSequenceName}" +
+            writer.WriteLine($"{_nativeLayout.PrivSequenceName}" +
                 $".Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<" +
-                    $"{_context.PrivStructSequenceName}>(data.ToPointer()));");
+                    $"{_nativeLayout.PrivSequenceName}>(data.ToPointer()));");
         };
         return method;
     }
@@ -645,7 +647,7 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
-            writer.WriteLine($"{_context.PrivStructName}.Destroy(({_context.PrivStructName}*)data);");
+            writer.WriteLine($"{_nativeLayout.PrivName}.Destroy(({_nativeLayout.PrivName}*)data);");
         };
         return method;
     }
@@ -700,7 +702,7 @@ public class MessageClassBuilder
         method.Parameters.Add(new CSharpParameter("textEncoding") { ParameterType = new CSharpFreeType("global::System.Text.Encoding") });
         method.Body = (writer, element) =>
         {
-            writer.WriteLine("WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<Priv>(data.ToPointer()), textEncoding);");
+            writer.WriteLine($"WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<{_nativeLayout.PrivName}>(data.ToPointer()), textEncoding);");
         };
 
         return method;
@@ -714,7 +716,7 @@ public class MessageClassBuilder
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
         };
 
-        method.Parameters.Add(new CSharpParameter("priv") { ParameterType = new CSharpFreeType(_context.PrivStructName).Ref(CSharpRefKind.Ref) });
+        method.Parameters.Add(new CSharpParameter("priv") { ParameterType = new CSharpFreeType(_nativeLayout.PrivName).Ref(CSharpRefKind.Ref) });
         method.Parameters.Add(new CSharpParameter("textEncoding") { ParameterType = new CSharpFreeType("global::System.Text.Encoding") });
 
         method.Body = (writer, element) =>
@@ -781,7 +783,6 @@ public class MessageClassBuilder
                             case ComplexTypeMetadata complex:
                                 if (!previousLineIsBlank) writer.WriteLine();
 
-                                var ct = _context.GetMessagePrivStructReferenceName(complex);
                                 writer.WriteLine($"for (int __i = 0; __i < {arraySize}; __i++)");
                                 writer.WriteLine("{");
                                 writer.WriteLine($"    this.{fieldName}[__i].WriteTo(ref priv.{fieldName}[__i], textEncoding);");
@@ -801,7 +802,7 @@ public class MessageClassBuilder
                         {
                             case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String:
                                 if (!previousLineIsBlank) writer.WriteLine();
-                                writer.WriteLine($"priv.{fieldName} = new global::Rosidl.Runtime.Interop.CStringSequence(this.{fieldName}.Length);");
+                                writer.WriteLine($"priv.{fieldName} = new {_nativeLayout.GetPrimitiveSequenceTypeName(prim)}(this.{fieldName}.Length);");
                                 writer.WriteLine($"var {fieldName}_span = priv.{fieldName}.AsSpan();");
                                 writer.WriteLine($"for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.WriteLine("{");
@@ -815,7 +816,7 @@ public class MessageClassBuilder
                                 break;
                             case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.WString:
                                 if (!previousLineIsBlank) writer.WriteLine();
-                                writer.WriteLine($"priv.{fieldName} = new global::Rosidl.Runtime.Interop.U16StringSequence(this.{fieldName}.Length);");
+                                writer.WriteLine($"priv.{fieldName} = new {_nativeLayout.GetPrimitiveSequenceTypeName(prim)}(this.{fieldName}.Length);");
                                 writer.WriteLine($"var {fieldName}_span = priv.{fieldName}.AsSpan();");
                                 writer.WriteLine($"for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.WriteLine("{");
@@ -833,7 +834,7 @@ public class MessageClassBuilder
                                 break;
                             case ComplexTypeMetadata complex:
                                 if (!previousLineIsBlank) writer.WriteLine();
-                                writer.WriteLine($"priv.{fieldName} = new {_context.GetMessagePrivStructSequenceReferenceName(complex)}(this.{fieldName}.Length);");
+                                writer.WriteLine($"priv.{fieldName} = new {_nativeLayout.GetMessagePrivStructSequenceReferenceName(complex)}(this.{fieldName}.Length);");
                                 writer.WriteLine($"var {fieldName}_span = priv.{fieldName}.AsSpan();");
                                 writer.WriteLine($"for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.WriteLine("{");

@@ -1,4 +1,5 @@
 namespace Rosidl.Test.Messages
+abi v1
 
 from-directory packages
 

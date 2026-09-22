@@ -5,12 +5,14 @@ namespace Rosidl.Generator.CSharp.Builders;
 
 public class PrivStructSequenceBuilder
 {
-    public static CSharpElement Build(MessageBuildContext context)
+    public static CSharpElement Build(MessageBuildContext context) => Build(context.NativeLayout);
+
+    internal static CSharpElement Build(NativeLayoutBuildContext context)
     {
         var methodContext = new SequenceStructMethodBuildContext(context);
-        var structure = new CSharpStruct(context.PrivStructSequenceName);
+        var structure = new CSharpStruct(context.PrivSequenceName);
 
-        structure.AddCommentsForStructSequence(context.Metadata);
+        structure.AddCommentsForStructSequence(context.MessageContext.Metadata);
 
         structure.BaseTypes.Add(new CSharpFreeType($"global::System.IEquatable<{methodContext.StructType}>"));
         structure.BaseTypes.Add(new CSharpFreeType($"global::System.IDisposable"));
@@ -22,7 +24,7 @@ public class PrivStructSequenceBuilder
         structure.Members.Add(new CSharpField("__data")
         {
             Visibility = CSharpVisibility.Private,
-            FieldType = new CSharpPointerType(new CSharpFreeType(context.PrivStructName)),
+            FieldType = new CSharpPointerType(new CSharpFreeType(context.PrivName)),
         });
 
         structure.Members.Add(new CSharpField("__size")
@@ -132,7 +134,7 @@ public class PrivStructSequenceBuilder
         return new CSharpMethod("AsSpan")
         {
             Visibility = CSharpVisibility.Public,
-            ReturnType = new CSharpFreeType($"System.Span<{context.MessageContext.PrivStructName}>"),
+            ReturnType = new CSharpFreeType($"System.Span<{context.NativeLayoutContext.PrivName}>"),
             Body = (writer, element) =>
             {
                 writer.WriteLine("return new(__data, Size);");
@@ -150,7 +152,7 @@ public class PrivStructSequenceBuilder
 
         method.Parameters.Add(new CSharpParameter("src")
         {
-            ParameterType = new CSharpFreeType($"System.ReadOnlySpan<{context.MessageContext.PrivStructName}>")
+            ParameterType = new CSharpFreeType($"System.ReadOnlySpan<{context.NativeLayoutContext.PrivName}>")
         });
 
         method.Body = (writer, element) =>
@@ -172,7 +174,7 @@ public class PrivStructSequenceBuilder
             Text = $$"""
             [{{Attributes.DebuggerNonUserCode}}]
             [{{Attributes.GeneratedCode}}]
-            public {{context.StructName}}(System.ReadOnlySpan<{{context.MessageContext.PrivStructName}}> src)
+            public {{context.StructName}}(System.ReadOnlySpan<{{context.NativeLayoutContext.PrivName}}> src)
                 : this(src.Length)
             {
                 src.CopyTo(AsSpan());

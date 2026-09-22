@@ -2,6 +2,27 @@
 
 namespace Rosidl.Generator.CSharp;
 
+/// <summary>
+/// Specifies which ROSIDL native ABI layout the generated code targets.
+/// </summary>
+public enum RosidlAbiMode
+{
+    /// <summary>
+    /// Generates the ROSIDL ABI used through ROS 2 Kilted.
+    /// </summary>
+    V1,
+
+    /// <summary>
+    /// Generates the ROSIDL ABI introduced in ROS 2 Lyrical.
+    /// </summary>
+    V2,
+
+    /// <summary>
+    /// Generates both layouts and selects the active ABI at runtime.
+    /// </summary>
+    Portable
+}
+
 public class GeneratorOptions
 {
     public GeneratorOptions()
@@ -10,6 +31,11 @@ public class GeneratorOptions
     }
 
     public string RootNamespace { get; set; } = "Rosidl.Messages";
+
+    /// <summary>
+    /// Gets or sets the ROSIDL native ABI mode used for code generation.
+    /// </summary>
+    public RosidlAbiMode Abi { get; set; } = RosidlAbiMode.V1;
 
     public Func<string, string> ResolveNamespace { get; set; }
 
@@ -129,9 +155,7 @@ public class GeneratorOptions
         }
 
         var fieldName = field.Name.ToPascalCase();
-        return (ctx.ClassName == fieldName ||
-                ctx.PrivStructName == fieldName ||
-                ctx.PrivStructSequenceName == fieldName) ? fieldName + "_" : fieldName;
+        return ctx.GetNormalizedFieldName(fieldName);
     };
 
 }

@@ -46,6 +46,12 @@ public enum NameType
     PrivStructSequence
 }
 
+internal enum NativeLayout
+{
+    V1,
+    V2
+}
+
 public enum MessageType
 {
     Plain,
@@ -60,7 +66,7 @@ public enum MessageType
 
 public class MessageBuildContext
 {
-    private static readonly Dictionary<PrimitiveTypes, string> _primitiveTypeMap = new()
+    private static readonly Dictionary<PrimitiveTypes, string> s_primitiveTypeMap = new()
     {
         {PrimitiveTypes.Bool, "bool" },
         {PrimitiveTypes.Int8, "sbyte" },
@@ -81,13 +87,15 @@ public class MessageBuildContext
 
     public MessageMetadata Metadata { get; }
 
-    public string PrivStructName { get; }
+    internal NativeLayoutBuildContext NativeLayout { get; }
 
-    public string PrivStructNameFullyQualified { get; }
+    public string PrivStructName => NativeLayout.PrivName;
 
-    public string PrivStructSequenceName { get; }
+    public string PrivStructNameFullyQualified => NativeLayout.PrivNameFullyQualified;
 
-    public string PrivStructSequenceNameFullyQualified { get; }
+    public string PrivStructSequenceName => NativeLayout.PrivSequenceName;
+
+    public string PrivStructSequenceNameFullyQualified => NativeLayout.PrivSequenceNameFullyQualified;
 
     public string ClassName { get; }
 
@@ -119,10 +127,12 @@ public class MessageBuildContext
 
         ClassName = Options.ResolveMessageClassName(this, Metadata);
         ClassNameFullyQualified = GetMessageClassReferenceName(Metadata);
-        PrivStructName = Options.ResolveMessagePrivStructName(this, Metadata);
-        PrivStructNameFullyQualified = GetMessagePrivStructReferenceName(Metadata);
-        PrivStructSequenceName = Options.ResolveMessagePrivStructSequenceName(this, Metadata);
-        PrivStructSequenceNameFullyQualified = GetMessagePrivStructSequenceReferenceName(Metadata);
+        // ABI modes are parsed now, while native output remains V1 until multi-layout emission is enabled.
+        NativeLayout = new NativeLayoutBuildContext(
+            this,
+            global::Rosidl.Generator.CSharp.NativeLayout.V1,
+            Options.ResolveMessagePrivStructName,
+            Options.ResolveMessagePrivStructSequenceName);
 
         GeneratorLibraryName = Metadata.Id.Package + "__rosidl_generator_c";
         TypeSupportLibraryName = Metadata.Id.Package + "__rosidl_typesupport_c";
@@ -155,16 +165,10 @@ public class MessageBuildContext
     /// </summary>
     /// <param name="metadata"></param>
     /// <returns></returns>
-    private string GetMessageReferenceName(ComplexTypeMetadata metadata, NameType type)
+    private string GetMessageReferenceName(ComplexTypeMetadata metadata, string? nestedTypeName = null)
     {
         var cls = Options.ResolveMessageClassName(this, metadata);
-        string className = type switch
-        {
-            NameType.Class => cls,
-            NameType.PrivStruct => $"{cls}.{Options.ResolveMessagePrivStructName(this, metadata)}",
-            NameType.PrivStructSequence => $"{cls}.{Options.ResolveMessagePrivStructSequenceName(this, metadata)}",
-            _ => throw new NotImplementedException()
-        };
+        var className = nestedTypeName is null ? cls : $"{cls}.{nestedTypeName}";
 
         var ns = metadata.Id.Package is null
             ? GetNamespace(Metadata) : GetNamespace(metadata);
@@ -172,15 +176,20 @@ public class MessageBuildContext
         return $"global::{ns}.{className}";
     }
 
-    public string GetMessageClassReferenceName(ComplexTypeMetadata metadata) => GetMessageReferenceName(metadata, NameType.Class);
+    public string GetMessageClassReferenceName(ComplexTypeMetadata metadata) => GetMessageReferenceName(metadata);
 
-    public string GetMessagePrivStructReferenceName(ComplexTypeMetadata metadata) => GetMessageReferenceName(metadata, NameType.PrivStruct);
+    public string GetMessagePrivStructReferenceName(ComplexTypeMetadata metadata) =>
+        NativeLayout.GetMessagePrivStructReferenceName(metadata);
 
-    public string GetMessagePrivStructSequenceReferenceName(ComplexTypeMetadata metadata) => GetMessageReferenceName(metadata, NameType.PrivStructSequence);
+    public string GetMessagePrivStructSequenceReferenceName(ComplexTypeMetadata metadata) =>
+        NativeLayout.GetMessagePrivStructSequenceReferenceName(metadata);
+
+    internal string GetMessageNestedTypeReferenceName(ComplexTypeMetadata metadata, string nestedTypeName) =>
+        GetMessageReferenceName(metadata, nestedTypeName);
 
     public string GetNormalizedFieldName(string name)
     {
-        if (name == ClassName || name == PrivStructName || name == PrivStructSequenceName)
+        if (name == ClassName || name == NativeLayout.PrivName || name == NativeLayout.PrivSequenceName)
         {
             return name + "_";
         }
@@ -195,8 +204,70 @@ public class MessageBuildContext
 
     public string GetPrimitiveTypeName(PrimitiveTypeMetadata metadata)
     {
-        return _primitiveTypeMap[metadata.ValueType];
+        return s_primitiveTypeMap[metadata.ValueType];
     }
+}
+
+internal sealed class NativeLayoutBuildContext
+{
+    private readonly Func<MessageBuildContext, ComplexTypeMetadata, string> _resolvePrivName;
+    private readonly Func<MessageBuildContext, ComplexTypeMetadata, string> _resolvePrivSequenceName;
+
+    public NativeLayoutBuildContext(
+        MessageBuildContext messageContext,
+        NativeLayout layout,
+        Func<MessageBuildContext, ComplexTypeMetadata, string> resolvePrivName,
+        Func<MessageBuildContext, ComplexTypeMetadata, string> resolvePrivSequenceName)
+    {
+        MessageContext = messageContext;
+        Layout = layout;
+        _resolvePrivName = resolvePrivName;
+        _resolvePrivSequenceName = resolvePrivSequenceName;
+        PrivName = resolvePrivName(messageContext, messageContext.Metadata);
+        PrivSequenceName = resolvePrivSequenceName(messageContext, messageContext.Metadata);
+    }
+
+    public MessageBuildContext MessageContext { get; }
+
+    public NativeLayout Layout { get; }
+
+    public string PrivName { get; }
+
+    public string PrivNameFullyQualified => GetMessagePrivStructReferenceName(MessageContext.Metadata);
+
+    public string PrivSequenceName { get; }
+
+    public string PrivSequenceNameFullyQualified => GetMessagePrivStructSequenceReferenceName(MessageContext.Metadata);
+
+    public string GetPrimitiveSequenceTypeName(PrimitiveTypeMetadata metadata)
+    {
+        var name = metadata.ValueType switch
+        {
+            PrimitiveTypes.Bool => "BooleanSequence",
+            PrimitiveTypes.Float32 => "FloatSequence",
+            PrimitiveTypes.Float64 => "DoubleSequence",
+            PrimitiveTypes.Int16 => "Int16Sequence",
+            PrimitiveTypes.Int32 => "Int32Sequence",
+            PrimitiveTypes.Int64 => "Int64Sequence",
+            PrimitiveTypes.Int8 => "Int8Sequence",
+            PrimitiveTypes.UInt16 => "UInt16Sequence",
+            PrimitiveTypes.UInt32 => "UInt32Sequence",
+            PrimitiveTypes.UInt64 => "UInt64Sequence",
+            PrimitiveTypes.UInt8 => "UInt8Sequence",
+            PrimitiveTypes.String => "CStringSequence",
+            PrimitiveTypes.WString => "U16StringSequence",
+            _ => throw new NotSupportedException(),
+        };
+
+        var suffix = Layout == NativeLayout.V2 ? "V2" : string.Empty;
+        return $"global::Rosidl.Runtime.Interop.{name}{suffix}";
+    }
+
+    public string GetMessagePrivStructReferenceName(ComplexTypeMetadata metadata) =>
+        MessageContext.GetMessageNestedTypeReferenceName(metadata, _resolvePrivName(MessageContext, metadata));
+
+    public string GetMessagePrivStructSequenceReferenceName(ComplexTypeMetadata metadata) =>
+        MessageContext.GetMessageNestedTypeReferenceName(metadata, _resolvePrivSequenceName(MessageContext, metadata));
 }
 
 public abstract class MethodBuildContext
@@ -204,13 +275,22 @@ public abstract class MethodBuildContext
     public MethodBuildContext(MessageBuildContext messageContext,
         CSharpFreeType structType,
         string structFullyQualifiedName)
+        : this(messageContext.NativeLayout, structType, structFullyQualifiedName)
     {
-        MessageContext = messageContext;
+    }
+
+    internal MethodBuildContext(NativeLayoutBuildContext nativeLayoutContext,
+        CSharpFreeType structType,
+        string structFullyQualifiedName)
+    {
+        NativeLayoutContext = nativeLayoutContext;
         StructType = structType;
         StructFullyQualifiedName = structFullyQualifiedName;
     }
 
-    public MessageBuildContext MessageContext { get; }
+    internal NativeLayoutBuildContext NativeLayoutContext { get; }
+
+    public MessageBuildContext MessageContext => NativeLayoutContext.MessageContext;
 
     public CSharpFreeType StructType { get; }
 
@@ -222,9 +302,14 @@ public abstract class MethodBuildContext
 public class PrivStructMethodBuildContext : MethodBuildContext
 {
     public PrivStructMethodBuildContext(MessageBuildContext messageContext)
-        : base(messageContext,
-            new CSharpFreeType(messageContext.PrivStructName),
-            messageContext.PrivStructNameFullyQualified)
+        : this(messageContext.NativeLayout)
+    {
+    }
+
+    internal PrivStructMethodBuildContext(NativeLayoutBuildContext nativeLayoutContext)
+        : base(nativeLayoutContext,
+            new CSharpFreeType(nativeLayoutContext.PrivName),
+            nativeLayoutContext.PrivNameFullyQualified)
     {
     }
 }
@@ -232,9 +317,14 @@ public class PrivStructMethodBuildContext : MethodBuildContext
 public class SequenceStructMethodBuildContext : MethodBuildContext
 {
     public SequenceStructMethodBuildContext(MessageBuildContext messageContext)
-        : base(messageContext,
-            new CSharpFreeType(messageContext.PrivStructSequenceName),
-            messageContext.PrivStructSequenceNameFullyQualified)
+        : this(messageContext.NativeLayout)
+    {
+    }
+
+    internal SequenceStructMethodBuildContext(NativeLayoutBuildContext nativeLayoutContext)
+        : base(nativeLayoutContext,
+            new CSharpFreeType(nativeLayoutContext.PrivSequenceName),
+            nativeLayoutContext.PrivSequenceNameFullyQualified)
     {
     }
 }
