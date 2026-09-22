@@ -8,6 +8,9 @@ jobs:
   publish:
     name: Release on ${{ matrix.os }}
     environment: Release
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -50,7 +53,13 @@ jobs:
           dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ src/Rcl.NET
           dotnet pack -p:Version=${GITHUB_REF#refs/tags/v} -c Release --no-build -o bin/ src/ros2cs
       
-      - name: Publish NugGet Package
+      - name: NuGet login
+        id: nuget
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Publish NuGet Packages
         working-directory: bin
         run: |
-          dotnet nuget push *.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
+          dotnet nuget push *.nupkg --api-key "${{ steps.nuget.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate

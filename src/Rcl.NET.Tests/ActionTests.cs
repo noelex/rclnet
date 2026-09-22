@@ -50,6 +50,35 @@ public class ActionTests
     }
 
     [Fact]
+    public async Task AcceptNativeActionGoalWithoutExplicitTimeout()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+
+        var actionName = NameGenerator.GenerateActionName();
+
+        using var server = node.CreateActionServer<
+            LookupTransformAction,
+            LookupTransformActionGoal,
+            LookupTransformActionResult,
+            LookupTransformActionFeedback>(actionName, new TestHandler());
+
+        using var client = node.CreateActionClient<
+            LookupTransformAction,
+            LookupTransformActionGoal,
+            LookupTransformActionResult,
+            LookupTransformActionFeedback>(actionName);
+
+        await client.WaitForServerAsync(1000);
+        using var goalBuffer = RosMessageBuffer.Create<LookupTransformActionGoal>();
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var goal = await client.SendGoalAsync(goalBuffer, cts.Token);
+        var result = await goal.GetResultWithStatusAsync(1000);
+        Assert.True(result.IsSuccessful);
+        using var resultBuffer = result.Result;
+    }
+
+    [Fact]
     public async Task RejectActionGoal()
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
@@ -219,13 +248,14 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
+        await client.WaitForServerAsync(5000);
         using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), 1000);
         var feedbackTask = CountFeedbacks(goal.ReadFeedbacksAsync());
 
         var result = await goal.GetResultWithStatusAsync(10000);
         Assert.True(result.IsSuccessful);
 
-        var count = await feedbackTask;
+        var count = await feedbackTask.WaitAsync(TimeSpan.FromSeconds(10));
         Assert.Equal(5, count);
 
         static async Task<int> CountFeedbacks(IAsyncEnumerable<LookupTransformActionFeedback> items)

@@ -64,10 +64,8 @@ OPTIONS:
 
         This option is disabled by default.
 
-    -df,
-    --details-file
-        Generate a details file 'sources.g.inputs' and 'generated.g.outputs' containing paths
-        of all input packages and generated files.
+    --emit-msbuild-metadata
+        Generate MSBuild metadata for incremental interface generation.
         
         This option is disabled by default.
 

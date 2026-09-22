@@ -20,7 +20,7 @@
 
         <PropertyGroup>
             <Ros2csDir>$(MSBuildThisFileDirectory)\ros2cs\bin\$(Configuration)\$(Ros2csBundleTfm)\publish</Ros2csDir>
-            <Ros2csExe>&quot;$(Ros2csDir)\ros2cs.dll&quot;</Ros2csExe>
+            <Ros2csExe>$(Ros2csDir)\ros2cs.dll</Ros2csExe>
         </PropertyGroup>
 
         <Message Text="[$(MSBuildProjectName), Source Build] Using ros2cs from $(Ros2csExe)"/>

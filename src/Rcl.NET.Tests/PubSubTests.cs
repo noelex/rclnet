@@ -11,16 +11,16 @@ public class PubSubTests
     public async Task PubSubStronglyTypedMessages()
     {
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-        using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
-        using var node2 = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var topic = NameGenerator.GenerateTopicName();
-        using var pub = node1.CreatePublisher<Time>(topic);
-        using var sub = node2.CreateSubscription<Time>(topic);
+        using var pub = node.CreatePublisher<Time>(topic);
+        using var sub = node.CreateSubscription<Time>(topic);
 
         var task = ReadOneAsync(sub.ReadAllAsync());
+        await WaitForSubscribersAsync(pub);
         pub.Publish(new(sec: 1, nanosec: 2));
-        var result = await task;
+        var result = await task.WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.Equal(1, result.Sec);
         Assert.Equal(2u, result.Nanosec);
@@ -41,20 +41,20 @@ public class PubSubTests
     public async Task PubSubNativeMessages()
     {
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-        using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
-        using var node2 = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var topic = NameGenerator.GenerateTopicName();
-        using var pub = node1.CreatePublisher<Time>(topic);
-        using var sub = node2.CreateNativeSubscription<Time>(topic);
+        using var pub = node.CreatePublisher<Time>(topic);
+        using var sub = node.CreateNativeSubscription<Time>(topic);
 
         using var buffer = RosMessageBuffer.Create<Time>();
         buffer.AsRef<Time.Priv>().Sec = 1;
         buffer.AsRef<Time.Priv>().Nanosec = 2;
 
         var task = ReadOneAsync(sub.ReadAllAsync());
+        await WaitForSubscribersAsync(pub);
         pub.Publish(buffer);
-        var result = await task;
+        var result = await task.WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.Equal(1, result.Sec);
         Assert.Equal(2u, result.Nanosec);
@@ -75,8 +75,7 @@ public class PubSubTests
     public async Task ConcurrentCallsToReadAllAsync()
     {
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-        using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
-        using var node2 = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var topic = NameGenerator.GenerateTopicName();
 
@@ -85,14 +84,18 @@ public class PubSubTests
         var qos = new QosProfile(Reliability: ReliabilityPolicy.Reliable, Depth: 2000);
 
         Task<int[]> aggregateTask;
-        using var pub = node1.CreatePublisher<Time>(topic, new(qos: qos));
-        using (var sub = node2.CreateSubscription<Time>(topic, new(qos: qos, queueSize: 128)))
+        using var pub = node.CreatePublisher<Time>(topic, new(qos: qos));
+        using (var sub = node.CreateSubscription<Time>(topic, new(qos: qos, queueSize: 128)))
         {
             aggregateTask = Task.WhenAll(
                 CountAsync(sub.ReadAllAsync()),
                 CountAsync(sub.ReadAllAsync()),
                 CountAsync(sub.ReadAllAsync()),
                 CountAsync(sub.ReadAllAsync()));
+
+            // Reliable QoS does not replay samples published before endpoint matching completes.
+            // Wait for the subscription to match so this test only measures concurrent consumption.
+            await WaitForSubscribersAsync(pub);
 
             var msg = new Time(sec: 1, nanosec: 2);
             for (var i = 0; i < 100; i++)
@@ -102,9 +105,9 @@ public class PubSubTests
             }
         }
 
-        var results = await aggregateTask;
+        var results = await aggregateTask.WaitAsync(TimeSpan.FromSeconds(5));
 
-        Assert.Equal(100, results.Sum(), TestConfig.GitHubActions ? 1.0 : 0);
+        Assert.Equal(100, results.Sum());
 
         static async Task<int> CountAsync<T>(IAsyncEnumerable<T> subscription)
         {
@@ -125,18 +128,17 @@ public class PubSubTests
             "Incompatible QoS event is not supported by rmw_fastrtps_cpp on foxy.");
 
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-        using var node1 = ctx.CreateNode(NameGenerator.GenerateNodeName());
-        using var node2 = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var topic = NameGenerator.GenerateTopicName();
         TaskCompletionSource<QosPolicyKind> offeredQosIncompatible = new(), requestQosIncompatible = new();
 
         // Pub = BestEffort and Sub = Reliable is incompatible.
-        using var pub = node1.CreatePublisher<Time>(topic, new(
+        using var pub = node.CreatePublisher<Time>(topic, new(
             qos: new(Reliability: ReliabilityPolicy.BestEffort),
             offeredQosIncompatibleHandler: OnOfferedQosIncompatible));
 
-        using var sub = node2.CreateSubscription<Time>(topic, new(
+        using var sub = node.CreateSubscription<Time>(topic, new(
             qos: new(Reliability: ReliabilityPolicy.Reliable),
             requestedQosIncompatibleHandler: OnRequestedQosIncompatible));
 
@@ -168,18 +170,21 @@ public class PubSubTests
 
         var topic = NameGenerator.GenerateTopicName();
         using var pub = node.CreatePublisher<Time>(topic);
+        using var controlSub = node.CreateSubscription<Time>(topic);
 
         Task<bool> t;
         using (var sub = node.CreateSubscription<Time>(topic, new(ignoreLocalPublications: true)))
         {
-
             t = ReadOneAsync(sub.ReadAllAsync());
+            var controlTask = ReadOneAsync(controlSub.ReadAllAsync());
+            await WaitForSubscribersAsync(pub);
             pub.Publish(new Time());
 
+            Assert.True(await controlTask.WaitAsync(TimeSpan.FromSeconds(5)));
             await Task.Delay(100);
         }
 
-        var result = await t;
+        var result = await t.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.False(result);
 
         static async Task<bool> ReadOneAsync<T>(IAsyncEnumerable<T> subscription)
@@ -211,6 +216,7 @@ public class PubSubTests
             new(qos: qos, contentFilter: new("sec < 5"))))
         {
             t = CountMessagesAsync(sub.ReadAllAsync());
+            await WaitForSubscribersAsync(pub);
             for (var i = 0; i < 10; i++)
             {
                 pub.Publish(new Time { Sec = i });
@@ -252,6 +258,7 @@ public class PubSubTests
             new(qos: qos, contentFilter: new("sec > %0 AND sec < %1", "3", "7"))))
         {
             t = CountMessagesAsync(sub.ReadAllAsync());
+            await WaitForSubscribersAsync(pub);
             for (var i = 0; i < 10; i++)
             {
                 pub.Publish(new Time { Sec = i });
@@ -353,5 +360,16 @@ public class PubSubTests
         using var pub2 = node.CreatePublisher<Time>(topic, new(uniqueNetworkFlowEndpoints: UniquenessRequirement.StrictlyRequired));
 
         Assert.Empty(pub1.Endpoints.Intersect(pub2.Endpoints));
+    }
+
+    private static async Task WaitForSubscribersAsync(IRclPublisher publisher, int expected = 1)
+    {
+        for (var retry = 0; publisher.Subscribers < expected && retry < 500; retry++)
+        {
+            await Task.Delay(10);
+        }
+
+        Assert.True(publisher.Subscribers >= expected,
+            $"Expected at least {expected} matched subscription(s), but found {publisher.Subscribers}.");
     }
 }

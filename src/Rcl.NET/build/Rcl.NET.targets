@@ -1,14 +1,73 @@
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
 	<PropertyGroup>
+		<Ros2csOutputDir Condition="'$(Ros2csOutputDir)' == ''">Ros2csGeneratedInterfaces</Ros2csOutputDir>
+		<Ros2csTargetsFile>$(MSBuildThisFileFullPath)</Ros2csTargetsFile>
+		<Ros2csOutputPath Condition="'$(Ros2csOutputPath)' == '' and $([System.IO.Path]::IsPathRooted('$(Ros2csOutputDir)'))">$([System.IO.Path]::GetFullPath('$(Ros2csOutputDir)'))</Ros2csOutputPath>
+		<Ros2csOutputPath Condition="'$(Ros2csOutputPath)' == '' and $([System.IO.Path]::IsPathRooted('$(BaseIntermediateOutputPath)'))">$([System.IO.Path]::GetFullPath('$(BaseIntermediateOutputPath)$(Ros2csOutputDir)'))</Ros2csOutputPath>
+		<Ros2csOutputPath Condition="'$(Ros2csOutputPath)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)$(Ros2csOutputDir)'))</Ros2csOutputPath>
+		<Ros2csManifestPropsPath>$(Ros2csOutputPath)\ros2cs.inputs.props</Ros2csManifestPropsPath>
 		<GenerateInterfaces_ros2csDependsOn>
-			$(GenerateInterfaces_ros2csDependsOn);GetRos2csProps
+			$(GenerateInterfaces_ros2csDependsOn);GetRos2csProps;PrepareRos2csIncrementalInputs;GenerateInterfaces_ros2csCore
 		</GenerateInterfaces_ros2csDependsOn>
 	</PropertyGroup>
+	<Import Project="$(Ros2csManifestPropsPath)" Condition="Exists('$(Ros2csManifestPropsPath)')" />
 
-	<Target Name="GenerateInterfaces_ros2cs" BeforeTargets="DispatchToInnerBuilds;BeforeCompile;CoreCompile" 
-			DependsOnTargets="$(GenerateInterfaces_ros2csDependsOn)"
-			Inputs="$(Ros2csSpecFile)" Outputs="$(BaseIntermediateOutputPath)$(Ros2csOutputDir)\ros2cs.spec.cache">
+	<Target Name="PrepareRos2csIncrementalInputs" Condition="'$(Ros2csSpecFile)' != ''">
+		<PropertyGroup>
+			<Ros2csDetailsInputsFile>$(Ros2csOutputPath)\sources.g.inputs</Ros2csDetailsInputsFile>
+			<Ros2csDetailsGlobsFile>$(Ros2csOutputPath)\sources.g.globs</Ros2csDetailsGlobsFile>
+			<Ros2csDetailsPropsFile>$(Ros2csOutputPath)\ros2cs.inputs.props</Ros2csDetailsPropsFile>
+			<Ros2csDetailsOutputsFile>$(Ros2csOutputPath)\sources.g.outputs</Ros2csDetailsOutputsFile>
+			<Ros2csIncrementalStateFile>$(Ros2csOutputPath)\ros2cs.state</Ros2csIncrementalStateFile>
+			<Ros2csGlobsStateFile>$(Ros2csOutputPath)\ros2cs.globs.state</Ros2csGlobsStateFile>
+			<Ros2csStampFile>$(Ros2csOutputPath)\ros2cs.spec.cache</Ros2csStampFile>
+			<Ros2csToolDirectory>$([System.IO.Path]::GetDirectoryName('$(Ros2csExe)'))</Ros2csToolDirectory>
+			<Ros2csIncrementalState>Spec=$(Ros2csSpecFile)&#xA;Arguments=$(Ros2csArgs)&#xA;AmentPrefixPath=$(AMENT_PREFIX_PATH)&#xA;Executable=$(Ros2csExe)</Ros2csIncrementalState>
+		</PropertyGroup>
+
+		<MakeDir Directories="$(Ros2csOutputPath)" />
+		<WriteLinesToFile File="$(Ros2csIncrementalStateFile)"
+					  Lines="$(Ros2csIncrementalState)"
+					  Overwrite="true"
+					  WriteOnlyWhenDifferent="true" />
+
+		<ItemGroup>
+			<_Ros2csTrackedInput Remove="@(_Ros2csTrackedInput)" />
+			<_Ros2csTrackedOutput Remove="@(_Ros2csTrackedOutput)" />
+			<_Ros2csGlobbedInput Remove="@(_Ros2csGlobbedInput)" />
+			<_Ros2csToolFile Remove="@(_Ros2csToolFile)" />
+			<_Ros2csGlobbedInput Include="@(Ros2csManifestGlob)" />
+		</ItemGroup>
+
+		<ReadLinesFromFile File="$(Ros2csDetailsInputsFile)" Condition="Exists('$(Ros2csDetailsInputsFile)')">
+			<Output TaskParameter="Lines" ItemName="_Ros2csTrackedInput" />
+		</ReadLinesFromFile>
+		<ReadLinesFromFile File="$(Ros2csDetailsOutputsFile)" Condition="Exists('$(Ros2csDetailsOutputsFile)')">
+			<Output TaskParameter="Lines" ItemName="_Ros2csTrackedOutput" />
+		</ReadLinesFromFile>
+
+		<WriteLinesToFile File="$(Ros2csGlobsStateFile)"
+					  Lines="@(_Ros2csGlobbedInput->'%(FullPath)')"
+					  Overwrite="true"
+					  WriteOnlyWhenDifferent="true" />
+
+		<ItemGroup>
+			<Ros2csIncrementalInput Remove="@(Ros2csIncrementalInput)" />
+			<Ros2csIncrementalOutput Remove="@(Ros2csIncrementalOutput)" />
+			<_Ros2csToolFile Include="$(Ros2csToolDirectory)\*.dll;$(Ros2csToolDirectory)\*.deps.json;$(Ros2csToolDirectory)\*.runtimeconfig.json" />
+			<Ros2csIncrementalInput Include="$(Ros2csSpecFile);$(Ros2csIncrementalStateFile);$(Ros2csGlobsStateFile);$(Ros2csTargetsFile);$(MSBuildThisFileDirectory)Rcl.NET.props;$(Ros2csDetailsInputsFile);$(Ros2csDetailsGlobsFile);$(Ros2csDetailsPropsFile);$(Ros2csDetailsOutputsFile)" />
+			<Ros2csIncrementalInput Include="@(_Ros2csToolFile);@(_Ros2csTrackedInput);@(_Ros2csGlobbedInput);@(_Ros2csTrackedOutput)" />
+			<Ros2csIncrementalOutput Include="$(Ros2csStampFile)" />
+		</ItemGroup>
+	</Target>
+
+	<Target Name="GenerateInterfaces_ros2cs" BeforeTargets="DispatchToInnerBuilds;BeforeCompile;CoreCompile"
+			DependsOnTargets="$(GenerateInterfaces_ros2csDependsOn)" />
+
+	<Target Name="GenerateInterfaces_ros2csCore"
+			Inputs="@(Ros2csIncrementalInput)" Outputs="@(Ros2csIncrementalOutput)"
+			Condition="'$(Ros2csSpecFile)' != ''">
 
 		<Message Text="Ros2csSpec: $(Ros2csSpecFile)"/>
 
@@ -24,14 +83,15 @@
 		<Error Condition="'$(Ros2csSpecFile)' != '' and '$(Ros2csExitCode)' != '0'"
 			   Text="'$(Ros2csCommand)' failed with exit code $(Ros2csExitCode):&#x0A;@(Ros2csOutput->'%(Identity)', '&#x0A;')" />
 
-		<Copy SourceFiles="$(Ros2csSpecFile)" 
-			  DestinationFiles="$(BaseIntermediateOutputPath)$(Ros2csOutputDir)\ros2cs.spec.cache" 
-			  SkipUnchangedFiles="true" 
+		<Copy SourceFiles="$(Ros2csSpecFile)"
+			  DestinationFiles="$(Ros2csStampFile)"
+			  SkipUnchangedFiles="true"
 			  Condition="'$(Ros2csSpecFile)' != ''"/>
+		<Touch Files="$(Ros2csStampFile)" AlwaysCreate="true" Condition="'$(Ros2csSpecFile)' != ''" />
 		
 		<ItemGroup>
 			<Compile Remove="@(Ros2csGenFiles)" />
-			<Compile Include="$(BaseIntermediateOutputPath)$(Ros2csOutputDir)\**\*.g.cs"/>
+			<Compile Include="$(Ros2csOutputPath)\**\*.g.cs"/>
 		</ItemGroup>
 	</Target>
 
@@ -44,7 +104,7 @@
 
 	<Target Name="CleanGenerated_ros2cs" BeforeTargets="CoreClean" DependsOnTargets="$(CleanGenerated_ros2csDependsOn)"
 			Condition="'$(TargetFrameworks)' == '' OR '$(TargetFramework)' == $(TargetFrameworks.Split(';')[0])">
-		<RemoveDir Directories="$(BaseIntermediateOutputPath)$(Ros2csOutputDir)" ContinueOnError="true" />
+		<RemoveDir Directories="$(Ros2csOutputPath)" ContinueOnError="true" />
 	</Target>
 
 
@@ -53,7 +113,7 @@
 			<DefaultRos2csSpecFile>$(MSBuildProjectDirectory)\ros2cs.spec</DefaultRos2csSpecFile>
 			<Ros2csSpecFile Condition="$(Ros2csSpecFile) == '' and Exists('$(DefaultRos2csSpecFile)')">$(DefaultRos2csSpecFile)</Ros2csSpecFile>
 
-			<Ros2csCommand>dotnet $(Ros2csExe.Trim()) $(Ros2csArgs.Trim()) -o &quot;$(BaseIntermediateOutputPath)$(Ros2csOutputDir.Trim())&quot; &quot;$(Ros2csSpecFile.Trim())&quot;</Ros2csCommand>
+			<Ros2csCommand>dotnet &quot;$(Ros2csExe.Trim())&quot; --emit-msbuild-metadata $(Ros2csArgs.Trim()) -o &quot;$(Ros2csOutputPath)&quot; &quot;$(Ros2csSpecFile.Trim())&quot;</Ros2csCommand>
 		</PropertyGroup>
 	</Target>
 
