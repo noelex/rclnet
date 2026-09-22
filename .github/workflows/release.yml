@@ -39,13 +39,8 @@ jobs:
       - name: Build
         run: |
           dotnet nuget locals all --clear
-          dotnet restore templates
           dotnet build -p:Version=${GITHUB_REF#refs/tags/v} -c Release src/rclnet.sln
           dotnet build -p:Version=${GITHUB_REF#refs/tags/v} -c Release src/ros2cs.sln
-
-      - name: Update Template Package Reference
-        working-directory: templates/templates
-        run: sed -i -E "s/(Version=\").+(\")/\1${GITHUB_REF#refs/tags/v}\2/" ros2-msg/Company.MessageLibrary1.csproj ros2-node/Company.Node1.csproj
 
       - name: Pack
         run: |
