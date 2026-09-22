@@ -64,167 +64,483 @@ Supported Operating Systems:
 Should also work on macOS but untested.
 
 ## Installing
-Stable releases of rclnet are hosted on NuGet. You can install them using the following command:
-```
+
+Install rclnet from NuGet:
+
+```bash
 dotnet add package Rcl.NET
 ```
 
-## Generating Messages
+rclnet uses the native ROS 2 runtime installed on the target machine. The NuGet package contains the managed .NET libraries, but does not bundle ROS 2 itself.
 
-### Preparation
-rclnet does not ship with message definitions. In order to communicate with other ROS 2 nodes,
-you need to generate messages first.
+## Quick Start
 
-Message definitions are .NET classes / structs, you can either include messages in a console app
-which runs as an ROS 2 node, or compile separately in another library.
+### Project setup
 
-Projects containing messages will have to meet the following requirements:
-- `Rcl.NET` (or `Rosidl.Runtime` if you are not using automated codegen) NuGet package is installed.
-- `AllowUnsafeBlocks` is set to `true`. This can be done by adding the following lines to the `.csproj` file:
-    ```xml
-    <PropertyGroup>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-    ```
-- Runtime marshalling for the assembly is disabled. You can add the following line to somewhere in the source code of the project:
-    ```csharp
-    [assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]
-    ```
+Generated ROS interface types use unsafe native interop. Enable unsafe code in your project:
 
-To generate messages, you also need to add a `ros2cs.spec` file to somewhere in the project (usually the project root).
-A `ros2cs.spec` file contains configurations such as output directory and where to find packages,
-see [here](https://github.com/noelex/rclnet/blob/main/src/ros2cs/ros2cs.spec) for detailed explanations.
-
-### Generating messages using automated codegen
-Now simply build the project and message definitions should appear in a directory named `Ros2csGeneratedInterfaces`.
-
-The path to the spec file and output directory can also be customized using `Ros2csSpecFile` and `Ros2csOutputDir` MSBuild property, e.g.:
 ```xml
 <PropertyGroup>
-  <Ros2csSpecFile>path/to/spec/file</Ros2csSpecFile>
-  <Ros2csOutputDir>MyInterfaces</Ros2csOutputDir>
+  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 </PropertyGroup>
 ```
 
-Please note that when using automated codegen, there's no need to specify `output` directive in the spec file as it's automatically determined during build.
+Create an `AssemblyInfo.cs` file in the project and add:
 
-### Generating messages using `ros2cs` tool
-First install `ros2cs` tool using NuGet package manager:
-```
-dotnet tool install -g ros2cs
+```csharp
+[assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]
 ```
 
-Now you should be able to generate messages for the spec file:
+Create a `ros2cs.spec` file in the project directory and select the ROS interface packages used by the examples below:
+
+```text
+from-ament-index
+
+include geometry_msgs
+include sensor_msgs
+include std_srvs
+include example_interfaces
 ```
-ros2cs /path/to/ros2cs.spec
+
+`ros2cs` runs automatically during build and generates the corresponding C# message, service and action types.
+
+When using `from-ament-index`, build from a configured ROS 2 environment.
+
+Linux:
+
+```bash
+source /opt/ros/lyrical/setup.bash
+dotnet build
 ```
 
-`ros2cs` tool also supports overriding directives defined in the spec file. You can run `ros2cs --help` for more details.
+Windows:
 
-### ROSIDL ABI modes
+```bat
+call C:\dev\ros2_lyrical\ros2-windows\setup.bat
+dotnet build
+```
 
-Message generation uses portable ABI mode by default. Portable output contains both native layouts so the same
-assembly can run on ROS 2 Foxy through Lyrical. You can select a mode explicitly in `ros2cs.spec`:
+Replace the ROS distribution and installation path with those installed on your machine.
+
+### Create a node
+
+```csharp
+await using var context = new RclContext(args);
+using var node = context.CreateNode("my_node");
+```
+
+Publishers, subscriptions, services and actions are created from the node.
+
+### Publish and subscribe
+
+Create a publisher:
+
+```csharp
+using var publisher =
+    node.CreatePublisher<Vector3>("/vector");
+
+publisher.Publish(new Vector3(
+    x: 1,
+    y: 2,
+    z: 3));
+```
+
+Create a subscription:
+
+```csharp
+using var subscription =
+    node.CreateSubscription<Vector3>("/vector");
+
+await foreach (var message in subscription.ReadAllAsync())
+{
+    Console.WriteLine(
+        $"{message.X}, {message.Y}, {message.Z}");
+}
+```
+
+`ReadAllAsync` returns an `IAsyncEnumerable<T>`, so normal .NET asynchronous code can be used directly:
+
+```csharp
+await foreach (var message in subscription.ReadAllAsync(cancellationToken))
+{
+    await ProcessMessageAsync(message, cancellationToken);
+}
+```
+
+### QoS
+
+QoS can be configured through `PublisherOptions` and `SubscriptionOptions`.
+
+For example, sensor topics commonly use `QosProfile.SensorData`:
+
+```csharp
+using var subscription = node.CreateSubscription<LaserScan>(
+    "/scan",
+    new SubscriptionOptions(
+        qos: QosProfile.SensorData));
+```
+
+Publisher and subscription QoS settings must be compatible for the endpoints to communicate.
+
+### Services
+
+Create a service:
+
+```csharp
+using var server = node.CreateService<
+    EmptyService,
+    EmptyServiceRequest,
+    EmptyServiceResponse>(
+        "/reset",
+        (request, state) =>
+        {
+            ResetSomething();
+            return new EmptyServiceResponse();
+        });
+```
+
+Call a service:
+
+```csharp
+using var client = node.CreateClient<
+    EmptyService,
+    EmptyServiceRequest,
+    EmptyServiceResponse>("/reset");
+
+await client.WaitForServerAsync();
+
+var response = await client.InvokeAsync(
+    new EmptyServiceRequest());
+```
+
+### Actions
+
+Create an action client:
+
+```csharp
+using var client = node.CreateActionClient<
+    FibonacciAction,
+    FibonacciActionGoal,
+    FibonacciActionResult,
+    FibonacciActionFeedback>("/fibonacci");
+
+await client.WaitForServerAsync();
+```
+
+Send a goal:
+
+```csharp
+using var goal = await client.SendGoalAsync(
+    new FibonacciActionGoal(order: 10));
+```
+
+Read feedback:
+
+```csharp
+await foreach (var feedback in goal.ReadFeedbacksAsync())
+{
+    Console.WriteLine(
+        string.Join(", ", feedback.PartialSequence));
+}
+```
+
+Wait for the result:
+
+```csharp
+var result = await goal.GetResultAsync();
+
+Console.WriteLine(
+    string.Join(", ", result.Sequence));
+```
+
+Action servers can be created with `CreateActionServer`.
+
+### ROS graph
+
+The discovered ROS graph is available through `node.Graph`.
+
+For example, wait for a service:
+
+```csharp
+await node.Graph.WaitForServiceServerAsync("/my/service");
+```
+
+Or observe graph changes:
+
+```csharp
+node.Graph
+    .OfType<NodeAppearedEvent>()
+    .Subscribe(e =>
+    {
+        Console.WriteLine(
+            $"Node {e.Node.Name} is online.");
+    });
+```
+
+## Running and Debugging
+
+rclnet loads ROS 2 native libraries at runtime, so the application must inherit a configured ROS environment.
+
+### Command line
+
+Linux:
+
+```bash
+source /opt/ros/lyrical/setup.bash
+dotnet run
+```
+
+Windows:
+
+```bat
+call C:\dev\ros2_lyrical\ros2-windows\setup.bat
+dotnet run
+```
+
+Optional ROS settings can be configured in the same shell:
+
+```bat
+set ROS_DOMAIN_ID=10
+set RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+dotnet run
+```
+
+Simply setting `ROS_DISTRO` is not sufficient. The ROS setup script also configures native library search paths and other runtime settings.
+
+### Visual Studio
+
+Visual Studio inherits its environment when it starts.
+
+If Visual Studio is launched normally, debugging an rclnet application may fail with `DllNotFoundException` or errors about loading `rcl`, an RMW implementation, or a type support library.
+
+Start Visual Studio from a configured ROS shell instead:
+
+```bat
+call C:\dev\ros2_lyrical\ros2-windows\setup.bat
+devenv MySolution.sln
+```
+
+Applications launched with F5 will then inherit the ROS environment.
+
+If Visual Studio was already running, close it and restart it from the configured shell.
+
+### VS Code
+
+The same applies to VS Code.
+
+Linux:
+
+```bash
+source /opt/ros/lyrical/setup.bash
+code .
+```
+
+Windows:
+
+```bat
+call C:\dev\ros2_lyrical\ros2-windows\setup.bat
+code .
+```
+
+## ROS Interface Code Generation
+
+`ros2cs` converts ROS `.msg`, `.srv` and `.action` definitions into C# types.
+
+A `ros2cs.spec` file in the project directory is detected automatically by the `Rcl.NET` MSBuild integration.
+
+### Using an installed ROS environment
+
+The simplest configuration is:
+
+```text
+from-ament-index
+
+include geometry_msgs
+include sensor_msgs
+include std_srvs
+```
+
+`from-ament-index` searches interface packages available through the current `AMENT_PREFIX_PATH`.
+
+Package dependencies are resolved automatically, so dependencies such as `builtin_interfaces` usually do not need to be listed explicitly.
+
+Without any `include` directive, all discovered interface packages are generated.
+
+### Loading packages from directories
+
+Interface packages can also be loaded directly:
+
+```text
+from-directory ./ros-packages
+
+include geometry_msgs
+include my_robot_msgs
+```
+
+The specified directory should contain normal ROS packages:
+
+```text
+ros-packages/
+├── geometry_msgs/
+│   ├── package.xml
+│   └── msg/
+└── my_robot_msgs/
+    ├── package.xml
+    ├── msg/
+    ├── srv/
+    └── action/
+```
+
+This allows C# bindings to be generated without a ROS installation on the build machine.
+
+It does not replace native ROS type support. At runtime, the corresponding ROS interface packages must still be built and installed in the ROS environment.
+
+`from-directory` is mainly useful for CI, reproducible builds and shared message assemblies.
+
+It can also be combined with `from-ament-index`:
+
+```text
+from-ament-index
+from-directory ./my-ros-packages
+
+include geometry_msgs
+include my_robot_msgs
+```
+
+### MSBuild integration
+
+Generated sources are written to the intermediate output directory, normally:
+
+```text
+obj/Ros2csGeneratedInterfaces/
+```
+
+and are included in the compilation automatically.
+
+Changes to relevant interface files or `package.xml` files trigger regeneration on the next build.
+
+A different spec file can be selected with:
+
+```xml
+<PropertyGroup>
+  <Ros2csSpecFile>path/to/ros2cs.spec</Ros2csSpecFile>
+</PropertyGroup>
+```
+
+Additional command-line arguments can be passed with:
+
+```xml
+<PropertyGroup>
+  <Ros2csArgs>--abi=v1</Ros2csArgs>
+</PropertyGroup>
+```
+
+Command-line options override values specified in `ros2cs.spec`.
+
+### ROSIDL native ABI
+
+`ros2cs` uses portable ABI mode by default:
 
 ```text
 abi portable
 ```
 
-Use `abi v1` for an assembly tied to Foxy through Kilted, or `abi v2` for an assembly tied to Lyrical. In portable
-output, `Priv` and `PrivSequence` always represent the V1 layout, while `PrivV2` and `PrivSequenceV2` represent the
-Lyrical layout. High-level message APIs select the correct layout automatically. Raw APIs such as
-`RosMessageBuffer.AsRef<T>()` do not validate or change the structure type chosen by the caller.
+Currently supported layouts are:
 
-Lyrical `rosidl::Buffer`-backed sequences are not currently supported. Ordinary contiguous CPU sequences remain
-supported.
+```text
+v1    ROS 2 Foxy through Kilted
+v2    ROS 2 Lyrical
+```
 
-## API Usage Showcase
-### Subscribing
+Portable mode generates both layouts and automatically selects the correct one when using the normal managed APIs.
+
+If an application only targets one ABI, generation can be restricted to:
+
+```text
+abi v1
+```
+
+or:
+
+```text
+abi v2
+```
+
+Portable output exposes:
+
+```text
+Priv / PrivSequence        ABI V1
+PrivV2 / PrivSequenceV2    ABI V2
+```
+
+These types only matter when using the low-level native message APIs.
+
+Lyrical `rosidl::Buffer`-backed non-CPU sequences are not currently supported.
+
+### Standalone ros2cs
+
+`ros2cs` can also be installed as a standalone .NET tool:
+
+```bash
+dotnet tool install -g ros2cs
+```
+
+Generate interfaces with:
+
+```bash
+ros2cs /path/to/ros2cs.spec
+```
+
+Run:
+
+```bash
+ros2cs --help
+```
+
+for the complete list of options.
+
+## Native Message Buffers
+
+The normal rclnet APIs convert ROS messages into managed .NET objects and should be preferred for most application code.
+
+For performance-sensitive paths, native message buffers can be consumed directly:
+
 ```csharp
-await using var ctx = new RclContext(args);
-using var node = ctx.CreateNode("hello_world");
-using var sub = node.CreateSubscription<Twist>("/cmd_vel");
-await foreach (Twist msg in sub.ReadAllAsync())
+using var subscription =
+    node.CreateNativeSubscription<Twist>("/cmd_vel");
+
+await foreach (RosMessageBuffer buffer in subscription.ReadAllAsync())
 {
-    ...
-}
-```
-### Publishing
-```csharp
-using var pub = node.CreatePublisher<Vector3>("/vec");
-pub.Publish(new Vector3(x: 1, y: 2, z: 3));
-```
-### Handling Service Calls
-```csharp
-using var server = node.CreateService<
-    EmptyService,
-    EmptyServiceRequest,
-    EmptyServiceResponse>("/vec",
-        (request, state) =>
-        {
-            return new EmptyServiceResponse();
-        });
-await Task.Delay(-1);
-```
-### Calling Services
-```csharp
-using var client = node.CreateClient<
-    EmptyService,
-    EmptyServiceRequest,
-    EmptyServiceResponse>("/vec");
-await client.InvokeAsync(new EmptyServiceRequest());
-``` 
-### Monitoring ROS Graph Changes
-```csharp
-node.Graph
-    .OfType<NodeAppearedEvent>()
-    .Subscribe(x =>
+    using (buffer)
     {
-        Console.WriteLine($"Node {x.Node.Name} is online.");
-    });
-
-await node.Graph.WaitForServiceServerAsync("/my/service");
-```
-### Calling Action Servers
-```csharp
-using var client = node.CreateActionClient<
-    SpinAction,
-    SpinActionGoal,
-    SpinActionResult,
-    SpinActionFeedback>("/spin");
-
-using var goal = await client.SendGoalAsync(
-        new SpinActionGoal(targetYaw: Math.PI));
-
-await foreach (var feedback in goal.ReadFeedbacksAsync())
-{
-    Console.WriteLine(feedback.AngularDistanceTraveled);
-}
-
-var result = await goal.GetResultAsync();
-```
-### Zero (Managed Heap) Allocation APIs
-```csharp
-using var sub = node.CreateNativeSubscription<Twist>("/cmd_vel");
-await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
-{
-    using (msg) ProcessMessage(msg);
-
-    static void ProcessMessage(RosMessageBuffer buffer)
-    {
-        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
-        {
-            ref var twist = ref buffer.AsRef<Twist.Priv>();
-            ...
-        }
-        else
-        {
-            ref var twist = ref buffer.AsRef<Twist.PrivV2>();
-            ...
-        }
+        ProcessMessage(buffer);
     }
 }
 ```
+
+When using portable message bindings, select the native structure matching the active ROSIDL ABI:
+
+```csharp
+static void ProcessMessage(RosMessageBuffer buffer)
+{
+    if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+    {
+        ref var message =
+            ref buffer.AsRef<Twist.Priv>();
+
+        Console.WriteLine(message.Linear.X);
+    }
+    else
+    {
+        ref var message =
+            ref buffer.AsRef<Twist.PrivV2>();
+
+        Console.WriteLine(message.Linear.X);
+    }
+}
+```
+
+Raw `AsRef<T>()` access does not perform ABI conversion or validation.
 
 ## Asynchronous Execution Model
 Unlike rclcpp and rclpy, rclnet doesn't have the concept of executors. Each `RclContext` runs its
