@@ -43,6 +43,10 @@ static class MessageIntrospection
         {
             return new JazzyMessageIntrospection(typesupport);
         }
+        else if (RosEnvironment.IsLyrical)
+        {
+            return new LyricalMessageIntrospection(typesupport);
+        }
         else
         {
             throw new NotSupportedException();
@@ -65,6 +69,10 @@ static class MessageIntrospection
         else if (RosEnvironment.IsJazzy || RosEnvironment.IsKilted)
         {
             return new JazzyMessageIntrospection((MessageMembers_Jazzy*)messageMembers);
+        }
+        else if (RosEnvironment.IsLyrical)
+        {
+            return new LyricalMessageIntrospection((MessageMembers_Jazzy*)messageMembers);
         }
         else
         {
