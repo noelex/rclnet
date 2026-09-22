@@ -1,8 +1,6 @@
 ﻿using CppAst.CodeGen.Common;
 using CppAst.CodeGen.CSharp;
-using LibGit2Sharp;
 using Rosidl.Generator.CSharp.Builders;
-using System.Text;
 using System.Xml.Linq;
 using Zio;
 using Zio.FileSystems;
@@ -14,7 +12,7 @@ record Message(string Package, string SubFolder, string Name, string Path, strin
     public ComplexTypeMetadata? Metadata { get; internal set; }
 }
 
-record Package(string Name, Message[] Messages);
+record Package(string Name, string Root, Message[] Messages);
 
 class ParseSpec
 {
@@ -182,8 +180,8 @@ public class CSharpCodeGenerator
             var opts = CommandlineOptionParser.Parse(args);
             var spec = new ParseSpec(opts);
             var baseDir = spec.SpecFile != null ? Path.GetDirectoryName(Path.GetFullPath(spec.SpecFile))! : Environment.CurrentDirectory;
-            return Generate(spec, baseDir, 
-                string.Equals(opts.FirstOrDefault(o => string.Equals(o.Name, "details-file", StringComparison.OrdinalIgnoreCase))?.Value
+            return Generate(spec, baseDir,
+                string.Equals(opts.FirstOrDefault(o => string.Equals(o.Name, "emit-msbuild-metadata", StringComparison.OrdinalIgnoreCase))?.Value
                         ?? "no", "yes", StringComparison.OrdinalIgnoreCase));
         }
         catch (Exception ex)
@@ -200,7 +198,7 @@ public class CSharpCodeGenerator
         Generate(spec, baseDir);
     }
 
-    private static int Generate(ParseSpec spec, string baseDir, bool detailed = false)
+    private static int Generate(ParseSpec spec, string baseDir, bool emitMsbuildMetadata = false)
     {
         var packages = new Dictionary<string, Package>();
         var outputDir = spec.OutputDirectory ?? baseDir;
@@ -219,43 +217,49 @@ public class CSharpCodeGenerator
         opts.ResolvePackageName =
             x => spec.PackageMapping.TryGetValue(x, out var ns) ? ns : originalMapper(x);
 
-        IEnumerable<string> pkgs = [];
+        var sourceRoots = spec.SourceDirectories
+            .Select(p => !Path.IsPathRooted(p) ? Path.GetFullPath(Path.Combine(baseDir, p)) : p)
+            .ToList();
+
+        var amentRoots = new List<string>();
         if (spec.UseAmentIndex)
         {
             var amentPrefixes = Environment.GetEnvironmentVariable("AMENT_PREFIX_PATH")?
                                            .Split([Path.PathSeparator], StringSplitOptions.RemoveEmptyEntries);
             if (amentPrefixes?.Length > 0)
             {
-                pkgs = amentPrefixes
-                    .SelectMany(p =>
-                    {
-                        var shrPath = Path.Combine(p, "share");
-                        Console.WriteLine("Searching in directory: " + shrPath);
-                        return Directory.GetDirectories(shrPath);
-                    });
+                amentRoots.AddRange(amentPrefixes.Select(p => Path.Combine(p, "share")));
             }
         }
 
-        var rawPkgs = spec.SourceDirectories
-            .Select(p => !Path.IsPathRooted(p) ? Path.GetFullPath(Path.Combine(baseDir, p)) : p)
-            .SelectMany(p =>
-            {
-                Console.WriteLine("Searching in directory: " + p);
-                return Directory.GetDirectories(p);
-            })
-            .Reverse() // Reverse so latest found from SourceDirectories takes precedence
-            .Union(pkgs).Where(ValidPkgDir)
+        var sourcePackageDirectories = sourceRoots
+            .SelectMany(EnumeratePackageDirectories)
+            .Reverse(); // Reverse so latest found from SourceDirectories takes precedence
+        var amentPackageDirectories = amentRoots.SelectMany(EnumeratePackageDirectories);
+        var candidatePackageDirectories = sourcePackageDirectories
+            .Union(amentPackageDirectories)
+            .ToArray();
+        var includeAllPackages = spec.Includes.Count == 0;
+
+        var rawPkgs = candidatePackageDirectories
+            .Where(ValidPkgDir)
             .Select(p => (Path.GetFileName(p), p))
             .GroupBy(p => p.Item1).Select(g => g.First()) // Only use the latest found package
             .ToDictionary(x => x.Item1, x => x.p);
 
-        if (spec.Includes.Count == 0) spec.Includes.AddRange(rawPkgs.Select(p => p.Key));
+        if (includeAllPackages) spec.Includes.AddRange(rawPkgs.Select(p => p.Key));
 
         var inclPkgs = rawPkgs.Where(x => spec.Includes.Contains(x.Key))
                                       .Select(x => (x.Key, TryLoadPackage(x.Value, out var p) ? p : null))
                                       .Where(x => x.Item2 is not null)
                                       .ToDictionary(x => x.Key, x => x.Item2!);
-        
+
+        IEnumerable<string> EnumeratePackageDirectories(string path)
+        {
+            Console.WriteLine("Searching in directory: " + path);
+            return Directory.GetDirectories(path);
+        }
+
         var resolved = new List<string>();
         var unresolved = new List<string>();
         while (true)
@@ -296,15 +300,18 @@ public class CSharpCodeGenerator
             return 1;
         }
 
-        if (detailed)
-        {
-            Directory.CreateDirectory(outputDir);
-            var inputsF = string.Join(Environment.NewLine, 
-                packages.Values.SelectMany(p => p.Messages.Select(m => m.Path)));
-            File.WriteAllText(Path.Combine(outputDir, "sources.g.inputs"), inputsF);
-        }
+        var inputsFile = Path.Combine(outputDir, "sources.g.inputs");
+        var globsFile = Path.Combine(outputDir, "sources.g.globs");
+        var globsPropsFile = Path.Combine(outputDir, "ros2cs.inputs.props");
+        var globsStateFile = Path.Combine(outputDir, "ros2cs.globs.state");
+        var outputsFile = Path.Combine(outputDir, "sources.g.outputs");
+        var previousOutputs = emitMsbuildMetadata && File.Exists(outputsFile)
+            ? File.ReadAllLines(outputsFile)
+            : [];
+        var generatedOutputs = new List<string>();
 
-        var outputsF = new StringBuilder();
+        if (emitMsbuildMetadata) Directory.CreateDirectory(outputDir);
+
         var parser = new MsgParser();
         using var fs = new MemoryFileSystem();
         foreach (var cand in packages.Values)
@@ -356,8 +363,7 @@ public class CSharpCodeGenerator
                 var validVer = string.IsNullOrWhiteSpace(metadata.Version) ? null : $" (v{metadata.Version})";
                 Console.WriteLine($"Converting {msg.Path}{validVer} to {genpath}");
 
-                if (detailed)
-                    outputsF.AppendLine(genpath);
+                if (emitMsbuildMetadata) generatedOutputs.Add(genpath);
 
                 var filePath = "/" + file.FilePath;
                 try
@@ -381,9 +387,65 @@ public class CSharpCodeGenerator
                 }
             }
         }
-        
-        if (detailed)
-            File.WriteAllText(Path.Combine(outputDir, "sources.g.outputs"), outputsF.ToString());
+
+        if (emitMsbuildMetadata)
+        {
+            var pathComparer = OperatingSystem.IsWindows()
+                ? StringComparer.OrdinalIgnoreCase
+                : StringComparer.Ordinal;
+            var relevantPackageNames = spec.Includes
+                .Union(packages.Keys)
+                .Union(missingPackages)
+                .ToHashSet(StringComparer.Ordinal);
+            var trackedPackageDirectories = includeAllPackages
+                ? candidatePackageDirectories
+                : candidatePackageDirectories.Where(p => relevantPackageNames.Contains(Path.GetFileName(p)));
+            var trackedPackageDirectoryArray = trackedPackageDirectories.ToArray();
+            var trackedInputs = trackedPackageDirectoryArray
+                .Select(p => Path.Combine(p, "package.xml"))
+                .Where(File.Exists)
+                .Concat(packages.Values.SelectMany(p => p.Messages.Select(m => m.Path)))
+                .Select(Path.GetFullPath)
+                .Distinct(pathComparer)
+                .Order(pathComparer)
+                .ToArray();
+            var searchRoots = sourceRoots.Concat(amentRoots).ToArray();
+            var packageDiscoveryGlobs = searchRoots.Select(p => Path.Combine(p, "*", "package.xml"));
+            var interfaceGlobs = trackedPackageDirectoryArray.SelectMany(p =>
+                new[] { "msg", "srv", "action" }.SelectMany(d =>
+                    new[] { "*.msg", "*.srv", "*.action" }.Select(f => Path.Combine(p, d, f))));
+            var trackedGlobs = packageDiscoveryGlobs
+                .Concat(interfaceGlobs)
+                .Select(Path.GetFullPath)
+                .Distinct(pathComparer)
+                .Order(pathComparer)
+                .ToArray();
+            var globbedInputs = trackedGlobs
+                .SelectMany(glob => ExpandGlob(glob, pathComparer))
+                .ToArray();
+            var currentOutputs = generatedOutputs
+                .Select(Path.GetFullPath)
+                .Distinct(pathComparer)
+                .Order(pathComparer)
+                .ToArray();
+
+            foreach (var staleOutput in previousOutputs.Except(currentOutputs, pathComparer))
+            {
+                if (staleOutput.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase)
+                    && IsPathWithinDirectory(outputDir, staleOutput)
+                    && File.Exists(staleOutput))
+                {
+                    Console.WriteLine("Removing stale generated file: " + staleOutput);
+                    File.Delete(staleOutput);
+                }
+            }
+
+            WriteAllLinesIfChanged(inputsFile, trackedInputs);
+            WriteAllLinesIfChanged(globsFile, trackedGlobs);
+            WriteGlobsPropsIfChanged(globsPropsFile, trackedGlobs);
+            WriteAllLinesIfChanged(globsStateFile, globbedInputs);
+            WriteAllLinesIfChanged(outputsFile, currentOutputs);
+        }
 
         PrintStats(false);
         return 0;
@@ -447,13 +509,7 @@ public class CSharpCodeGenerator
         }
 
         var pkgver = pkgXml.Element("version")?.Value;
-        _ = TryGetGitCommitHash(packageRoot, out var gitsha);
-
-        var ver = !string.IsNullOrEmpty(pkgver) && !string.IsNullOrEmpty(gitsha)
-            ? pkgver + "+" + gitsha
-            : !string.IsNullOrEmpty(pkgver) ? pkgver
-            : !string.IsNullOrEmpty(gitsha) ? gitsha
-            : null;
+        var ver = !string.IsNullOrEmpty(pkgver) ? pkgver : null;
 
         var results = Directory.GetDirectories(packageRoot)
             .Where(x => Path.GetFileName(x) is "msg" or "action" or "srv")
@@ -500,7 +556,7 @@ public class CSharpCodeGenerator
 
         if (results.Count == 0) return false;
 
-        p = new Package(packageName, [.. results]);
+        p = new Package(packageName, packageRoot, [.. results]);
         return true;
     }
 
@@ -510,32 +566,50 @@ public class CSharpCodeGenerator
         return File.Exists(packageXml);
     }
 
-    private static bool TryGetGitCommitHash(string packageRoot, out string? sha1, int? recurseNum = 3)
+    private static bool IsPathWithinDirectory(string directory, string path)
     {
-        sha1 = null;
-        try
+        var relativePath = Path.GetRelativePath(Path.GetFullPath(directory), Path.GetFullPath(path));
+        return !Path.IsPathRooted(relativePath)
+            && relativePath != ".."
+            && !relativePath.StartsWith(".." + Path.DirectorySeparatorChar)
+            && !relativePath.StartsWith(".." + Path.AltDirectorySeparatorChar);
+    }
+
+    private static void WriteAllLinesIfChanged(string path, IReadOnlyCollection<string> lines)
+    {
+        if (File.Exists(path) && File.ReadAllLines(path).SequenceEqual(lines)) return;
+        File.WriteAllLines(path, lines);
+    }
+
+    private static void WriteGlobsPropsIfChanged(string path, IEnumerable<string> globs)
+    {
+        var document = new XDocument(
+            new XElement("Project",
+                new XElement("ItemGroup",
+                    globs.Select(glob => new XElement("Ros2csManifestGlob", new XAttribute("Include", glob))))));
+        var content = document + Environment.NewLine;
+        if (File.Exists(path) && File.ReadAllText(path) == content) return;
+        File.WriteAllText(path, content);
+    }
+
+    private static IEnumerable<string> ExpandGlob(string glob, StringComparer comparer)
+    {
+        var directory = Path.GetDirectoryName(glob)!;
+        var pattern = Path.GetFileName(glob);
+        if (Path.GetFileName(directory) == "*")
         {
-            sha1 = new Repository(packageRoot).Head.Tip.Sha;
-            return true;
+            var root = Path.GetDirectoryName(directory)!;
+            return Directory.Exists(root)
+                ? Directory.GetDirectories(root)
+                    .Select(p => Path.Combine(p, pattern))
+                    .Where(File.Exists)
+                    .Order(comparer)
+                : [];
         }
-        catch (RepositoryNotFoundException)
-        {
-            // .git not found in current path, recurse upwards
-            if (recurseNum.HasValue && recurseNum.Value > 0)
-            {
-                var parent = Directory.GetParent(packageRoot);
-                if (parent != null)
-                {
-                    return TryGetGitCommitHash(parent.FullName, out sha1, recurseNum - 1);
-                }
-            }
-            return false;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Warning: Unable to get git commit hash for package at '{packageRoot}': {ex.Message}");
-            return false;
-        }
+
+        return Directory.Exists(directory)
+            ? Directory.GetFiles(directory, pattern).Order(comparer)
+            : [];
     }
 
     private static List<string> ResolveDependencies(Dictionary<string, Package> inclPkgs, ParseSpec spec)

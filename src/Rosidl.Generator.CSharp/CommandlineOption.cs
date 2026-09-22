@@ -16,7 +16,7 @@ class CommandlineOptionParser
         new OptionDefinition("from-ament-index", new[]{ "--from-ament-index", "--no-ament-index" }, IsFlag: true),
         new OptionDefinition("ignore-missing", new[]{ "--ignore-missing", "--no-ignore-missing" }, IsFlag: true),
 
-        new OptionDefinition("details-file", [ "-df", "--details-file" ], IsFlag: true),
+        new OptionDefinition("emit-msbuild-metadata", [ "--emit-msbuild-metadata", "-df", "--details-file" ], AllowMultiple: true, IsFlag: true),
 
         new OptionDefinition("namespace", new[]{ "-n", "--namespace" }),
         new OptionDefinition("output", new[]{ "-o", "--output" }),
@@ -39,7 +39,8 @@ class CommandlineOptionParser
             {
                 if (opt.IsFlag)
                 {
-                    value = new OptionValue(opt, opt.AllowedKeys[idx], idx == 0 ? "yes" : "no");
+                    value = new OptionValue(opt, opt.AllowedKeys[idx],
+                        opt.AllowedKeys[idx].StartsWith("--no-", StringComparison.Ordinal) ? "no" : "yes");
                 }
                 else
                 {
