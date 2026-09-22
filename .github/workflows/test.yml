@@ -100,13 +100,13 @@ jobs:
             ros_archive: https://github.com/ros2/ros2/releases/download/release-kilted-20250728/ros2-kilted-20250728-windows-release-amd64.zip
             is_legacy_distro: false
           - ros_distribution: jazzy
-            ros_archive: https://github.com/ros2/ros2/releases/download/release-jazzy-20250820/ros2-jazzy-20250820-windows-release-amd64.zip
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-jazzy-20260128/ros2-jazzy-20260128-windows-release-amd64.zip
             is_legacy_distro: false
           - ros_distribution: iron
             ros_archive: https://github.com/ros2/ros2/releases/download/release-iron-20241204/ros2-iron-20241204-windows-release-amd64.zip
             is_legacy_distro: true
           - ros_distribution: humble
-            ros_archive: https://github.com/ros2/ros2/releases/download/release-humble-20241205/ros2-humble-20241205-windows-release-amd64.zip
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-humble-20260220/ros2-humble-20260220-windows-release-amd64.zip
             is_legacy_distro: true
           - ros_distribution: foxy
             ros_archive: https://github.com/ros2/ros2/releases/download/release-foxy-20230620/ros2-foxy-20230620-windows-release-amd64.zip
@@ -154,7 +154,7 @@ jobs:
       - name: Install dependencies
         if: ${{ !matrix.is_legacy_distro }}
         run: |
-          mkdir c:/dev/pixi/
+          New-Item -ItemType Directory -Force c:/dev/pixi/ | Out-Null
           cd c:/dev/pixi/
           irm https://raw.githubusercontent.com/ros2/ros2/refs/heads/${{ matrix.ros_distribution }}/pixi.toml -OutFile pixi.toml
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
