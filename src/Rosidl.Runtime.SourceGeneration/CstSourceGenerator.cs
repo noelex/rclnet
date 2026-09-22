@@ -8,9 +8,9 @@ namespace Rosidl.Runtime.SourceGeneration;
 [Generator]
 public class CstSourceGenerator : ISourceGenerator
 {
-    private static readonly Regex StatementPattern =
-        new Regex(@"^\s*@([a-z]+)\s*((!)?\s*([A-Za-z]+))?\s*@\s*$");
-    private static readonly Regex OutputDefinitionPattern =
+    private static readonly Regex s_statementPattern =
+        new Regex(@"^\s*@([a-z]+)\s*((!)?\s*([A-Za-z][A-Za-z0-9]*))?\s*@\s*$");
+    private static readonly Regex s_outputDefinitionPattern =
         new Regex(@"\s*@output\s*\((.+)\)\s*@\s*$");
 
     public void Execute(GeneratorExecutionContext context)
@@ -51,7 +51,7 @@ public class CstSourceGenerator : ISourceGenerator
                 continue;
             }
 
-            var match = OutputDefinitionPattern.Match(text);
+            var match = s_outputDefinitionPattern.Match(text);
             if (!match.Success)
             {
                 break;
@@ -94,7 +94,7 @@ public class CstSourceGenerator : ISourceGenerator
         {
             var line = template[linenum].ToString();
 
-            var match = StatementPattern.Match(line);
+            var match = s_statementPattern.Match(line);
             if (!match.Success)
             {
                 if ((!elseStarted && !ifStarted) ||
