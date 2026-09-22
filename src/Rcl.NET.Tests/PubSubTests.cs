@@ -94,6 +94,14 @@ public class PubSubTests
                 CountAsync(sub.ReadAllAsync()),
                 CountAsync(sub.ReadAllAsync()));
 
+            // Reliable QoS does not replay samples published before endpoint discovery completes.
+            // Wait for the subscription to match so this test only measures concurrent consumption.
+            for (var retry = 0; pub.Subscribers == 0 && retry < 500; retry++)
+            {
+                await Task.Delay(10);
+            }
+            Assert.Equal(1, pub.Subscribers);
+
             var msg = new Time(sec: 1, nanosec: 2);
             for (var i = 0; i < 100; i++)
             {
@@ -104,7 +112,7 @@ public class PubSubTests
 
         var results = await aggregateTask;
 
-        Assert.Equal(100, results.Sum(), TestConfig.GitHubActions ? 1.0 : 0);
+        Assert.Equal(100, results.Sum());
 
         static async Task<int> CountAsync<T>(IAsyncEnumerable<T> subscription)
         {
