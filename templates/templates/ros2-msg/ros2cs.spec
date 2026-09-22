@@ -1,6 +1,10 @@
-﻿# Specifiy the output directory.
+# Specifiy the output directory.
 # A path relative to this file or an absolute path can be used.
 output ./
+
+# Select the ROSIDL native ABI layout.
+# Portable mode is the default and supports ROS 2 Foxy through Lyrical.
+# abi [v1|v2|portable]
 
 # Generate classes with internal visibility rather than public.
 # internal

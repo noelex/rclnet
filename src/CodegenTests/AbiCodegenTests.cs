@@ -2,7 +2,6 @@ using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Xunit;
 using Portable = Rosidl.Test.Portable.Ros2csAbiTest;
 using V1 = Rosidl.Test.V1.Ros2csAbiTest;
@@ -63,14 +62,9 @@ public class AbiCodegenTests
     public void MessageSequenceLayoutsMatchTheirAbi()
     {
         Assert.Equal(3 * IntPtr.Size, Unsafe.SizeOf<V1.Scalar.PrivSequence>());
-        Assert.Equal(4 * IntPtr.Size, Unsafe.SizeOf<V2.Scalar.PrivSequence>());
+        Assert.Equal(3 * IntPtr.Size, Unsafe.SizeOf<V2.Scalar.PrivSequence>());
         Assert.Equal(3 * IntPtr.Size, Unsafe.SizeOf<Portable.Scalar.PrivSequence>());
-        Assert.Equal(4 * IntPtr.Size, Unsafe.SizeOf<Portable.Scalar.PrivSequenceV2>());
-
-        Assert.Equal(3 * IntPtr.Size, Marshal.OffsetOf<V2.Scalar.PrivSequence>("__isRosidlBuffer").ToInt32());
-        Assert.Equal(3 * IntPtr.Size + 1, Marshal.OffsetOf<V2.Scalar.PrivSequence>("__ownsRosidlBuffer").ToInt32());
-        Assert.Equal(3 * IntPtr.Size, Marshal.OffsetOf<Portable.Scalar.PrivSequenceV2>("__isRosidlBuffer").ToInt32());
-        Assert.Equal(3 * IntPtr.Size + 1, Marshal.OffsetOf<Portable.Scalar.PrivSequenceV2>("__ownsRosidlBuffer").ToInt32());
+        Assert.Equal(3 * IntPtr.Size, Unsafe.SizeOf<Portable.Scalar.PrivSequenceV2>());
     }
 
     [Fact]
@@ -144,19 +138,6 @@ public class AbiCodegenTests
     }
 
     [Fact]
-    public void BufferBackedGeneratedSequencesRejectDataAccess()
-    {
-        var source = CreateBufferBacked<V2.Scalar.PrivSequence>();
-        var target = default(V2.Scalar.PrivSequence);
-
-        AssertBufferNotSupported(() => { source.AsSpan(); });
-        AssertBufferNotSupported(() => target.CopyFrom(source));
-        AssertBufferNotSupported(() => source.CopyFrom(target));
-        AssertBufferNotSupported(() => source.CopyFrom(ReadOnlySpan<V2.Scalar.Priv>.Empty));
-        AssertBufferNotSupported(() => source.Equals(target));
-    }
-
-    [Fact]
     public void PortableWrongAbiLifecycleIsRejectedBeforeNativeCall()
     {
         var originalDistro = Environment.GetEnvironmentVariable("ROS_DISTRO");
@@ -216,17 +197,4 @@ public class AbiCodegenTests
         return checked((int)Unsafe.ByteOffset(ref start, ref target));
     }
 
-    private static T CreateBufferBacked<T>() where T : unmanaged
-    {
-        var value = default(T);
-        var bytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref value, 1));
-        bytes[3 * IntPtr.Size] = 1;
-        return value;
-    }
-
-    private static void AssertBufferNotSupported(Action action)
-    {
-        var exception = Assert.Throws<NotSupportedException>(action);
-        Assert.Equal("rosidl::Buffer-backed sequences are not supported.", exception.Message);
-    }
 }

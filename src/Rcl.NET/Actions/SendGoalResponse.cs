@@ -12,7 +12,20 @@ internal struct SendGoalResponse
 }
 
 [StructLayout(LayoutKind.Sequential)]
+internal struct SendGoalResponseV2
+{
+    public bool Accepted;
+    public Time.PrivV2 Stamp;
+}
+
+[StructLayout(LayoutKind.Sequential)]
 internal struct GetResultRequest
 {
     public UUID.Priv GoalId;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct GetResultRequestV2
+{
+    public UUID.PrivV2 GoalId;
 }

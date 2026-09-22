@@ -1,6 +1,11 @@
 # rclnet
 rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.
 
+## What's New in 3.0
+ - ROS 2 Lyrical Support
+ - Added portable ROSIDL ABI support
+ - Added MSBuild incremental build support for generated interfaces
+
 ## What's New in 2.0
  - Added support for .NET 10 and changed minimum supported .NET version to 8.0
  - ROS 2 Kilted Support
@@ -50,6 +55,7 @@ Supported ROS 2 Distributions:
 - Iron Irwini
 - Jazzy Jalisco
 - Kilted Kaiju
+- Lyrical Luth
 
 Supported Operating Systems:
 - Ubuntu
@@ -114,6 +120,23 @@ ros2cs /path/to/ros2cs.spec
 ```
 
 `ros2cs` tool also supports overriding directives defined in the spec file. You can run `ros2cs --help` for more details.
+
+### ROSIDL ABI modes
+
+Message generation uses portable ABI mode by default. Portable output contains both native layouts so the same
+assembly can run on ROS 2 Foxy through Lyrical. You can select a mode explicitly in `ros2cs.spec`:
+
+```text
+abi portable
+```
+
+Use `abi v1` for an assembly tied to Foxy through Kilted, or `abi v2` for an assembly tied to Lyrical. In portable
+output, `Priv` and `PrivSequence` always represent the V1 layout, while `PrivV2` and `PrivSequenceV2` represent the
+Lyrical layout. High-level message APIs select the correct layout automatically. Raw APIs such as
+`RosMessageBuffer.AsRef<T>()` do not validate or change the structure type chosen by the caller.
+
+Lyrical `rosidl::Buffer`-backed sequences are not currently supported. Ordinary contiguous CPU sequences remain
+supported.
 
 ## API Usage Showcase
 ### Subscribing
@@ -189,8 +212,16 @@ await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
 
     static void ProcessMessage(RosMessageBuffer buffer)
     {
-        ref var twist = ref buffer.AsRef<Twist.Priv>();
-        ...
+        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+        {
+            ref var twist = ref buffer.AsRef<Twist.Priv>();
+            ...
+        }
+        else
+        {
+            ref var twist = ref buffer.AsRef<Twist.PrivV2>();
+            ...
+        }
     }
 }
 ```

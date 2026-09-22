@@ -40,20 +40,7 @@ public class PrivStructSequenceBuilder
             FieldType = new CSharpFreeType("nuint"),
         });
 
-        if (context.Layout == NativeLayout.V2)
-        {
-            structure.Members.Add(new CSharpField("__isRosidlBuffer")
-            {
-                Visibility = CSharpVisibility.Private,
-                FieldType = new CSharpFreeType("byte"),
-            });
-            structure.Members.Add(new CSharpField("__ownsRosidlBuffer")
-            {
-                Visibility = CSharpVisibility.Private,
-                FieldType = new CSharpFreeType("byte"),
-            });
-            structure.Members.Add(EmitThrowIfRosidlBuffer());
-        }
+        // Generated message sequences retain data/size/capacity in both ABIs.
 
         structure.Members.Add(new CSharpProperty("Size")
         {
@@ -161,10 +148,6 @@ public class PrivStructSequenceBuilder
                 {
                     writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
                 }
-                if (context.IsV2Sequence)
-                {
-                    writer.WriteLine("ThrowIfRosidlBuffer();");
-                }
                 writer.WriteLine("return new(__data, Size);");
             }
         };
@@ -189,10 +172,6 @@ public class PrivStructSequenceBuilder
             {
                 writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
             }
-            if (context.IsV2Sequence)
-            {
-                writer.WriteLine("ThrowIfRosidlBuffer();");
-            }
             writer.WriteLine($$"""
                     Finalize(ref this);
                     ThrowIfNonSuccess(TryInitialize(src.Length, out this));
@@ -201,22 +180,6 @@ public class PrivStructSequenceBuilder
         };
 
         return method;
-    }
-
-    private static CSharpFreeMember EmitThrowIfRosidlBuffer()
-    {
-        return new CSharpFreeMember
-        {
-            Text = """
-            private readonly void ThrowIfRosidlBuffer()
-            {
-                if (__isRosidlBuffer != 0)
-                {
-                    throw new global::System.NotSupportedException("rosidl::Buffer-backed sequences are not supported.");
-                }
-            }
-            """
-        };
     }
 
     private static CSharpFreeMember EmitCopyConstructorSpan(MethodBuildContext context)

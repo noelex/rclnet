@@ -52,11 +52,6 @@ internal static class PInvokeEmitHelper
         method.Body = (writer, element) =>
         {
             WriteAbiGuard(writer, context);
-            if (context.IsV2Sequence)
-            {
-                writer.WriteLine("input->ThrowIfRosidlBuffer();");
-                writer.WriteLine("output->ThrowIfRosidlBuffer();");
-            }
             writer.WriteLine($$"""
                 return _PInvoke(input, output);
 
@@ -85,11 +80,6 @@ internal static class PInvokeEmitHelper
         method.Body = (writer, element) =>
         {
             WriteAbiGuard(writer, context);
-            if (context.IsV2Sequence)
-            {
-                writer.WriteLine("lhs.ThrowIfRosidlBuffer();");
-                writer.WriteLine("rhs.ThrowIfRosidlBuffer();");
-            }
             writer.WriteLine($$"""
                 fixed ({{structType}}* plhs = &lhs, prhs = &rhs)
                 {

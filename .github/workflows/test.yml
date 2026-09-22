@@ -15,6 +15,7 @@ jobs:
           - iron
           - jazzy
           - kilted
+          - lyrical
         include:
           - ros_distribution: foxy
             docker_image: ros:foxy-ros-base
@@ -26,6 +27,8 @@ jobs:
             docker_image: ros:jazzy-ros-base
           - ros_distribution: kilted
             docker_image: ros:kilted-ros-base
+          - ros_distribution: lyrical
+            docker_image: ros:lyrical-ros-base
     container:
       image: ${{ matrix.docker_image }}
     steps:
@@ -38,11 +41,18 @@ jobs:
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
           # ros:foxy-ros-base is no longer being updated due to EOL of foxy.
           # We have to pull the new GPG key for ROS package repository manually.
-          apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4B63CF8FDE49746E98FA01DDAD19BAB3CBF125EA
+          if [ "${{ matrix.ros_distribution }}" = "foxy" ]; then
+            apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4B63CF8FDE49746E98FA01DDAD19BAB3CBF125EA
+          fi
           apt update
-          apt install -y curl
+          apt install -y curl python3-colcon-common-extensions
           rosdep update --include-eol-distros
-          rosdep install -i -y --from-paths src/Rcl.NET.Tests
+          rosdep install -i -y --from-paths src/Rcl.NET.Tests src/CodegenTests/packages/ros2cs_abi_test_msgs
+
+      - name: Build ABI test interfaces
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          colcon build --merge-install --packages-select ros2cs_abi_test_msgs --base-paths src/CodegenTests/packages
 
       - name: Setup .NET 8.0
         uses: actions/setup-dotnet@v3
@@ -72,6 +82,7 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh && \
+          . "$GITHUB_WORKSPACE/install/setup.sh" && \
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds)
@@ -82,6 +93,7 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh && \
+          . "$GITHUB_WORKSPACE/install/setup.sh" && \
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
   windows:
@@ -95,7 +107,11 @@ jobs:
           - iron
           - jazzy
           - kilted
+          - lyrical
         include:
+          - ros_distribution: lyrical
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-lyrical-20260522/ros2-lyrical-2026-05-22-windows-AMD64.zip
+            is_legacy_distro: false
           - ros_distribution: kilted
             ros_archive: https://github.com/ros2/ros2/releases/download/release-kilted-20250728/ros2-kilted-20250728-windows-release-amd64.zip
             is_legacy_distro: false
@@ -165,6 +181,14 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Build ABI test interfaces
+        if: ${{ !matrix.is_legacy_distro }}
+        shell: cmd
+        run: |
+          refreshenv && ^
+          pixi run --manifest-path "c:/dev/pixi/" ^
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && colcon build --merge-install --packages-select ros2cs_abi_test_msgs --base-paths src/CodegenTests/packages"
+
       - name: Setup .NET 9.0
         uses: actions/setup-dotnet@v3
         with:
@@ -215,7 +239,7 @@ jobs:
         run: |
           refreshenv && ^
           pixi run --manifest-path "c:/dev/pixi/" ^
-          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call ${{ github.workspace }}/install/setup.bat && dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
 
       - name: Test (cyclonedds)
         if: ${{ !matrix.is_legacy_distro }}
@@ -227,7 +251,7 @@ jobs:
         run: |
           refreshenv && ^
           pixi run --manifest-path "c:/dev/pixi/" ^
-          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call ${{ github.workspace }}/install/setup.bat && dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
 
   #test_macos:
   #  runs-on: macos-latest

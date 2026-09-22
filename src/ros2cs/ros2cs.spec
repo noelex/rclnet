@@ -1,4 +1,4 @@
-﻿# Specifiy the output directory.
+# Specifiy the output directory.
 # A path relative to this file or an absolute path can be used.
 output ./
 
@@ -28,6 +28,11 @@ output ./
 # code size.
 # The default value is 'off'.
 # action-details [on|off]
+
+# Select the ROSIDL native ABI layout.
+# 'portable' emits both layouts and selects one at runtime. This is the default.
+# 'v1' targets ROS 2 Foxy through Kilted, while 'v2' targets ROS 2 Lyrical.
+# abi [v1|v2|portable]
 
 # Generate classes with internal visibility rather than public.
 # internal

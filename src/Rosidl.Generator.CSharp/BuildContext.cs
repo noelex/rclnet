@@ -327,7 +327,6 @@ public abstract class MethodBuildContext
 
     internal bool IsSequence => this is SequenceStructMethodBuildContext;
 
-    internal bool IsV2Sequence => IsSequence && NativeLayoutContext.Layout == NativeLayout.V2;
 }
 
 public class PrivStructMethodBuildContext : MethodBuildContext

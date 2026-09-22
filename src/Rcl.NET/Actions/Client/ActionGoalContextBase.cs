@@ -1,5 +1,6 @@
 ﻿using Rosidl.Messages.Action;
 using Rosidl.Messages.UniqueIdentifier;
+using Rosidl.Runtime;
 using System.Diagnostics;
 
 namespace Rcl.Actions.Client;
@@ -74,9 +75,14 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
         void BuildRequest(nint requestBuffer)
         {
             // GetResult_Request contains a single UUID field.
-            using var goalId = new UUID.Priv(GoalId);
-
-            _client.Introspection.ResultService.Request.AsRef<UUID.Priv>(requestBuffer, 0).CopyFrom(goalId);
+            if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+            {
+                _client.Introspection.ResultService.Request.AsRef<UUID.Priv>(requestBuffer, 0).CopyFrom(GoalId);
+            }
+            else
+            {
+                _client.Introspection.ResultService.Request.AsRef<UUID.PrivV2>(requestBuffer, 0).CopyFrom(GoalId);
+            }
         }
 
         ActionGoalStatus ProcessResponse(nint responseBuffer, out RosMessageBuffer resultBuffer)
@@ -112,24 +118,24 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
     public async Task CancelAsync(TimeSpan timeout, CancellationToken cancellationToken)
     {
         using var requestBuffer = RosMessageBuffer.Create<CancelGoalServiceRequest>();
-        PrepareRequest(requestBuffer);
-
-        using var responseBuffer = await _client.CancelClient.InvokeAsync(requestBuffer, timeout, cancellationToken).ConfigureAwait(false);
-        ProcessResponse(responseBuffer);
-
-        void PrepareRequest(RosMessageBuffer buffer)
+        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
         {
-            ref var request = ref buffer.AsRef<CancelGoalServiceRequest.Priv>();
-            request.GoalInfo.GoalId.CopyFrom(GoalId);
+            requestBuffer.AsRef<CancelGoalServiceRequest.Priv>().GoalInfo.GoalId.CopyFrom(GoalId);
+        }
+        else
+        {
+            requestBuffer.AsRef<CancelGoalServiceRequest.PrivV2>().GoalInfo.GoalId.CopyFrom(GoalId);
         }
 
-        void ProcessResponse(RosMessageBuffer buffer)
+        using var responseBuffer = await _client.CancelClient
+            .InvokeAsync(requestBuffer, timeout, cancellationToken)
+            .ConfigureAwait(false);
+        var returnCode = RosidlRuntime.NativeAbi == RosidlNativeAbi.V1
+            ? responseBuffer.AsRef<CancelGoalServiceResponse.Priv>().ReturnCode
+            : responseBuffer.AsRef<CancelGoalServiceResponse.PrivV2>().ReturnCode;
+        if (returnCode != CancelGoalServiceResponse.ERROR_NONE)
         {
-            ref var response = ref buffer.AsRef<CancelGoalServiceResponse.Priv>();
-            if (response.ReturnCode != CancelGoalServiceResponse.ERROR_NONE)
-            {
-                throw new RclException($"Failed to cancel action goal, server returned status code {response.ReturnCode}.");
-            }
+            throw new RclException($"Failed to cancel action goal, server returned status code {returnCode}.");
         }
     }
 

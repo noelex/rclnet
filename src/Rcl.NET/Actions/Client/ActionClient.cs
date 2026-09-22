@@ -108,8 +108,13 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         Debug.Assert(introspection.GetMemberName(0) == "goal_id");
         Debug.Assert(introspection.GetMemberName(1) == "feedback");
 
-        ref var uuid = ref introspection.AsRef<UUID.Priv>(buffer.Data, 0);
-        if (!_goals.TryGetValue(uuid, out var ctx) || !ctx.HasFeedbackListeners)
+        var goalId = RosidlRuntime.NativeAbi switch
+        {
+            RosidlNativeAbi.V1 => introspection.AsRef<UUID.Priv>(buffer.Data, 0).ToGuid(),
+            RosidlNativeAbi.V2 => introspection.AsRef<UUID.PrivV2>(buffer.Data, 0).ToGuid(),
+            _ => throw new UnreachableException(),
+        };
+        if (!_goals.TryGetValue(goalId, out var ctx) || !ctx.HasFeedbackListeners)
         {
             return;
         }
@@ -129,13 +134,26 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
     private void ProcessStatusArray(RosMessageBuffer buffer)
     {
-        ref var array = ref buffer.AsRef<GoalStatusArray.Priv>();
-        foreach (var status in array.StatusList.AsSpan())
+        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
         {
-            var id = status.GoalInfo.GoalId.ToGuid();
+            foreach (ref readonly var status in buffer.AsRef<GoalStatusArray.Priv>().StatusList.AsSpan())
+            {
+                ProcessStatus(status.GoalInfo.GoalId.ToGuid(), status.Status);
+            }
+
+            return;
+        }
+
+        foreach (ref readonly var status in buffer.AsRef<GoalStatusArray.PrivV2>().StatusList.AsSpan())
+        {
+            ProcessStatus(status.GoalInfo.GoalId.ToGuid(), status.Status);
+        }
+
+        void ProcessStatus(Guid id, sbyte status)
+        {
             if (_goals.TryGetValue(id, out var ctx))
             {
-                ctx.OnStatusChanged((ActionGoalStatus)status.Status);
+                ctx.OnStatusChanged((ActionGoalStatus)status);
             }
         }
     }
@@ -150,9 +168,16 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         // bool accepted;
         // Time.Priv stamp;
         Debug.Assert(_typesupport.GoalService.Response.MemberCount == 2);
-        Debug.Assert(_typesupport.GoalService.Response.SizeOf == Unsafe.SizeOf<SendGoalResponse>());
+        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+        {
+            Debug.Assert(_typesupport.GoalService.Response.SizeOf == Unsafe.SizeOf<SendGoalResponse>());
+            return _typesupport.GoalService.Response
+                .AsRef<SendGoalResponse>(responseBuffer.Data, 0).Accepted;
+        }
+
+        Debug.Assert(_typesupport.GoalService.Response.SizeOf == Unsafe.SizeOf<SendGoalResponseV2>());
         return _typesupport.GoalService.Response
-            .AsRef<SendGoalResponse>(responseBuffer.Data, 0).Accepted;
+            .AsRef<SendGoalResponseV2>(responseBuffer.Data, 0).Accepted;
     }
 
     public async Task<INativeActionGoalContext> SendGoalAsync(RosMessageBuffer goalBuffer, int timeoutMilliseconds, CancellationToken cancellationToken = default)
@@ -224,8 +249,6 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
     {
         var requestIntrospection = _typesupport.GoalService.Request;
 
-        using var goalid = new UUID.Priv(goalId);
-
         // Copy fields into SendGoal_Request:
         //
         // UUID goal_id;
@@ -233,7 +256,14 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         Debug.Assert(requestIntrospection.MemberCount == 2);
         Debug.Assert(requestIntrospection.GetMemberName(0) == "goal_id");
         Debug.Assert(requestIntrospection.GetMemberName(1) == "goal");
-        requestIntrospection.AsRef<UUID.Priv>(requestBuffer, 0).CopyFrom(in goalid);
+        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+        {
+            requestIntrospection.AsRef<UUID.Priv>(requestBuffer, 0).CopyFrom(goalId);
+        }
+        else
+        {
+            requestIntrospection.AsRef<UUID.PrivV2>(requestBuffer, 0).CopyFrom(goalId);
+        }
         if (!_bufferHelper.CopyGoal(goalBuffer, requestIntrospection.GetMemberPointer(requestBuffer, 1)))
         {
             throw new RclException("Unable to copy goal buffer, send goal failed.");
