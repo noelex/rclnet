@@ -12,12 +12,13 @@ public class PrivStructSequenceBuilder
         var methodContext = new SequenceStructMethodBuildContext(context);
         var structure = new CSharpStruct(context.PrivSequenceName);
 
-        structure.AddCommentsForStructSequence(context.MessageContext.Metadata);
+        structure.AddCommentsForStructSequence(context.MessageContext.Metadata, context.Layout);
 
         structure.BaseTypes.Add(new CSharpFreeType($"global::System.IEquatable<{methodContext.StructType}>"));
         structure.BaseTypes.Add(new CSharpFreeType($"global::System.IDisposable"));
 
         structure.Attributes.Add(Attributes.StructLayoutSequential);
+        structure.Attributes.Add(Attributes.RosidlAbi(context.Layout));
 
 
 
@@ -38,6 +39,21 @@ public class PrivStructSequenceBuilder
             Visibility = CSharpVisibility.Private,
             FieldType = new CSharpFreeType("nuint"),
         });
+
+        if (context.Layout == NativeLayout.V2)
+        {
+            structure.Members.Add(new CSharpField("__isRosidlBuffer")
+            {
+                Visibility = CSharpVisibility.Private,
+                FieldType = new CSharpFreeType("byte"),
+            });
+            structure.Members.Add(new CSharpField("__ownsRosidlBuffer")
+            {
+                Visibility = CSharpVisibility.Private,
+                FieldType = new CSharpFreeType("byte"),
+            });
+            structure.Members.Add(EmitThrowIfRosidlBuffer());
+        }
 
         structure.Members.Add(new CSharpProperty("Size")
         {
@@ -114,6 +130,10 @@ public class PrivStructSequenceBuilder
 
         method.Body = (writer, element) =>
         {
+            if (context.NativeLayoutContext.RequiresAbiGuard)
+            {
+                writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
+            }
             writer.WriteLine($$"""
                 fixed ({{structType}}* pMsg = &msg)
                 {
@@ -137,6 +157,14 @@ public class PrivStructSequenceBuilder
             ReturnType = new CSharpFreeType($"System.Span<{context.NativeLayoutContext.PrivName}>"),
             Body = (writer, element) =>
             {
+                if (context.NativeLayoutContext.RequiresAbiGuard)
+                {
+                    writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
+                }
+                if (context.IsV2Sequence)
+                {
+                    writer.WriteLine("ThrowIfRosidlBuffer();");
+                }
                 writer.WriteLine("return new(__data, Size);");
             }
         };
@@ -157,6 +185,14 @@ public class PrivStructSequenceBuilder
 
         method.Body = (writer, element) =>
         {
+            if (context.NativeLayoutContext.RequiresAbiGuard)
+            {
+                writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
+            }
+            if (context.IsV2Sequence)
+            {
+                writer.WriteLine("ThrowIfRosidlBuffer();");
+            }
             writer.WriteLine($$"""
                     Finalize(ref this);
                     ThrowIfNonSuccess(TryInitialize(src.Length, out this));
@@ -165,6 +201,22 @@ public class PrivStructSequenceBuilder
         };
 
         return method;
+    }
+
+    private static CSharpFreeMember EmitThrowIfRosidlBuffer()
+    {
+        return new CSharpFreeMember
+        {
+            Text = """
+            private readonly void ThrowIfRosidlBuffer()
+            {
+                if (__isRosidlBuffer != 0)
+                {
+                    throw new global::System.NotSupportedException("rosidl::Buffer-backed sequences are not supported.");
+                }
+            }
+            """
+        };
     }
 
     private static CSharpFreeMember EmitCopyConstructorSpan(MethodBuildContext context)

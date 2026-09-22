@@ -23,6 +23,10 @@ static class Attributes
         = new CSharpFreeAttribute($"global::System.CodeDom.Compiler.GeneratedCodeAttribute(\"ros2cs\", " +
             $"\"{typeof(Attributes).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
                 .InformationalVersion}\")");
+
+    public static CSharpAttribute RosidlAbi(NativeLayout layout) =>
+        new CSharpFreeAttribute(
+            $"global::Rosidl.Runtime.RosidlAbiAttribute(global::Rosidl.Runtime.RosidlNativeAbi.{layout})");
 }
 
 public record VariableFieldInfo(
@@ -87,7 +91,9 @@ public class MessageBuildContext
 
     public MessageMetadata Metadata { get; }
 
-    internal NativeLayoutBuildContext NativeLayout { get; }
+    internal NativeLayoutBuildContext NativeLayout => NativeLayouts[0];
+
+    internal IReadOnlyList<NativeLayoutBuildContext> NativeLayouts { get; }
 
     public string PrivStructName => NativeLayout.PrivName;
 
@@ -127,15 +133,29 @@ public class MessageBuildContext
 
         ClassName = Options.ResolveMessageClassName(this, Metadata);
         ClassNameFullyQualified = GetMessageClassReferenceName(Metadata);
-        // ABI modes are parsed now, while native output remains V1 until multi-layout emission is enabled.
-        NativeLayout = new NativeLayoutBuildContext(
-            this,
-            global::Rosidl.Generator.CSharp.NativeLayout.V1,
-            Options.ResolveMessagePrivStructName,
-            Options.ResolveMessagePrivStructSequenceName);
+        NativeLayouts = Options.Abi switch
+        {
+            RosidlAbiMode.V1 => [CreateNativeLayout(global::Rosidl.Generator.CSharp.NativeLayout.V1)],
+            RosidlAbiMode.V2 => [CreateNativeLayout(global::Rosidl.Generator.CSharp.NativeLayout.V2)],
+            RosidlAbiMode.Portable =>
+            [
+                CreateNativeLayout(global::Rosidl.Generator.CSharp.NativeLayout.V1),
+                CreateNativeLayout(global::Rosidl.Generator.CSharp.NativeLayout.V2, "V2")
+            ],
+            _ => throw new NotSupportedException(),
+        };
 
         GeneratorLibraryName = Metadata.Id.Package + "__rosidl_generator_c";
         TypeSupportLibraryName = Metadata.Id.Package + "__rosidl_typesupport_c";
+
+        NativeLayoutBuildContext CreateNativeLayout(NativeLayout layout, string suffix = "")
+        {
+            return new NativeLayoutBuildContext(
+                this,
+                layout,
+                (context, metadata) => Options.ResolveMessagePrivStructName(context, metadata) + suffix,
+                (context, metadata) => Options.ResolveMessagePrivStructSequenceName(context, metadata) + suffix);
+        }
     }
 
     public string GetNativeMessageFunctionSymbol(string function)
@@ -189,7 +209,7 @@ public class MessageBuildContext
 
     public string GetNormalizedFieldName(string name)
     {
-        if (name == ClassName || name == NativeLayout.PrivName || name == NativeLayout.PrivSequenceName)
+        if (name == ClassName || NativeLayouts.Any(x => name == x.PrivName || name == x.PrivSequenceName))
         {
             return name + "_";
         }
@@ -238,6 +258,13 @@ internal sealed class NativeLayoutBuildContext
     public string PrivSequenceName { get; }
 
     public string PrivSequenceNameFullyQualified => GetMessagePrivStructSequenceReferenceName(MessageContext.Metadata);
+
+    public bool RequiresAbiGuard => MessageContext.Options.Abi == RosidlAbiMode.Portable;
+
+    public string NativeAbiExpression => $"global::Rosidl.Runtime.RosidlNativeAbi.{Layout}";
+
+    public string RequireNativeAbiStatement =>
+        $"global::Rosidl.Runtime.RosidlRuntime.RequireNativeAbi({NativeAbiExpression});";
 
     public string GetPrimitiveSequenceTypeName(PrimitiveTypeMetadata metadata)
     {
@@ -297,6 +324,10 @@ public abstract class MethodBuildContext
     public string StructName => StructType.ToFullString();
 
     public string StructFullyQualifiedName { get; }
+
+    internal bool IsSequence => this is SequenceStructMethodBuildContext;
+
+    internal bool IsV2Sequence => IsSequence && NativeLayoutContext.Layout == NativeLayout.V2;
 }
 
 public class PrivStructMethodBuildContext : MethodBuildContext

@@ -20,6 +20,7 @@ internal static class PInvokeEmitHelper
 
         method.Body = (writer, element) =>
         {
+            WriteAbiGuard(writer, context);
             writer.WriteLine($$"""
                 fixed ({{structType}}* pMsg = &msg)
                 {
@@ -50,6 +51,12 @@ internal static class PInvokeEmitHelper
 
         method.Body = (writer, element) =>
         {
+            WriteAbiGuard(writer, context);
+            if (context.IsV2Sequence)
+            {
+                writer.WriteLine("input->ThrowIfRosidlBuffer();");
+                writer.WriteLine("output->ThrowIfRosidlBuffer();");
+            }
             writer.WriteLine($$"""
                 return _PInvoke(input, output);
 
@@ -77,6 +84,12 @@ internal static class PInvokeEmitHelper
 
         method.Body = (writer, element) =>
         {
+            WriteAbiGuard(writer, context);
+            if (context.IsV2Sequence)
+            {
+                writer.WriteLine("lhs.ThrowIfRosidlBuffer();");
+                writer.WriteLine("rhs.ThrowIfRosidlBuffer();");
+            }
             writer.WriteLine($$"""
                 fixed ({{structType}}* plhs = &lhs, prhs = &rhs)
                 {
@@ -104,6 +117,7 @@ internal static class PInvokeEmitHelper
 
         method.Body = (writer, element) =>
         {
+            WriteAbiGuard(writer, context);
             writer.WriteLine($$"""
                 return _PInvoke();
 
@@ -130,6 +144,7 @@ internal static class PInvokeEmitHelper
 
         method.Body = (writer, element) =>
         {
+            WriteAbiGuard(writer, context);
             writer.WriteLine($$"""
                 _PInvoke(msg);
 
@@ -140,5 +155,13 @@ internal static class PInvokeEmitHelper
         };
 
         return method;
+    }
+
+    private static void WriteAbiGuard(CppAst.CodeGen.Common.CodeWriter writer, MethodBuildContext context)
+    {
+        if (context.NativeLayoutContext.RequiresAbiGuard)
+        {
+            writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
+        }
     }
 }

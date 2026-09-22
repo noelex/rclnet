@@ -35,7 +35,7 @@ public class GeneratorOptions
     /// <summary>
     /// Gets or sets the ROSIDL native ABI mode used for code generation.
     /// </summary>
-    public RosidlAbiMode Abi { get; set; } = RosidlAbiMode.V1;
+    public RosidlAbiMode Abi { get; set; } = RosidlAbiMode.Portable;
 
     public Func<string, string> ResolveNamespace { get; set; }
 

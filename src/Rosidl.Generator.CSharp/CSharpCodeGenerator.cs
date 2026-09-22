@@ -24,7 +24,7 @@ class ParseSpec
 
     public string DefaultRootNamespace { get; } = "Rosidl.Messages";
 
-    public RosidlAbiMode Abi { get; } = RosidlAbiMode.V1;
+    public RosidlAbiMode Abi { get; } = RosidlAbiMode.Portable;
 
     public string? OutputDirectory { get; }
 

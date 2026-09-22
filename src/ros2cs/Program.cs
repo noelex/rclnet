@@ -76,7 +76,7 @@ OPTIONS:
         or an absolute path can be used.
 
     --abi=v1|v2|portable
-        Select the ROSIDL native ABI mode. The default is v1.
+        Select the ROSIDL native ABI mode. The default is portable.
 
     -I,
     --from-directory=INCLUDE_DIR

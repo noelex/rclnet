@@ -8,12 +8,12 @@ namespace Rosidl.Generator.CSharp.Builders;
 public class MessageClassBuilder
 {
     private readonly MessageBuildContext _context;
-    private readonly NativeLayoutBuildContext _nativeLayout;
+    private readonly IReadOnlyList<NativeLayoutBuildContext> _nativeLayouts;
     private readonly VariableFieldInfo[] _variables;
     public MessageClassBuilder(MessageBuildContext context)
     {
         _context = context;
-        _nativeLayout = context.NativeLayout;
+        _nativeLayouts = context.NativeLayouts;
         _variables = context.Metadata.Fields.OfType<VariableFieldMetadata>().Select(x =>
                 new VariableFieldInfo(x, GetTypeName(x.Type), context.Options.ResolveFieldName(context, x),
                 x.Name.ToCamelCase(), x.Type is ComplexTypeMetadata or ArrayTypeMetadata, GetValueLiteralOrDefault(x)))
@@ -40,7 +40,10 @@ public class MessageClassBuilder
         cls.Members.Add(EmitGetTypeSupportHandle());
 
         cls.Members.Add(EmitFullConstructor());
-        cls.Members.Add(EmitRefConstructor());
+        foreach (var nativeLayout in _nativeLayouts)
+        {
+            cls.Members.Add(EmitRefConstructor(nativeLayout));
+        }
 
         if (_variables.Any())
             cls.Members.Add(EmitDefaultConstructor());
@@ -52,7 +55,10 @@ public class MessageClassBuilder
             cls.Members.Add(c);
 
         cls.Members.Add(EmitWriteTo());
-        cls.Members.Add(EmitWriteToRef());
+        foreach (var nativeLayout in _nativeLayouts)
+        {
+            cls.Members.Add(EmitWriteToRef(nativeLayout));
+        }
 
         cls.Members.Add(EmitCreateFrom());
         cls.Members.Add(EmitUnsafeCreate());
@@ -62,8 +68,11 @@ public class MessageClassBuilder
         cls.Members.Add(EmitUnsafeInitializeSequence());
         cls.Members.Add(EmitUnsafeFinalizeSequence());
 
-        cls.Members.Add(PrivStructBuilder.Build(_nativeLayout));
-        cls.Members.Add(PrivStructSequenceBuilder.Build(_nativeLayout));
+        foreach (var nativeLayout in _nativeLayouts)
+        {
+            cls.Members.Add(PrivStructBuilder.Build(nativeLayout));
+            cls.Members.Add(PrivStructSequenceBuilder.Build(nativeLayout));
+        }
 
         foreach (var m in cls.Members.OfType<CSharpMethod>())
         {
@@ -214,21 +223,26 @@ public class MessageClassBuilder
         return new CSharpFreeMember() { Text = builder.ToString() };
     }
 
-    private CSharpFreeMember EmitRefConstructor()
+    private CSharpFreeMember EmitRefConstructor(NativeLayoutBuildContext nativeLayout)
     {
         var builder = new StringBuilder();
 
         builder.AppendLine($"""
             /// <summary>
-            /// Create a new instance of <see cref="{_context.ClassName}"/>, and copy its data from the specified <see cref="{_nativeLayout.PrivName}"/> structure.
+            /// Create a new instance of <see cref="{_context.ClassName}"/>, and copy its data from the specified <see cref="{nativeLayout.PrivName}"/> structure.
             /// </summary>
-            /// <param name="priv">The <see cref="{_nativeLayout.PrivName}"/> structure to be copied from.</param>
-            /// <param name="textEncoding">Text encoding of the strings in the <see cref="{_nativeLayout.PrivName}"/> structure and its containing structures, if any.</param>
+            /// <param name="priv">The <see cref="{nativeLayout.PrivName}"/> structure to be copied from.</param>
+            /// <param name="textEncoding">Text encoding of the strings in the <see cref="{nativeLayout.PrivName}"/> structure and its containing structures, if any.</param>
             [{Attributes.DebuggerNonUserCode}]
             [{Attributes.GeneratedCode}]
-            public {_context.ClassName}(in {_nativeLayout.PrivName} priv, global::System.Text.Encoding textEncoding)
+            public {_context.ClassName}(in {nativeLayout.PrivName} priv, global::System.Text.Encoding textEncoding)
             """);
         builder.AppendLine("{");
+
+        if (nativeLayout.RequiresAbiGuard)
+        {
+            builder.AppendLine($"    {nativeLayout.RequireNativeAbiStatement}");
+        }
 
         var previousLineIsBlank = true;
         for (var i = 0; i < _variables.Length; i++)
@@ -528,7 +542,21 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
-            writer.WriteLine($"return new {_context.ClassName}(in global::System.Runtime.CompilerServices.Unsafe.AsRef<{_nativeLayout.PrivName}>(data.ToPointer()), textEncoding);");
+            if (_nativeLayouts.Count == 1)
+            {
+                var nativeLayout = _nativeLayouts[0];
+                writer.WriteLine($"return new {_context.ClassName}(in global::System.Runtime.CompilerServices.Unsafe.AsRef<{nativeLayout.PrivName}>(data.ToPointer()), textEncoding);");
+                return;
+            }
+
+            writer.WriteLine("return global::Rosidl.Runtime.RosidlRuntime.NativeAbi switch");
+            writer.WriteLine("{");
+            foreach (var nativeLayout in _nativeLayouts)
+            {
+                writer.WriteLine($"    {nativeLayout.NativeAbiExpression} => new {_context.ClassName}(in global::System.Runtime.CompilerServices.Unsafe.AsRef<{nativeLayout.PrivName}>(data.ToPointer()), textEncoding),");
+            }
+            writer.WriteLine("    _ => throw new global::System.NotSupportedException(),");
+            writer.WriteLine("};");
         };
         return method;
     }
@@ -544,7 +572,13 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
-            writer.WriteLine($"return new({_nativeLayout.PrivName}.Create());");
+            writer.WriteLine($$"""
+                return _PInvoke();
+
+                [{{Attributes.SuppressGCTransition}}]
+                [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.GeneratorLibraryName}}", EntryPoint = "{{_context.GetNativeMessageFunctionSymbol("create")}}")]
+                static extern nint _PInvoke();
+                """);
         };
         return method;
     }
@@ -562,10 +596,13 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
+            writer.WriteLine($$"""
+                return _PInvoke(data);
 
-            writer.WriteLine($"return {_nativeLayout.PrivName}" +
-                $".TryInitialize(out System.Runtime.CompilerServices.Unsafe.AsRef<" +
-                    $"{_nativeLayout.PrivName}>(data.ToPointer()));");
+                [{{Attributes.SuppressGCTransition}}]
+                [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.GeneratorLibraryName}}", EntryPoint = "{{_context.GetNativeMessageFunctionSymbol("init")}}")]
+                static extern bool _PInvoke(nint data);
+                """);
         };
         return method;
     }
@@ -583,10 +620,13 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
+            writer.WriteLine($$"""
+                _PInvoke(data);
 
-            writer.WriteLine($"{_nativeLayout.PrivName}" +
-                $".Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<" +
-                    $"{_nativeLayout.PrivName}>(data.ToPointer()));");
+                [{{Attributes.SuppressGCTransition}}]
+                [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.GeneratorLibraryName}}", EntryPoint = "{{_context.GetNativeMessageFunctionSymbol("fini")}}")]
+                static extern void _PInvoke(nint data);
+                """);
         };
         return method;
     }
@@ -605,10 +645,13 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
+            writer.WriteLine($$"""
+                return _PInvoke(data, (nuint)size);
 
-            writer.WriteLine($"return {_nativeLayout.PrivSequenceName}" +
-                $".TryInitialize(size, out System.Runtime.CompilerServices.Unsafe.AsRef<" +
-                    $"{_nativeLayout.PrivSequenceName}>(data.ToPointer()));");
+                [{{Attributes.SuppressGCTransition}}]
+                [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.GeneratorLibraryName}}", EntryPoint = "{{_context.GetNativeSequenceFunctionSymbol("init")}}")]
+                static extern bool _PInvoke(nint data, nuint size);
+                """);
         };
         return method;
     }
@@ -626,10 +669,13 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
+            writer.WriteLine($$"""
+                _PInvoke(data);
 
-            writer.WriteLine($"{_nativeLayout.PrivSequenceName}" +
-                $".Finalize(ref System.Runtime.CompilerServices.Unsafe.AsRef<" +
-                    $"{_nativeLayout.PrivSequenceName}>(data.ToPointer()));");
+                [{{Attributes.SuppressGCTransition}}]
+                [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.GeneratorLibraryName}}", EntryPoint = "{{_context.GetNativeSequenceFunctionSymbol("fini")}}")]
+                static extern void _PInvoke(nint data);
+                """);
         };
         return method;
     }
@@ -647,7 +693,13 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
-            writer.WriteLine($"{_nativeLayout.PrivName}.Destroy(({_nativeLayout.PrivName}*)data);");
+            writer.WriteLine($$"""
+                _PInvoke(data);
+
+                [{{Attributes.SuppressGCTransition}}]
+                [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.GeneratorLibraryName}}", EntryPoint = "{{_context.GetNativeMessageFunctionSymbol("destroy")}}")]
+                static extern void _PInvoke(nint data);
+                """);
         };
         return method;
     }
@@ -702,13 +754,30 @@ public class MessageClassBuilder
         method.Parameters.Add(new CSharpParameter("textEncoding") { ParameterType = new CSharpFreeType("global::System.Text.Encoding") });
         method.Body = (writer, element) =>
         {
-            writer.WriteLine($"WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<{_nativeLayout.PrivName}>(data.ToPointer()), textEncoding);");
+            if (_nativeLayouts.Count == 1)
+            {
+                var nativeLayout = _nativeLayouts[0];
+                writer.WriteLine($"WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<{nativeLayout.PrivName}>(data.ToPointer()), textEncoding);");
+                return;
+            }
+
+            writer.WriteLine("switch (global::Rosidl.Runtime.RosidlRuntime.NativeAbi)");
+            writer.WriteLine("{");
+            foreach (var nativeLayout in _nativeLayouts)
+            {
+                writer.WriteLine($"    case {nativeLayout.NativeAbiExpression}:");
+                writer.WriteLine($"        WriteTo(ref global::System.Runtime.CompilerServices.Unsafe.AsRef<{nativeLayout.PrivName}>(data.ToPointer()), textEncoding);");
+                writer.WriteLine("        break;");
+            }
+            writer.WriteLine("    default:");
+            writer.WriteLine("        throw new global::System.NotSupportedException();");
+            writer.WriteLine("}");
         };
 
         return method;
     }
 
-    private CSharpMethod EmitWriteToRef()
+    private CSharpMethod EmitWriteToRef(NativeLayoutBuildContext nativeLayout)
     {
         var method = new CSharpMethod("WriteTo")
         {
@@ -716,11 +785,15 @@ public class MessageClassBuilder
             ReturnType = new CSharpPrimitiveType(CSharpPrimitiveKind.Void)
         };
 
-        method.Parameters.Add(new CSharpParameter("priv") { ParameterType = new CSharpFreeType(_nativeLayout.PrivName).Ref(CSharpRefKind.Ref) });
+        method.Parameters.Add(new CSharpParameter("priv") { ParameterType = new CSharpFreeType(nativeLayout.PrivName).Ref(CSharpRefKind.Ref) });
         method.Parameters.Add(new CSharpParameter("textEncoding") { ParameterType = new CSharpFreeType("global::System.Text.Encoding") });
 
         method.Body = (writer, element) =>
         {
+            if (nativeLayout.RequiresAbiGuard)
+            {
+                writer.WriteLine(nativeLayout.RequireNativeAbiStatement);
+            }
             var previousLineIsBlank = true;
             for (var i = 0; i < _context.Variables.Length; i++)
             {
@@ -802,7 +875,7 @@ public class MessageClassBuilder
                         {
                             case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.String:
                                 if (!previousLineIsBlank) writer.WriteLine();
-                                writer.WriteLine($"priv.{fieldName} = new {_nativeLayout.GetPrimitiveSequenceTypeName(prim)}(this.{fieldName}.Length);");
+                                writer.WriteLine($"priv.{fieldName} = new {nativeLayout.GetPrimitiveSequenceTypeName(prim)}(this.{fieldName}.Length);");
                                 writer.WriteLine($"var {fieldName}_span = priv.{fieldName}.AsSpan();");
                                 writer.WriteLine($"for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.WriteLine("{");
@@ -816,7 +889,7 @@ public class MessageClassBuilder
                                 break;
                             case PrimitiveTypeMetadata prim when prim.ValueType is PrimitiveTypes.WString:
                                 if (!previousLineIsBlank) writer.WriteLine();
-                                writer.WriteLine($"priv.{fieldName} = new {_nativeLayout.GetPrimitiveSequenceTypeName(prim)}(this.{fieldName}.Length);");
+                                writer.WriteLine($"priv.{fieldName} = new {nativeLayout.GetPrimitiveSequenceTypeName(prim)}(this.{fieldName}.Length);");
                                 writer.WriteLine($"var {fieldName}_span = priv.{fieldName}.AsSpan();");
                                 writer.WriteLine($"for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.WriteLine("{");
@@ -834,7 +907,7 @@ public class MessageClassBuilder
                                 break;
                             case ComplexTypeMetadata complex:
                                 if (!previousLineIsBlank) writer.WriteLine();
-                                writer.WriteLine($"priv.{fieldName} = new {_nativeLayout.GetMessagePrivStructSequenceReferenceName(complex)}(this.{fieldName}.Length);");
+                                writer.WriteLine($"priv.{fieldName} = new {nativeLayout.GetMessagePrivStructSequenceReferenceName(complex)}(this.{fieldName}.Length);");
                                 writer.WriteLine($"var {fieldName}_span = priv.{fieldName}.AsSpan();");
                                 writer.WriteLine($"for (int __i = 0; __i < this.{fieldName}.Length; __i++)");
                                 writer.WriteLine("{");

@@ -163,12 +163,13 @@ namespace Rosidl.Generator.CSharp.Helpers
             return element;
         }
 
-        public static T AddCommentsForStruct<T>(this T element, MessageMetadata message)
+        public static T AddCommentsForStruct<T>(this T element, MessageMetadata message, NativeLayout layout)
             where T : ICSharpWithComment
         {
             element.Comment = new XmlCommentGroup();
 
-            var description = $"Blittable native structure for <c>{message}</c>.";
+            var description = $"Blittable native structure for <c>{message}</c> using " +
+                $"<see cref=\"global::Rosidl.Runtime.RosidlNativeAbi.{layout}\"/>.";
             if (message.Comments.Length > 0)
             {
                 element.Comment.Children.Add(EmitSummary(message.Comments));
@@ -181,12 +182,13 @@ namespace Rosidl.Generator.CSharp.Helpers
             return element;
         }
 
-        public static T AddCommentsForStructSequence<T>(this T element, MessageMetadata message)
+        public static T AddCommentsForStructSequence<T>(this T element, MessageMetadata message, NativeLayout layout)
             where T : ICSharpWithComment
         {
             element.Comment = new XmlCommentGroup();
 
-            var description = $"Blittable native sequence structure for <c>{message}</c>.";
+            var description = $"Blittable native sequence structure for <c>{message}</c> using " +
+                $"<see cref=\"global::Rosidl.Runtime.RosidlNativeAbi.{layout}\"/>.";
             if (message.Comments.Length > 0)
             {
                 element.Comment.Children.Add(EmitSummary(message.Comments));

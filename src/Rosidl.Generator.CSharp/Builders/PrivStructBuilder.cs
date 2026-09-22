@@ -2,6 +2,7 @@
 using Rosidl.Generator.CSharp.Helpers;
 
 namespace Rosidl.Generator.CSharp.Builders;
+
 public class PrivStructBuilder
 {
     public static CSharpElement Build(MessageBuildContext context) => Build(context.NativeLayout);
@@ -11,12 +12,13 @@ public class PrivStructBuilder
         var methodContext = new PrivStructMethodBuildContext(context);
         var structure = new CSharpStruct(context.PrivName);
 
-        structure.AddCommentsForStruct(context.MessageContext.Metadata);
+        structure.AddCommentsForStruct(context.MessageContext.Metadata, context.Layout);
 
         structure.BaseTypes.Add(new CSharpFreeType($"global::System.IEquatable<{methodContext.StructType}>"));
         structure.BaseTypes.Add(new CSharpFreeType($"global::System.IDisposable"));
 
         structure.Attributes.Add(Attributes.StructLayoutSequential);
+        structure.Attributes.Add(Attributes.RosidlAbi(context.Layout));
 
         var fields = GetFields(context);
 
@@ -41,6 +43,10 @@ public class PrivStructBuilder
                     }.AddComments(variable.Metadata);
                     spanProp.GetBody = (writer, element) =>
                     {
+                        if (context.RequiresAbiGuard)
+                        {
+                            writer.WriteLine(context.RequireNativeAbiStatement);
+                        }
                         writer.WriteLine($"fixed ({context.GetMessagePrivStructReferenceName(context.MessageContext.Metadata)}* __p = &this) return new (__p->__{variable.Name}, {variable.FixedSize});");
                     };
                     spanProp.Attributes.Add(Attributes.DebuggerNonUserCode);
@@ -75,6 +81,10 @@ public class PrivStructBuilder
                     }.AddComments(variable.Metadata);
                     spanProp.GetBody = (writer, element) =>
                     {
+                        if (context.RequiresAbiGuard)
+                        {
+                            writer.WriteLine(context.RequireNativeAbiStatement);
+                        }
                         writer.WriteLine($"fixed ({typeName}* __p = &__{variable.Name}_0) return new (__p, {variable.FixedSize});");
                     };
                     spanProp.Attributes.Add(Attributes.DebuggerNonUserCode);
@@ -207,6 +217,10 @@ public class PrivStructBuilder
 
         method.Body = (writer, element) =>
         {
+            if (context.NativeLayoutContext.RequiresAbiGuard)
+            {
+                writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
+            }
             writer.WriteLine($$"""
                 fixed ({{structType}}* pMsg = &msg)
                 {
