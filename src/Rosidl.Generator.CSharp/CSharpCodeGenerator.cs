@@ -52,6 +52,7 @@ class ParseSpec
 
     public ParseSpec(IEnumerable<CommandlineOption> options)
     {
+        var abiSpecified = false;
         var specFile = options.FirstOrDefault(x => x.Name == string.Empty)?.Value;
         if (specFile == null && !options.Any())
         {
@@ -126,7 +127,12 @@ class ParseSpec
                         {
                             throw new Exception("'abi' requires exactly one argument.");
                         }
+                        if (abiSpecified)
+                        {
+                            throw new Exception("'abi' can only be specified once in a spec file.");
+                        }
                         Abi = ParseAbi(parts[1]);
+                        abiSpecified = true;
                         break;
                     case "map-package":
                         var p = parts[1].Split(':');

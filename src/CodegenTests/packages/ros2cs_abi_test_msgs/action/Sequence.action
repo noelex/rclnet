@@ -1,0 +1,5 @@
+uint8[] goal_values
+---
+string[] result_values
+---
+Nested[] feedback_values
