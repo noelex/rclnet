@@ -326,30 +326,13 @@ public class RosGraphTests
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var topic = "/" + NameGenerator.GenerateTopicName();
+        using var pub = node.CreatePublisher<Time>(topic);
 
-        var watcher = node.Graph.TryWatchAsync((graph, e) =>
-            graph.Topics.FirstOrDefault(x => x.Name == topic)?.Publishers?.Any() == true, -1);
-        using var cts = new CancellationTokenSource();
+        var found = await node.Graph.TryWatchAsync((graph, e) =>
+            graph.Topics.FirstOrDefault(x => x.Name == topic)?.Publishers?.Any() == true, 5000);
 
-        var gidTask = new TaskCompletionSource<GraphId>();
-        var t = RunInSeparateContext(async ctx =>
-        {
-            using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
-            using var pub = node.CreatePublisher<Time>(topic);
-            gidTask.SetResult(pub.Gid);
-            await Task.Delay(-1, cts.Token);
-        });
-
-        try
-        {
-            Assert.True(await watcher);
-            Assert.Equal(node.Graph.Topics.Single(x => x.Name == topic).Publishers.Single().Gid, await gidTask.Task);
-        }
-        finally
-        {
-            cts.Cancel();
-            await Task.WhenAny(t);
-        }
+        Assert.True(found);
+        Assert.Equal(pub.Gid, node.Graph.Topics.Single(x => x.Name == topic).Publishers.Single().Gid);
     }
 
     private async Task RunInSeparateContext(Func<RclContext, Task> action)

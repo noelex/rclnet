@@ -184,7 +184,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         => SendGoalAsync(goalBuffer, (int)timeout.TotalMilliseconds, cancellationToken);
 
     public Task<INativeActionGoalContext> SendGoalAsync(RosMessageBuffer goalBuffer, CancellationToken cancellationToken = default)
-        => SendGoalAsync(goalBuffer, cancellationToken);
+        => SendGoalAsync(goalBuffer, -1, cancellationToken);
 
     public async Task<IActionGoalContext<TResult, TFeedback>> SendGoalAsync(TGoal goal, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {

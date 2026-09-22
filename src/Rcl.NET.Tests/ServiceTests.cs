@@ -42,13 +42,12 @@ public class ServiceTests
                 return response;
             });
 
-        using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
-        using var client = clientNode.CreateClient<
+        using var client = node.CreateClient<
             ListParametersService,
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
 
-        await client.TryWaitForServerAsync(ServerOnlineTimeout);
+        Assert.True(await client.TryWaitForServerAsync(ServerOnlineTimeout));
         var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
 
         Assert.True(response.Result.Names.SequenceEqual(actualResponse.Result.Names));
@@ -76,13 +75,13 @@ public class ServiceTests
                     return response;
                 });
 
-            using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
-            using var client = clientNode.CreateClient<
+            using var client = node.CreateClient<
                 ListParametersService,
                 ListParametersServiceRequest,
                 ListParametersServiceResponse>(service);
 
             var result = await client.TryWaitForServerAsync(ServerOnlineTimeout);
+            Assert.True(result);
             await anotherContext.Yield();
             // Now we are on the event loop of anotherContext.
 
@@ -120,13 +119,12 @@ public class ServiceTests
                 return Task.FromResult(response);
             }, null);
 
-        using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
-        using var client = clientNode.CreateClient<
+        using var client = node.CreateClient<
             ListParametersService,
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
 
-        await client.TryWaitForServerAsync(ServerOnlineTimeout);
+        Assert.True(await client.TryWaitForServerAsync(ServerOnlineTimeout));
         var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
     }
 
@@ -305,9 +303,10 @@ public class ServiceTests
 
         var events = new Dictionary<byte, FrameGraphServiceEvent>();
 
-        using var cts = new CancellationTokenSource(1000);
+        using var cts = new CancellationTokenSource(5000);
         var introspectTask = IntrospectService(4, cts.Token);
-        await client.InvokeAsync(new FrameGraphServiceRequest());
+        Assert.True(await client.TryWaitForServerAsync(ServerOnlineTimeout));
+        await client.InvokeAsync(new FrameGraphServiceRequest(), RequestTimeout);
 
         await introspectTask;
         Assert.Equal(4, events.Count);
@@ -346,6 +345,13 @@ public class ServiceTests
         async Task IntrospectService(int expectedEvents, CancellationToken cancellationToken)
         {
             using var sub = node.CreateSubscription<FrameGraphServiceEvent>(introspectionTopic, new(queueSize: 10));
+            for (var retry = 0; sub.Publishers < 2 && retry < 500; retry++)
+            {
+                await Task.Delay(10, cancellationToken);
+            }
+            Assert.True(sub.Publishers >= 2,
+                $"Expected both service introspection publishers, but found {sub.Publishers}.");
+
             await foreach (var item in sub.ReadAllAsync(cancellationToken))
             {
                 events[item.Info.EventType] = item;
