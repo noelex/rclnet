@@ -3,3 +3,25 @@ root = true
 [*]
 end_of_line = crlf
 
+[*.cs]
+dotnet_naming_rule.constants_should_be_pascal_case.severity = suggestion
+dotnet_naming_rule.constants_should_be_pascal_case.symbols = constants
+dotnet_naming_rule.constants_should_be_pascal_case.style = pascal_case
+
+dotnet_naming_rule.non_public_static_fields_should_have_s_prefix.severity = suggestion
+dotnet_naming_rule.non_public_static_fields_should_have_s_prefix.symbols = non_public_static_fields
+dotnet_naming_rule.non_public_static_fields_should_have_s_prefix.style = s_prefix
+
+dotnet_naming_symbols.constants.applicable_kinds = field
+dotnet_naming_symbols.constants.applicable_accessibilities = *
+dotnet_naming_symbols.constants.required_modifiers = const, static
+
+dotnet_naming_symbols.non_public_static_fields.applicable_kinds = field
+dotnet_naming_symbols.non_public_static_fields.applicable_accessibilities = private, internal, protected_internal, private_protected
+dotnet_naming_symbols.non_public_static_fields.required_modifiers = static
+
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+dotnet_naming_style.s_prefix.required_prefix = s_
+dotnet_naming_style.s_prefix.capitalization = camel_case
+

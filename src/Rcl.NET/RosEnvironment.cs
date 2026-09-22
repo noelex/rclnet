@@ -14,7 +14,7 @@ internal enum VersionRequirement
 /// </summary>
 public unsafe static class RosEnvironment
 {
-    private static readonly string[] SupportedDistributions = [Foxy, Humble, Iron, Jazzy, Kilted];
+    private static readonly string[] s_supportedDistributions = [Foxy, Humble, Iron, Jazzy, Kilted];
 
     /// <summary>
     /// ROS 2 Foxy Fitzroy.
@@ -89,13 +89,13 @@ public unsafe static class RosEnvironment
 
     internal static bool IsSupported(string targetDistro, VersionRequirement requirement = VersionRequirement.SinceInclusive)
     {
-        var v = Array.IndexOf(SupportedDistributions, Distribution);
+        var v = Array.IndexOf(s_supportedDistributions, Distribution);
         if (v < 0)
         {
             return false;
         }
 
-        var t = Array.IndexOf(SupportedDistributions, targetDistro);
+        var t = Array.IndexOf(s_supportedDistributions, targetDistro);
         if (t < 0)
         {
             throw new ArgumentException("Specified target distribution is not supported.", nameof(targetDistro));
