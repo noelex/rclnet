@@ -7,6 +7,7 @@ RUN echo "from urllib import request\nrequest.urlretrieve('https://packages.micr
        ros-foxy-rmw-cyclonedds-cpp \
        ros-foxy-rmw-fastrtps-cpp \
        ros-foxy-tf2-msgs \
+	   wget \
     && apt-get autoremove -y \
     && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
