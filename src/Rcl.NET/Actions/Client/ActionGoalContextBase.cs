@@ -97,7 +97,8 @@ internal abstract class ActionGoalContextBase : IDisposable, IActionGoalContext
             Debug.Assert(introspection.GetMemberName(0) == "status");
             Debug.Assert(introspection.GetMemberName(1) == "result");
 
-            var state = introspection.AsRef<ActionGoalStatus>(responseBuffer, 0);
+            // ActionGoalStatus maps directly to the ABI-independent int8 status member.
+            var state = introspection.UnsafeAsRef<ActionGoalStatus>(responseBuffer, 0);
             if (state != ActionGoalStatus.Succeeded)
             {
                 return state;

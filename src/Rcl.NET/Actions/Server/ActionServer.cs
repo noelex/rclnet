@@ -241,7 +241,8 @@ internal class ActionServer : IActionServer
         {
             await ctx.Completion.WaitAsync(cancellationToken).ConfigureAwait(false);
 
-            _typesupport.ResultService.Response.AsRef<ActionGoalStatus>(response.Data, 0) = ctx.Status;
+            // ActionGoalStatus maps directly to the ABI-independent int8 status member.
+            _typesupport.ResultService.Response.UnsafeAsRef<ActionGoalStatus>(response.Data, 0) = ctx.Status;
             if (ctx.Status == ActionGoalStatus.Succeeded)
             {
                 _functions.CopyResult(ctx.ResultBuffer.Data,
@@ -261,7 +262,8 @@ internal class ActionServer : IActionServer
         }
         else
         {
-            _typesupport.ResultService.Response.AsRef<ActionGoalStatus>(response.Data, 0) = ActionGoalStatus.Unknown;
+            // ActionGoalStatus maps directly to the ABI-independent int8 status member.
+            _typesupport.ResultService.Response.UnsafeAsRef<ActionGoalStatus>(response.Data, 0) = ActionGoalStatus.Unknown;
         }
     }
 

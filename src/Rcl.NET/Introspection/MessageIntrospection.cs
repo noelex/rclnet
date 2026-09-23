@@ -12,6 +12,9 @@ interface IMessageIntrospection
     RosMessageBuffer CreateBuffer();
 
     ref T AsRef<T>(nint msgPtr, int memberIndex)
+        where T : unmanaged, IRosidlNative;
+
+    ref T UnsafeAsRef<T>(nint msgPtr, int memberIndex)
         where T : unmanaged;
 
     nint GetMemberPointer(nint msgPtr, int memberIndex);

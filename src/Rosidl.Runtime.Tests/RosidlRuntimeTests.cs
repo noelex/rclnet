@@ -18,7 +18,7 @@ public class RosidlRuntimeTests
     [MemberData(nameof(SupportedDistributions))]
     public void ResolveNativeAbiMapsSupportedDistributions(string distro, RosidlNativeAbi expected)
     {
-        Assert.Equal(expected, RosidlRuntime.ResolveNativeAbi(distro));
+        Assert.Equal(expected, RosidlAbiResolver.Resolve(distro));
     }
 
     [Theory]
@@ -28,22 +28,19 @@ public class RosidlRuntimeTests
     public void ResolveNativeAbiRejectsUnsupportedDistributions(string? distro, string displayedDistro)
     {
         var exception = Assert.Throws<NotSupportedException>(
-            () => RosidlRuntime.ResolveNativeAbi(distro));
+            () => RosidlAbiResolver.Resolve(distro));
 
         Assert.Contains(displayedDistro, exception.Message);
         Assert.Contains("foxy, humble, iron, jazzy, kilted, lyrical", exception.Message);
     }
 
     [Fact]
-    public void NativeAbiIsResolvedOnFirstAccess()
+    public void NativeAbiIsResolvedDuringTypeInitialization()
     {
         var originalDistro = Environment.GetEnvironmentVariable("ROS_DISTRO");
 
         try
         {
-            Environment.SetEnvironmentVariable("ROS_DISTRO", null);
-            _ = new MessagePoco();
-
             Environment.SetEnvironmentVariable("ROS_DISTRO", "lyrical");
 
             Assert.Equal(RosidlNativeAbi.V2, RosidlRuntime.NativeAbi);
@@ -58,10 +55,5 @@ public class RosidlRuntimeTests
         {
             Environment.SetEnvironmentVariable("ROS_DISTRO", originalDistro);
         }
-    }
-
-    private sealed class MessagePoco
-    {
-        public RosidlNativeAbi Abi { get; init; }
     }
 }

@@ -62,7 +62,7 @@ public readonly struct RosMessageBuffer : IDisposable
     public unsafe ref T AsRef<T>()
         where T : unmanaged, IRosidlNative
     {
-        RosidlAbiGuard<T>.EnsureCompatible();
+        RosidlRuntime.RequireNativeAbi(T.Abi);
         return ref Unsafe.AsRef<T>(Data.ToPointer());
     }
 
@@ -98,19 +98,5 @@ public readonly struct RosMessageBuffer : IDisposable
     {
         return new(
              T.UnsafeCreate(), static (buffer, _) => T.UnsafeDestroy(buffer));
-    }
-}
-
-internal static class RosidlAbiGuard<T>
-    where T : unmanaged, IRosidlNative
-{
-    static RosidlAbiGuard()
-    {
-        RosidlRuntime.RequireNativeAbi(T.Abi);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void EnsureCompatible()
-    {
     }
 }

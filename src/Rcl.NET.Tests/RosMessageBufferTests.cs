@@ -25,7 +25,7 @@ public class RosMessageBufferTests
     {
         var buffer = new RosMessageBuffer(1, static (_, _) => { });
 
-        var exception = Assert.Throws<TypeInitializationException>(() =>
+        Assert.Throws<InvalidOperationException>(() =>
         {
             if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
             {
@@ -36,8 +36,6 @@ public class RosMessageBufferTests
                 buffer.AsRef<Scalar.Priv>();
             }
         });
-
-        Assert.IsType<InvalidOperationException>(exception.InnerException);
     }
 
     [Fact]

@@ -5,29 +5,27 @@ namespace Rosidl.Runtime;
 /// </summary>
 public static class RosidlRuntime
 {
-    private const string SupportedDistributions = "foxy, humble, iron, jazzy, kilted, lyrical";
-
-    private static readonly Lazy<RosidlNativeAbi> s_nativeAbi = new(
-        () => ResolveNativeAbi(Environment.GetEnvironmentVariable("ROS_DISTRO")));
+    private static readonly RosidlNativeAbi s_nativeAbi =
+        RosidlAbiResolver.Resolve(Environment.GetEnvironmentVariable("ROS_DISTRO"));
 
     /// <summary>
     /// Gets the native ROSIDL message ABI for the ROS distribution selected by
     /// the <c>ROS_DISTRO</c> environment variable.
     /// </summary>
     /// <remarks>
-    /// The environment variable is read when this property is accessed for the first time.
+    /// The environment variable is read when <see cref="RosidlRuntime"/> is initialized.
     /// </remarks>
-    /// <exception cref="NotSupportedException">
-    /// The selected ROS distribution is missing or unsupported.
+    /// <exception cref="TypeInitializationException">
+    /// Initialization failed because the selected ROS distribution is missing or unsupported.
     /// </exception>
-    public static RosidlNativeAbi NativeAbi => s_nativeAbi.Value;
+    public static RosidlNativeAbi NativeAbi => s_nativeAbi;
 
     /// <summary>
     /// Verifies that the current ROS distribution uses the expected native ROSIDL message ABI.
     /// </summary>
     /// <param name="expected">The native ABI required by the caller.</param>
-    /// <exception cref="NotSupportedException">
-    /// The selected ROS distribution is missing or unsupported.
+    /// <exception cref="TypeInitializationException">
+    /// Initialization failed because the selected ROS distribution is missing or unsupported.
     /// </exception>
     /// <exception cref="InvalidOperationException">
     /// The current native ROSIDL message ABI does not match <paramref name="expected"/>.
@@ -41,8 +39,13 @@ public static class RosidlRuntime
                 $"The current ROSIDL native ABI is '{actual}', but '{expected}' is required.");
         }
     }
+}
 
-    internal static RosidlNativeAbi ResolveNativeAbi(string? distro)
+internal static class RosidlAbiResolver
+{
+    private const string SupportedDistributions = "foxy, humble, iron, jazzy, kilted, lyrical";
+
+    public static RosidlNativeAbi Resolve(string? distro)
     {
         return distro switch
         {

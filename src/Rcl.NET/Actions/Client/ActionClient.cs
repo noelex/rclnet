@@ -171,13 +171,11 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
         {
             Debug.Assert(_typesupport.GoalService.Response.SizeOf == Unsafe.SizeOf<SendGoalResponse>());
-            return _typesupport.GoalService.Response
-                .AsRef<SendGoalResponse>(responseBuffer.Data, 0).Accepted;
+            return responseBuffer.AsRef<SendGoalResponse>().Accepted;
         }
 
         Debug.Assert(_typesupport.GoalService.Response.SizeOf == Unsafe.SizeOf<SendGoalResponseV2>());
-        return _typesupport.GoalService.Response
-            .AsRef<SendGoalResponseV2>(responseBuffer.Data, 0).Accepted;
+        return responseBuffer.AsRef<SendGoalResponseV2>().Accepted;
     }
 
     public async Task<INativeActionGoalContext> SendGoalAsync(RosMessageBuffer goalBuffer, int timeoutMilliseconds, CancellationToken cancellationToken = default)
