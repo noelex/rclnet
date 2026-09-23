@@ -12,7 +12,7 @@ public class AbiIntegrationTests
     [SkippableFact]
     public async Task PortableSequenceMessagesRoundTrip()
     {
-        RequireLyrical();
+        RequireTestInterfaces();
 
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
@@ -44,7 +44,7 @@ public class AbiIntegrationTests
     [SkippableFact]
     public async Task PortableNativeBufferSubscriptionRoundTrip()
     {
-        RequireLyrical();
+        RequireTestInterfaces();
 
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
@@ -67,7 +67,7 @@ public class AbiIntegrationTests
     [SkippableFact]
     public async Task PortableSequenceServiceRoundTrip()
     {
-        RequireLyrical();
+        RequireTestInterfaces();
 
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
@@ -92,7 +92,7 @@ public class AbiIntegrationTests
     [SkippableFact]
     public async Task PortableSequenceActionRoundTrip()
     {
-        RequireLyrical();
+        RequireTestInterfaces();
 
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
@@ -121,10 +121,8 @@ public class AbiIntegrationTests
         Assert.Equal(new byte[] { 18, 19 }, feedback.FeedbackValues[0].Value.Data);
     }
 
-    private static void RequireLyrical()
+    private static void RequireTestInterfaces()
     {
-        Skip.If(!RosEnvironment.IsLyrical, "The ABI integration tests target ROS 2 Lyrical.");
-
         try
         {
             _ = PrimitiveSequence.GetTypeSupportHandle();

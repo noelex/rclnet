@@ -145,6 +145,12 @@ jobs:
           Invoke-WebRequest -Uri ${{ matrix.ros_archive }} -OutFile ros2-release.zip
           Expand-Archive -Path ros2-release.zip c:/dev/${{ matrix.ros_distribution }}
 
+      - name: Setup Python (Legacy)
+        if: ${{ matrix.is_legacy_distro }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
       - name: Install dependencies (Legacy)
         if: ${{ matrix.is_legacy_distro }}
         run: |
@@ -152,6 +158,7 @@ jobs:
           Invoke-WebRequest -Uri https://github.com/ros2/choco-packages/releases/download/2022-03-15/tinyxml2.6.0.0.nupkg -OutFile tinyxml2.6.0.0.nupkg
           choco install --limit-output --no-progress -y -s . tinyxml2
           choco install --limit-output --no-progress -y openssl --version 1.1.1.2100
+          python -m pip install --upgrade "setuptools<60" "numpy<2" catkin_pkg colcon-common-extensions empy==3.3.4 lark-parser
 
       - name: Install Pixi
         if: ${{ !matrix.is_legacy_distro }}
@@ -180,6 +187,15 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 8.0.x
+
+      - name: Build ABI test interfaces (Legacy)
+        if: ${{ matrix.is_legacy_distro }}
+        shell: cmd
+        run: |
+          refreshenv && ^
+          set "PATH=%pythonLocation%;%pythonLocation%\Scripts;%PATH%" && ^
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
+          "%pythonLocation%\Scripts\colcon.exe" build --merge-install --packages-select ros2cs_abi_test_msgs --base-paths src/CodegenTests/packages
 
       - name: Build ABI test interfaces
         if: ${{ !matrix.is_legacy_distro }}
@@ -215,6 +231,7 @@ jobs:
         run: |
           refreshenv && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
+          call ${{ github.workspace }}/install/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds) (Legacy)
@@ -227,6 +244,7 @@ jobs:
         run: |
           refreshenv && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
+          call ${{ github.workspace }}/install/setup.bat && ^
           dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (fastrtps)
