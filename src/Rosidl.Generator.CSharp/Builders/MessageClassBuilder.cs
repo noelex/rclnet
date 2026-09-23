@@ -239,10 +239,7 @@ public class MessageClassBuilder
             """);
         builder.AppendLine("{");
 
-        if (nativeLayout.RequiresAbiGuard)
-        {
-            builder.AppendLine($"    {nativeLayout.RequireNativeAbiStatement}");
-        }
+        builder.AppendLine($"    {nativeLayout.RequireNativeAbiStatement}");
 
         var previousLineIsBlank = true;
         for (var i = 0; i < _variables.Length; i++)
@@ -790,10 +787,7 @@ public class MessageClassBuilder
 
         method.Body = (writer, element) =>
         {
-            if (nativeLayout.RequiresAbiGuard)
-            {
-                writer.WriteLine(nativeLayout.RequireNativeAbiStatement);
-            }
+            writer.WriteLine(nativeLayout.RequireNativeAbiStatement);
             var previousLineIsBlank = true;
             for (var i = 0; i < _context.Variables.Length; i++)
             {

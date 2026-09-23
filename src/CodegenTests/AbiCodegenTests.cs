@@ -158,12 +158,76 @@ public class AbiCodegenTests
 
         try
         {
-            Environment.SetEnvironmentVariable("ROS_DISTRO", "kilted");
+            Environment.SetEnvironmentVariable("ROS_DISTRO", originalDistro ?? "kilted");
 
             var exception = Assert.Throws<InvalidOperationException>(
-                () => Portable.Scalar.PrivV2.TryInitialize(out _));
+                () =>
+                {
+                    if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+                        Portable.Scalar.PrivV2.TryInitialize(out _);
+                    else
+                        Portable.Scalar.Priv.TryInitialize(out _);
+                });
             Assert.Contains("V2", exception.Message);
             Assert.Contains("V1", exception.Message);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("ROS_DISTRO", originalDistro);
+        }
+    }
+
+    [Fact]
+    public unsafe void FixedModesRejectWrongAbiBeforeNativeAccess()
+    {
+        var originalDistro = Environment.GetEnvironmentVariable("ROS_DISTRO");
+        try
+        {
+            Environment.SetEnvironmentVariable("ROS_DISTRO", originalDistro ?? "kilted");
+            if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V2)
+            {
+                var value = default(V1.Scalar.Priv);
+                var sequence = default(V1.Scalar.PrivSequence);
+                var array = default(V1.FixedComplexArray.Priv);
+
+                Assert.Throws<InvalidOperationException>(() => new V1.Scalar.Priv());
+                Assert.Throws<InvalidOperationException>(() => value.CopyFrom(value));
+                Assert.Throws<InvalidOperationException>(() => value.Dispose());
+                Assert.Throws<InvalidOperationException>(() => value.Equals(value));
+                Assert.Throws<InvalidOperationException>(() => { _ = V1.Scalar.Priv.Create(); });
+                Assert.Throws<InvalidOperationException>(() => V1.Scalar.Priv.Destroy(null));
+                Assert.Throws<InvalidOperationException>(() => new V1.Scalar(in value, System.Text.Encoding.UTF8));
+                Assert.Throws<InvalidOperationException>(() => new V1.Scalar().WriteTo(ref value, System.Text.Encoding.UTF8));
+                Assert.Throws<InvalidOperationException>(() => new V1.Scalar.PrivSequence(1));
+                Assert.Throws<InvalidOperationException>(() => sequence.CopyFrom(sequence));
+                Assert.Throws<InvalidOperationException>(() => sequence.CopyFrom(ReadOnlySpan<V1.Scalar.Priv>.Empty));
+                Assert.Throws<InvalidOperationException>(() => sequence.Dispose());
+                Assert.Throws<InvalidOperationException>(() => sequence.Equals(sequence));
+                Assert.Throws<InvalidOperationException>(() => { _ = sequence.AsSpan(); });
+                Assert.Throws<InvalidOperationException>(() => { _ = array.Values; });
+            }
+            else
+            {
+                var value = default(V2.Scalar.Priv);
+                var sequence = default(V2.Scalar.PrivSequence);
+                var array = default(V2.FixedComplexArray.Priv);
+
+                Assert.Throws<InvalidOperationException>(() => new V2.Scalar.Priv());
+                Assert.Throws<InvalidOperationException>(() => value.CopyFrom(value));
+                Assert.Throws<InvalidOperationException>(() => value.Dispose());
+                Assert.Throws<InvalidOperationException>(() => value.Equals(value));
+                Assert.Throws<InvalidOperationException>(() => { _ = V2.Scalar.Priv.Create(); });
+                Assert.Throws<InvalidOperationException>(() => V2.Scalar.Priv.Destroy(null));
+                Assert.Throws<InvalidOperationException>(() => new V2.Scalar(in value, System.Text.Encoding.UTF8));
+                Assert.Throws<InvalidOperationException>(() => new V2.Scalar().WriteTo(ref value, System.Text.Encoding.UTF8));
+                Assert.Throws<InvalidOperationException>(() => new V2.Scalar.PrivSequence(1));
+                Assert.Throws<InvalidOperationException>(() => sequence.CopyFrom(sequence));
+                Assert.Throws<InvalidOperationException>(() => sequence.CopyFrom(ReadOnlySpan<V2.Scalar.Priv>.Empty));
+                Assert.Throws<InvalidOperationException>(() => sequence.Dispose());
+                Assert.Throws<InvalidOperationException>(() => sequence.Equals(sequence));
+                Assert.Throws<InvalidOperationException>(() => { _ = sequence.AsSpan(); });
+                Assert.Throws<InvalidOperationException>(() => { _ = array.Values; });
+            }
         }
         finally
         {

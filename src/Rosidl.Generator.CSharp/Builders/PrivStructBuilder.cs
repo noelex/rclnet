@@ -56,10 +56,7 @@ public class PrivStructBuilder
                     }.AddComments(variable.Metadata);
                     spanProp.GetBody = (writer, element) =>
                     {
-                        if (context.RequiresAbiGuard)
-                        {
-                            writer.WriteLine(context.RequireNativeAbiStatement);
-                        }
+                        writer.WriteLine(context.RequireNativeAbiStatement);
                         writer.WriteLine($"fixed ({context.GetMessagePrivStructReferenceName(context.MessageContext.Metadata)}* __p = &this) return new (__p->__{variable.Name}, {variable.FixedSize});");
                     };
                     spanProp.Attributes.Add(Attributes.DebuggerNonUserCode);
@@ -94,10 +91,7 @@ public class PrivStructBuilder
                     }.AddComments(variable.Metadata);
                     spanProp.GetBody = (writer, element) =>
                     {
-                        if (context.RequiresAbiGuard)
-                        {
-                            writer.WriteLine(context.RequireNativeAbiStatement);
-                        }
+                        writer.WriteLine(context.RequireNativeAbiStatement);
                         writer.WriteLine($"fixed ({typeName}* __p = &__{variable.Name}_0) return new (__p, {variable.FixedSize});");
                     };
                     spanProp.Attributes.Add(Attributes.DebuggerNonUserCode);
@@ -230,10 +224,7 @@ public class PrivStructBuilder
 
         method.Body = (writer, element) =>
         {
-            if (context.NativeLayoutContext.RequiresAbiGuard)
-            {
-                writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
-            }
+            writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
             writer.WriteLine($$"""
                 fixed ({{structType}}* pMsg = &msg)
                 {

@@ -259,8 +259,6 @@ internal sealed class NativeLayoutBuildContext
 
     public string PrivSequenceNameFullyQualified => GetMessagePrivStructSequenceReferenceName(MessageContext.Metadata);
 
-    public bool RequiresAbiGuard => MessageContext.Options.Abi == RosidlAbiMode.Portable;
-
     public string NativeAbiExpression => $"global::Rosidl.Runtime.RosidlNativeAbi.{Layout}";
 
     public string RequireNativeAbiStatement =>

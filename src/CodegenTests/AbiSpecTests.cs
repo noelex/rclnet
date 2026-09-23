@@ -95,6 +95,7 @@ public class AbiSpecTests
             {
                 var contents = File.ReadAllText(path);
                 Assert.Contains($"RosidlNativeAbi.{expectedAbi}", contents);
+                Assert.Contains($"RosidlRuntime.RequireNativeAbi(global::Rosidl.Runtime.RosidlNativeAbi.{expectedAbi});", contents);
                 Assert.DoesNotContain($"RosidlNativeAbi.{unexpectedAbi}", contents);
             });
         }

@@ -149,9 +149,6 @@ internal static class PInvokeEmitHelper
 
     private static void WriteAbiGuard(CppAst.CodeGen.Common.CodeWriter writer, MethodBuildContext context)
     {
-        if (context.NativeLayoutContext.RequiresAbiGuard)
-        {
-            writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
-        }
+        writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
     }
 }

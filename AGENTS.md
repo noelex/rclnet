@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## README Changes
+
+- Do not modify `README.md` without the user's explicit instruction.
+
 ## ROS Integration Testing
 
 - Use the Visual Studio Docker test environments defined in `src/testEnvironments.json`.

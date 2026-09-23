@@ -128,10 +128,7 @@ public class PrivStructSequenceBuilder
 
         method.Body = (writer, element) =>
         {
-            if (context.NativeLayoutContext.RequiresAbiGuard)
-            {
-                writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
-            }
+            writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
             writer.WriteLine($$"""
                 fixed ({{structType}}* pMsg = &msg)
                 {
@@ -155,10 +152,7 @@ public class PrivStructSequenceBuilder
             ReturnType = new CSharpFreeType($"System.Span<{context.NativeLayoutContext.PrivName}>"),
             Body = (writer, element) =>
             {
-                if (context.NativeLayoutContext.RequiresAbiGuard)
-                {
-                    writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
-                }
+                writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
                 writer.WriteLine("return new(__data, Size);");
             }
         };
@@ -179,10 +173,7 @@ public class PrivStructSequenceBuilder
 
         method.Body = (writer, element) =>
         {
-            if (context.NativeLayoutContext.RequiresAbiGuard)
-            {
-                writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
-            }
+            writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
             writer.WriteLine($$"""
                     Finalize(ref this);
                     ThrowIfNonSuccess(TryInitialize(src.Length, out this));
