@@ -9,6 +9,36 @@ public class ClockTests
     private const int Timeout = 5_000;
 
     [Fact]
+    public async Task TimeProviderPreservesNanosecondTimestamps()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var publisherNode = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var clockPublisher = publisherNode.CreatePublisher<Clock>("/clock", new(qos: QosProfile.Clock));
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName(),
+            options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
+
+        await WaitForSubscribersAsync(clockPublisher);
+        using var buffer = RosMessageBuffer.Create<Clock>();
+        var provider = node.TimeProvider;
+        Assert.Equal(1_000_000_000L, provider.TimestampFrequency);
+
+        // An epoch-sized value with sub-tick precision exposes floating-point rounding.
+        const long initialNanoseconds = 1_700_000_000_000_000_123;
+        foreach (var nanoseconds in new[] { initialNanoseconds, initialNanoseconds + 1_000 })
+        {
+            PublishClock(clockPublisher, buffer, nanoseconds);
+            for (var retry = 0; provider.GetTimestamp() != nanoseconds && retry < 500; retry++)
+            {
+                await Task.Delay(10);
+            }
+
+            Assert.Equal(nanoseconds, provider.GetTimestamp());
+        }
+
+        Assert.Equal(TimeSpan.FromTicks(10), provider.GetElapsedTime(initialNanoseconds, provider.GetTimestamp()));
+    }
+
+    [Fact]
     public async Task CancellationTokenSourceUsesRosClock()
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
@@ -162,8 +192,10 @@ public class ClockTests
     }
 
     private static void PublishClock(IRclPublisher publisher, RosMessageBuffer buffer, TimeSpan time)
+        => PublishClock(publisher, buffer, time.Ticks * 100);
+
+    private static void PublishClock(IRclPublisher publisher, RosMessageBuffer buffer, long nanoseconds)
     {
-        var nanoseconds = time.Ticks * 100;
         var seconds = (int)(nanoseconds / 1_000_000_000);
         var remainder = (uint)(nanoseconds % 1_000_000_000);
 

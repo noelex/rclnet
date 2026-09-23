@@ -38,10 +38,10 @@ public sealed class RclTimeProvider : TimeProvider, IDisposable
         => _clock.Type == RclClockType.Steady ? TimeProvider.System.GetUtcNow() : _clock.Now;
 
     /// <inheritdoc/>
-    public override long GetTimestamp() => _clock.Elapsed.Ticks;
+    public override long GetTimestamp() => _clock.Impl.Nanoseconds;
 
     /// <inheritdoc/>
-    public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+    public override long TimestampFrequency => 1_000_000_000;
 
     /// <inheritdoc/>
     public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
