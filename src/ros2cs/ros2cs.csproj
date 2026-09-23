@@ -15,7 +15,7 @@
 	  <ToolCommandName>ros2cs</ToolCommandName>
     <PackageId>ros2cs</PackageId>
     <Description>
-      <![CDATA[Generates C# source codes from ROS2 interface definitions for use with rclnet.]]>
+      <![CDATA[ros2cs generates C# types from ROS 2 message, service, and action definitions for use with Rcl.NET.]]>
     </Description>
   </PropertyGroup>
 

@@ -15,6 +15,7 @@ jobs:
           - iron
           - jazzy
           - kilted
+          - lyrical
         include:
           - ros_distribution: foxy
             docker_image: ros:foxy-ros-base
@@ -26,6 +27,8 @@ jobs:
             docker_image: ros:jazzy-ros-base
           - ros_distribution: kilted
             docker_image: ros:kilted-ros-base
+          - ros_distribution: lyrical
+            docker_image: ros:lyrical-ros-base
     container:
       image: ${{ matrix.docker_image }}
     steps:
@@ -38,11 +41,21 @@ jobs:
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
           # ros:foxy-ros-base is no longer being updated due to EOL of foxy.
           # We have to pull the new GPG key for ROS package repository manually.
-          apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4B63CF8FDE49746E98FA01DDAD19BAB3CBF125EA
+          if [ "${{ matrix.ros_distribution }}" = "foxy" ]; then
+            apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 4B63CF8FDE49746E98FA01DDAD19BAB3CBF125EA
+          fi
           apt update
-          apt install -y curl
+          apt install -y curl python3-colcon-common-extensions
+          if [ "${{ matrix.ros_distribution }}" = "lyrical" ]; then
+            apt install -y libicu78
+          fi
           rosdep update --include-eol-distros
-          rosdep install -i -y --from-paths src/Rcl.NET.Tests
+          rosdep install -i -y --from-paths src/Rcl.NET.Tests src/CodegenTests/packages/ros2cs_abi_test_msgs
+
+      - name: Build ABI test interfaces
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          colcon build --merge-install --packages-select ros2cs_abi_test_msgs --base-paths src/CodegenTests/packages
 
       - name: Setup .NET 8.0
         uses: actions/setup-dotnet@v3
@@ -59,6 +72,18 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Test code generation
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          . "$GITHUB_WORKSPACE/install/setup.sh"
+          dotnet test src/CodegenTests/CodegenTests.csproj -c Release --verbosity normal
+
+      - name: Test Rosidl runtime
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          . "$GITHUB_WORKSPACE/install/setup.sh"
+          dotnet test src/Rosidl.Runtime.Tests/Rosidl.Runtime.Tests.csproj -c Release --verbosity normal
+
       - name: Build
         working-directory: src/Rcl.NET.Tests
         run: |
@@ -72,7 +97,8 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh && \
-          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          . "$GITHUB_WORKSPACE/install/setup.sh" && \
+          dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds)
         if: ${{ matrix.ros_distribution != 'foxy' }}
@@ -82,10 +108,11 @@ jobs:
           ROS_LOCALHOST_ONLY: 0
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh && \
-          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          . "$GITHUB_WORKSPACE/install/setup.sh" && \
+          dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
   windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
@@ -95,7 +122,11 @@ jobs:
           - iron
           - jazzy
           - kilted
+          - lyrical
         include:
+          - ros_distribution: lyrical
+            ros_archive: https://github.com/ros2/ros2/releases/download/release-lyrical-20260807/ros2-lyrical-2026-08-07-windows-AMD64.zip
+            is_legacy_distro: false
           - ros_distribution: kilted
             ros_archive: https://github.com/ros2/ros2/releases/download/release-kilted-20250728/ros2-kilted-20250728-windows-release-amd64.zip
             is_legacy_distro: false
@@ -129,6 +160,12 @@ jobs:
           Invoke-WebRequest -Uri ${{ matrix.ros_archive }} -OutFile ros2-release.zip
           Expand-Archive -Path ros2-release.zip c:/dev/${{ matrix.ros_distribution }}
 
+      - name: Setup Python (Legacy)
+        if: ${{ matrix.is_legacy_distro }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
       - name: Install dependencies (Legacy)
         if: ${{ matrix.is_legacy_distro }}
         run: |
@@ -136,6 +173,26 @@ jobs:
           Invoke-WebRequest -Uri https://github.com/ros2/choco-packages/releases/download/2022-03-15/tinyxml2.6.0.0.nupkg -OutFile tinyxml2.6.0.0.nupkg
           choco install --limit-output --no-progress -y -s . tinyxml2
           choco install --limit-output --no-progress -y openssl --version 1.1.1.2100
+          python -m pip install --upgrade "setuptools<60" "numpy<2" catkin_pkg colcon-common-extensions empy==3.3.4 lark-parser
+
+      - name: Map legacy ROS Python installation path
+        if: ${{ matrix.is_legacy_distro }}
+        shell: pwsh
+        run: |
+          # The ROS binaries export CMake targets containing absolute C:\Python38 paths.
+          $pythonRoot = (Resolve-Path -LiteralPath $env:pythonLocation).Path
+          $legacyRoot = 'C:\Python38'
+          if (Test-Path -LiteralPath $legacyRoot) {
+            $existing = Get-Item -LiteralPath $legacyRoot
+            if ($existing.LinkType -ne 'Junction' -or $existing.Target -ne $pythonRoot) {
+              throw "Expected $legacyRoot to be a junction to $pythonRoot."
+            }
+          } else {
+            New-Item -ItemType Junction -Path $legacyRoot -Target $pythonRoot | Out-Null
+          }
+          if (-not (Test-Path -LiteralPath "$legacyRoot\lib\site-packages\numpy\core\include\numpy\arrayobject.h")) {
+            throw 'The legacy ROS NumPy include path is not available.'
+          }
 
       - name: Install Pixi
         if: ${{ !matrix.is_legacy_distro }}
@@ -165,6 +222,34 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Find Visual Studio developer command prompt
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $installation = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installation) { throw 'Visual Studio C++ tools not found.' }
+          $vsDevCmd = Join-Path $installation 'Common7\Tools\VsDevCmd.bat'
+          "VSDEVCMD=$vsDevCmd" >> $env:GITHUB_ENV
+
+      - name: Build ABI test interfaces (Legacy)
+        if: ${{ matrix.is_legacy_distro }}
+        shell: cmd
+        run: |
+          refreshenv && ^
+          call "%VSDEVCMD%" -arch=amd64 && ^
+          set "PATH=%pythonLocation%;%pythonLocation%\Scripts;%PATH%" && ^
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
+          "%pythonLocation%\Scripts\colcon.exe" build --merge-install --packages-select ros2cs_abi_test_msgs --base-paths src/CodegenTests/packages --cmake-args "-DPython3_EXECUTABLE=%pythonLocation%\python.exe"
+
+      - name: Build ABI test interfaces
+        if: ${{ !matrix.is_legacy_distro }}
+        shell: cmd
+        run: |
+          refreshenv && ^
+          call "%VSDEVCMD%" -arch=amd64 && ^
+          pixi run --manifest-path "c:/dev/pixi/" ^
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && colcon build --merge-install --packages-select ros2cs_abi_test_msgs --base-paths src/CodegenTests/packages"
+
       - name: Setup .NET 9.0
         uses: actions/setup-dotnet@v3
         with:
@@ -174,6 +259,40 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 10.0.x
+
+      - name: Test code generation (Legacy)
+        if: ${{ matrix.is_legacy_distro }}
+        shell: cmd
+        run: |
+          refreshenv && ^
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
+          call install/setup.bat && ^
+          dotnet test src/CodegenTests/CodegenTests.csproj -c Release --verbosity normal
+
+      - name: Test code generation
+        if: ${{ !matrix.is_legacy_distro }}
+        shell: cmd
+        run: |
+          refreshenv && ^
+          pixi run --manifest-path "c:/dev/pixi/" ^
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call install/setup.bat && dotnet test src/CodegenTests/CodegenTests.csproj -c Release --verbosity normal"
+
+      - name: Test Rosidl runtime (Legacy)
+        if: ${{ matrix.is_legacy_distro }}
+        shell: cmd
+        run: |
+          refreshenv && ^
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
+          call install/setup.bat && ^
+          dotnet test src/Rosidl.Runtime.Tests/Rosidl.Runtime.Tests.csproj -c Release --verbosity normal
+
+      - name: Test Rosidl runtime
+        if: ${{ !matrix.is_legacy_distro }}
+        shell: cmd
+        run: |
+          refreshenv && ^
+          pixi run --manifest-path "c:/dev/pixi/" ^
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call install/setup.bat && dotnet test src/Rosidl.Runtime.Tests/Rosidl.Runtime.Tests.csproj -c Release --verbosity normal"
 
       - name: Build
         working-directory: src/Rcl.NET.Tests
@@ -191,7 +310,8 @@ jobs:
         run: |
           refreshenv && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
-          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          call ${{ github.workspace }}/install/setup.bat && ^
+          dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds) (Legacy)
         if: ${{ matrix.is_legacy_distro && matrix.ros_distribution != 'foxy' }}
@@ -203,7 +323,8 @@ jobs:
         run: |
           refreshenv && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
-          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          call ${{ github.workspace }}/install/setup.bat && ^
+          dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (fastrtps)
         if: ${{ !matrix.is_legacy_distro }}
@@ -215,7 +336,7 @@ jobs:
         run: |
           refreshenv && ^
           pixi run --manifest-path "c:/dev/pixi/" ^
-          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call ${{ github.workspace }}/install/setup.bat && dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
 
       - name: Test (cyclonedds)
         if: ${{ !matrix.is_legacy_distro }}
@@ -227,52 +348,4 @@ jobs:
         run: |
           refreshenv && ^
           pixi run --manifest-path "c:/dev/pixi/" ^
-          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
-
-  #test_macos:
-  #  runs-on: macos-latest
-  #  strategy:
-  #    matrix:
-  #      ros_distribution:
-  #        - foxy
-  #        - humble
-  #  steps:
-  #    - uses: actions/checkout@v2
-  
-  #    - name: Setup ROS environment
-  #      uses: ros-tooling/setup-ros@v0.6
-  #      with:
-  #        required-ros-distributions: ${{ matrix.ros_distribution }}
-
-  #    - name: Install additional ROS dependencies
-  #      run: |
-  #        . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-  #        rosdep update
-  #        rosdep install -i -y --from-paths src/Rcl.NET.Tests
-
-  #    - name: Setup .NET 7.0
-  #      uses: actions/setup-dotnet@v1
-  #      with:
-  #        dotnet-version: 7.0.x
-
-  #    - name: Build
-  #      working-directory: src/Rcl.NET.Tests
-  #      run: |
-  #        dotnet nuget locals all --clear
-  #        dotnet build -c Release
-
-  #    - name: Test (fastrtps)
-  #      working-directory: src/Rcl.NET.Tests
-  #      env:
-  #        RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-  #      run: |
-  #        . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-  #        dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
-
-  #    - name: Test (cyclonedds)
-  #      working-directory: src/Rcl.NET.Tests
-  #      env:
-  #        RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
-  #      run: |
-  #        . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
-  #        dotnet test -c Release --no-build --verbosity normal -p:ParallelizeTestCollections=false
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call ${{ github.workspace }}/install/setup.bat && dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"

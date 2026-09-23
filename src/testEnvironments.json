@@ -1,4 +1,4 @@
-﻿{
+{
   "version": "1",
   "environments": [
     {
@@ -40,6 +40,11 @@
       "name": "Container - Kilted",
       "type": "docker",
       "dockerFile": "Rcl.NET.Tests/kilted.Dockerfile"
+    },
+    {
+      "name": "Container - Lyrical",
+      "type": "docker",
+      "dockerFile": "Rcl.NET.Tests/lyrical.Dockerfile"
     }
   ]
 }

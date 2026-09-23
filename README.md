@@ -1,346 +1,703 @@
 # rclnet
-rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.
 
-## What's New in 2.0
- - Added support for .NET 10 and changed minimum supported .NET version to 8.0
- - ROS 2 Kilted Support
- - ROS 2 Jazzy Support by @AlrayQiu ([#39](https://github.com/noelex/rclnet/pull/39))
- - Simplified message generation workflow by @ha-ves ([#38](https://github.com/noelex/rclnet/pull/38))
- - String pooling is now disabled by default
+**🚀Modern ROS 2 for .NET.**
 
-## Features
-- Completely asynchronous and `async`/`await` friendly.
-- Flexible asynchronous scheduling control to fit rclnet into existing applications.
-- Unified message generation for POCOs and blittable structures.
-- Intuitive ROS graph querying and monitoring APIs.
-- Easy-to-use POCO-based APIs.
-- Fast and zero managed heap allocation APIs operating directly on native message buffers.
-- Single package with runtime support for different ROS 2 distros.
-- Builtin support for querying topic messages and ROS graph events with [Reactive Extensions](https://github.com/dotnet/reactive).
+rclnet is a high-performance, asynchronous .NET client library for ROS 2, designed to feel like a native part of the .NET ecosystem rather than a thin port of the C++ API.
 
-### Supported ROS Features
-| Feature                 | Status | Additional Information                                                                                                                                                                                                                       |
-| ----------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Topics                  | ✅      | N/A                                                                                                                                                                                                                                          |
-| Services                | ✅      | N/A                                                                                                                                                                                                                                          |
-| Actions                 | ✅      | Managed implementation.                                                                                                                                                                                                                      |
-| Clocks                  | ✅      | Supports external time source by setting `use_sim_time` to `true`.<br/>`CancellationTokenSource`s can also be configured to cancel with timeout measured by external clock.                                                                  |
-| Timers                  | ✅      | N/A                                                                                                                                                                                                                                          |
-| Guard Conditions        | ✅      | N/A                                                                                                                                                                                                                                          |
-| Events                  | ✅      | Event handlers can be registered via `SubscriptionOptions` or `PublisherOptions` when creating the subscirption or publisher.                                                                                                                |
-| ROS Graph               | ✅      | Managed implementation.                                                                                                                                                                                                                      |
-| Logging                 | ✅      | Supports logging to stdout, /rosout and log files. Configurable with `--ros-args`.                                                                                                                                                           |
-| [Content Filtered Topics](https://github.com/ros2/design/blob/918c09758ed4c0854aa128b9c8ed0051c21a6590/articles/content_filtering.md) | ✅      | Available since humble. 
-| [Network Flow Endpoints](https://design.ros2.org/articles/unique_network_flows.html)  | ✅      | Available since galactic.<br/>Network flow endpoints of publishers and subscriptions can be retrieved via `IRclPublisher.Endpoints` and `IRclSubscription.Endpoints` property.<br/>Unique network flow endpoints requirement can be configured when creating `SubscriptionOptions` and `PublisherOptions`.|
-| [Service Introspection](https://github.com/ros-infrastructure/rep/blob/jacob/service_introspection/rep-2012.rst)   | ✅      | Available since iron. |
-| [Parameter Service](https://design.ros2.org/articles/ros_parameters.html)       | ⚠️      | Supports loading parameters from command-line arguments and parameter files.<br/>Locally declared parameters are exposed via Parameter API.<br/>Parameter client is not implemented. |
-| [Lifecycle Nodes](https://design.ros2.org/articles/node_lifecycle.html)         | ❌      | N/A                                                                                                                                                                                                                                          |
+* **One assembly, multiple ROS 2 distributions** — run the same application binaries across supported ROS 2 releases.
+* **NuGet and MSBuild first** — use ROS 2 from a normal .NET project with interface generation integrated into `dotnet build`.
+* **Async by design** — ROS communication integrates naturally with `async`/`await`, `Task`, and `IAsyncEnumerable<T>`.
+* **High-level and low-level APIs** — use managed messages or access native message buffers directly when performance matters.
+* **Cross-platform by default** — use the same managed APIs and assemblies across Linux and Windows.
+
+## What's New in 3.0
+- ROS 2 Lyrical support
+- Portable ROSIDL ABI support
+- Incremental MSBuild support for generated interfaces
+- .NET `TimeProvider` integration, including ROS-time-aware delays and timers
+
+## ROS 2 Feature Support
+| Feature                 | Support | Notes                                                     |
+| ----------------------- | ------- | --------------------------------------------------------- |
+| Topics                  | ✅       |                                                           |
+| Services                | ✅       |                                                           |
+| Actions                 | ✅       | Managed implementation                                    |
+| Clocks & Timers         | ✅       | `use_sim_time` supported; .NET `TimeProvider` integration |
+| Guard Conditions        | ✅       |                                                           |
+| ROS Graph               | ✅       | Managed graph API                                         |
+| Logging                 | ✅       | stdout, `/rosout`, log files                              |
+| [Content Filtered Topics](https://github.com/ros2/design/blob/918c09758ed4c0854aa128b9c8ed0051c21a6590/articles/content_filtering.md) | ✅       | Humble+                                                   |
+| [Network Flow Endpoints](https://design.ros2.org/articles/unique_network_flows.html)  | ✅       | Humble+                                                 |
+| [Service Introspection](https://github.com/ros-infrastructure/rep/blob/jacob/service_introspection/rep-2012.rst)   | ✅       | Iron+                                                     |
+| [Parameters](https://design.ros2.org/articles/ros_parameters.html)              | ⚠️       | Local parameters and parameter files; no parameter client |
+| [Lifecycle Nodes](https://design.ros2.org/articles/node_lifecycle.html)         | ❌       |                                                           |
 
 ✅Supported ⚠️Partial support ❌Not supported ⏳In development
 
 ## Supported Platforms
-Supported .NET Versions:
-- .NET 8
-- .NET 9
-- .NET 10
 
-Supported ROS 2 Distributions:
-- Foxy Fitzroy
-- Humble Hawksbill
-- Iron Irwini
-- Jazzy Jalisco
-- Kilted Kaiju
+### ROS 2 distributions
 
-Supported Operating Systems:
-- Ubuntu
-- Windows
+| Distribution | ROSIDL ABI | Support |
+| --- | --- | --- |
+| Lyrical Luth | V2 | ✅ Supported |
+| Kilted Kaiju | V1 | ✅ Supported |
+| Jazzy Jalisco | V1 | ✅ Supported |
+| Humble Hawksbill | V1 | ✅ Supported |
+| Iron Irwini | V1 | 🟡 Legacy |
+| Foxy Fitzroy | V1 | 🟡 Legacy |
 
-Should also work on macOS but untested.
+Legacy distributions remain compatible where practical, but new features may require a currently supported ROS 2 distribution.
+
+### .NET and operating systems
+
+- **.NET:** 8, 9, 10
+- **Operating systems:** Linux and Windows
+
+macOS is not currently tested or officially supported.
 
 ## Installing
-Stable releases of rclnet are hosted on NuGet. You can install them using the following command:
-```
+
+Install rclnet from NuGet:
+
+```bash
 dotnet add package Rcl.NET
 ```
 
-## Generating Messages
+rclnet uses the native ROS 2 runtime installed on the target machine. The NuGet package contains the managed .NET libraries, but does not bundle ROS 2 itself.
 
-### Preparation
-rclnet does not ship with message definitions. In order to communicate with other ROS 2 nodes,
-you need to generate messages first.
+## Quick Start
 
-Message definitions are .NET classes / structs, you can either include messages in a console app
-which runs as an ROS 2 node, or compile separately in another library.
+### Project setup
 
-Projects containing messages will have to meet the following requirements:
-- `Rcl.NET` (or `Rosidl.Runtime` if you are not using automated codegen) NuGet package is installed.
-- `AllowUnsafeBlocks` is set to `true`. This can be done by adding the following lines to the `.csproj` file:
-    ```xml
-    <PropertyGroup>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    </PropertyGroup>
-    ```
-- Runtime marshalling for the assembly is disabled. You can add the following line to somewhere in the source code of the project:
-    ```csharp
-    [assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]
-    ```
+Generated ROS interface types use unsafe native interop. Enable unsafe code in your project:
 
-To generate messages, you also need to add a `ros2cs.spec` file to somewhere in the project (usually the project root).
-A `ros2cs.spec` file contains configurations such as output directory and where to find packages,
-see [here](https://github.com/noelex/rclnet/blob/main/src/ros2cs/ros2cs.spec) for detailed explanations.
-
-### Generating messages using automated codegen
-Now simply build the project and message definitions should appear in a directory named `Ros2csGeneratedInterfaces`.
-
-The path to the spec file and output directory can also be customized using `Ros2csSpecFile` and `Ros2csOutputDir` MSBuild property, e.g.:
 ```xml
 <PropertyGroup>
-  <Ros2csSpecFile>path/to/spec/file</Ros2csSpecFile>
-  <Ros2csOutputDir>MyInterfaces</Ros2csOutputDir>
+  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 </PropertyGroup>
 ```
 
-Please note that when using automated codegen, there's no need to specify `output` directive in the spec file as it's automatically determined during build.
+Create an `AssemblyInfo.cs` file in the project and add:
 
-### Generating messages using `ros2cs` tool
-First install `ros2cs` tool using NuGet package manager:
-```
-dotnet tool install -g ros2cs
-```
-
-Now you should be able to generate messages for the spec file:
-```
-ros2cs /path/to/ros2cs.spec
-```
-
-`ros2cs` tool also supports overriding directives defined in the spec file. You can run `ros2cs --help` for more details.
-
-## API Usage Showcase
-### Subscribing
 ```csharp
-await using var ctx = new RclContext(args);
-using var node = ctx.CreateNode("hello_world");
-using var sub = node.CreateSubscription<Twist>("/cmd_vel");
-await foreach (Twist msg in sub.ReadAllAsync())
+[assembly: System.Runtime.CompilerServices.DisableRuntimeMarshalling]
+```
+
+Create a `ros2cs.spec` file in the project directory and select the ROS interface packages used by the examples below:
+
+```text
+from-ament-index
+
+include geometry_msgs
+include sensor_msgs
+include std_srvs
+include example_interfaces
+```
+
+`ros2cs` runs automatically during build and generates the corresponding C# message, service and action types.
+
+When using `from-ament-index`, build from a configured ROS 2 environment.
+
+Linux:
+
+```bash
+source /opt/ros/lyrical/setup.bash
+dotnet build
+```
+
+Windows:
+
+```bat
+call C:\dev\ros2_lyrical\ros2-windows\setup.bat
+dotnet build
+```
+
+Replace the ROS distribution and installation path with those installed on your machine.
+
+### Create a node
+
+```csharp
+await using var context = new RclContext(args);
+using var node = context.CreateNode("my_node");
+```
+
+Publishers, subscriptions, services and actions are created from the node.
+
+### Publish and subscribe
+
+Create a publisher:
+
+```csharp
+using var publisher =
+    node.CreatePublisher<Vector3>("/vector");
+
+publisher.Publish(new Vector3(
+    x: 1,
+    y: 2,
+    z: 3));
+```
+
+Create a subscription:
+
+```csharp
+using var subscription =
+    node.CreateSubscription<Vector3>("/vector");
+
+await foreach (var message in subscription.ReadAllAsync())
 {
-    ...
+    Console.WriteLine(
+        $"{message.X}, {message.Y}, {message.Z}");
 }
 ```
-### Publishing
+
+`ReadAllAsync` returns an `IAsyncEnumerable<T>`, so normal .NET asynchronous code can be used directly:
+
 ```csharp
-using var pub = node.CreatePublisher<Vector3>("/vec");
-pub.Publish(new Vector3(x: 1, y: 2, z: 3));
+await foreach (var message in subscription.ReadAllAsync(cancellationToken))
+{
+    await ProcessMessageAsync(message, cancellationToken);
+}
 ```
-### Handling Service Calls
+
+### QoS
+
+QoS can be configured through `PublisherOptions` and `SubscriptionOptions`.
+
+For example, sensor topics commonly use `QosProfile.SensorData`:
+
+```csharp
+using var subscription = node.CreateSubscription<LaserScan>(
+    "/scan",
+    new SubscriptionOptions(
+        qos: QosProfile.SensorData));
+```
+
+Publisher and subscription QoS settings must be compatible for the endpoints to communicate.
+
+### Services
+
+Create a service:
+
 ```csharp
 using var server = node.CreateService<
     EmptyService,
     EmptyServiceRequest,
-    EmptyServiceResponse>("/vec",
+    EmptyServiceResponse>(
+        "/reset",
         (request, state) =>
         {
+            ResetSomething();
             return new EmptyServiceResponse();
         });
-await Task.Delay(-1);
 ```
-### Calling Services
+
+`CreateService` handlers run synchronously on the `RclContext` event loop. If a handler performs asynchronous I/O or may take a significant amount of time, use `CreateConcurrentService` instead:
+
+```csharp
+using var server = node.CreateConcurrentService<
+    EmptyService,
+    EmptyServiceRequest,
+    EmptyServiceResponse>(
+        "/reset",
+        async (request, state, cancellationToken) =>
+        {
+            await ResetSomethingAsync(cancellationToken);
+            return new EmptyServiceResponse();
+        });
+```
+
+Concurrent handlers start on the event loop, but multiple requests can remain in progress while the handlers are awaiting. Blocking or CPU-intensive work should be offloaded with `Task.Run` instead of blocking the event loop.
+
+Call a service:
+
 ```csharp
 using var client = node.CreateClient<
     EmptyService,
     EmptyServiceRequest,
-    EmptyServiceResponse>("/vec");
-await client.InvokeAsync(new EmptyServiceRequest());
-``` 
-### Monitoring ROS Graph Changes
+    EmptyServiceResponse>("/reset");
+
+await client.WaitForServerAsync();
+
+var response = await client.InvokeAsync(
+    new EmptyServiceRequest());
+```
+
+### Actions
+
+Create an action client:
+
+```csharp
+using var client = node.CreateActionClient<
+    FibonacciAction,
+    FibonacciActionGoal,
+    FibonacciActionResult,
+    FibonacciActionFeedback>("/fibonacci");
+
+await client.WaitForServerAsync();
+```
+
+Send a goal:
+
+```csharp
+using var goal = await client.SendGoalAsync(
+    new FibonacciActionGoal(order: 10));
+```
+
+Read feedback:
+
+```csharp
+await foreach (var feedback in goal.ReadFeedbacksAsync())
+{
+    Console.WriteLine(
+        string.Join(", ", feedback.PartialSequence));
+}
+```
+
+Wait for the result:
+
+```csharp
+var result = await goal.GetResultAsync();
+
+Console.WriteLine(
+    string.Join(", ", result.Sequence));
+```
+
+Action servers can be created with `CreateActionServer`.
+
+### ROS graph
+
+The discovered ROS graph is available through `node.Graph`.
+
+For example, wait for a service:
+
+```csharp
+await node.Graph.WaitForServiceServerAsync("/my/service");
+```
+
+Or observe graph changes:
+
 ```csharp
 node.Graph
     .OfType<NodeAppearedEvent>()
-    .Subscribe(x =>
+    .Subscribe(e =>
     {
-        Console.WriteLine($"Node {x.Node.Name} is online.");
+        Console.WriteLine(
+            $"Node {e.Node.Name} is online.");
     });
-
-await node.Graph.WaitForServiceServerAsync("/my/service");
 ```
-### Calling Action Servers
+
+### Time and simulation
+
+Each node exposes a `TimeProvider` backed by its ROS clock. Standard .NET time-based APIs can therefore follow ROS time and `use_sim_time`:
+
 ```csharp
-using var client = node.CreateActionClient<
-    SpinAction,
-    SpinActionGoal,
-    SpinActionResult,
-    SpinActionFeedback>("/spin");
+await Task.Delay(
+    TimeSpan.FromSeconds(1),
+    node.TimeProvider,
+    cancellationToken);
 
-using var goal = await client.SendGoalAsync(
-        new SpinActionGoal(targetYaw: Math.PI));
-
-await foreach (var feedback in goal.ReadFeedbacksAsync())
-{
-    Console.WriteLine(feedback.AngularDistanceTraveled);
-}
-
-var result = await goal.GetResultAsync();
+using var timer = new PeriodicTimer(
+    TimeSpan.FromSeconds(1),
+    node.TimeProvider);
 ```
-### Zero (Managed Heap) Allocation APIs
-```csharp
-using var sub = node.CreateNativeSubscription<Twist>("/cmd_vel");
-await foreach (RosMessageBuffer msg in sub.ReadAllAsync())
-{
-    using (msg) ProcessMessage(msg);
 
-    static void ProcessMessage(RosMessageBuffer buffer)
+When `use_sim_time` is enabled, delays and timers created with the node's `TimeProvider` follow `/clock`.
+
+## Running and Debugging
+
+rclnet loads ROS 2 native libraries at runtime, so the application must inherit a configured ROS environment.
+
+### Command line
+
+Linux:
+
+```bash
+source /opt/ros/lyrical/setup.bash
+dotnet run
+```
+
+Windows:
+
+```bat
+call C:\dev\ros2_lyrical\ros2-windows\setup.bat
+dotnet run
+```
+
+Optional ROS settings can be configured in the same shell:
+
+```bat
+set ROS_DOMAIN_ID=10
+set RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+dotnet run
+```
+
+Simply setting `ROS_DISTRO` is not sufficient. The ROS setup script also configures native library search paths and other runtime settings.
+
+### Visual Studio
+
+Visual Studio inherits its environment when it starts.
+
+If Visual Studio is launched normally, debugging an rclnet application may fail with `DllNotFoundException` or errors about loading `rcl`, an RMW implementation, or a type support library.
+
+Start Visual Studio from a configured ROS shell instead:
+
+```bat
+call C:\dev\ros2_lyrical\ros2-windows\setup.bat
+devenv MySolution.sln
+```
+
+Applications launched with F5 will then inherit the ROS environment.
+
+If Visual Studio was already running, close it and restart it from the configured shell.
+
+### VS Code
+
+The same applies to VS Code.
+
+Linux:
+
+```bash
+source /opt/ros/lyrical/setup.bash
+code .
+```
+
+Windows:
+
+```bat
+call C:\dev\ros2_lyrical\ros2-windows\setup.bat
+code .
+```
+
+## ROS Interface Code Generation
+
+`ros2cs` converts ROS `.msg`, `.srv` and `.action` definitions into C# types.
+
+A `ros2cs.spec` file in the project directory is detected automatically by the `Rcl.NET` MSBuild integration.
+
+### Using an installed ROS environment
+
+The simplest configuration is:
+
+```text
+from-ament-index
+
+include geometry_msgs
+include sensor_msgs
+include std_srvs
+```
+
+`from-ament-index` searches interface packages available through the current `AMENT_PREFIX_PATH`.
+
+Package dependencies are resolved automatically, so dependencies such as `builtin_interfaces` usually do not need to be listed explicitly.
+
+Without any `include` directive, all discovered interface packages are generated.
+
+### Loading packages from directories
+
+Interface packages can also be loaded directly:
+
+```text
+from-directory ./ros-packages
+
+include geometry_msgs
+include my_robot_msgs
+```
+
+The specified directory should contain normal ROS packages:
+
+```text
+ros-packages/
+├── geometry_msgs/
+│   ├── package.xml
+│   └── msg/
+└── my_robot_msgs/
+    ├── package.xml
+    ├── msg/
+    ├── srv/
+    └── action/
+```
+
+This allows C# bindings to be generated without a ROS installation on the build machine.
+
+It does not replace native ROS type support. At runtime, the corresponding ROS interface packages must still be built and installed in the ROS environment.
+
+`from-directory` is mainly useful for CI, reproducible builds and shared message assemblies.
+
+It can also be combined with `from-ament-index`:
+
+```text
+from-ament-index
+from-directory ./my-ros-packages
+
+include geometry_msgs
+include my_robot_msgs
+```
+
+### MSBuild integration
+
+Generated sources are written to the intermediate output directory, normally:
+
+```text
+obj/Ros2csGeneratedInterfaces/
+```
+
+and are included in the compilation automatically.
+
+Changes to relevant interface files or `package.xml` files trigger regeneration on the next build.
+
+A different spec file can be selected with:
+
+```xml
+<PropertyGroup>
+  <Ros2csSpecFile>path/to/ros2cs.spec</Ros2csSpecFile>
+</PropertyGroup>
+```
+
+Additional command-line arguments can be passed with:
+
+```xml
+<PropertyGroup>
+  <Ros2csArgs>--abi=v1</Ros2csArgs>
+</PropertyGroup>
+```
+
+Command-line options override values specified in `ros2cs.spec`.
+
+### ROSIDL native ABI
+
+`ros2cs` supports the following ROSIDL ABI layouts:
+
+| ABI | ROS 2 distributions | Native types in portable mode* |
+| --- | ------------------- | ------------------------------ |
+| V1  | Foxy through Kilted | `Priv` / `PrivSequence`        |
+| V2  | Lyrical             | `PrivV2` / `PrivSequenceV2`    |
+
+\* In non-portable modes, generated native types are always named `Priv` / `PrivSequence`.
+
+`ros2cs` uses portable ABI mode by default:
+
+```text
+abi portable
+```
+
+Portable mode generates all supported layouts and automatically selects the correct one when using the normal managed APIs.
+
+If an application only targets one ABI, generation can be restricted to:
+
+```text
+abi v1
+```
+
+or:
+
+```text
+abi v2
+```
+
+The ABI can also be selected from the active ROS distribution at generation time:
+
+```text
+abi native
+```
+
+Native mode reads `ROS_DISTRO`, generates only the corresponding ABI layout, and fails if the variable is missing or names an unsupported distribution.
+
+Non-CPU `rosidl::Buffer`-backed sequences are not currently supported.
+
+### Standalone ros2cs
+
+`ros2cs` can also be installed as a standalone .NET tool:
+
+```bash
+dotnet tool install -g ros2cs
+```
+
+Generate interfaces with:
+
+```bash
+ros2cs /path/to/ros2cs.spec
+```
+
+Run:
+
+```bash
+ros2cs --help
+```
+
+for the complete list of options.
+
+## Native Message Buffers
+
+The normal rclnet APIs convert ROS messages into managed .NET objects and should be preferred for most application code.
+
+For performance-sensitive paths, native message buffers can be consumed directly:
+
+```csharp
+using var subscription =
+    node.CreateNativeSubscription<Twist>("/cmd_vel");
+
+await foreach (RosMessageBuffer buffer in subscription.ReadAllAsync())
+{
+    using (buffer)
     {
-        ref var twist = ref buffer.AsRef<Twist.Priv>();
-        ...
+        ProcessMessage(buffer);
     }
 }
 ```
 
-## Asynchronous Execution Model
-Unlike rclcpp and rclpy, rclnet doesn't have the concept of executors. Each `RclContext` runs its
-own event loop for waiting on signals and dispatching callbacks, which is essentialy a single-threaded
-executor.
-
-Although rclnet does not provide multi-threaded executors, it doesn't mean that you can't process messages or handle
-service requests using multiple threads. All communication primitives in rclnet provide both synchronous
-and asynchronous APIs for different needs and scenarios.
-
-Synchronous APIs are simpler and faster if the work need to be done is simple enough, e.g. neither CPU-intensive nor needs to issue blocking calls. Asynchronous APIs, in contrast, are for scenarios where you need to perform asynchronous calls or
-offload blocking operations into background threads.
-
-Take subscriptions for example, you can receive messages synchronously using `IRclSubscription<T>.Subscribe`,
-or asynchronously using `IRclSubscription<T>.ReadAllAsync`. Synchronous subscriptions always handle messages
-on the event loop. While for asynchronous subscriptions, you can choose where you'd like to process the received
-messages:
+When using portable message bindings, select the native structure matching the active ROSIDL ABI:
 
 ```csharp
-await foreach (var msg in sub.ReadAllAsync())
+static void ProcessMessage(RosMessageBuffer buffer)
 {
-    // Perform asynchronous operation.
-    await SomeAsyncOperation(msg);
+    if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+    {
+        ref var message =
+            ref buffer.AsRef<Twist.Priv>();
 
-    // Perform synchronous operation and wait for its completion without blocking the event loop.
-    await Task.Run(() => SomeOffloadedSyncOperation(msg));
+        Console.WriteLine(message.Linear.X);
+    }
+    else
+    {
+        ref var message =
+            ref buffer.AsRef<Twist.PrivV2>();
+
+        Console.WriteLine(message.Linear.X);
+    }
 }
 ```
 
-In the above example, the event loop of the `RclContext` is used for listening to events only. Where are the messages
-handled depends on the `SynchronizationContext` currently captured.
+`AsRef<T>()` verifies that `T` matches the current ROSIDL native ABI. It does not convert
+between ABIs or verify that the buffer contains the requested message type.
 
-If there's no `SynchronizationContext` in use, event handling happens in background threads by default. Otherwise, the
-events will be handled in the captured `SynchronizationContext`. If you are using rclnet inside a GUI application,
-this usually means that the events are handled on the UI thread.
+## Execution and Scheduling
 
-`RclContext`s can also have their own `SynchronizationContext`s, which always schedule asynchronous operations on the event loop.
-This is extremely helpful if you want to introduce single-threaded concurrency into your application:
+Unlike `rclcpp` and `rclpy`, rclnet does not require applications to explicitly spin an executor.
+
+Each `RclContext` owns a dedicated event loop that waits for ROS events and dispatches work. A single context is sufficient for most applications, although multiple contexts can be created when needed.
+
+### Synchronous callbacks
+
+Synchronous callbacks are executed directly on the `RclContext` event loop.
+
+This includes synchronous subscription observers and other synchronous event handlers. These callbacks should therefore finish quickly and avoid blocking operations or long-running CPU work.
+
+For example:
 
 ```csharp
-await using var context = new RclContext(useSynchronizationContext: true);
+using var subscription = node
+    .CreateSubscription<Twist>("/cmd_vel")
+    .Subscribe(message =>
+    {
+        // Runs on the RclContext event loop.
+        ProcessMessage(message);
+    });
+```
 
-...
+If expensive synchronous work is required, offload it instead of blocking the event loop.
 
-// Enforce execution on the event loop so that we can capture its SynchronizationContext.
+### Asynchronous APIs
+
+Asynchronous APIs allow the event loop to remain focused on receiving and dispatching ROS events while application code uses normal .NET asynchronous scheduling.
+
+For example:
+
+```csharp
+using var subscription =
+    node.CreateSubscription<Twist>("/cmd_vel");
+
+await foreach (var message in subscription.ReadAllAsync())
+{
+    await ProcessMessageAsync(message);
+}
+```
+
+The ROS message is received by the `RclContext` event loop, but rclnet does not normally execute the asynchronous consumer on that event loop. Continuation scheduling follows the normal .NET rules for the current `SynchronizationContext` and `TaskScheduler`.
+
+In a typical console or server application, asynchronous processing therefore normally continues on thread-pool threads. In a GUI application, an existing UI `SynchronizationContext` may instead cause continuations to resume on the UI thread.
+
+Subscription delivery queues disable synchronous continuations by default. For performance-sensitive workloads, this can be changed with `SubscriptionOptions.AllowSynchronousContinuations`, allowing a waiting consumer to continue directly from the event loop.
+
+### Running asynchronous code on the event loop
+
+For applications that benefit from single-threaded cooperative concurrency, an `RclContext` can install a `SynchronizationContext` on its event loop:
+
+```csharp
+await using var context =
+    new RclContext(useSynchronizationContext: true);
+
 await context.Yield();
 
-// All following awaits will resume on the event loop by default.
-await foreach (var msg in sub.ReadAllAsync())
-{
-    // On event loop.
-    await SomeAsyncOperation(msg);
-    // On event loop.
-    await Task.Run(() => {
-        // On thread pool.
-        SomeOffloadedSyncOperation(msg);
-    });
-    // On event loop.
-    await Task.Yield();
-    // On event loop.
+// Running on the RclContext event loop.
 
-    // We can also spin up multiple coroutines to run concurrently on the event loop.
-    Task task1 = Coroutine1Async(msg),
-         task2 = Coroutine2Async(msg);
+await SomeAsyncOperation();
 
-    // Or asynchronously wait for all coroutines to complete.
-    await Task.WhenAll(task1, task2);
-
-    ...
-
-    // The execution of current async method will stay on the event
-    // loop unless we break out of the SynchronizationContext using
-    // ConfigureAwait(false), or RclContext.YieldBackground().
-
-    await AnotherAsyncOperation(msg).ConfigureAwait(false);
-    // On thread pool thread.
-
-    // We can still transition back to the event loop with context.Yield().
-
-    await context.Yield();
-    // On event loop.
-
-    await RclContext.YieldBackground();
-    // On thread pool thread.
-}
+// Resumes on the event loop by default.
 ```
 
-As shown in the above example, besides of `SynchronizationContext`, you can also use `RclContext.Yield`, `RclContext.YieldBackground` and `ConfigureAwait(false)` to perform fine-grained control
-over the asynchronous exection flow.
+Once execution has entered the context with `Yield()`, normal `await` expressions capture the context and resume on the event loop by default.
 
-### Additional Notes about `IRclWaitObject.WaitOneAsync`
-Timers and guard conditions created by `RclContext` implements `IRclWaitObject` interface,
-which allow the caller to asynchronously wait for the signal.
+This can be useful when multiple asynchronous operations need to access shared application state without explicit locking.
 
-`IRclWaitObject` interface exposes the following two overloads of `WaitOneAsync`:
+CPU-intensive or blocking work can still be moved to the thread pool:
+
 ```csharp
-ValueTask WaitOneAsync(bool runContinuationAsynchronously, CancellationToken cancellationToken = default);
-ValueTask WaitOneAsync(CancellationToken cancellationToken = default);
-```
-The latter overload simply calls another one with `runContinuationAsynchronously` set to `true`.
+await Task.Run(() =>
+{
+    ProcessCpuIntensiveWork();
+});
 
-`WaitOneAsync` allows the caller to explicitly control the execution of the continuation via `runContinuationAsynchronously`
-parameter. Assuming there's no captured `SynchronizationContext` or `TaskScheduler`, when `runContinuationAsynchronously`
-is set to `true`, the continuation will be scheduled to execute in thread pool. And if `runContinuationAsynchronously`
-is set to `false`, the continuation is guaranteed to execute on the event loop.
-
-However, when a `SynchronizationContext` or `TaskScheduler` is captured, the continuation of the call to `WaitOneAsync`
-will always execute in the captured context, regardless of the value of `runContinuationAsynchronously`.
-
-Since context capture can be suppressed by calling `ConfigureAwait` with `continueOnCapturedContext` set to `false`,
-execution of the continuation can be precisely controlled using `runContinuationAsynchronously` in conjunction with
-`continueOnCapturedContext`.
-
-
-| `runContinuationAsynchronously` | `continueOnCapturedContext` | Continuation Execution                                                             |
-| ------------------------------- | --------------------------- | ---------------------------------------------------------------------------------- |
-| `true`                          | `true`                      | Captured `SynchronizationContext` or `TaskScheduler` if any, thread pool otherwise |
-| `true`                          | `false`                     | Thread pool                                                                        |
-| `false`                         | `true`                      | Captured `SynchronizationContext` or `TaskScheduler` if any, event loop otherwise  |
-| `false`                         | `false`                     | Event loop                                                                         |
-
-## Building and Running Examples
-### Install dependencies
-The following instruction assumes that you've already installed ROS 2 foxy or humble in your system.
-
-You'll need .NET 8.0 SDK to build and run the examples, see instructions 
-[here](https://learn.microsoft.com/dotnet/core/install/linux-ubuntu).
-
-Make sure you have all dependencies installed by running:
-```
-rosdep install -i --from-paths examples
+// Back on the RclContext event loop.
 ```
 
-### Run with `dotnet run`
-Now you can run example projects using `dotnet run`, e.g.
-```
-dotnet run --project examples/turtle_rotate
+Execution can explicitly leave the event loop with either `ConfigureAwait(false)` or `RclContext.YieldBackground()`:
+
+```csharp
+await SomeAsyncOperation().ConfigureAwait(false);
+
+// Running outside the RclContext event loop.
+
+await context.Yield();
+
+// Back on the event loop.
+
+await RclContext.YieldBackground();
+
+// Running on a background thread.
 ```
 
-### Run with `ros2 run`
-Or you can build and install examples as colcon packages:
-```
-colcon build --executor sequential --merge-install --paths examples/*
-source install/setup.bash
+`context.Yield()` always transitions execution to that context's event loop, regardless of the currently captured `SynchronizationContext`.
+
+### Low-level wait objects
+
+Timers, guard conditions, and other `IRclWaitObject` implementations expose `WaitOneAsync` for directly awaiting an RCL event.
+
+The default overload forces the continuation to run asynchronously:
+
+```csharp
+await waitObject.WaitOneAsync(cancellationToken);
 ```
 
-To run an example node, use `ros2 run`, e.g.
+Low-level code can instead allow the continuation to execute directly on the `RclContext` event loop:
+
+```csharp
+await waitObject
+    .WaitOneAsync(
+        runContinuationAsynchronously: false,
+        cancellationToken)
+    .ConfigureAwait(false);
 ```
-ros2 run graph_monitor graph_monitor
-```
+
+The two scheduling controls interact as follows:
+
+| `runContinuationAsynchronously` | Await behavior          | Continuation runs on                                                                    |
+| ------------------------------- | ----------------------- | --------------------------------------------------------------------------------------- |
+| `true`                          | Normal `await`          | Captured `SynchronizationContext` / `TaskScheduler`, or thread pool if none             |
+| `true`                          | `ConfigureAwait(false)` | Thread pool                                                                             |
+| `false`                         | Normal `await`          | Captured `SynchronizationContext` / `TaskScheduler`, or `RclContext` event loop if none |
+| `false`                         | `ConfigureAwait(false)` | `RclContext` event loop                                                                 |
+
+The `WaitOneAsync(CancellationToken)` overload is equivalent to `WaitOneAsync(true, cancellationToken)`.
+
+Most application code does not need to control continuation scheduling at this level, but the table above can be useful when implementing low-level event-driven code.

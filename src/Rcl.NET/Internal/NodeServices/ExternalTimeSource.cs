@@ -2,6 +2,7 @@
 using Rcl.Parameters;
 using Rcl.Qos;
 using Rosidl.Messages.Rosgraph;
+using Rosidl.Runtime;
 
 namespace Rcl.Internal.NodeServices;
 
@@ -82,14 +83,24 @@ class ExternalTimeSource : IDisposable
 
     private void UpdateClock(RosMessageBuffer buffer)
     {
-        ref var clock = ref buffer.AsRef<Clock.Priv>();
         if (!_overrideEnabled)
         {
             _node.Clock.Impl.ToggleRosTimeOverride(true);
             _overrideEnabled = true;
         }
 
-        var t = clock.Clock_.Sec * 1000_000_000L + clock.Clock_.Nanosec;
+        long t;
+        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+        {
+            ref var clock = ref buffer.AsRef<Clock.Priv>();
+            t = clock.Clock_.Sec * 1000_000_000L + clock.Clock_.Nanosec;
+        }
+        else
+        {
+            ref var clock = ref buffer.AsRef<Clock.PrivV2>();
+            t = clock.Clock_.Sec * 1000_000_000L + clock.Clock_.Nanosec;
+        }
+
         _node.Clock.Impl.SetRosTimeOverride(t);
     }
 

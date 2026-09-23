@@ -66,7 +66,7 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
     {
         RosEnvironment.Require(RosEnvironment.Iron, feature: "Service Introspection");
 
-        var opts = RclHumble.rcl_publisher_get_default_options();
+        var opts = RclIron.rcl_publisher_get_default_options();
         opts.qos = (qos ?? QosProfile.SystemDefault).ToRmwQosProfile();
 
         var ret = RclIron.rcl_service_configure_service_introspection(

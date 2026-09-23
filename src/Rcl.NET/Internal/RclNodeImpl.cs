@@ -15,6 +15,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
     private readonly RosGraph _graph;
     private readonly ExternalTimeSource? _timeSource;
     private readonly ParameterService _parameters;
+    private readonly RclTimeProvider _timeProvider;
     private readonly CancellationTokenSource _cts = new();
     private readonly RclGuardConditionImpl _graphSignal;
 
@@ -34,6 +35,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
             RclClockType.System => RclClock.SystemClock,
             _ => throw new RclException($"Unsupported clock type '{Options.Clock}'.")
         };
+        _timeProvider = new(context, Clock);
 
         Name = StringMarshal.CreatePooledString(rcl_node_get_name(Handle.Object))!;
         Namespace = StringMarshal.CreatePooledString(rcl_node_get_namespace(Handle.Object))!;
@@ -66,6 +68,8 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
     public IParameterService Parameters => _parameters;
 
     public RclClock Clock { get; }
+
+    public TimeProvider TimeProvider => _timeProvider;
 
     public NodeOptions Options { get; }
 
@@ -128,6 +132,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
 
     public override void Dispose()
     {
+        _timeProvider.Dispose();
         _timeSource?.Dispose();
         _parameters.Dispose();
         _cts.Cancel();

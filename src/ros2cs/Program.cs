@@ -16,7 +16,7 @@ if (args.Length == 1 && args[0] is "/?" or "/h" or "-h" or "--help")
 @"
 Usage:  ros2cs <OPTIONS> <SPEC_FILE>
 
-Generates C# source code from ROS2 interface definitions for use with Rcl.NET.
+Generates C# source code from ROS 2 interface definitions for use with Rcl.NET.
 
 OPTIONS:
     --service-introspection,
@@ -30,7 +30,7 @@ OPTIONS:
     --no-action-details
         Generate implementation details for actions, including FeedbackMessage, SendGoal 
         request/response and GetResult request/response.
-        Detail messages are not neccesary for using action servers and clients as rclnet
+        Detail messages are not necessary for using action servers and clients as rclnet
         utilizes introspection to construct and extract Feedback / Goal and Result messages.
         Enabling 'action-details' will allow you to perform service introspection on Result
         and Goal services, or manually subscribe Feedback messages, at the cost of increased
@@ -48,14 +48,14 @@ OPTIONS:
     --from-ament-index,
     --no-ament-index
         Read packages from ament prefix directories as specified by AMENT_PREFIX_PATH.
-        If this flag specified, ament prefix directories always load before all other
+        If this flag is specified, ament prefix directories always load before all other
         'from-directory' directives.
 
         This option is disabled by default.
 
     --ignore-missing,
     --no-ignore-missing
-        Ignore missing included/depedency packages, proceed with packages currently available
+        Ignore missing included/dependency packages, proceed with packages currently available
         anyway.
 
         By default, ros2cs will abort with exit code 1 if any package dependency is missing, 
@@ -71,9 +71,14 @@ OPTIONS:
 
     -o,
     --output=OUTPUT_DIR
-        Specifiy the output directory.
+        Specify the output directory.
         A path relative to the SPEC_FILE (if not specified, relative to current directory),
         or an absolute path can be used.
+
+    --abi=v1|v2|portable|native
+        Select the ROSIDL native ABI mode. The default is portable.
+        'native' generates the ABI used by the distribution in ROS_DISTRO.
+        It requires ROS_DISTRO to contain a supported ROS distribution.
 
     -I,
     --from-directory=INCLUDE_DIR
@@ -88,9 +93,9 @@ OPTIONS:
 
     -i,
     --include=""PKG1 PKG2 ...""
-        Generate codes for specified packages only.
+        Generate code for specified packages only.
         Dependencies of the specified packages will also be included recursively.
-        If no include directive is specified, ros2cs will generate codes for all discovered
+        If no include directive is specified, ros2cs will generate code for all discovered
         packages.
 
         This option may be specified multiple times.
@@ -103,7 +108,7 @@ OPTIONS:
 
     --map-namespace=PKG:NAMESPACE
         Set the root namespace of a specific package,
-        e.g. '--map-name my_messages:My.Namespace' will map definitions in package 'my_messages'
+        e.g. '--map-namespace my_messages:My.Namespace' will map definitions in package 'my_messages'
         into C# namespace My.Namespace.MyMessages.
         If not specified, default root namespace is used.
 
@@ -111,7 +116,7 @@ OPTIONS:
 
     --map-name=PKG:NAME
         Set the name of a specific package,
-        e.g. 'map-name my_messages:Messages' will map definitions in package 'my_messages'
+        e.g. '--map-name my_messages:Messages' will map definitions in package 'my_messages'
         into C# namespace Rosidl.Messages.Messages.
         If not specified, ros2cs will determine the package name automatically.
 

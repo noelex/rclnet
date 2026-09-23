@@ -53,13 +53,30 @@ public readonly struct RosMessageBuffer : IDisposable
     /// Access the containing message as a reference.
     /// </summary>
     /// <remarks>
-    /// This method does not perform any check on the type of the underlying buffer.
-    /// Calling this method with a mismatched message type parameter may cause
-    /// unexpected behavior.
+    /// This method verifies that <typeparamref name="T"/> uses the native ABI of the
+    /// current ROS distribution. It does not verify the message type of the underlying buffer.
+    /// </remarks>
+    /// <typeparam name="T">Native structure definition of the message.</typeparam>
+    /// <returns>A reference to the internal native data structure.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe ref T AsRef<T>()
+        where T : unmanaged, IRosidlNative
+    {
+        RosidlRuntime.RequireNativeAbi(T.Abi);
+        return ref Unsafe.AsRef<T>(Data.ToPointer());
+    }
+
+    /// <summary>
+    /// Access the containing message as a reference without validating its native ABI.
+    /// </summary>
+    /// <remarks>
+    /// This method does not perform any check on the type or ABI of the underlying buffer.
+    /// Calling this method with a mismatched type parameter may cause unexpected behavior.
     /// </remarks>
     /// <typeparam name="T">Blittable structure definition of the message.</typeparam>
     /// <returns>A reference to the internal native data structure.</returns>
-    public unsafe ref T AsRef<T>()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe ref T UnsafeAsRef<T>()
         where T : unmanaged
     {
         return ref Unsafe.AsRef<T>(Data.ToPointer());

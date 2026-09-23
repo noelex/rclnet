@@ -23,7 +23,7 @@
 			<Ros2csGlobsStateFile>$(Ros2csOutputPath)\ros2cs.globs.state</Ros2csGlobsStateFile>
 			<Ros2csStampFile>$(Ros2csOutputPath)\ros2cs.spec.cache</Ros2csStampFile>
 			<Ros2csToolDirectory>$([System.IO.Path]::GetDirectoryName('$(Ros2csExe)'))</Ros2csToolDirectory>
-			<Ros2csIncrementalState>Spec=$(Ros2csSpecFile)&#xA;Arguments=$(Ros2csArgs)&#xA;AmentPrefixPath=$(AMENT_PREFIX_PATH)&#xA;Executable=$(Ros2csExe)</Ros2csIncrementalState>
+			<Ros2csIncrementalState>Spec=$(Ros2csSpecFile)&#xA;Arguments=$(Ros2csArgs)&#xA;AmentPrefixPath=$(AMENT_PREFIX_PATH)&#xA;RosDistro=$(ROS_DISTRO)&#xA;Executable=$(Ros2csExe)</Ros2csIncrementalState>
 		</PropertyGroup>
 
 		<MakeDir Directories="$(Ros2csOutputPath)" />
@@ -47,6 +47,7 @@
 			<Output TaskParameter="Lines" ItemName="_Ros2csTrackedOutput" />
 		</ReadLinesFromFile>
 
+		<!-- Match CSharpCodeGenerator's WriteAllLinesIfChanged format for this shared state. -->
 		<WriteLinesToFile File="$(Ros2csGlobsStateFile)"
 					  Lines="@(_Ros2csGlobbedInput->'%(FullPath)')"
 					  Overwrite="true"
@@ -62,8 +63,26 @@
 		</ItemGroup>
 	</Target>
 
+	<!-- All framework builds share one output directory. Route generation through the
+	     outer project so MSBuild coordinates concurrent project-reference builds too. -->
 	<Target Name="GenerateInterfaces_ros2cs" BeforeTargets="DispatchToInnerBuilds;BeforeCompile;CoreCompile"
-			DependsOnTargets="$(GenerateInterfaces_ros2csDependsOn)" />
+			DependsOnTargets="$(GenerateInterfaces_ros2csDependsOn)"
+			Condition="'$(TargetFramework)' == '' or '$(TargetFrameworks)' == ''" />
+
+	<Target Name="GenerateRos2csFromOuterBuild" BeforeTargets="BeforeCompile;CoreCompile"
+			Condition="'$(TargetFramework)' != '' and '$(TargetFrameworks)' != ''">
+		<MSBuild Projects="$(MSBuildProjectFullPath)" Targets="GenerateInterfaces_ros2cs"
+				RemoveProperties="TargetFramework" />
+	</Target>
+
+	<!-- Rebuild may reuse an inner project evaluated before the outer build regenerated these files. -->
+	<Target Name="IncludeRos2csGeneratedSources" BeforeTargets="BeforeCompile;CoreCompile"
+			DependsOnTargets="GenerateInterfaces_ros2cs;GenerateRos2csFromOuterBuild">
+		<ItemGroup>
+			<Compile Remove="@(Ros2csGenFiles)" />
+			<Compile Include="$(Ros2csOutputPath)\**\*.g.cs" />
+		</ItemGroup>
+	</Target>
 
 	<Target Name="GenerateInterfaces_ros2csCore"
 			Inputs="@(Ros2csIncrementalInput)" Outputs="@(Ros2csIncrementalOutput)"
@@ -89,24 +108,14 @@
 			  Condition="'$(Ros2csSpecFile)' != ''"/>
 		<Touch Files="$(Ros2csStampFile)" AlwaysCreate="true" Condition="'$(Ros2csSpecFile)' != ''" />
 		
-		<ItemGroup>
-			<Compile Remove="@(Ros2csGenFiles)" />
-			<Compile Include="$(Ros2csOutputPath)\**\*.g.cs"/>
-		</ItemGroup>
 	</Target>
 
 
-	<PropertyGroup>
-		<CleanGenerated_ros2csDependsOn>
-			$(CleanGenerated_ros2csDependsOn);GetRos2csProps
-		</CleanGenerated_ros2csDependsOn>
-	</PropertyGroup>
-
-	<Target Name="CleanGenerated_ros2cs" BeforeTargets="CoreClean" DependsOnTargets="$(CleanGenerated_ros2csDependsOn)"
-			Condition="'$(TargetFrameworks)' == '' OR '$(TargetFramework)' == $(TargetFrameworks.Split(';')[0])">
+	<!-- Inner Clean/Rebuild must not delete sources shared by the other frameworks. -->
+	<Target Name="CleanGenerated_ros2cs" BeforeTargets="Clean;CoreClean"
+			Condition="'$(TargetFramework)' == '' or '$(TargetFrameworks)' == ''">
 		<RemoveDir Directories="$(Ros2csOutputPath)" ContinueOnError="true" />
 	</Target>
-
 
 	<Target Name="GetRos2csProps" DependsOnTargets="$(GetRos2csPropsDependsOn)">
 		<PropertyGroup>

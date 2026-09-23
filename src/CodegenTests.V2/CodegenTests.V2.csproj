@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <SignAssembly>false</SignAssembly>
+    <PublicSign>false</PublicSign>
+    <IsPackable>false</IsPackable>
+    <Ros2csOutputDir>Generated</Ros2csOutputDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Rosidl.Runtime\Rosidl.Runtime.csproj" />
+  </ItemGroup>
+
+  <Import Project="$(MSBuildProjectDirectory)\..\Rcl.NET\build\Rcl.NET.targets" />
+  <Import Project="$(MSBuildProjectDirectory)\..\Rcl.NET\build\Rcl.NET.props" />
+</Project>

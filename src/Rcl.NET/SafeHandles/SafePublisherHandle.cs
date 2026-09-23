@@ -15,30 +15,24 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
 
         try
         {
-            // This is backward compatible as long as we don't access
-            // rmw_publisher_options.require_unique_network_flow_endpoints
-            var opts = RclHumble.rcl_publisher_get_default_options();
-            opts.qos = options.Qos.ToRmwQosProfile();
-
-            if (RosEnvironment.IsSupported(RosEnvironment.Humble))
-            {
-                opts.rmw_publisher_options.require_unique_network_flow_endpoints =
-                    (RclHumble.rmw_unique_network_flow_endpoints_requirement_t)options.UniqueNetworkFlowEndpoints;
-            }
-
             var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);
             Span<byte> nameBuffer = stackalloc byte[nameSize];
             InteropHelpers.FillUtf8Buffer(topicName, nameBuffer);
 
             fixed (byte* pname = nameBuffer)
             {
-                RclException.ThrowIfNonSuccess(
-                    rcl_publisher_init(
-                        Object,
-                        node.Object,
-                        typeSupportHandle.GetMessageTypeSupport(),
-                        pname,
-                        &opts));
+                if (RosEnvironment.IsFoxy)
+                {
+                    InitFoxy(pname, typeSupportHandle, options);
+                }
+                else if (RosEnvironment.IsHumble)
+                {
+                    InitHumble(pname, typeSupportHandle, options);
+                }
+                else
+                {
+                    InitIronOrLater(pname, typeSupportHandle, options);
+                }
             }
         }
         catch
@@ -46,6 +40,52 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
             Dispose();
             throw;
         }
+    }
+
+    private void InitFoxy(byte* name, TypeSupportHandle typeSupport, PublisherOptions options)
+    {
+        var nativeOptions = RclFoxy.rcl_publisher_get_default_options();
+        nativeOptions.qos = options.Qos.ToRmwQosProfile();
+
+        RclException.ThrowIfNonSuccess(
+            rcl_publisher_init(
+                Object,
+                _node.Object,
+                typeSupport.GetMessageTypeSupport(),
+                name,
+                &nativeOptions));
+    }
+
+    private void InitHumble(byte* name, TypeSupportHandle typeSupport, PublisherOptions options)
+    {
+        var nativeOptions = RclHumble.rcl_publisher_get_default_options();
+        nativeOptions.qos = options.Qos.ToRmwQosProfile();
+        nativeOptions.rmw_publisher_options.require_unique_network_flow_endpoints =
+            (RclHumble.rmw_unique_network_flow_endpoints_requirement_t)options.UniqueNetworkFlowEndpoints;
+
+        RclException.ThrowIfNonSuccess(
+            rcl_publisher_init(
+                Object,
+                _node.Object,
+                typeSupport.GetMessageTypeSupport(),
+                name,
+                &nativeOptions));
+    }
+
+    private void InitIronOrLater(byte* name, TypeSupportHandle typeSupport, PublisherOptions options)
+    {
+        var nativeOptions = RclIron.rcl_publisher_get_default_options();
+        nativeOptions.qos = options.Qos.ToRmwQosProfile();
+        nativeOptions.rmw_publisher_options.require_unique_network_flow_endpoints =
+            (RclHumble.rmw_unique_network_flow_endpoints_requirement_t)options.UniqueNetworkFlowEndpoints;
+
+        RclException.ThrowIfNonSuccess(
+            rcl_publisher_init(
+                Object,
+                _node.Object,
+                typeSupport.GetMessageTypeSupport(),
+                name,
+                &nativeOptions));
     }
 
     protected override void ReleaseHandleCore(rcl_publisher_t* ptr)

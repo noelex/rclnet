@@ -12,7 +12,7 @@
 	<PropertyGroup>
 		<PackageId>Rcl.NET</PackageId>
 		<Description>
-			<![CDATA[rclnet is a fast and easy-to-use .NET wrapper over ROS 2 client library, allowing .NET applications to interact with other ROS applications.]]>
+			<![CDATA[rclnet is a high-performance, asynchronous .NET client library for ROS 2, designed to feel like a native part of the .NET ecosystem.]]>
 		</Description>
 	</PropertyGroup>
 

@@ -2,6 +2,7 @@ namespace Rcl.NET.Tests;
 
 using Rcl.Qos;
 using Rosidl.Messages.Builtin;
+using Rosidl.Runtime;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -48,8 +49,7 @@ public class PubSubTests
         using var sub = node.CreateNativeSubscription<Time>(topic);
 
         using var buffer = RosMessageBuffer.Create<Time>();
-        buffer.AsRef<Time.Priv>().Sec = 1;
-        buffer.AsRef<Time.Priv>().Nanosec = 2;
+        WriteNativeTime(buffer, 1, 2);
 
         var task = ReadOneAsync(sub.ReadAllAsync());
         await WaitForSubscribersAsync(pub);
@@ -59,16 +59,47 @@ public class PubSubTests
         Assert.Equal(1, result.Sec);
         Assert.Equal(2u, result.Nanosec);
 
-        static async Task<Time.Priv> ReadOneAsync(IAsyncEnumerable<RosMessageBuffer> subscription)
+        static async Task<(int Sec, uint Nanosec)> ReadOneAsync(IAsyncEnumerable<RosMessageBuffer> subscription)
         {
             await foreach (var m in subscription)
             {
-                using (m) return m.AsRef<Time.Priv>();
+                using (m)
+                {
+                    return ReadNativeTime(m);
+                }
             }
 
             Assert.Fail("No message received from topic.");
             throw new NotImplementedException();
         }
+    }
+
+    private static void WriteNativeTime(RosMessageBuffer buffer, int sec, uint nanosec)
+    {
+        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+        {
+            ref var time = ref buffer.AsRef<Time.Priv>();
+            time.Sec = sec;
+            time.Nanosec = nanosec;
+        }
+        else
+        {
+            ref var time = ref buffer.AsRef<Time.PrivV2>();
+            time.Sec = sec;
+            time.Nanosec = nanosec;
+        }
+    }
+
+    private static (int Sec, uint Nanosec) ReadNativeTime(RosMessageBuffer buffer)
+    {
+        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+        {
+            ref var time = ref buffer.AsRef<Time.Priv>();
+            return (time.Sec, time.Nanosec);
+        }
+
+        ref var timeV2 = ref buffer.AsRef<Time.PrivV2>();
+        return (timeV2.Sec, timeV2.Nanosec);
     }
 
     [Fact]

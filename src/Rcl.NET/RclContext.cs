@@ -223,6 +223,8 @@ public sealed class RclContext : IRclContext
 
     private unsafe void Interrupt() => rcl_trigger_guard_condition(_interruptSignal.Object);
 
+    internal void NotifyTimerChanged() => Interrupt();
+
     private unsafe void DisposeCore(bool blocking)
     {
         if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
@@ -441,7 +443,15 @@ public sealed class RclContext : IRclContext
                     }
                 }
 
-                RclException.ThrowIfNonSuccess(rcl_wait(&ws, -1));
+                var waitResult = rcl_wait(&ws, -1);
+
+                // RCL can shorten an infinite wait to the next timer deadline and
+                // return timeout before a timer is ready. Keep processing callbacks
+                // and rebuilding the wait set instead of terminating the event loop.
+                if (waitResult != Rcl.Interop.rcl_ret_t.RCL_RET_TIMEOUT)
+                {
+                    RclException.ThrowIfNonSuccess(waitResult);
+                }
 
                 // The order of the following checks matters,
                 // higher priority wait objects should be checked first.

@@ -5,6 +5,9 @@ namespace Rcl.NET.Tests;
 
 public class ActionTests
 {
+    private const int RequestTimeout = 10_000;
+    private const int ServerOnlineTimeout = 5_000;
+
     [Theory]
     [InlineData(0)]
     [InlineData(50)]
@@ -44,8 +47,9 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), 1000);
-        var result = await goal.GetResultWithStatusAsync(1000);
+        await client.WaitForServerAsync(ServerOnlineTimeout);
+        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout);
+        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
         Assert.True(result.IsSuccessful);
     }
 
@@ -69,11 +73,11 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        await client.WaitForServerAsync(1000);
+        await client.WaitForServerAsync(ServerOnlineTimeout);
         using var goalBuffer = RosMessageBuffer.Create<LookupTransformActionGoal>();
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cts = new CancellationTokenSource(RequestTimeout);
         using var goal = await client.SendGoalAsync(goalBuffer, cts.Token);
-        var result = await goal.GetResultWithStatusAsync(1000);
+        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
         Assert.True(result.IsSuccessful);
         using var resultBuffer = result.Result;
     }
@@ -98,7 +102,9 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        await Assert.ThrowsAsync<RclException>(() => client.SendGoalAsync(new LookupTransformActionGoal(), 1000));
+        await client.WaitForServerAsync(ServerOnlineTimeout);
+        await Assert.ThrowsAsync<RclException>(() =>
+            client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout));
     }
 
     [Fact]
@@ -121,8 +127,9 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), 1000);
-        var result = await goal.GetResultWithStatusAsync(1000);
+        await client.WaitForServerAsync(ServerOnlineTimeout);
+        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout);
+        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
         Assert.Equal(ActionGoalStatus.Aborted, result.Status);
     }
 
@@ -134,11 +141,12 @@ public class ActionTests
 
         var actionName = NameGenerator.GenerateActionName();
 
+        var handler = new TestHandler(executeWaitTime: -1);
         using var server = node.CreateActionServer<
             LookupTransformAction,
             LookupTransformActionGoal,
             LookupTransformActionResult,
-            LookupTransformActionFeedback>(actionName, new TestHandler(executeWaitTime: -1));
+            LookupTransformActionFeedback>(actionName, handler);
 
         using var client = node.CreateActionClient<
             LookupTransformAction,
@@ -146,17 +154,13 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), 1000);
-        _ = CancelGoalAfter(goal, 100);
-        var result = await goal.GetResultWithStatusAsync(1000);
+        await client.WaitForServerAsync(ServerOnlineTimeout);
+        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout);
+        await handler.ExecutionStarted.WaitAsync(TimeSpan.FromMilliseconds(RequestTimeout));
+        await goal.CancelAsync(RequestTimeout);
+        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
 
         Assert.Equal(ActionGoalStatus.Canceled, result.Status);
-
-        static async Task CancelGoalAfter(IActionGoalContext goal, int milliseconds)
-        {
-            await Task.Delay(milliseconds);
-            await goal.CancelAsync();
-        }
     }
 
     [Fact]
@@ -179,13 +183,14 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), 1000);
-        var result = await goal.GetResultWithStatusAsync(1000);
+        await client.WaitForServerAsync(ServerOnlineTimeout);
+        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout);
+        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
         Assert.True(result.IsSuccessful);
 
         // Goal results are cached on action server by default,
         // we can call GetResult as many times as we want.
-        result = await goal.GetResultWithStatusAsync(1000);
+        result = await goal.GetResultWithStatusAsync(RequestTimeout);
         Assert.True(result.IsSuccessful);
     }
 
@@ -209,15 +214,16 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), 1000);
-        var result = await goal.GetResultWithStatusAsync(1000);
+        await client.WaitForServerAsync(ServerOnlineTimeout);
+        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout);
+        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
         Assert.True(result.IsSuccessful);
 
         // Goal result is removed after the first call to GetResultWithStatusAsync,
         // now we should get a result with unknown status.
         //
         // TODO: Does this conform to the design of ROS 2 actions?
-        result = await goal.GetResultWithStatusAsync(1000);
+        result = await goal.GetResultWithStatusAsync(RequestTimeout);
         Assert.Equal(ActionGoalStatus.Unknown, result.Status);
     }
 
@@ -231,16 +237,17 @@ public class ActionTests
 
         var actionName = NameGenerator.GenerateActionName();
 
+        var handler = new TestHandler(
+            feedbackCount: 5,
+            feedbackInterval: 100,
+            executeWaitTime: 100,
+            asyncFeedback: useAsyncFeedback,
+            waitForCompletion: true);
         using var server = node.CreateActionServer<
             LookupTransformAction,
             LookupTransformActionGoal,
             LookupTransformActionResult,
-            LookupTransformActionFeedback>(actionName, new TestHandler(
-                feedbackCount: 5,
-                feedbackInterval: 100,
-                executeWaitTime: 100,
-                asyncFeedback: useAsyncFeedback)
-            );
+            LookupTransformActionFeedback>(actionName, handler);
 
         using var client = node.CreateActionClient<
             LookupTransformAction,
@@ -248,22 +255,28 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        await client.WaitForServerAsync(5000);
-        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), 1000);
-        var feedbackTask = CountFeedbacks(goal.ReadFeedbacksAsync());
+        await client.WaitForServerAsync(ServerOnlineTimeout);
+        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout);
+        var feedbackTask = CountFeedbacks(goal.ReadFeedbacksAsync(), 5);
 
-        var result = await goal.GetResultWithStatusAsync(10000);
+        var count = await feedbackTask.WaitAsync(TimeSpan.FromMilliseconds(RequestTimeout));
+        Assert.Equal(5, count);
+        handler.Complete();
+
+        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
         Assert.True(result.IsSuccessful);
 
-        var count = await feedbackTask.WaitAsync(TimeSpan.FromSeconds(10));
-        Assert.Equal(5, count);
-
-        static async Task<int> CountFeedbacks(IAsyncEnumerable<LookupTransformActionFeedback> items)
+        static async Task<int> CountFeedbacks(
+            IAsyncEnumerable<LookupTransformActionFeedback> items,
+            int expectedCount)
         {
             var count = 0;
             await foreach (var f in items)
             {
-                count++;
+                if (++count == expectedCount)
+                {
+                    break;
+                }
             }
             return count;
         }
@@ -273,9 +286,12 @@ public class ActionTests
     {
         private readonly bool _acceptGoal, _throwOnExecute, _asyncFeedback;
         private readonly int _executeWaitTime, _feedbackCount, _feedbackInterval;
+        private readonly TaskCompletionSource _executionStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource? _completionSignal;
 
         public TestHandler(bool acceptGoal = true, bool throwOnExecute = false,
-            int executeWaitTime = 0, int feedbackCount = 0, int feedbackInterval = 1000, bool asyncFeedback = false)
+            int executeWaitTime = 0, int feedbackCount = 0, int feedbackInterval = 1000,
+            bool asyncFeedback = false, bool waitForCompletion = false)
         {
             _acceptGoal = acceptGoal;
             _throwOnExecute = throwOnExecute;
@@ -283,7 +299,15 @@ public class ActionTests
             _feedbackCount = feedbackCount;
             _feedbackInterval = feedbackInterval;
             _asyncFeedback = asyncFeedback;
+            if (waitForCompletion)
+            {
+                _completionSignal = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            }
         }
+
+        public Task ExecutionStarted => _executionStarted.Task;
+
+        public void Complete() => _completionSignal?.TrySetResult();
 
         public override bool CanAccept(Guid id, LookupTransformActionGoal goal)
         {
@@ -295,6 +319,7 @@ public class ActionTests
             LookupTransformActionGoal goal,
             CancellationToken cancellationToken)
         {
+            _executionStarted.TrySetResult();
             await Task.Delay(_executeWaitTime, cancellationToken);
             if (_throwOnExecute)
             {
@@ -319,6 +344,11 @@ public class ActionTests
                 }
 
                 await Task.Delay(_feedbackInterval, cancellationToken);
+            }
+
+            if (_completionSignal != null)
+            {
+                await _completionSignal.Task.WaitAsync(cancellationToken);
             }
 
             return new LookupTransformActionResult();

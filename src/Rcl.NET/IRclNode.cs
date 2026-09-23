@@ -22,6 +22,11 @@ public interface IRclNode : IRclObject
     IRclClock Clock { get; }
 
     /// <summary>
+    /// Gets a .NET time provider that schedules timers using this node's clock and context.
+    /// </summary>
+    TimeProvider TimeProvider { get; }
+
+    /// <summary>
     /// Gets an <see cref="IParameterService"/> for accessing parameters in the scope of the node.
     /// </summary>
     IParameterService Parameters { get; }

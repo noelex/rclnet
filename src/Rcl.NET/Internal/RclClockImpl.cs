@@ -39,15 +39,17 @@ class RclClockImpl : RclObject<SafeClockHandle>
             rcl_set_ros_time_override(Handle.Object, nanoseconds));
     }
 
-    public unsafe TimeSpan Elapsed
+    internal unsafe long Nanoseconds
     {
         get
         {
             rcl_time_point_value_t t;
             rcl_clock_get_now(Handle.Object, &t);
-            return TimeSpan.FromMicroseconds(t.Value / 1000.0);
+            return t.Value;
         }
     }
+
+    public TimeSpan Elapsed => TimeSpan.FromMicroseconds(Nanoseconds / 1000.0);
 
     public DateTimeOffset Now => DateTimeOffset.UnixEpoch + Elapsed;
 }

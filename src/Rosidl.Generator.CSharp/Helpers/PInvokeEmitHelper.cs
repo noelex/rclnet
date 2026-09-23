@@ -20,6 +20,7 @@ internal static class PInvokeEmitHelper
 
         method.Body = (writer, element) =>
         {
+            WriteAbiGuard(writer, context);
             writer.WriteLine($$"""
                 fixed ({{structType}}* pMsg = &msg)
                 {
@@ -50,6 +51,7 @@ internal static class PInvokeEmitHelper
 
         method.Body = (writer, element) =>
         {
+            WriteAbiGuard(writer, context);
             writer.WriteLine($$"""
                 return _PInvoke(input, output);
 
@@ -77,6 +79,7 @@ internal static class PInvokeEmitHelper
 
         method.Body = (writer, element) =>
         {
+            WriteAbiGuard(writer, context);
             writer.WriteLine($$"""
                 fixed ({{structType}}* plhs = &lhs, prhs = &rhs)
                 {
@@ -84,7 +87,7 @@ internal static class PInvokeEmitHelper
                 }
 
                 [{{Attributes.SuppressGCTransition}}]
-                [global::System.Runtime.InteropServices.DllImportAttribute("{{context.MessageContext.GeneratorLibraryName}}", EntryPoint = "{{symbolResolver("are_qual")}}")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("{{context.MessageContext.GeneratorLibraryName}}", EntryPoint = "{{symbolResolver("are_equal")}}")]
                 static extern {{method.ReturnType}} _PInvoke({{structType}}* lhs, {{structType}}* rhs);
                 """);
         };
@@ -104,6 +107,7 @@ internal static class PInvokeEmitHelper
 
         method.Body = (writer, element) =>
         {
+            WriteAbiGuard(writer, context);
             writer.WriteLine($$"""
                 return _PInvoke();
 
@@ -130,6 +134,7 @@ internal static class PInvokeEmitHelper
 
         method.Body = (writer, element) =>
         {
+            WriteAbiGuard(writer, context);
             writer.WriteLine($$"""
                 _PInvoke(msg);
 
@@ -140,5 +145,10 @@ internal static class PInvokeEmitHelper
         };
 
         return method;
+    }
+
+    private static void WriteAbiGuard(CppAst.CodeGen.Common.CodeWriter writer, MethodBuildContext context)
+    {
+        writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
     }
 }

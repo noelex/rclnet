@@ -24,4 +24,27 @@ partial class Time
         public static implicit operator TimeSpan(Priv priv)
             => TimeSpan.FromSeconds(priv.Sec + priv.Nanosec / 1000000000.0);
     }
+
+    public unsafe partial struct PrivV2
+    {
+        /// <summary>
+        /// Copy value from specified <see cref="DateTimeOffset"/>.
+        /// </summary>
+        /// <param name="time"></param>
+        public void CopyFrom(DateTimeOffset time)
+            => CopyFrom(time - DateTimeOffset.UnixEpoch);
+
+        /// <summary>
+        /// Copy value from specified <see cref="TimeSpan"/>.
+        /// </summary>
+        /// <param name="time"></param>
+        public void CopyFrom(TimeSpan time)
+        {
+            Sec = (int)(time.TotalNanoseconds / 1000000000);
+            Nanosec = (uint)(time.TotalNanoseconds % 1000000000);
+        }
+
+        public static implicit operator TimeSpan(PrivV2 priv)
+            => TimeSpan.FromSeconds(priv.Sec + priv.Nanosec / 1000000000.0);
+    }
 }

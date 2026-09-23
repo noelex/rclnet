@@ -52,7 +52,16 @@ internal unsafe class JazzyMessageIntrospection : IMessageIntrospection
         }, this);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ref T AsRef<T>(nint msgPtr, int memberIndex)
+        where T : unmanaged, IRosidlNative
+    {
+        RosidlRuntime.RequireNativeAbi(T.Abi);
+        return ref UnsafeAsRef<T>(msgPtr, memberIndex);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ref T UnsafeAsRef<T>(nint msgPtr, int memberIndex)
         where T : unmanaged
     {
         return ref Unsafe.AsRef<T>(GetMemberPointer(msgPtr, memberIndex).ToPointer());

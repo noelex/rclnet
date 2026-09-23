@@ -12,6 +12,9 @@ interface IMessageIntrospection
     RosMessageBuffer CreateBuffer();
 
     ref T AsRef<T>(nint msgPtr, int memberIndex)
+        where T : unmanaged, IRosidlNative;
+
+    ref T UnsafeAsRef<T>(nint msgPtr, int memberIndex)
         where T : unmanaged;
 
     nint GetMemberPointer(nint msgPtr, int memberIndex);
@@ -43,6 +46,10 @@ static class MessageIntrospection
         {
             return new JazzyMessageIntrospection(typesupport);
         }
+        else if (RosEnvironment.IsLyrical)
+        {
+            return new LyricalMessageIntrospection(typesupport);
+        }
         else
         {
             throw new NotSupportedException();
@@ -65,6 +72,10 @@ static class MessageIntrospection
         else if (RosEnvironment.IsJazzy || RosEnvironment.IsKilted)
         {
             return new JazzyMessageIntrospection((MessageMembers_Jazzy*)messageMembers);
+        }
+        else if (RosEnvironment.IsLyrical)
+        {
+            return new LyricalMessageIntrospection((MessageMembers_Jazzy*)messageMembers);
         }
         else
         {

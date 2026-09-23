@@ -5,24 +5,38 @@ namespace Rosidl.Generator.CSharp.Builders;
 
 public class PrivStructSequenceBuilder
 {
-    public static CSharpElement Build(MessageBuildContext context)
+    public static CSharpElement Build(MessageBuildContext context) => Build(context.NativeLayout);
+
+    internal static CSharpElement Build(NativeLayoutBuildContext context)
     {
         var methodContext = new SequenceStructMethodBuildContext(context);
-        var structure = new CSharpStruct(context.PrivStructSequenceName);
+        var structure = new CSharpStruct(context.PrivSequenceName);
 
-        structure.AddCommentsForStructSequence(context.Metadata);
+        structure.AddCommentsForStructSequence(context.MessageContext.Metadata, context.Layout);
 
         structure.BaseTypes.Add(new CSharpFreeType($"global::System.IEquatable<{methodContext.StructType}>"));
         structure.BaseTypes.Add(new CSharpFreeType($"global::System.IDisposable"));
+        structure.BaseTypes.Add(new CSharpFreeType($"global::Rosidl.Runtime.IRosidlNativeSequence<{context.PrivName}>"));
 
         structure.Attributes.Add(Attributes.StructLayoutSequential);
+        structure.Attributes.Add(Attributes.RosidlAbi(context.Layout));
 
-
+        var abiProperty = new CSharpProperty("Abi")
+        {
+            Comment = new XmlComment("<inheritdoc/>"),
+            Modifiers = CSharpModifiers.Static,
+            Visibility = CSharpVisibility.Public,
+            ReturnType = new CSharpFreeType("global::Rosidl.Runtime.RosidlNativeAbi"),
+            GetBodyInlined = context.NativeAbiExpression,
+        };
+        abiProperty.Attributes.Add(Attributes.DebuggerNonUserCode);
+        abiProperty.Attributes.Add(Attributes.GeneratedCode);
+        structure.Members.Add(abiProperty);
 
         structure.Members.Add(new CSharpField("__data")
         {
             Visibility = CSharpVisibility.Private,
-            FieldType = new CSharpPointerType(new CSharpFreeType(context.PrivStructName)),
+            FieldType = new CSharpPointerType(new CSharpFreeType(context.PrivName)),
         });
 
         structure.Members.Add(new CSharpField("__size")
@@ -36,6 +50,8 @@ public class PrivStructSequenceBuilder
             Visibility = CSharpVisibility.Private,
             FieldType = new CSharpFreeType("nuint"),
         });
+
+        // Generated message sequences retain data/size/capacity in both ABIs.
 
         structure.Members.Add(new CSharpProperty("Size")
         {
@@ -112,6 +128,7 @@ public class PrivStructSequenceBuilder
 
         method.Body = (writer, element) =>
         {
+            writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
             writer.WriteLine($$"""
                 fixed ({{structType}}* pMsg = &msg)
                 {
@@ -132,9 +149,10 @@ public class PrivStructSequenceBuilder
         return new CSharpMethod("AsSpan")
         {
             Visibility = CSharpVisibility.Public,
-            ReturnType = new CSharpFreeType($"System.Span<{context.MessageContext.PrivStructName}>"),
+            ReturnType = new CSharpFreeType($"System.Span<{context.NativeLayoutContext.PrivName}>"),
             Body = (writer, element) =>
             {
+                writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
                 writer.WriteLine("return new(__data, Size);");
             }
         };
@@ -150,11 +168,12 @@ public class PrivStructSequenceBuilder
 
         method.Parameters.Add(new CSharpParameter("src")
         {
-            ParameterType = new CSharpFreeType($"System.ReadOnlySpan<{context.MessageContext.PrivStructName}>")
+            ParameterType = new CSharpFreeType($"System.ReadOnlySpan<{context.NativeLayoutContext.PrivName}>")
         });
 
         method.Body = (writer, element) =>
         {
+            writer.WriteLine(context.NativeLayoutContext.RequireNativeAbiStatement);
             writer.WriteLine($$"""
                     Finalize(ref this);
                     ThrowIfNonSuccess(TryInitialize(src.Length, out this));
@@ -172,7 +191,7 @@ public class PrivStructSequenceBuilder
             Text = $$"""
             [{{Attributes.DebuggerNonUserCode}}]
             [{{Attributes.GeneratedCode}}]
-            public {{context.StructName}}(System.ReadOnlySpan<{{context.MessageContext.PrivStructName}}> src)
+            public {{context.StructName}}(System.ReadOnlySpan<{{context.NativeLayoutContext.PrivName}}> src)
                 : this(src.Length)
             {
                 src.CopyTo(AsSpan());

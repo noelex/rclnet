@@ -9,7 +9,7 @@
 	<RepositoryUrl>https://github.com/noelex/rclnet.git</RepositoryUrl>
 	<Authors>noelex@outlook.jp</Authors>
 	<Company />
-	<Copyright>Copyright (c) 2022-2025, noelex@outlook.jp</Copyright>
+	<Copyright>Copyright (c) 2022-2026, noelex@outlook.jp</Copyright>
 	<PackageTags>ros, ros2, rcl, rosidl, ros2cs, rclnet</PackageTags>
   <SignAssembly>true</SignAssembly>
   <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)\SigningKey.snk</AssemblyOriginatorKeyFile>

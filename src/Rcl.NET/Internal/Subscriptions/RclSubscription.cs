@@ -136,9 +136,14 @@ internal unsafe class RclSubscription<T> :
         _deadlineMissedEvent?.Dispose();
         _qosEvent?.Dispose();
 
+        // Stop future receives before queuing buffer destruction on the event loop.
+        base.Dispose();
         if (_messageChannel.Writer.TryComplete())
         {
-            _messageBuffer.Dispose();
+            // A receive callback can still be taking or finalizing this buffer,
+            // including when a synchronous message observer disposes the subscription.
+            Context.SynchronizationContext.Post(static state =>
+                ((RclSubscription<T>)state!)._messageBuffer.Dispose(), this);
             foreach (var (_, obs) in _observers)
             {
                 obs.OnCompleted();
@@ -146,7 +151,6 @@ internal unsafe class RclSubscription<T> :
             _observers.Clear();
         }
 
-        base.Dispose();
         _node.Context.DefaultLogger.LogDebug($"Disposed RclSubscription '{Name}'.");
     }
 

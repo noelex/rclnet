@@ -23,9 +23,17 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
             {
                 InitFoxy(name, typeSupportHandle, options);
             }
+            else if (RosEnvironment.IsHumble)
+            {
+                InitHumble(name, typeSupportHandle, options);
+            }
+            else if (RosEnvironment.IsLyrical)
+            {
+                InitLyrical(name, typeSupportHandle, options);
+            }
             else
             {
-                InitHumbleOrLater(name, typeSupportHandle, options);
+                InitIronToKilted(name, typeSupportHandle, options);
             }
         }
         catch
@@ -37,10 +45,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
 
     private void InitFoxy(byte* name, TypeSupportHandle typeSupport, SubscriptionOptions options)
     {
-        // This is backward compatible as long as we don't access
-        // rmw_subscription_options.require_unique_network_flow_endpoints and
-        // rmw_subscription_options.content_filter_options
-        var opts = RclHumble.rcl_subscription_get_default_options();
+        var opts = RclFoxy.rcl_subscription_get_default_options();
         opts.qos = options.Qos.ToRmwQosProfile();
         opts.rmw_subscription_options.ignore_local_publications = options.IgnoreLocalPublications;
 
@@ -54,7 +59,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
 
     }
 
-    private void InitHumbleOrLater(byte* name, TypeSupportHandle typeSupport, SubscriptionOptions options)
+    private void InitHumble(byte* name, TypeSupportHandle typeSupport, SubscriptionOptions options)
     {
         var opts = RclHumble.rcl_subscription_get_default_options();
 
@@ -96,12 +101,112 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
         }
 
         RclException.ThrowIfNonSuccess(
-                rcl_subscription_init(
-                    Object,
-                    _node.Object,
-                    typeSupport.GetMessageTypeSupport(),
-                    name,
-                    &opts));
+            rcl_subscription_init(
+                Object,
+                _node.Object,
+                typeSupport.GetMessageTypeSupport(),
+                name,
+                &opts));
+    }
+
+    private void InitIronToKilted(byte* name, TypeSupportHandle typeSupport, SubscriptionOptions options)
+    {
+        var opts = RclIron.rcl_subscription_get_default_options();
+
+        opts.qos = options.Qos.ToRmwQosProfile();
+        opts.rmw_subscription_options.ignore_local_publications = options.IgnoreLocalPublications;
+        opts.rmw_subscription_options.require_unique_network_flow_endpoints =
+            (RclHumble.rmw_unique_network_flow_endpoints_requirement_t)options.UniqueNetworkFlowEndpoints;
+
+        if (options.ContentFilter != null)
+        {
+            var expSize = InteropHelpers.GetUtf8BufferSize(options.ContentFilter.Expression);
+            byte* expBuffer = stackalloc byte[expSize];
+            InteropHelpers.FillUtf8Buffer(options.ContentFilter.Expression, new(expBuffer, expSize));
+
+            var argc = options.ContentFilter.Arguments.Length;
+            rcl_ret_t ret;
+            if (argc > 0)
+            {
+                var bufferSize = InteropHelpers.GetUtf8BufferSize(options.ContentFilter.Arguments);
+                Span<byte> argBuffer = stackalloc byte[bufferSize];
+                byte** argv = stackalloc byte*[argc];
+                InteropHelpers.FillUtf8Buffer(options.ContentFilter.Arguments, argBuffer, argv);
+                ret = RclIron.rcl_subscription_options_set_content_filter_options(
+                    expBuffer,
+                    (uint)argc,
+                    argv,
+                    &opts);
+            }
+            else
+            {
+                ret = RclIron.rcl_subscription_options_set_content_filter_options(
+                    expBuffer,
+                    0,
+                    null,
+                    &opts);
+            }
+
+            RclException.ThrowIfNonSuccess(ret);
+        }
+
+        RclException.ThrowIfNonSuccess(
+            rcl_subscription_init(
+                Object,
+                _node.Object,
+                typeSupport.GetMessageTypeSupport(),
+                name,
+                &opts));
+    }
+
+    private void InitLyrical(byte* name, TypeSupportHandle typeSupport, SubscriptionOptions options)
+    {
+        var opts = RclLyrical.rcl_subscription_get_default_options();
+
+        opts.qos = options.Qos.ToRmwQosProfile();
+        opts.rmw_subscription_options.ignore_local_publications = options.IgnoreLocalPublications;
+        opts.rmw_subscription_options.require_unique_network_flow_endpoints =
+            (RclHumble.rmw_unique_network_flow_endpoints_requirement_t)options.UniqueNetworkFlowEndpoints;
+
+        if (options.ContentFilter != null)
+        {
+            var expSize = InteropHelpers.GetUtf8BufferSize(options.ContentFilter.Expression);
+            byte* expBuffer = stackalloc byte[expSize];
+            InteropHelpers.FillUtf8Buffer(options.ContentFilter.Expression, new(expBuffer, expSize));
+
+            var argc = options.ContentFilter.Arguments.Length;
+            rcl_ret_t ret;
+            if (argc > 0)
+            {
+                var bufferSize = InteropHelpers.GetUtf8BufferSize(options.ContentFilter.Arguments);
+                Span<byte> argBuffer = stackalloc byte[bufferSize];
+                byte** argv = stackalloc byte*[argc];
+                InteropHelpers.FillUtf8Buffer(options.ContentFilter.Arguments, argBuffer, argv);
+                ret = RclLyrical.rcl_subscription_options_set_content_filter_options(
+                    expBuffer,
+                    (uint)argc,
+                    argv,
+                    &opts);
+            }
+            else
+            {
+                ret = RclLyrical.rcl_subscription_options_set_content_filter_options(
+                    expBuffer,
+                    0,
+                    null,
+                    &opts);
+            }
+
+            RclException.ThrowIfNonSuccess(ret);
+        }
+
+        RclException.ThrowIfNonSuccess(
+            rcl_subscription_init(
+                Object,
+                _node.Object,
+                typeSupport.GetMessageTypeSupport(),
+                name,
+                &opts));
     }
 
     protected override void ReleaseHandleCore(rcl_subscription_t* ptr)
