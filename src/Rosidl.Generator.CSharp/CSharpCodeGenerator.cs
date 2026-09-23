@@ -95,8 +95,8 @@ class ParseSpec
                         Excludes.AddRange(parts[1..]);
                         break;
                     case "map-namespace":
-                        var mapping = parts[1].Split(':');
-                        NamespaceMapping.Add(mapping[0], mapping[1]);
+                        var mapping = ParseMapping(directive, parts);
+                        NamespaceMapping.Add(mapping.Package, mapping.Value);
                         break;
                     case "service-introspection":
                         if (parts.Length != 2)
@@ -134,9 +134,10 @@ class ParseSpec
                         Abi = ParseAbi(parts[1]);
                         abiSpecified = true;
                         break;
+                    case "map-name":
                     case "map-package":
-                        var p = parts[1].Split(':');
-                        PackageMapping.Add(p[0], p[1]);
+                        var packageMapping = ParseMapping(directive, parts);
+                        PackageMapping.Add(packageMapping.Package, packageMapping.Value);
                         break;
                     default:
                         throw new Exception($"Unrecognized directive '{directive}'.");
@@ -168,8 +169,8 @@ class ParseSpec
                     Excludes.AddRange(opt.Value!.Split(s_optSeparator, StringSplitOptions.RemoveEmptyEntries));
                     break;
                 case "map-namespace":
-                    var mapping = opt.Value!.Split(':');
-                    NamespaceMapping.Add(mapping[0], mapping[1]);
+                    var mapping = ParseMapping(opt.Name, opt.Value!);
+                    NamespaceMapping[mapping.Package] = mapping.Value;
                     break;
                 case "service-introspection":
                     EnableServiceIntrospection = opt.Value == "yes";
@@ -180,12 +181,33 @@ class ParseSpec
                 case "abi":
                     Abi = ParseAbi(opt.Value!);
                     break;
-                case "map-package":
-                    var p = opt.Value!.Split(':');
-                    PackageMapping.Add(p[0], p[1]);
+                case "map-name":
+                    var packageMapping = ParseMapping(opt.Name, opt.Value!);
+                    PackageMapping[packageMapping.Package] = packageMapping.Value;
                     break;
             }
         }
+    }
+
+    private static (string Package, string Value) ParseMapping(string option, string[] parts)
+    {
+        if (parts.Length != 2)
+        {
+            throw new Exception($"'{option}' requires exactly one argument in PKG:VALUE format.");
+        }
+
+        return ParseMapping(option, parts[1]);
+    }
+
+    private static (string Package, string Value) ParseMapping(string option, string value)
+    {
+        var mapping = value.Split(':', 2);
+        if (mapping.Length != 2 || string.IsNullOrEmpty(mapping[0]) || string.IsNullOrEmpty(mapping[1]))
+        {
+            throw new Exception($"'{option}' requires an argument in PKG:VALUE format.");
+        }
+
+        return (mapping[0], mapping[1]);
     }
 
     private static RosidlAbiMode ParseAbi(string value)
