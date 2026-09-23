@@ -160,6 +160,35 @@ public class ClockTests
         await context.Yield();
     }
 
+    [Fact]
+    public async Task ProviderTimerAndNodeCanBeDisposedConcurrently()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        for (var iteration = 0; iteration < 50; iteration++)
+        {
+            var node = context.CreateNode(NameGenerator.GenerateNodeName());
+            using var timer = node.TimeProvider.CreateTimer(
+                _ => { }, null, TimeSpan.FromHours(1), System.Threading.Timeout.InfiniteTimeSpan);
+            var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var disposeTimer = Task.Run(async () =>
+            {
+                await start.Task;
+                timer.Dispose();
+            });
+            var disposeNode = Task.Run(async () =>
+            {
+                await start.Task;
+                node.Dispose();
+            });
+
+            start.SetResult();
+            await Task.WhenAll(disposeTimer, disposeNode).WaitAsync(TimeSpan.FromMilliseconds(Timeout));
+            await timer.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromMilliseconds(Timeout));
+            Assert.False(timer.Change(TimeSpan.FromSeconds(1), System.Threading.Timeout.InfiniteTimeSpan));
+            await context.Yield();
+        }
+    }
+
     private static async Task AssertCancellationUsesRosTimeAsync(
         IRclPublisher clockPublisher,
         IRclNode timerNode,

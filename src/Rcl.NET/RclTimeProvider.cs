@@ -240,10 +240,12 @@ internal sealed class RclTimeProviderTimer : ITimer
             if (_disposed) return;
             _disposed = true;
             RclException.ThrowIfNonSuccess(rcl_timer_cancel(_handle.Object));
+            // Concurrent disposal must not return before native release is queued,
+            // otherwise the owning node can queue its clock release first.
+            _registration.Dispose();
+            _context.SynchronizationContext.Post(static state => ((RclTimeProviderTimer)state!).ReleaseHandle(), this);
         }
 
-        _registration.Dispose();
-        _context.SynchronizationContext.Post(static state => ((RclTimeProviderTimer)state!).ReleaseHandle(), this);
         _owner.Remove(this);
     }
 
