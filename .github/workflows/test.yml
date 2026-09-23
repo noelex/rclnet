@@ -4,27 +4,6 @@ on:
   pull_request:
     branches: [main, release/*]
 jobs:
-  codegen:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: |
-            8.0.x
-            9.0.x
-            10.0.x
-
-      - name: Test code generation
-        run: dotnet test src/CodegenTests/CodegenTests.csproj -c Release --verbosity normal
-
-      - name: Test Rosidl runtime
-        run: dotnet test src/Rosidl.Runtime.Tests/Rosidl.Runtime.Tests.csproj -c Release --verbosity normal
-
   ubuntu:
     runs-on: ubuntu-latest
     strategy:
@@ -67,6 +46,9 @@ jobs:
           fi
           apt update
           apt install -y curl python3-colcon-common-extensions
+          if [ "${{ matrix.ros_distribution }}" = "lyrical" ]; then
+            apt install -y libicu78
+          fi
           rosdep update --include-eol-distros
           rosdep install -i -y --from-paths src/Rcl.NET.Tests src/CodegenTests/packages/ros2cs_abi_test_msgs
 
@@ -89,6 +71,18 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 10.0.x
+
+      - name: Test code generation
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          . "$GITHUB_WORKSPACE/install/setup.sh"
+          dotnet test src/CodegenTests/CodegenTests.csproj -c Release --verbosity normal
+
+      - name: Test Rosidl runtime
+        run: |
+          . /opt/ros/${{ matrix.ros_distribution }}/setup.sh
+          . "$GITHUB_WORKSPACE/install/setup.sh"
+          dotnet test src/Rosidl.Runtime.Tests/Rosidl.Runtime.Tests.csproj -c Release --verbosity normal
 
       - name: Build
         working-directory: src/Rcl.NET.Tests
@@ -118,7 +112,7 @@ jobs:
           dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
   windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
@@ -209,20 +203,31 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Find Visual Studio developer command prompt
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $installation = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $installation) { throw 'Visual Studio C++ tools not found.' }
+          $vsDevCmd = Join-Path $installation 'Common7\Tools\VsDevCmd.bat'
+          "VSDEVCMD=$vsDevCmd" >> $env:GITHUB_ENV
+
       - name: Build ABI test interfaces (Legacy)
         if: ${{ matrix.is_legacy_distro }}
         shell: cmd
         run: |
           refreshenv && ^
+          call "%VSDEVCMD%" -arch=amd64 && ^
           set "PATH=%pythonLocation%;%pythonLocation%\Scripts;%PATH%" && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
-          "%pythonLocation%\Scripts\colcon.exe" build --merge-install --packages-select ros2cs_abi_test_msgs --base-paths src/CodegenTests/packages
+          "%pythonLocation%\Scripts\colcon.exe" build --merge-install --packages-select ros2cs_abi_test_msgs --base-paths src/CodegenTests/packages --cmake-args "-DPython3_EXECUTABLE=%pythonLocation%\python.exe"
 
       - name: Build ABI test interfaces
         if: ${{ !matrix.is_legacy_distro }}
         shell: cmd
         run: |
           refreshenv && ^
+          call "%VSDEVCMD%" -arch=amd64 && ^
           pixi run --manifest-path "c:/dev/pixi/" ^
           cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && colcon build --merge-install --packages-select ros2cs_abi_test_msgs --base-paths src/CodegenTests/packages"
 
@@ -235,6 +240,40 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: 10.0.x
+
+      - name: Test code generation (Legacy)
+        if: ${{ matrix.is_legacy_distro }}
+        shell: cmd
+        run: |
+          refreshenv && ^
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
+          call install/setup.bat && ^
+          dotnet test src/CodegenTests/CodegenTests.csproj -c Release --verbosity normal
+
+      - name: Test code generation
+        if: ${{ !matrix.is_legacy_distro }}
+        shell: cmd
+        run: |
+          refreshenv && ^
+          pixi run --manifest-path "c:/dev/pixi/" ^
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call install/setup.bat && dotnet test src/CodegenTests/CodegenTests.csproj -c Release --verbosity normal"
+
+      - name: Test Rosidl runtime (Legacy)
+        if: ${{ matrix.is_legacy_distro }}
+        shell: cmd
+        run: |
+          refreshenv && ^
+          call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
+          call install/setup.bat && ^
+          dotnet test src/Rosidl.Runtime.Tests/Rosidl.Runtime.Tests.csproj -c Release --verbosity normal
+
+      - name: Test Rosidl runtime
+        if: ${{ !matrix.is_legacy_distro }}
+        shell: cmd
+        run: |
+          refreshenv && ^
+          pixi run --manifest-path "c:/dev/pixi/" ^
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call install/setup.bat && dotnet test src/Rosidl.Runtime.Tests/Rosidl.Runtime.Tests.csproj -c Release --verbosity normal"
 
       - name: Build
         working-directory: src/Rcl.NET.Tests
