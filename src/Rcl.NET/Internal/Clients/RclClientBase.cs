@@ -3,6 +3,7 @@ using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
+using System.Collections.Concurrent;
 
 namespace Rcl.Internal.Clients;
 
@@ -10,7 +11,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 {
     private readonly TypeSupportHandle _typesupport;
     private readonly RclNodeImpl _node;
-    private readonly Dictionary<long, ManualResetValueTaskSource<RosMessageBuffer>> _pendingRequests = new();
+    private readonly ConcurrentDictionary<long, ManualResetValueTaskSource<RosMessageBuffer>> _pendingRequests = new();
     private readonly CancellationTokenSource _shutdownSignal = new();
 
     public unsafe RclClientBase(
@@ -99,7 +100,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
                     Handle.Object, &header, responseBuffer.Data.ToPointer())
             )
             {
-                if (_pendingRequests.Remove(header.request_id.sequence_number, out var future))
+                if (_pendingRequests.TryRemove(header.request_id.sequence_number, out var future))
                 {
                     future.SetResult(responseBuffer);
                     keepBuffer = true;
@@ -142,8 +143,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     {
         // TODO: Maybe use private ObjectPools?
         var completion = ObjectPool.Rent<ManualResetValueTaskSource<RosMessageBuffer>>();
-        var timeoutCts = ObjectPool.Rent<CancellationTokenSource>();
-        var cancelAfterReg = timeoutCts.CancelAfter(timeout, _node);
+        var timeoutCts = new CancellationTokenSource(timeout, _node.TimeProvider);
 
         // Yielding back to the event loop is required to avoid the situation that response 
         // has already been received at the point we add the ValueTaskSource into _pendingRequests,
@@ -160,7 +160,6 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         // Because if the cancellation token is already completed upon registration, the callback is
         // called in place, and if the request is not in _pendingRequests, the request can never complete.
 
-        // Does not need locking or concurrent dictionary because we are on the event loop
         _pendingRequests[sequence] = completion;
 
         var cancelArgs = ObjectPool.Rent<CancellationArgs>()
@@ -172,7 +171,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         var completionArgs =
             ObjectPool.Rent<CompletionArgs>()
-            .Reset(sequence, this, completion, outerReg, disposeReg, timeoutReg, timeoutCts, cancelArgs, cancelAfterReg);
+            .Reset(sequence, this, completion, outerReg, disposeReg, timeoutReg, timeoutCts, cancelArgs);
 
         completion.RunContinuationsAsynchronously = true;
         completion.OnFinally(state => ((CompletionArgs)state!).Return(), completionArgs);
@@ -242,7 +241,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         public void CancelWithOuterToken()
         {
-            if (This._pendingRequests.Remove(Sequence, out var ctx))
+            if (This._pendingRequests.TryRemove(Sequence, out var ctx))
             {
                 ctx.SetException(new OperationCanceledException(OuterCancellation));
             }
@@ -250,7 +249,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         public void CancelAsDisposed()
         {
-            if (This._pendingRequests.Remove(Sequence, out var ctx))
+            if (This._pendingRequests.TryRemove(Sequence, out var ctx))
             {
                 ctx.SetException(new ObjectDisposedException(This.GetType().Name));
             }
@@ -258,7 +257,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         public void CancelAsTimedOut()
         {
-            if (This._pendingRequests.Remove(Sequence, out var ctx))
+            if (This._pendingRequests.TryRemove(Sequence, out var ctx))
             {
                 ctx.SetException(new TimeoutException($"ROS service request timed out after {Timeout}."));
             }
@@ -289,8 +288,6 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         public CancellationTokenRegistration TimeoutCanellationReg { get; private set; }
 
-        public TimeoutRegistration CancelAfterReg { get; private set; }
-
         public CancellationTokenSource TimeoutSource { get; private set; } = null!;
 
         public CancellationArgs CancellationArgs { get; private set; } = null!;
@@ -303,8 +300,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             CancellationTokenRegistration shutdownCancellation,
             CancellationTokenRegistration timeoutCancellation,
             CancellationTokenSource timeoutSource,
-            CancellationArgs canelArgs,
-            TimeoutRegistration cancelAfterReg)
+            CancellationArgs canelArgs)
         {
             Sequence = sequence;
             This = @this;
@@ -314,29 +310,17 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             TimeoutCanellationReg = timeoutCancellation;
             TimeoutSource = timeoutSource;
             CancellationArgs = canelArgs;
-            CancelAfterReg = cancelAfterReg;
             return this;
         }
 
         public void Return()
         {
-            CancelAfterReg.Dispose();
-
             // Cancel CancellationTokenRegistrations
             OuterCanellationReg.Dispose();
             ShutdownCanellationReg.Dispose();
             TimeoutCanellationReg.Dispose();
 
-            // Return TimeoutSource to the pool if not already canceled,
-            // otherwise dispose it.
-            if (TimeoutSource.TryReset())
-            {
-                ObjectPool.Return(TimeoutSource);
-            }
-            else
-            {
-                TimeoutSource.Dispose();
-            }
+            TimeoutSource.Dispose();
 
             // Reset and return the ValueTaskSource
             Completion.Reset();
@@ -354,7 +338,6 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             TimeoutCanellationReg = default;
             TimeoutSource = default!;
             CancellationArgs = default!;
-            CancelAfterReg = default;
             ObjectPool.Return(this);
         }
     }

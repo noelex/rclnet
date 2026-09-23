@@ -66,21 +66,14 @@ public partial class RosGraph
 
         var obs = new GraphWatcher(this, watcher, state);
         using var sub = Subscribe(obs);
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        using var reg = cts.CancelAfter(timeout, _node);
-
         try
         {
-            await obs.Completion.WaitAsync(cts.Token).ConfigureAwait(false);
+            await obs.Completion.WaitAsync(timeout, _node.TimeProvider, cancellationToken).ConfigureAwait(false);
             return true;
         }
-        catch (OperationCanceledException)
+        catch (TimeoutException)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-
+            cancellationToken.ThrowIfCancellationRequested();
             return false;
         }
     }

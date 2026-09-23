@@ -223,6 +223,8 @@ public sealed class RclContext : IRclContext
 
     private unsafe void Interrupt() => rcl_trigger_guard_condition(_interruptSignal.Object);
 
+    internal void NotifyTimerChanged() => Interrupt();
+
     private unsafe void DisposeCore(bool blocking)
     {
         if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)

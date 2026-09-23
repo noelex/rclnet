@@ -11,6 +11,7 @@ namespace Rcl;
 /// It's the caller's responsibility the make sure that the registration
 /// is disposed exactly once.
 /// </remarks>
+[Obsolete("Use TimeProvider-aware APIs such as new CancellationTokenSource(timeout, node.TimeProvider); no separate timeout registration is needed.")]
 public readonly struct TimeoutRegistration : IDisposable
 {
     private readonly ObjectPool<ReusableTimer> _pool;
@@ -110,6 +111,7 @@ public static class CancellationTokenSourceExtensions
     /// A <see cref="TimeoutRegistration"/> for unregistering the operation from the <see cref="IRclContext"/>.
     /// </returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
+    [Obsolete("Use new CancellationTokenSource(timeout, node.TimeProvider) or a TimeProvider-aware wait API instead.")]
     public static TimeoutRegistration CancelAfter(
         this CancellationTokenSource source, TimeSpan timeout, IRclClock clock, IRclContext context)
     {
@@ -158,6 +160,7 @@ public static class CancellationTokenSourceExtensions
     /// <returns>
     /// A <see cref="TimeoutRegistration"/> for unregistering the operation from the <see cref="IRclContext"/>.
     /// </returns>
+    [Obsolete("Use new CancellationTokenSource(timeout, node.TimeProvider) or a TimeProvider-aware wait API instead.")]
     public static TimeoutRegistration CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, IRclClock clock, IRclContext context)
         => source.CancelAfter(TimeSpan.FromMilliseconds(timeoutMilliseconds), clock, context);
 
@@ -179,6 +182,7 @@ public static class CancellationTokenSourceExtensions
     /// <returns>
     /// A <see cref="TimeoutRegistration"/> for unregistering the operation from the <see cref="IRclContext"/>.
     /// </returns>
+    [Obsolete("Use new CancellationTokenSource(timeout, node.TimeProvider) or a TimeProvider-aware wait API instead.")]
     public static TimeoutRegistration CancelAfter(this CancellationTokenSource source, int timeoutMilliseconds, IRclNode node)
         => source.CancelAfter(timeoutMilliseconds, node.Clock, node.Context);
 
@@ -198,6 +202,7 @@ public static class CancellationTokenSourceExtensions
     /// <returns>
     /// A <see cref="TimeoutRegistration"/> for unregistering the operation from the <see cref="IRclContext"/>.
     /// </returns>
+    [Obsolete("Use new CancellationTokenSource(timeout, node.TimeProvider) or a TimeProvider-aware wait API instead.")]
     public static TimeoutRegistration CancelAfter(this CancellationTokenSource source, TimeSpan timeout, IRclNode node)
         => source.CancelAfter(timeout, node.Clock, node.Context);
 }

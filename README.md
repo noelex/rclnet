@@ -14,6 +14,7 @@ rclnet is a high-performance, asynchronous .NET client library for ROS 2, design
 - ROS 2 Lyrical support
 - Portable ROSIDL ABI support
 - Incremental MSBuild support for generated interfaces
+- .NET `TimeProvider` integration, including ROS-time-aware delays and timers
 
 ## ROS 2 Feature Support
 | Feature                 | Support | Notes                                                     |
@@ -21,7 +22,7 @@ rclnet is a high-performance, asynchronous .NET client library for ROS 2, design
 | Topics                  | ✅       |                                                           |
 | Services                | ✅       |                                                           |
 | Actions                 | ✅       | Managed implementation                                    |
-| Clocks & Timers         | ✅       | `use_sim_time` supported                                  |
+| Clocks & Timers         | ✅       | `use_sim_time` supported; .NET `TimeProvider` integration |
 | Guard Conditions        | ✅       |                                                           |
 | ROS Graph               | ✅       | Managed graph API                                         |
 | Logging                 | ✅       | stdout, `/rosout`, log files                              |
@@ -285,6 +286,23 @@ node.Graph
             $"Node {e.Node.Name} is online.");
     });
 ```
+
+### Time and simulation
+
+Each node exposes a `TimeProvider` backed by its ROS clock. Standard .NET time-based APIs can therefore follow ROS time and `use_sim_time`:
+
+```csharp
+await Task.Delay(
+    TimeSpan.FromSeconds(1),
+    node.TimeProvider,
+    cancellationToken);
+
+using var timer = new PeriodicTimer(
+    TimeSpan.FromSeconds(1),
+    node.TimeProvider);
+```
+
+When `use_sim_time` is enabled, delays and timers created with the node's `TimeProvider` follow `/clock`.
 
 ## Running and Debugging
 
