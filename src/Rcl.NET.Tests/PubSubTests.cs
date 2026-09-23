@@ -2,6 +2,7 @@ namespace Rcl.NET.Tests;
 
 using Rcl.Qos;
 using Rosidl.Messages.Builtin;
+using Rosidl.Runtime;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -48,8 +49,18 @@ public class PubSubTests
         using var sub = node.CreateNativeSubscription<Time>(topic);
 
         using var buffer = RosMessageBuffer.Create<Time>();
-        buffer.AsRef<Time.Priv>().Sec = 1;
-        buffer.AsRef<Time.Priv>().Nanosec = 2;
+        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+        {
+            ref var time = ref buffer.AsRef<Time.Priv>();
+            time.Sec = 1;
+            time.Nanosec = 2;
+        }
+        else
+        {
+            ref var time = ref buffer.AsRef<Time.PrivV2>();
+            time.Sec = 1;
+            time.Nanosec = 2;
+        }
 
         var task = ReadOneAsync(sub.ReadAllAsync());
         await WaitForSubscribersAsync(pub);
@@ -59,11 +70,21 @@ public class PubSubTests
         Assert.Equal(1, result.Sec);
         Assert.Equal(2u, result.Nanosec);
 
-        static async Task<Time.Priv> ReadOneAsync(IAsyncEnumerable<RosMessageBuffer> subscription)
+        static async Task<(int Sec, uint Nanosec)> ReadOneAsync(IAsyncEnumerable<RosMessageBuffer> subscription)
         {
             await foreach (var m in subscription)
             {
-                using (m) return m.AsRef<Time.Priv>();
+                using (m)
+                {
+                    if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+                    {
+                        ref var time = ref m.AsRef<Time.Priv>();
+                        return (time.Sec, time.Nanosec);
+                    }
+
+                    ref var timeV2 = ref m.AsRef<Time.PrivV2>();
+                    return (timeV2.Sec, timeV2.Nanosec);
+                }
             }
 
             Assert.Fail("No message received from topic.");

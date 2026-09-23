@@ -558,7 +558,8 @@ static void ProcessMessage(RosMessageBuffer buffer)
 }
 ```
 
-Raw `AsRef<T>()` access does not perform ABI conversion or validation.
+`AsRef<T>()` verifies that `T` matches the current ROSIDL native ABI. It does not convert
+between ABIs or verify that the buffer contains the requested message type.
 
 ## Execution and Scheduling
 
