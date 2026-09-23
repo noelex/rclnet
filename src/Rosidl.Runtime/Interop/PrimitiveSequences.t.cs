@@ -125,12 +125,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     public override bool Equals(object obj) => obj is @StructName@ s ? Equals(s) : false;
 
     /// <inheritdoc/>
-@if BufferAware@
-    public override int GetHashCode()
-        => HashCode.Combine((nint)_data, _size, _capacity, _isRosidlBuffer, _ownsRosidlBuffer);
-@else@
-    public override int GetHashCode() => HashCode.Combine((nint)_data, _size, _capacity);
-@endif@
+    public override int GetHashCode() => _size.GetHashCode();
 
     /// <inheritdoc/>
     public static bool operator ==(@StructName@ lhs, @StructName@ rhs) => lhs.Equals(rhs);

@@ -62,6 +62,35 @@ public class SequenceLayoutTests
     }
 
     [Fact]
+    public void EqualNativeSequencesHaveSameHashCode()
+    {
+        if (RosidlRuntime.NativeAbi != RosidlNativeAbi.V2)
+        {
+            return;
+        }
+
+        var source = new UInt8SequenceV2(new byte[] { 1, 2, 3 });
+        try
+        {
+            var copy = new UInt8SequenceV2(source);
+            try
+            {
+                Assert.True(source.Equals(copy));
+                Assert.Equal(source.GetHashCode(), copy.GetHashCode());
+                Assert.Equal(source.Size.GetHashCode(), source.GetHashCode());
+            }
+            finally
+            {
+                copy.Dispose();
+            }
+        }
+        finally
+        {
+            source.Dispose();
+        }
+    }
+
+    [Fact]
     public unsafe void V2StringSequencesCreatedByNativeCodeCanBeAccessed()
     {
         if (RosidlRuntime.NativeAbi != RosidlNativeAbi.V2)
@@ -90,6 +119,8 @@ public class SequenceLayoutTests
             {
                 Assert.True(cString->Equals(cStringCopy));
                 Assert.True(u16String->Equals(u16StringCopy));
+                Assert.Equal(cString->GetHashCode(), cStringCopy.GetHashCode());
+                Assert.Equal(u16String->GetHashCode(), u16StringCopy.GetHashCode());
             }
             finally
             {
