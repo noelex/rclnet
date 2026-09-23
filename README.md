@@ -505,7 +505,7 @@ Native mode reads `ROS_DISTRO`, generates only the corresponding ABI layout, and
 
 The ABI-specific native types listed above only matter when using the low-level native message APIs.
 
-Lyrical `rosidl::Buffer`-backed sequences are not currently supported, including those stored in CPU memory.
+Non-CPU `rosidl::Buffer`-backed sequences are not currently supported.
 
 ### Standalone ros2cs
 
