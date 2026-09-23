@@ -87,7 +87,7 @@ internal static class PInvokeEmitHelper
                 }
 
                 [{{Attributes.SuppressGCTransition}}]
-                [global::System.Runtime.InteropServices.DllImportAttribute("{{context.MessageContext.GeneratorLibraryName}}", EntryPoint = "{{symbolResolver("are_qual")}}")]
+                [global::System.Runtime.InteropServices.DllImportAttribute("{{context.MessageContext.GeneratorLibraryName}}", EntryPoint = "{{symbolResolver("are_equal")}}")]
                 static extern {{method.ReturnType}} _PInvoke({{structType}}* lhs, {{structType}}* rhs);
                 """);
         };

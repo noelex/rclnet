@@ -466,20 +466,22 @@ Command-line options override values specified in `ros2cs.spec`.
 
 ### ROSIDL native ABI
 
+`ros2cs` supports the following ROSIDL ABI layouts:
+
+| ABI | ROS 2 distributions | Native types in portable mode*|
+| --- | ------------------- | ----------------------------- |
+| V1  | Foxy through Kilted | `Priv` / `PrivSequence`       |
+| V2  | Lyrical             | `PrivV2` / `PrivSequenceV2`   |
+
+\* In non-portable modes, generated native types are always named `Priv` / `PrivSequence`.
+
 `ros2cs` uses portable ABI mode by default:
 
 ```text
 abi portable
 ```
 
-Currently supported layouts are:
-
-```text
-v1    ROS 2 Foxy through Kilted
-v2    ROS 2 Lyrical
-```
-
-Portable mode generates both layouts and automatically selects the correct one when using the normal managed APIs.
+Portable mode generates all supported layouts and automatically selects the correct one when using the normal managed APIs.
 
 If an application only targets one ABI, generation can be restricted to:
 
@@ -499,19 +501,11 @@ The ABI can also be selected from the active ROS distribution at generation time
 abi native
 ```
 
-Native mode reads `ROS_DISTRO`, generates only the corresponding ABI layout, and fails if
-the variable is missing or names an unsupported distribution.
+Native mode reads `ROS_DISTRO`, generates only the corresponding ABI layout, and fails if the variable is missing or names an unsupported distribution.
 
-Portable output exposes:
+The ABI-specific native types listed above only matter when using the low-level native message APIs.
 
-```text
-Priv / PrivSequence        ABI V1
-PrivV2 / PrivSequenceV2    ABI V2
-```
-
-These types only matter when using the low-level native message APIs.
-
-Lyrical `rosidl::Buffer`-backed non-CPU sequences are not currently supported.
+Lyrical `rosidl::Buffer`-backed sequences are not currently supported, including those stored in CPU memory.
 
 ### Standalone ros2cs
 

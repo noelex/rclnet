@@ -10,6 +10,27 @@ public class AbiIntegrationTests
     private const int Timeout = 10_000;
 
     [SkippableFact]
+    public void NativeMessageAndSequenceEqualityUsesRosidlSymbols()
+    {
+        RequireTestInterfaces();
+
+        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+        {
+            using var message = new Scalar.Priv();
+            using var sequence = new Scalar.PrivSequence(1);
+            Assert.True(message.Equals(message));
+            Assert.True(sequence.Equals(sequence));
+        }
+        else
+        {
+            using var message = new Scalar.PrivV2();
+            using var sequence = new Scalar.PrivSequenceV2(1);
+            Assert.True(message.Equals(message));
+            Assert.True(sequence.Equals(sequence));
+        }
+    }
+
+    [SkippableFact]
     public async Task PortableSequenceMessagesRoundTrip()
     {
         RequireTestInterfaces();
