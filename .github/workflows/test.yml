@@ -16,10 +16,14 @@ jobs:
         with:
           dotnet-version: |
             8.0.x
+            9.0.x
             10.0.x
 
       - name: Test code generation
         run: dotnet test src/CodegenTests/CodegenTests.csproj -c Release --verbosity normal
+
+      - name: Test Rosidl runtime
+        run: dotnet test src/Rosidl.Runtime.Tests/Rosidl.Runtime.Tests.csproj -c Release --verbosity normal
 
   ubuntu:
     runs-on: ubuntu-latest

@@ -503,8 +503,6 @@ abi native
 
 Native mode reads `ROS_DISTRO`, generates only the corresponding ABI layout, and fails if the variable is missing or names an unsupported distribution.
 
-The ABI-specific native types listed above only matter when using the low-level native message APIs.
-
 Non-CPU `rosidl::Buffer`-backed sequences are not currently supported.
 
 ### Standalone ros2cs
