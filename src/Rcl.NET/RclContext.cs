@@ -443,7 +443,15 @@ public sealed class RclContext : IRclContext
                     }
                 }
 
-                RclException.ThrowIfNonSuccess(rcl_wait(&ws, -1));
+                var waitResult = rcl_wait(&ws, -1);
+
+                // RCL can shorten an infinite wait to the next timer deadline and
+                // return timeout before a timer is ready. Keep processing callbacks
+                // and rebuilding the wait set instead of terminating the event loop.
+                if (waitResult != Rcl.Interop.rcl_ret_t.RCL_RET_TIMEOUT)
+                {
+                    RclException.ThrowIfNonSuccess(waitResult);
+                }
 
                 // The order of the following checks matters,
                 // higher priority wait objects should be checked first.
