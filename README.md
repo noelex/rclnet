@@ -468,10 +468,10 @@ Command-line options override values specified in `ros2cs.spec`.
 
 `ros2cs` supports the following ROSIDL ABI layouts:
 
-| ABI | ROS 2 distributions | Native types in portable mode*|
-| --- | ------------------- | ----------------------------- |
-| V1  | Foxy through Kilted | `Priv` / `PrivSequence`       |
-| V2  | Lyrical             | `PrivV2` / `PrivSequenceV2`   |
+| ABI | ROS 2 distributions | Native types in portable mode* |
+| --- | ------------------- | ------------------------------ |
+| V1  | Foxy through Kilted | `Priv` / `PrivSequence`        |
+| V2  | Lyrical             | `PrivV2` / `PrivSequenceV2`    |
 
 \* In non-portable modes, generated native types are always named `Priv` / `PrivSequence`.
 
