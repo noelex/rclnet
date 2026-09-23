@@ -22,6 +22,7 @@ public unsafe partial struct @StructName@
     /// </returns>
     public static @StructName@* Create(int size)
     {
+        RosidlRuntime.RequireNativeAbi(Abi);
         return _PInovke((uint)size);
 
         [DllImport("rosidl_runtime_c", EntryPoint = "rosidl_runtime_c__@NativeStructName@__Sequence__create")]
@@ -34,6 +35,7 @@ public unsafe partial struct @StructName@
     /// <remarks>Calling the function with an already deallocated sequence is a no-op.</remarks>
     public static void Destroy(@StructName@* sequence)
     {
+        RosidlRuntime.RequireNativeAbi(Abi);
         _PInovke(sequence);
 
         [DllImport("rosidl_runtime_c", EntryPoint = "rosidl_runtime_c__@NativeStructName@__Sequence__destroy")]

@@ -225,6 +225,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
 
     private static bool TryInitialize(int size, out @StructName@ sequence)
     {
+        RosidlRuntime.RequireNativeAbi(Abi);
         fixed (@StructName@* pSequence = &sequence)
         {
             return _PInvoke(pSequence, (uint)size);
@@ -244,6 +245,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
 
     private static bool TryCopy(@StructName@* input, @StructName@* output)
     {
+        RosidlRuntime.RequireNativeAbi(Abi);
         return _PInvoke(input, output);
 
         [SuppressGCTransition]
@@ -253,6 +255,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
 
     private static bool AreEqual(in @StructName@ input, in @StructName@ output)
     {
+        RosidlRuntime.RequireNativeAbi(Abi);
         fixed (@StructName@* pInput = &input, pOutput = &output)
         {
             return _PInvoke(pInput, pOutput);
@@ -264,6 +267,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
 
     private static void Finalize(ref @StructName@ sequence)
     {
+        RosidlRuntime.RequireNativeAbi(Abi);
         fixed (@StructName@* pSequence = &sequence)
         {
             _PInvoke(pSequence);
