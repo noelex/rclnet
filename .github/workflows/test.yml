@@ -175,6 +175,25 @@ jobs:
           choco install --limit-output --no-progress -y openssl --version 1.1.1.2100
           python -m pip install --upgrade "setuptools<60" "numpy<2" catkin_pkg colcon-common-extensions empy==3.3.4 lark-parser
 
+      - name: Map legacy ROS Python installation path
+        if: ${{ matrix.is_legacy_distro }}
+        shell: pwsh
+        run: |
+          # The ROS binaries export CMake targets containing absolute C:\Python38 paths.
+          $pythonRoot = (Resolve-Path -LiteralPath $env:pythonLocation).Path
+          $legacyRoot = 'C:\Python38'
+          if (Test-Path -LiteralPath $legacyRoot) {
+            $existing = Get-Item -LiteralPath $legacyRoot
+            if ($existing.LinkType -ne 'Junction' -or $existing.Target -ne $pythonRoot) {
+              throw "Expected $legacyRoot to be a junction to $pythonRoot."
+            }
+          } else {
+            New-Item -ItemType Junction -Path $legacyRoot -Target $pythonRoot | Out-Null
+          }
+          if (-not (Test-Path -LiteralPath "$legacyRoot\lib\site-packages\numpy\core\include\numpy\arrayobject.h")) {
+            throw 'The legacy ROS NumPy include path is not available.'
+          }
+
       - name: Install Pixi
         if: ${{ !matrix.is_legacy_distro }}
         run: |
