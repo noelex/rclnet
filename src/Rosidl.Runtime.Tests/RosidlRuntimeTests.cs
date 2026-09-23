@@ -35,25 +35,20 @@ public class RosidlRuntimeTests
     }
 
     [Fact]
-    public void NativeAbiIsResolvedDuringTypeInitialization()
+    public void NativeAbiMatchesCurrentRosEnvironment()
     {
-        var originalDistro = Environment.GetEnvironmentVariable("ROS_DISTRO");
+        // Keep the process ABI consistent with the native libraries used by other tests.
+        var expectedAbi = RosidlAbiResolver.Resolve(Environment.GetEnvironmentVariable("ROS_DISTRO"));
+        var incompatibleAbi = expectedAbi == RosidlNativeAbi.V1
+            ? RosidlNativeAbi.V2
+            : RosidlNativeAbi.V1;
 
-        try
-        {
-            Environment.SetEnvironmentVariable("ROS_DISTRO", "lyrical");
+        Assert.Equal(expectedAbi, RosidlRuntime.NativeAbi);
+        RosidlRuntime.RequireNativeAbi(expectedAbi);
 
-            Assert.Equal(RosidlNativeAbi.V2, RosidlRuntime.NativeAbi);
-            RosidlRuntime.RequireNativeAbi(RosidlNativeAbi.V2);
-
-            var exception = Assert.Throws<InvalidOperationException>(
-                () => RosidlRuntime.RequireNativeAbi(RosidlNativeAbi.V1));
-            Assert.Contains("V2", exception.Message);
-            Assert.Contains("V1", exception.Message);
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("ROS_DISTRO", originalDistro);
-        }
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => RosidlRuntime.RequireNativeAbi(incompatibleAbi));
+        Assert.Contains(expectedAbi.ToString(), exception.Message);
+        Assert.Contains(incompatibleAbi.ToString(), exception.Message);
     }
 }
