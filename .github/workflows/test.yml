@@ -90,7 +90,7 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         run: |
           dotnet nuget locals all --clear
-          dotnet build -c Release
+          dotnet build -c Release -p:BuildInParallel=false
       
       - name: Test (fastrtps)
         working-directory: src/Rcl.NET.Tests
@@ -236,7 +236,7 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         run: |
           dotnet nuget locals all --clear
-          dotnet build -c Release
+          dotnet build -c Release -p:BuildInParallel=false
 
       - name: Test (fastrtps) (Legacy)
         if: ${{ matrix.is_legacy_distro }}

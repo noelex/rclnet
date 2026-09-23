@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
     <ParallelizeTestCollections>false</ParallelizeTestCollections>
     <Ros2csOutputDir>Interfaces</Ros2csOutputDir>
   </PropertyGroup>
