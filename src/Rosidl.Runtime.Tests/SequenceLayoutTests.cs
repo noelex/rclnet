@@ -31,7 +31,7 @@ public class SequenceLayoutTests
     }
 
     [Fact]
-    public void BufferBackedPrimitiveSequencesRejectDataAccess()
+    public void BufferBackedUInt8SequenceRejectsDataAccess()
     {
         var source = CreateBufferBacked<UInt8SequenceV2>();
         var target = default(UInt8SequenceV2);
@@ -47,15 +47,66 @@ public class SequenceLayoutTests
     }
 
     [Fact]
-    public void BufferBackedStringSequencesRejectDataAccess()
+    public void NonUInt8V2SequencesIgnoreOpaqueBufferFlags()
     {
-        var source = CreateBufferBacked<CStringSequenceV2>();
-        var target = default(CStringSequenceV2);
+        var octet = CreateBufferBacked<OctetSequenceV2>();
+        var cString = CreateBufferBacked<CStringSequenceV2>();
+        var u16String = CreateBufferBacked<U16StringSequenceV2>();
 
-        AssertBufferNotSupported(() => { source.AsSpan(); });
-        AssertBufferNotSupported(() => target.CopyFrom(source));
-        AssertBufferNotSupported(() => source.CopyFrom(ReadOnlySpan<CString>.Empty));
-        AssertBufferNotSupported(() => target.Equals(source));
+        Assert.True(octet.AsSpan().IsEmpty);
+        Assert.True(cString.AsSpan().IsEmpty);
+        Assert.True(u16String.AsSpan().IsEmpty);
+        Assert.Equal(default(OctetSequenceV2).GetHashCode(), octet.GetHashCode());
+        Assert.Equal(default(CStringSequenceV2).GetHashCode(), cString.GetHashCode());
+        Assert.Equal(default(U16StringSequenceV2).GetHashCode(), u16String.GetHashCode());
+    }
+
+    [Fact]
+    public unsafe void V2StringSequencesCreatedByNativeCodeCanBeAccessed()
+    {
+        if (RosidlRuntime.NativeAbi != RosidlNativeAbi.V2)
+        {
+            return;
+        }
+
+        var cString = CStringSequenceV2.Create(1);
+        var u16String = U16StringSequenceV2.Create(1);
+        try
+        {
+            Assert.True(cString != null);
+            Assert.True(u16String != null);
+            Assert.Equal(1, cString->AsSpan().Length);
+            Assert.Equal(1, u16String->AsSpan().Length);
+
+            SetOpaqueBufferFlags(ref *cString);
+            SetOpaqueBufferFlags(ref *u16String);
+
+            Assert.Equal(1, cString->AsSpan().Length);
+            Assert.Equal(1, u16String->AsSpan().Length);
+
+            var cStringCopy = new CStringSequenceV2(*cString);
+            var u16StringCopy = new U16StringSequenceV2(*u16String);
+            try
+            {
+                Assert.True(cString->Equals(cStringCopy));
+                Assert.True(u16String->Equals(u16StringCopy));
+            }
+            finally
+            {
+                cStringCopy.Dispose();
+                u16StringCopy.Dispose();
+            }
+
+            cString->CopyFrom(ReadOnlySpan<CString>.Empty);
+            u16String->CopyFrom(ReadOnlySpan<U16String>.Empty);
+            Assert.True(cString->AsSpan().IsEmpty);
+            Assert.True(u16String->AsSpan().IsEmpty);
+        }
+        finally
+        {
+            CStringSequenceV2.Destroy(cString);
+            U16StringSequenceV2.Destroy(u16String);
+        }
     }
 
     [Fact]
@@ -106,9 +157,15 @@ public class SequenceLayoutTests
     private static T CreateBufferBacked<T>() where T : unmanaged
     {
         var value = default(T);
+        SetOpaqueBufferFlags(ref value);
+        return value;
+    }
+
+    private static void SetOpaqueBufferFlags<T>(ref T value) where T : unmanaged
+    {
         var bytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateSpan(ref value, 1));
         bytes[3 * IntPtr.Size] = 1;
-        return value;
+        bytes[3 * IntPtr.Size + 1] = 1;
     }
 
     private static unsafe void CopyFromPointer(UInt8SequenceV2 source)

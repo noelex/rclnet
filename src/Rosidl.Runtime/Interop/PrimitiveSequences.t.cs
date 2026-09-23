@@ -22,7 +22,7 @@
 @output(WCharSequenceV2.g.cs, StructName=WCharSequenceV2, ElementType=Char, NativeStructName=wchar, V2)@
 @output(BooleanSequenceV2.g.cs, StructName=BooleanSequenceV2, ElementType=Boolean, NativeStructName=boolean, V2)@
 @output(OctetSequenceV2.g.cs, StructName=OctetSequenceV2, ElementType=Byte, NativeStructName=octet, V2)@
-@output(UInt8SequenceV2.g.cs, StructName=UInt8SequenceV2, ElementType=Byte, NativeStructName=uint8, V2)@
+@output(UInt8SequenceV2.g.cs, StructName=UInt8SequenceV2, ElementType=Byte, NativeStructName=uint8, V2, BufferAware)@
 @output(Int8SequenceV2.g.cs, StructName=Int8SequenceV2, ElementType=SByte, NativeStructName=int8, V2)@
 @output(UInt16SequenceV2.g.cs, StructName=UInt16SequenceV2, ElementType=UInt16, NativeStructName=uint16, V2)@
 @output(Int16SequenceV2.g.cs, StructName=Int16SequenceV2, ElementType=Int16, NativeStructName=int16, V2)@
@@ -61,6 +61,8 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     private nuint _size;
     private nuint _capacity;
 @if V2@
+    // Kept for the Lyrical ABI. Native string sequences leave these bytes uninitialized;
+    // only UInt8SequenceV2 interprets them as rosidl::Buffer flags.
     private byte _isRosidlBuffer;
     private byte _ownsRosidlBuffer;
 @endif@
@@ -123,7 +125,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     public override bool Equals(object obj) => obj is @StructName@ s ? Equals(s) : false;
 
     /// <inheritdoc/>
-@if V2@
+@if BufferAware@
     public override int GetHashCode()
         => HashCode.Combine((nint)_data, _size, _capacity, _isRosidlBuffer, _ownsRosidlBuffer);
 @else@
@@ -142,7 +144,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     /// <returns>
     /// <see langword="true"/> if <see cref="@StructName@"/> structures are equal in size and content, otherwise <see langword="false"/>.
     /// </returns>
-@if V2@
+@if BufferAware@
     public bool Equals(@StructName@ other)
     {
         ThrowIfRosidlBuffer();
@@ -167,7 +169,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     /// <summary>
     /// Creates a <see cref="Span{@ElementType@}"/> that represents the internal storage of the <see cref="@StructName@"/> structure.
     /// </summary>
-@if V2@
+@if BufferAware@
     public Span<@ElementType@> AsSpan()
     {
         ThrowIfRosidlBuffer();
@@ -183,7 +185,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     /// <param name="src">The source <see cref="@StructName@"/> structure to copy from.</param>
     public void CopyFrom(@StructName@ src)
     {
-@if V2@
+@if BufferAware@
         ThrowIfRosidlBuffer();
         src.ThrowIfRosidlBuffer();
 @endif@
@@ -196,7 +198,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     /// <param name="src">The source <see cref="@ElementType@"/> buffer to copy from.</param>
     public void CopyFrom(ReadOnlySpan<@ElementType@> src)
     {
-@if V2@
+@if BufferAware@
         ThrowIfRosidlBuffer();
 @endif@
         Finalize(ref this);
@@ -210,7 +212,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     /// <param name="value">A pointer to the <see cref="@StructName@"/> structure to copy from.</param>
     public void CopyFrom(@StructName@* value)
     {
-@if V2@
+@if BufferAware@
         ThrowIfRosidlBuffer();
         if (value != null)
         {
@@ -277,7 +279,7 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
         static extern void _PInvoke(@StructName@* sequence);
     }
 
-@if V2@
+@if BufferAware@
     private readonly void ThrowIfRosidlBuffer()
     {
         if (_isRosidlBuffer != 0)

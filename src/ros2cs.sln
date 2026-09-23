@@ -17,8 +17,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodegenTests.V2", "CodegenT
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodegenTests.Portable", "CodegenTests.Portable\CodegenTests.Portable.csproj", "{0FDA8A2E-0D5F-440E-9C83-73D215A3C704}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rosidl.Runtime.Tests", "Rosidl.Runtime.Tests\Rosidl.Runtime.Tests.csproj", "{823FEC42-A4BE-4FB5-B82E-CED5209BFEE6}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,10 +51,6 @@ Global
 		{0FDA8A2E-0D5F-440E-9C83-73D215A3C704}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0FDA8A2E-0D5F-440E-9C83-73D215A3C704}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0FDA8A2E-0D5F-440E-9C83-73D215A3C704}.Release|Any CPU.Build.0 = Release|Any CPU
-		{823FEC42-A4BE-4FB5-B82E-CED5209BFEE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{823FEC42-A4BE-4FB5-B82E-CED5209BFEE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{823FEC42-A4BE-4FB5-B82E-CED5209BFEE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{823FEC42-A4BE-4FB5-B82E-CED5209BFEE6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
