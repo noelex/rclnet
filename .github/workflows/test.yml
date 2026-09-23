@@ -94,7 +94,7 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         run: |
           dotnet nuget locals all --clear
-          dotnet build -c Release -p:BuildInParallel=false
+          dotnet build -c Release
       
       - name: Test (fastrtps)
         working-directory: src/Rcl.NET.Tests
@@ -104,7 +104,7 @@ jobs:
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh && \
           . "$GITHUB_WORKSPACE/install/setup.sh" && \
-          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds)
         if: ${{ matrix.ros_distribution != 'foxy' }}
@@ -115,7 +115,7 @@ jobs:
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh && \
           . "$GITHUB_WORKSPACE/install/setup.sh" && \
-          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
   windows:
     runs-on: windows-latest
@@ -240,7 +240,7 @@ jobs:
         working-directory: src/Rcl.NET.Tests
         run: |
           dotnet nuget locals all --clear
-          dotnet build -c Release -p:BuildInParallel=false
+          dotnet build -c Release
 
       - name: Test (fastrtps) (Legacy)
         if: ${{ matrix.is_legacy_distro }}
@@ -253,7 +253,7 @@ jobs:
           refreshenv && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           call ${{ github.workspace }}/install/setup.bat && ^
-          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds) (Legacy)
         if: ${{ matrix.is_legacy_distro && matrix.ros_distribution != 'foxy' }}
@@ -266,7 +266,7 @@ jobs:
           refreshenv && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           call ${{ github.workspace }}/install/setup.bat && ^
-          dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (fastrtps)
         if: ${{ !matrix.is_legacy_distro }}
@@ -278,7 +278,7 @@ jobs:
         run: |
           refreshenv && ^
           pixi run --manifest-path "c:/dev/pixi/" ^
-          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call ${{ github.workspace }}/install/setup.bat && dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call ${{ github.workspace }}/install/setup.bat && dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
 
       - name: Test (cyclonedds)
         if: ${{ !matrix.is_legacy_distro }}
@@ -290,7 +290,7 @@ jobs:
         run: |
           refreshenv && ^
           pixi run --manifest-path "c:/dev/pixi/" ^
-          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call ${{ github.workspace }}/install/setup.bat && dotnet test -c Release -p:BuildInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call ${{ github.workspace }}/install/setup.bat && dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
 
   #test_macos:
   #  runs-on: macos-latest
