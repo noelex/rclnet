@@ -118,12 +118,13 @@ public class AbiIntegrationTests
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
         var actionName = NameGenerator.GenerateActionName();
+        var handler = new SequenceHandler();
 
         using var server = node.CreateActionServer<
             SequenceAction,
             SequenceActionGoal,
             SequenceActionResult,
-            SequenceActionFeedback>(actionName, new SequenceHandler());
+            SequenceActionFeedback>(actionName, handler);
         using var client = node.CreateActionClient<
             SequenceAction,
             SequenceActionGoal,
@@ -133,8 +134,10 @@ public class AbiIntegrationTests
         await client.WaitForServerAsync(Timeout);
         using var goal = await client.SendGoalAsync(new SequenceActionGoal([18, 19]), Timeout);
         var feedbackTask = ReadOneAsync(goal.ReadFeedbacksAsync());
-        var result = await goal.GetResultWithStatusAsync(Timeout);
+        handler.FeedbackReaderReady.TrySetResult();
         var feedback = await feedbackTask.WaitAsync(TimeSpan.FromMilliseconds(Timeout));
+        handler.FeedbackReceived.TrySetResult();
+        var result = await goal.GetResultWithStatusAsync(Timeout);
 
         Assert.True(result.IsSuccessful);
         Assert.NotNull(result.Result);
@@ -190,6 +193,11 @@ public class AbiIntegrationTests
     private sealed class SequenceHandler :
         ActionGoalHandler<SequenceActionGoal, SequenceActionResult, SequenceActionFeedback>
     {
+        public TaskCompletionSource FeedbackReaderReady { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource FeedbackReceived { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
         public override bool CanAccept(Guid id, SequenceActionGoal goal)
             => goal.GoalValues.SequenceEqual(new byte[] { 18, 19 });
 
@@ -198,10 +206,12 @@ public class AbiIntegrationTests
             SequenceActionGoal goal,
             CancellationToken cancellationToken)
         {
-            await Task.Delay(50, cancellationToken);
+            await FeedbackReaderReady.Task.WaitAsync(TimeSpan.FromMilliseconds(Timeout), cancellationToken);
             controller.Report(new SequenceActionFeedback([
                 new(new PrimitiveSequence(goal.GoalValues, trailingBool: true, trailingValue: 20)),
             ]));
+            // Goal completion can close the feedback stream before its last message is processed.
+            await FeedbackReceived.Task.WaitAsync(TimeSpan.FromMilliseconds(Timeout), cancellationToken);
             return new(goal.GoalValues.Select(x => $"value-{x}").ToArray());
         }
     }
