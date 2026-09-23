@@ -55,7 +55,7 @@ namespace Rosidl.Runtime.Interop;
 [RosidlAbi(RosidlNativeAbi.V1)]
 @endif@
 [StructLayout(LayoutKind.Sequential)]
-public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@>
+public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@>, IRosidlNativeSequence<@ElementType@>
 {
     private @ElementType@* _data;
     private nuint _size;
@@ -63,6 +63,13 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
 @if V2@
     private byte _isRosidlBuffer;
     private byte _ownsRosidlBuffer;
+@endif@
+
+    /// <inheritdoc/>
+@if V2@
+    public static RosidlNativeAbi Abi => RosidlNativeAbi.V2;
+@else@
+    public static RosidlNativeAbi Abi => RosidlNativeAbi.V1;
 @endif@
 
     /// <summary>

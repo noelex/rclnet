@@ -3,6 +3,36 @@
 namespace Rosidl.Runtime;
 
 /// <summary>
+/// Represents a native ROS interface value with a known rosidl ABI.
+/// </summary>
+public interface IRosidlNative
+{
+    /// <summary>
+    /// Gets the rosidl ABI used by the native value.
+    /// </summary>
+    static abstract RosidlNativeAbi Abi { get; }
+}
+
+/// <summary>
+/// Represents a native ROS sequence whose elements can be accessed without allocation.
+/// </summary>
+/// <typeparam name="T">The native element type.</typeparam>
+public interface IRosidlNativeSequence<T> : IRosidlNative
+    where T : unmanaged
+{
+    /// <summary>
+    /// Gets the number of elements in the sequence.
+    /// </summary>
+    int Size { get; }
+
+    /// <summary>
+    /// Gets a span over the elements in the sequence.
+    /// </summary>
+    /// <returns>A span over the sequence elements.</returns>
+    Span<T> AsSpan();
+}
+
+/// <summary>
 /// Provide access to type support of ROS interface definition.
 /// </summary>
 public interface ITypeSupport

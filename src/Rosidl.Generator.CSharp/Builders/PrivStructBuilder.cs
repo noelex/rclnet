@@ -16,9 +16,22 @@ public class PrivStructBuilder
 
         structure.BaseTypes.Add(new CSharpFreeType($"global::System.IEquatable<{methodContext.StructType}>"));
         structure.BaseTypes.Add(new CSharpFreeType($"global::System.IDisposable"));
+        structure.BaseTypes.Add(new CSharpFreeType("global::Rosidl.Runtime.IRosidlNative"));
 
         structure.Attributes.Add(Attributes.StructLayoutSequential);
         structure.Attributes.Add(Attributes.RosidlAbi(context.Layout));
+
+        var abiProperty = new CSharpProperty("Abi")
+        {
+            Comment = new XmlComment("<inheritdoc/>"),
+            Modifiers = CSharpModifiers.Static,
+            Visibility = CSharpVisibility.Public,
+            ReturnType = new CSharpFreeType("global::Rosidl.Runtime.RosidlNativeAbi"),
+            GetBodyInlined = context.NativeAbiExpression,
+        };
+        abiProperty.Attributes.Add(Attributes.DebuggerNonUserCode);
+        abiProperty.Attributes.Add(Attributes.GeneratedCode);
+        structure.Members.Add(abiProperty);
 
         var fields = GetFields(context);
 

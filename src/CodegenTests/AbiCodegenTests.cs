@@ -37,6 +37,19 @@ public class AbiCodegenTests
     }
 
     [Fact]
+    public void NativeLayoutsExposeGenericContracts()
+    {
+        AssertNativeType<V1.Scalar.Priv>(RosidlNativeAbi.V1);
+        AssertNativeSequence<V1.Scalar.PrivSequence, V1.Scalar.Priv>(RosidlNativeAbi.V1);
+        AssertNativeType<V2.Scalar.Priv>(RosidlNativeAbi.V2);
+        AssertNativeSequence<V2.Scalar.PrivSequence, V2.Scalar.Priv>(RosidlNativeAbi.V2);
+        AssertNativeType<Portable.Scalar.Priv>(RosidlNativeAbi.V1);
+        AssertNativeSequence<Portable.Scalar.PrivSequence, Portable.Scalar.Priv>(RosidlNativeAbi.V1);
+        AssertNativeType<Portable.Scalar.PrivV2>(RosidlNativeAbi.V2);
+        AssertNativeSequence<Portable.Scalar.PrivSequenceV2, Portable.Scalar.PrivV2>(RosidlNativeAbi.V2);
+    }
+
+    [Fact]
     public void SequenceLayoutsPreserveFollowingFieldOffsets()
     {
         var v1 = default(V1.PrimitiveSequence.Priv);
@@ -180,6 +193,22 @@ public class AbiCodegenTests
 
         Assert.NotNull(messageType.GetConstructor(parameters));
         Assert.NotNull(messageType.GetMethod("WriteTo", parameters));
+    }
+
+    private static void AssertNativeType<T>(RosidlNativeAbi expectedAbi)
+        where T : unmanaged, IRosidlNative
+    {
+        Assert.Equal(expectedAbi, T.Abi);
+    }
+
+    private static void AssertNativeSequence<TSequence, T>(RosidlNativeAbi expectedAbi)
+        where TSequence : unmanaged, IRosidlNativeSequence<T>
+        where T : unmanaged, IRosidlNative
+    {
+        var sequence = default(TSequence);
+
+        Assert.Equal(expectedAbi, TSequence.Abi);
+        Assert.Equal(0, sequence.Size);
     }
 
     private static void AssertFieldType(Type declaringType, string name, Type expectedType, bool nonPublic = false)

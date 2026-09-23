@@ -67,9 +67,18 @@ public class SequenceLayoutTests
         Assert.NotNull(typeof(U16StringSequenceV2).GetMethod(nameof(U16StringSequenceV2.Destroy)));
     }
 
+    [Fact]
+    public void NativeSequencesExposeGenericContracts()
+    {
+        AssertSequenceContract<UInt8Sequence, byte>(RosidlNativeAbi.V1);
+        AssertSequenceContract<UInt8SequenceV2, byte>(RosidlNativeAbi.V2);
+        AssertSequenceContract<CStringSequence, CString>(RosidlNativeAbi.V1);
+        AssertSequenceContract<CStringSequenceV2, CString>(RosidlNativeAbi.V2);
+    }
+
     private static void AssertSequenceLayout<TV1, TV2>()
-        where TV1 : unmanaged
-        where TV2 : unmanaged
+        where TV1 : unmanaged, IRosidlNative
+        where TV2 : unmanaged, IRosidlNative
     {
         var flagsOffset = 3 * IntPtr.Size;
 
@@ -77,8 +86,21 @@ public class SequenceLayoutTests
         Assert.Equal(4 * IntPtr.Size, Unsafe.SizeOf<TV2>());
         Assert.Equal(flagsOffset, Marshal.OffsetOf<TV2>("_isRosidlBuffer").ToInt32());
         Assert.Equal(flagsOffset + 1, Marshal.OffsetOf<TV2>("_ownsRosidlBuffer").ToInt32());
+        Assert.Equal(RosidlNativeAbi.V1, TV1.Abi);
+        Assert.Equal(RosidlNativeAbi.V2, TV2.Abi);
         Assert.Equal(RosidlNativeAbi.V1, typeof(TV1).GetCustomAttribute<RosidlAbiAttribute>()?.Abi);
         Assert.Equal(RosidlNativeAbi.V2, typeof(TV2).GetCustomAttribute<RosidlAbiAttribute>()?.Abi);
+    }
+
+    private static void AssertSequenceContract<TSequence, T>(RosidlNativeAbi expectedAbi)
+        where TSequence : unmanaged, IRosidlNativeSequence<T>
+        where T : unmanaged
+    {
+        var sequence = default(TSequence);
+
+        Assert.Equal(expectedAbi, TSequence.Abi);
+        Assert.Equal(0, sequence.Size);
+        Assert.True(sequence.AsSpan().IsEmpty);
     }
 
     private static T CreateBufferBacked<T>() where T : unmanaged
