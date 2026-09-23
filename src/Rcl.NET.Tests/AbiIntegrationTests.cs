@@ -63,6 +63,29 @@ public class AbiIntegrationTests
     }
 
     [SkippableFact]
+    public async Task SubscriptionCanBeDisposedFromSequenceMessageObserver()
+    {
+        RequireTestInterfaces();
+
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        var topic = NameGenerator.GenerateTopicName();
+        using var publisher = node.CreatePublisher<PrimitiveSequence>(topic);
+        using var subscription = node.CreateSubscription<PrimitiveSequence>(topic);
+        var observer = new DisposingSequenceObserver(subscription);
+        using var registration = subscription.Subscribe(observer);
+
+        await WaitForSubscribersAsync(publisher);
+        publisher.Publish(new PrimitiveSequence([1, 2, 3], trailingBool: true, trailingValue: 42));
+        var message = await observer.Received.Task.WaitAsync(TimeSpan.FromMilliseconds(Timeout));
+        // Drain the event loop after the receive callback and deferred native cleanup.
+        await context.Yield();
+        Assert.Equal(new byte[] { 1, 2, 3 }, message.Data);
+        Assert.True(message.TrailingBool);
+        Assert.Equal(42u, message.TrailingValue);
+    }
+
+    [SkippableFact]
     public async Task PortableNativeBufferSubscriptionRoundTrip()
     {
         RequireTestInterfaces();
@@ -188,6 +211,22 @@ public class AbiIntegrationTests
         }
 
         Assert.True(publisher.Subscribers > 0, "The publisher did not match a subscription.");
+    }
+
+    private sealed class DisposingSequenceObserver(IDisposable subscription) : IObserver<PrimitiveSequence>
+    {
+        public TaskCompletionSource<PrimitiveSequence> Received { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public void OnNext(PrimitiveSequence value)
+        {
+            subscription.Dispose();
+            Received.TrySetResult(value);
+        }
+
+        public void OnError(Exception error) => Received.TrySetException(error);
+
+        public void OnCompleted() { }
     }
 
     private sealed class SequenceHandler :
