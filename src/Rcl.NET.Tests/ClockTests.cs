@@ -1,115 +1,106 @@
-﻿using Rcl.Qos;
+using Rcl.Qos;
 using Rosidl.Messages.Rosgraph;
-using System.Diagnostics;
+using Rosidl.Runtime;
 
 namespace Rcl.NET.Tests;
 
 public class ClockTests
 {
-    private static async Task GenerateClockAsync(double scale = 1.0, CancellationToken cancellationToken = default)
+    private const int Timeout = 5_000;
+
+    [Fact]
+    public async Task CancellationTokenSourceUsesRosClock()
     {
-        const int resolution = 20_000_000;
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var publisherNode = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var clockPublisher = publisherNode.CreatePublisher<Clock>("/clock", new(qos: QosProfile.Clock));
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName(),
+            options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
 
-        await using var context = new RclContext();
-        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
-        using var clockPub = node.CreatePublisher<Clock>("/clock", new(qos: QosProfile.Clock));
+        await AssertCancellationUsesRosTimeAsync(clockPublisher, node, node.Clock);
+    }
 
-        var current = 0L;
-        using var periodicTimer = new PeriodicTimer(TimeSpan.FromMilliseconds(resolution / 1_000_000.0));
+    [Fact]
+    public async Task CancelWithOverrideClock()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var publisherNode = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var clockPublisher = publisherNode.CreatePublisher<Clock>("/clock", new(qos: QosProfile.Clock));
+        using var clockProducer = context.CreateNode(NameGenerator.GenerateNodeName(),
+            options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
+        using var clockConsumer = context.CreateNode(NameGenerator.GenerateNodeName(), clockProducer.Clock);
+
+        await AssertCancellationUsesRosTimeAsync(clockPublisher, clockConsumer, clockProducer.Clock);
+    }
+
+    private static async Task AssertCancellationUsesRosTimeAsync(
+        IRclPublisher clockPublisher,
+        IRclNode timerNode,
+        IRclClock clock)
+    {
+        var initialTime = TimeSpan.FromSeconds(1);
+        var timeout = TimeSpan.FromMilliseconds(100);
+
+        await WaitForSubscribersAsync(clockPublisher);
+
         using var buffer = RosMessageBuffer.Create<Clock>();
+        PublishClock(clockPublisher, buffer, initialTime);
+        await WaitForClockAsync(clock, initialTime);
 
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            UpdateClock(buffer, current);
-            clockPub.Publish(buffer);
-            await periodicTimer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false);
-            current += (long)(resolution * scale);
-        }
+        using var cts = new CancellationTokenSource();
+        using var timeoutRegistration = cts.CancelAfter(timeout, timerNode);
+        var cancellation = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var cancellationRegistration = cts.Token.Register(
+            static state => ((TaskCompletionSource)state!).TrySetResult(), cancellation);
 
-        static void UpdateClock(RosMessageBuffer buffer, long time)
+        var beforeDeadline = initialTime + timeout - TimeSpan.FromMilliseconds(1);
+        PublishClock(clockPublisher, buffer, beforeDeadline);
+        await WaitForClockAsync(clock, beforeDeadline);
+        Assert.False(cts.IsCancellationRequested);
+
+        PublishClock(clockPublisher, buffer, initialTime + timeout);
+        await cancellation.Task.WaitAsync(TimeSpan.FromMilliseconds(Timeout));
+    }
+
+    private static void PublishClock(IRclPublisher publisher, RosMessageBuffer buffer, TimeSpan time)
+    {
+        var nanoseconds = time.Ticks * 100;
+        var seconds = (int)(nanoseconds / 1_000_000_000);
+        var remainder = (uint)(nanoseconds % 1_000_000_000);
+
+        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
         {
             ref var clock = ref buffer.AsRef<Clock.Priv>();
-            clock.Clock_.Sec = (int)(time / 1_000_000_000);
-            clock.Clock_.Nanosec = (uint)(time % 1_000_000_000);
+            clock.Clock_.Sec = seconds;
+            clock.Clock_.Nanosec = remainder;
         }
+        else
+        {
+            ref var clock = ref buffer.AsRef<Clock.PrivV2>();
+            clock.Clock_.Sec = seconds;
+            clock.Clock_.Nanosec = remainder;
+        }
+
+        publisher.Publish(buffer);
     }
 
-    [SkippableTheory]
-    [InlineData(0.5, 100, 200, 100)]
-    [InlineData(1, 100, 100, 100)]
-    [InlineData(2, 200, 100, 100)]
-    public async Task TestCancellationTokenSourceWithRosClock(double scale, int rosTime, int actualTime, double tol)
+    private static async Task WaitForSubscribersAsync(IRclPublisher publisher)
     {
-        Skip.If(TestConfig.GitHubActions,
-            "Skipping clock tests when running by GitHub Actions because it's nearly impossible to meet the timing criteria.");
-
-
-        using var clockCancellation = new CancellationTokenSource();
-        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-
-        var task = GenerateClockAsync(scale, clockCancellation.Token);
-
-        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName(),
-            options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
-
-        var sw = Stopwatch.StartNew();
-        try
+        for (var retry = 0; publisher.Subscribers == 0 && retry < 500; retry++)
         {
-            using var cts = new CancellationTokenSource();
-            cts.CancelAfter(10_000);
-            using var reg = cts.CancelAfter(rosTime, node);
+            await Task.Delay(10);
+        }
 
-            await Task.Delay(-1, cts.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            sw.Stop();
-            Assert.Equal(actualTime, sw.ElapsedMilliseconds, tol);
-        }
-        finally
-        {
-            clockCancellation.Cancel();
-            await Task.WhenAny(task).WaitAsync(TimeSpan.FromSeconds(5));
-        }
+        Assert.True(publisher.Subscribers > 0, "The clock publisher did not match a subscription.");
     }
 
-    [SkippableTheory]
-    [InlineData(0.5, 100, 200, 100)]
-    [InlineData(1, 100, 100, 100)]
-    [InlineData(2, 200, 100, 100)]
-    public async Task CancelWithOverrideClock(double scale, int rosTime, int actualTime, double tol)
+    private static async Task WaitForClockAsync(IRclClock clock, TimeSpan expected)
     {
-        Skip.If(TestConfig.GitHubActions,
-            "Skipping clock tests when running by GitHub Actions because it's nearly impossible to meet the timing criteria.");
-
-        using var clockCancellation = new CancellationTokenSource();
-        await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-
-        var task = GenerateClockAsync(scale, clockCancellation.Token);
-
-        using var clockProducer = ctx.CreateNode(NameGenerator.GenerateNodeName(),
-            options: new(arguments: new[] { "--ros-args", "-p", "use_sim_time:=true" }));
-
-        using var clockConsumer = ctx.CreateNode(NameGenerator.GenerateNodeName(), clockProducer.Clock);
-
-        var sw = Stopwatch.StartNew();
-        try
+        for (var retry = 0; clock.Elapsed != expected && retry < 500; retry++)
         {
-            using var cts = new CancellationTokenSource();
-            cts.CancelAfter(10_000);
-            using var reg = cts.CancelAfter(rosTime, clockConsumer);
+            await Task.Delay(10);
+        }
 
-            await Task.Delay(-1, cts.Token);
-        }
-        catch (OperationCanceledException)
-        {
-            sw.Stop();
-            Assert.Equal(actualTime, sw.ElapsedMilliseconds, tol);
-        }
-        finally
-        {
-            clockCancellation.Cancel();
-            await Task.WhenAny(task).WaitAsync(TimeSpan.FromSeconds(5));
-        }
+        Assert.Equal(expected, clock.Elapsed);
     }
 }

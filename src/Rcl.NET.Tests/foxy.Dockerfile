@@ -19,7 +19,7 @@ RUN echo "from urllib import request\nrequest.urlretrieve('https://packages.micr
     && rm -rf /var/lib/apt/lists/*
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh  \
     && chmod +x ./dotnet-install.sh \
-    && ./dotnet-install.sh --channel 10.0 --runtime dotnet \
+    && ./dotnet-install.sh --channel 10.0 \
     && ./dotnet-install.sh --channel 9.0 --runtime dotnet \
     && ./dotnet-install.sh --channel 8.0 --runtime dotnet
 

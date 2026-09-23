@@ -20,7 +20,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh \
     && chmod +x ./dotnet-install.sh \
-    && ./dotnet-install.sh --channel 10.0 --runtime dotnet \
+    && ./dotnet-install.sh --channel 10.0 \
     && ./dotnet-install.sh --channel 9.0 --runtime dotnet \
     && ./dotnet-install.sh --channel 8.0 --runtime dotnet
 

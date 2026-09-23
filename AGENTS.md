@@ -4,6 +4,6 @@
 
 - Use the Visual Studio Docker test environments defined in `src/testEnvironments.json`.
 - Reuse existing `rclnet-tests:<distro>` images and Docker build cache. Rebuild only when the corresponding Dockerfile or test interface package changes.
-- Keep test images runtime-only. Build test assemblies with the host SDK or Visual Studio; do not install or download a .NET SDK inside test containers.
+- Test images include the .NET 10 SDK and the .NET 8/9 runtimes. Run tests inside the reusable container so the ROS and .NET environments match.
 - Do not remove reusable `rclnet-tests:*` images as routine cleanup.
-- If the Visual Studio test environment cannot be used, report the limitation before introducing another test runner or downloading an SDK.
+- If the Visual Studio test environment cannot be used, run `dotnet test` inside the corresponding reusable test image instead of introducing another test runner.
