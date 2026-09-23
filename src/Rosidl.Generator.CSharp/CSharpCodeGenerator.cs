@@ -474,7 +474,8 @@ public class CSharpCodeGenerator
                 .Order(pathComparer)
                 .ToArray();
             var globbedInputs = trackedGlobs
-                .SelectMany(glob => ExpandGlob(glob, pathComparer))
+                // MSBuild sorts each wildcard expansion case-insensitively, including on Linux.
+                .SelectMany(glob => ExpandGlob(glob, StringComparer.OrdinalIgnoreCase))
                 .ToArray();
             var currentOutputs = generatedOutputs
                 .Select(Path.GetFullPath)
