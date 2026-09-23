@@ -23,7 +23,7 @@
 			<Ros2csGlobsStateFile>$(Ros2csOutputPath)\ros2cs.globs.state</Ros2csGlobsStateFile>
 			<Ros2csStampFile>$(Ros2csOutputPath)\ros2cs.spec.cache</Ros2csStampFile>
 			<Ros2csToolDirectory>$([System.IO.Path]::GetDirectoryName('$(Ros2csExe)'))</Ros2csToolDirectory>
-			<Ros2csIncrementalState>Spec=$(Ros2csSpecFile)&#xA;Arguments=$(Ros2csArgs)&#xA;AmentPrefixPath=$(AMENT_PREFIX_PATH)&#xA;Executable=$(Ros2csExe)</Ros2csIncrementalState>
+			<Ros2csIncrementalState>Spec=$(Ros2csSpecFile)&#xA;Arguments=$(Ros2csArgs)&#xA;AmentPrefixPath=$(AMENT_PREFIX_PATH)&#xA;RosDistro=$(ROS_DISTRO)&#xA;Executable=$(Ros2csExe)</Ros2csIncrementalState>
 		</PropertyGroup>
 
 		<MakeDir Directories="$(Ros2csOutputPath)" />

@@ -75,8 +75,10 @@ OPTIONS:
         A path relative to the SPEC_FILE (if not specified, relative to current directory),
         or an absolute path can be used.
 
-    --abi=v1|v2|portable
+    --abi=v1|v2|portable|native
         Select the ROSIDL native ABI mode. The default is portable.
+        'native' generates the ABI used by the distribution in ROS_DISTRO.
+        It requires ROS_DISTRO to contain a supported ROS distribution.
 
     -I,
     --from-directory=INCLUDE_DIR

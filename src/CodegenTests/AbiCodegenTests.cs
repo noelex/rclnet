@@ -9,6 +9,7 @@ using V2 = Rosidl.Test.V2.Ros2csAbiTest;
 
 namespace CodegenTests;
 
+[Collection(RosEnvironmentTestCollection.Name)]
 public class AbiCodegenTests
 {
     [Fact]

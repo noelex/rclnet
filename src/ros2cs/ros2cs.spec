@@ -32,7 +32,8 @@ output ./
 # Select the ROSIDL native ABI layout.
 # 'portable' emits both layouts and selects one at runtime. This is the default.
 # 'v1' targets ROS 2 Foxy through Kilted, while 'v2' targets ROS 2 Lyrical.
-# abi [v1|v2|portable]
+# 'native' selects v1 or v2 from the ROS_DISTRO environment variable.
+# abi [v1|v2|portable|native]
 
 # Generate classes with internal visibility rather than public.
 # internal

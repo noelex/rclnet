@@ -20,7 +20,13 @@ public enum RosidlAbiMode
     /// <summary>
     /// Generates both layouts and selects the active ABI at runtime.
     /// </summary>
-    Portable
+    Portable,
+
+    /// <summary>
+    /// Generates the layout used by the ROS distribution selected through
+    /// the <c>ROS_DISTRO</c> environment variable.
+    /// </summary>
+    Native
 }
 
 public class GeneratorOptions
@@ -32,12 +38,44 @@ public class GeneratorOptions
 
     public string RootNamespace { get; set; } = "Rosidl.Messages";
 
+    private RosidlAbiMode _abi = RosidlAbiMode.Portable;
+
     /// <summary>
     /// Gets or sets the ROSIDL native ABI mode used for code generation.
     /// </summary>
-    public RosidlAbiMode Abi { get; set; } = RosidlAbiMode.Portable;
+    /// <remarks>
+    /// Setting this property to <see cref="RosidlAbiMode.Native"/> resolves the current
+    /// <c>ROS_DISTRO</c> immediately and stores the corresponding concrete ABI mode.
+    /// </remarks>
+    public RosidlAbiMode Abi
+    {
+        get => _abi;
+        set => _abi = value == RosidlAbiMode.Native
+            ? ResolveNativeAbi(Environment.GetEnvironmentVariable("ROS_DISTRO"))
+            : value;
+    }
 
     public Func<string, string> ResolveNamespace { get; set; }
+
+    private static RosidlAbiMode ResolveNativeAbi(string? distro)
+    {
+        return distro switch
+        {
+            "foxy" or "humble" or "iron" or "jazzy" or "kilted" => RosidlAbiMode.V1,
+            "lyrical" => RosidlAbiMode.V2,
+            _ => throw new NotSupportedException(
+                $"ABI mode 'native' requires a supported ROS distribution in ROS_DISTRO, " +
+                $"but its current value is '{FormatDistribution(distro)}'. " +
+                "Supported distributions: foxy, humble, iron, jazzy, kilted, lyrical.")
+        };
+    }
+
+    private static string FormatDistribution(string? distro) => distro switch
+    {
+        null => "<unset>",
+        "" => "<empty>",
+        _ => distro
+    };
 
     public Func<string, string> ResolvePackageName { get; set; } = (s) =>
     {

@@ -217,6 +217,7 @@ class ParseSpec
             "v1" => RosidlAbiMode.V1,
             "v2" => RosidlAbiMode.V2,
             "portable" => RosidlAbiMode.Portable,
+            "native" => RosidlAbiMode.Native,
             _ => throw new Exception($"'{value}' is not a valid value for 'abi'."),
         };
     }

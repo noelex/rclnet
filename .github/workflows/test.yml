@@ -11,10 +11,12 @@ jobs:
         with:
           submodules: true
 
-      - name: Setup .NET 8.0
+      - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: |
+            8.0.x
+            10.0.x
 
       - name: Test code generation
         run: dotnet test src/CodegenTests/CodegenTests.csproj -c Release --verbosity normal

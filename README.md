@@ -475,6 +475,15 @@ or:
 abi v2
 ```
 
+The ABI can also be selected from the active ROS distribution at generation time:
+
+```text
+abi native
+```
+
+Native mode reads `ROS_DISTRO`, generates only the corresponding ABI layout, and fails if
+the variable is missing or names an unsupported distribution.
+
 Portable output exposes:
 
 ```text
