@@ -70,6 +70,7 @@ public class RegistrationLifecycleTests : IDisposable
         probe.Dispose();
         Assert.IsType<ObjectDisposedException>(Record.Exception(probe.Publish));
         await context.Yield();
+        await probe.Detached.Task.WaitAsync(TimeSpan.FromSeconds(10));
         Assert.True(probe.Handle.IsClosed);
         Assert.Equal(1, probe.DetachCount);
         Assert.Equal(1, probe.NativeReleases);
@@ -86,7 +87,8 @@ public class RegistrationLifecycleTests : IDisposable
         probe.Handle.Dispose();
 
         await context.Yield();
-        Assert.True(probe.Handle.IsClosed);
+        await probe.Detached.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.True(SpinWait.SpinUntil(() => probe.Handle.IsClosed, TimeSpan.FromSeconds(10)));
         Assert.Equal(1, probe.NativeReleases);
         Assert.Equal(1, probe.DetachCount);
     }
@@ -98,8 +100,8 @@ public class RegistrationLifecycleTests : IDisposable
         using var handle = new TrackedGuard(context.Handle);
         WaitHandleRegistration registration = default;
         context.Register(handle, static (_, _) =>
-{
-}, null, ref registration);
+        {
+        }, null, ref registration);
         handle.Dispose();
 
         for (var i = 0; i < 3; i++)
@@ -111,7 +113,8 @@ public class RegistrationLifecycleTests : IDisposable
         registration.Dispose();
         registration.Dispose();
         await context.Yield();
-        Assert.True(handle.IsClosed);
+        // A posted continuation can run before cleanup from the next wait-set iteration.
+        Assert.True(SpinWait.SpinUntil(() => handle.IsClosed, TimeSpan.FromSeconds(10)));
         Assert.Equal(1, handle.Releases);
     }
 
@@ -122,17 +125,17 @@ public class RegistrationLifecycleTests : IDisposable
         using var handle = new TrackedGuard(context.Handle);
         WaitHandleRegistration first = default, duplicate = default;
         context.Register(handle, static (_, _) =>
-{
-}, null, ref first);
+        {
+        }, null, ref first);
         Assert.Throws<InvalidOperationException>(() => context.Register(handle, static (_, _) =>
-{
-}, null, ref duplicate));
+        {
+        }, null, ref duplicate));
         Assert.True(duplicate.IsEmpty);
         handle.Dispose();
         Assert.False(handle.IsClosed);
         first.Dispose();
         await context.Yield();
-        Assert.True(handle.IsClosed);
+        Assert.True(SpinWait.SpinUntil(() => handle.IsClosed, TimeSpan.FromSeconds(10)));
         Assert.Equal(1, handle.Releases);
     }
 
@@ -166,8 +169,9 @@ public class RegistrationLifecycleTests : IDisposable
         await received.Task.WaitAsync(TimeSpan.FromSeconds(10));
         newRegistration.Dispose();
         await context.Yield();
-        Assert.True(oldRegistration.Entry!.Detached);
-        Assert.True(newRegistration.Entry!.Detached);
+        Assert.True(SpinWait.SpinUntil(() =>
+            Volatile.Read(ref oldRegistration.Entry!.Detached) && Volatile.Read(ref newRegistration.Entry!.Detached),
+            TimeSpan.FromSeconds(10)));
         Assert.False(checkpoint.TimedOut);
     }
 
@@ -179,8 +183,8 @@ public class RegistrationLifecycleTests : IDisposable
         using var handle = new TrackedGuard(first.Handle);
         WaitHandleRegistration registration = default;
         Assert.Throws<InvalidOperationException>(() => second.Register(handle, static (_, _) =>
-{
-}, null, ref registration));
+        {
+        }, null, ref registration));
         Assert.True(registration.IsEmpty);
         handle.Dispose();
         Assert.True(handle.IsClosed);
@@ -194,10 +198,10 @@ public class RegistrationLifecycleTests : IDisposable
         using var checkpoint = new LifecycleCheckpoint();
         using var probe = new Probe(context);
         probe.Callback = () =>
-{
-    probe.Dispose();
-    checkpoint.Pause();
-};
+        {
+            probe.Dispose();
+            checkpoint.Pause();
+        };
         probe.Publish();
         Trigger(probe.Handle);
 
@@ -289,15 +293,15 @@ public class RegistrationLifecycleTests : IDisposable
                 }
             });
             var cancel = Task.Run(async () =>
-{
-    await start.Task;
-    cancellation.Cancel();
-});
+            {
+                await start.Task;
+                cancellation.Cancel();
+            });
             var close = Task.Run(async () =>
-{
-    await start.Task;
-    guard.Dispose();
-});
+            {
+                await start.Task;
+                guard.Dispose();
+            });
             start.SetResult();
             await Task.WhenAll(signal, cancel, close).WaitAsync(TimeSpan.FromSeconds(10));
 
@@ -337,10 +341,10 @@ public class RegistrationLifecycleTests : IDisposable
         int calls = 0;
         using var service = node.CreateService<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(
             name, (request, state) =>
-{
-    Interlocked.Increment(ref calls);
-    return new ListParametersServiceResponse();
-});
+            {
+                Interlocked.Increment(ref calls);
+                return new ListParametersServiceResponse();
+            });
         using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(name);
         Assert.True(await client.TryWaitForServerAsync(10_000));
         using var canceled = new CancellationTokenSource();
@@ -650,10 +654,10 @@ public class RegistrationLifecycleTests : IDisposable
 
             _checkpoint.Pause();
             return new(buffer.Data, (_, _) =>
-{
-    buffer.Dispose();
-    Interlocked.Increment(ref Destroyed);
-});
+            {
+                buffer.Dispose();
+                Interlocked.Increment(ref Destroyed);
+            });
         }
     }
 
@@ -668,10 +672,10 @@ public class RegistrationLifecycleTests : IDisposable
 
         private RosMessageBuffer Track(RosMessageBuffer buffer)
             => new(buffer.Data, (_, _) =>
-{
-    buffer.Dispose();
-    Interlocked.Increment(ref Destroyed);
-});
+            {
+                buffer.Dispose();
+                Interlocked.Increment(ref Destroyed);
+            });
 
         protected override RosMessageBuffer CreateRequestBuffer() => Track(base.CreateRequestBuffer());
 

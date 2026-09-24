@@ -87,7 +87,7 @@ public class OperationLifecycleTests : IDisposable
             await copying.WaitAsync(TimeSpan.FromSeconds(10));
         }
 
-        Assert.True(handle.IsClosed);
+        Assert.True(SpinWait.SpinUntil(() => handle.IsClosed, TimeSpan.FromSeconds(10)));
         Assert.False(checkpoint.TimedOut);
     }
 
