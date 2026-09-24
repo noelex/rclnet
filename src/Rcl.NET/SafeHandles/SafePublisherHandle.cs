@@ -11,28 +11,34 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
         SafeNodeHandle node, TypeSupportHandle typeSupportHandle, string topicName, PublisherOptions options)
     {
         _node = node;
-        *Object = rcl_get_zero_initialized_publisher();
 
         try
         {
-            var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);
-            Span<byte> nameBuffer = stackalloc byte[nameSize];
-            InteropHelpers.FillUtf8Buffer(topicName, nameBuffer);
-
-            fixed (byte* pname = nameBuffer)
+            lock (node.Context.LifecycleGate)
             {
-                if (RosEnvironment.IsFoxy)
+                SetDependencies(node);
+                *DangerousObject = rcl_get_zero_initialized_publisher();
+                var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);
+                Span<byte> nameBuffer = stackalloc byte[nameSize];
+                InteropHelpers.FillUtf8Buffer(topicName, nameBuffer);
+
+                fixed (byte* pname = nameBuffer)
                 {
-                    InitFoxy(pname, typeSupportHandle, options);
+                    if (RosEnvironment.IsFoxy)
+                    {
+                        InitFoxy(pname, typeSupportHandle, options);
+                    }
+                    else if (RosEnvironment.IsHumble)
+                    {
+                        InitHumble(pname, typeSupportHandle, options);
+                    }
+                    else
+                    {
+                        InitIronOrLater(pname, typeSupportHandle, options);
+                    }
                 }
-                else if (RosEnvironment.IsHumble)
-                {
-                    InitHumble(pname, typeSupportHandle, options);
-                }
-                else
-                {
-                    InitIronOrLater(pname, typeSupportHandle, options);
-                }
+
+                MarkInitialized();
             }
         }
         catch
@@ -49,8 +55,8 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
 
         RclException.ThrowIfNonSuccess(
             rcl_publisher_init(
-                Object,
-                _node.Object,
+                DangerousObject,
+                _node.DangerousObject,
                 typeSupport.GetMessageTypeSupport(),
                 name,
                 &nativeOptions));
@@ -65,8 +71,8 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
 
         RclException.ThrowIfNonSuccess(
             rcl_publisher_init(
-                Object,
-                _node.Object,
+                DangerousObject,
+                _node.DangerousObject,
                 typeSupport.GetMessageTypeSupport(),
                 name,
                 &nativeOptions));
@@ -81,15 +87,15 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
 
         RclException.ThrowIfNonSuccess(
             rcl_publisher_init(
-                Object,
-                _node.Object,
+                DangerousObject,
+                _node.DangerousObject,
                 typeSupport.GetMessageTypeSupport(),
                 name,
                 &nativeOptions));
     }
 
-    protected override void ReleaseHandleCore(rcl_publisher_t* ptr)
+    protected override bool ReleaseHandleCore(rcl_publisher_t* ptr)
     {
-        rcl_publisher_fini(ptr, _node.Object);
+        return CheckReleaseResult(rcl_publisher_fini(ptr, _node.DangerousObject), nameof(rcl_publisher_fini));
     }
 }

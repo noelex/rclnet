@@ -26,37 +26,46 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
         : base(node.Context, new(node.Handle, typesupport, topicName, options))
     {
         bool completelyInitialized = false;
+
         try
         {
+            using var lease = Handle.Acquire();
             _node = node;
             ref var actualQos = ref Unsafe.AsRef<rmw_qos_profile_t>(
-                rcl_publisher_get_actual_qos(Handle.Object));
+                rcl_publisher_get_actual_qos(lease.Object));
             _actualQos = QosProfile.Create(in actualQos);
 
             _introspection = MessageIntrospection.Create(typesupport);
-            Name = StringMarshal.CreatePooledString(rcl_publisher_get_topic_name(Handle.Object))!;
+            Name = StringMarshal.CreatePooledString(rcl_publisher_get_topic_name(lease.Object))!;
             Options = options;
 
             Endpoints = GetEndpoints();
 
             InitializePublisherEvents(options,
                 ref _livelinessEvent, ref _deadlineMissedEvent, ref _qosEvent);
+            RclWaitObject<SafePublisherEventHandle>.RegisterWaitHandles(Context, _livelinessEvent, _deadlineMissedEvent, _qosEvent);
 
             rmw_gid_t gid;
-            var rmwHandle = rcl_publisher_get_rmw_handle(Handle.Object);
+            var rmwHandle = rcl_publisher_get_rmw_handle(lease.Object);
             RclException.ThrowIfNonSuccess(rmw_get_gid_for_publisher(rmwHandle, &gid));
             Gid = new(gid.GetGidSpan()[..GraphId.Size]);
 
+            Handle.ThrowIfOperationClosed();
             completelyInitialized = true;
         }
         finally
         {
-            if (!completelyInitialized) Dispose();
+            if (!completelyInitialized)
+            {
+                Dispose();
+            }
         }
     }
 
     private unsafe NetworkFlowEndpoint[] GetEndpoints()
     {
+        using var lease = Handle.Acquire();
+
         if (!RosEnvironment.IsSupported(RosEnvironment.Humble))
         {
             return Array.Empty<NetworkFlowEndpoint>();
@@ -65,11 +74,10 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
         var allocator = RclAllocator.Default.Object;
         var endpoints = RclHumble.rmw_get_zero_initialized_network_flow_endpoint_array();
 
-
         try
         {
             RclException.ThrowIfNonSuccess(
-                RclHumble.rcl_publisher_get_network_flow_endpoints(Handle.Object, &allocator, &endpoints));
+                RclHumble.rcl_publisher_get_network_flow_endpoints(lease.Object, &allocator, &endpoints));
             return InteropHelpers.ConvertNetworkFlowEndpoints(ref endpoints);
         }
         catch (Exception e)
@@ -104,6 +112,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessLostEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -120,6 +129,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register OfferedDeadlineMissedEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -136,6 +146,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register OfferedQosIncompatibleEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -172,15 +183,22 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
     {
         get
         {
+            using var lease = Handle.Acquire();
             size_t count;
             RclException.ThrowIfNonSuccess(
-                rcl_publisher_get_subscription_count(Handle.Object, &count));
+                rcl_publisher_get_subscription_count(lease.Object, &count));
             return (int)count.Value;
         }
     }
 
     public bool IsValid
-         => rcl_publisher_is_valid(Handle.Object);
+    {
+        get
+        {
+            using var lease = Handle.Acquire();
+            return rcl_publisher_is_valid(lease.Object);
+        }
+    }
 
     public NetworkFlowEndpoint[] Endpoints { get; }
 
@@ -188,68 +206,51 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
     public void Publish(RosMessageBuffer message)
     {
+        using var lease = Handle.Acquire();
         RclException.ThrowIfNonSuccess(
-            rcl_publish(Handle.Object, message.Data.ToPointer(), null));
+            rcl_publish(lease.Object, message.Data.ToPointer(), null));
     }
 
     public ValueTask PublishAsync(RosMessageBuffer message) => PublishAsync(message, false);
 
     protected ValueTask PublishAsync(RosMessageBuffer message, bool disposeBuffer)
     {
-        var vts = ObjectPool.Rent<ManualResetValueTaskSource<bool>>();
-        var args = ObjectPool.Rent<PublishArgs>().Init(this, message, vts, disposeBuffer);
+        var pending = new PendingOperation<bool>(false, static (operation, error) => operation.Fail(error));
+        var args = ObjectPool.Rent<PublishArgs>().Init(this, message, pending, disposeBuffer);
 
-        // Allow the continuation to run synchronously on the thread pool to reduce
-        // scheduling overhead, otherwise we will need 2 scheduling for 1 publish.
-        // May cause stack overflow in very rare but possible case.
-        vts.RunContinuationsAsynchronously = false;
-        vts.OnFinally(static state =>
+        try
         {
-            var args = (PublishArgs)state!;
-
-            if (args.ShouldDisposeBuffer)
-            {
-                args.Buffer.Dispose();
-            }
-
-            args.TaskSource.Reset();
-            ObjectPool.Return(args.TaskSource);
-
-            args.Reset();
-            ObjectPool.Return(args);
-        }, args);
-
-        ThreadPool.UnsafeQueueUserWorkItem(static args =>
+            ThreadPool.UnsafeQueueUserWorkItem(static args => args.Run(), args, true);
+        }
+        catch (Exception error)
         {
-            try
-            {
-                args.This.Publish(args.Buffer);
-                args.TaskSource.SetResult(true);
-            }
-            catch (Exception e)
-            {
-                args.TaskSource.SetException(e);
-            }
-        }, args, true);
+            Cleanup.Run(static state => ((PublishArgs)state!).Release(), args);
+            pending.Fail(error);
+        }
+        finally
+        {
+            pending.FinishSetup();
+        }
 
-        return new(vts, vts.Version);
+        return pending.VoidTask;
     }
 
     public RosMessageBuffer CreateBuffer() => _introspection.CreateBuffer();
 
     public unsafe void AssertLiveliness()
     {
+        using var lease = Handle.Acquire();
         RclException.ThrowIfNonSuccess(
-            rcl_publisher_assert_liveliness(Handle.Object));
+            rcl_publisher_assert_liveliness(lease.Object));
     }
 
-    public override void Dispose()
+    protected override void DisposeCore()
     {
-        _deadlineMissedEvent?.Dispose();
-        _qosEvent?.Dispose();
-        _livelinessEvent?.Dispose();
+        Cleanup.Dispose(_deadlineMissedEvent);
+        Cleanup.Dispose(_qosEvent);
+        Cleanup.Dispose(_livelinessEvent);
 
-        base.Dispose();
+        base.DisposeCore();
     }
 
     private class PublishArgs
@@ -258,24 +259,73 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
         public RclNativePublisher This { get; private set; } = null!;
 
-        public ManualResetValueTaskSource<bool> TaskSource { get; private set; } = null!;
+        public PendingOperation<bool> Completion { get; private set; } = null!;
 
         public bool ShouldDisposeBuffer { get; protected set; }
+
+        public void Run()
+        {
+            var completion = Completion;
+            Exception? failure = null;
+
+            try
+            {
+                try
+                {
+                    This.Publish(Buffer);
+                }
+                finally
+                {
+                    Release();
+                }
+            }
+            catch (Exception error)
+            {
+                failure = error;
+            }
+
+            // No access to pooled arguments after publication: a synchronous consumer
+            // may start another publish before this producer returns.
+            if (failure == null)
+            {
+                completion.Succeed(true);
+            }
+            else
+            {
+                completion.Fail(failure);
+            }
+        }
+
+        public void Release()
+        {
+            try
+            {
+                if (ShouldDisposeBuffer)
+                {
+                    Buffer.Dispose();
+                }
+            }
+            finally
+            {
+                Reset();
+                ObjectPool.Return(this);
+            }
+        }
 
         public void Reset()
         {
             Buffer = RosMessageBuffer.Empty;
             This = null!;
-            TaskSource = null!;
+            Completion = null!;
             ShouldDisposeBuffer = false;
         }
 
         public PublishArgs Init(RclNativePublisher self, RosMessageBuffer buffer,
-            ManualResetValueTaskSource<bool> taskSource, bool shouldDisposeBuffer)
+            PendingOperation<bool> completion, bool shouldDisposeBuffer)
         {
             Buffer = buffer;
             This = self;
-            TaskSource = taskSource;
+            Completion = completion;
             ShouldDisposeBuffer = shouldDisposeBuffer;
 
             return this;

@@ -14,6 +14,8 @@ class ExternalTimeSource : IDisposable
     private readonly QosProfile _qos;
     private readonly IDisposable _reg;
 
+    private readonly object _gate = new();
+    private bool _disposed;
     private bool _overrideEnabled;
     private IRclNativeSubscription? _subscription;
 
@@ -23,61 +25,84 @@ class ExternalTimeSource : IDisposable
         _qos = clockQoS;
 
         _reg = node.Parameters.RegisterParameterChangingEvent(OnParameterChanging, this);
-        node.Parameters.Declare(UseSimTime, false);
+
+        try
+        {
+            node.Parameters.Declare(UseSimTime, false);
+        }
+        catch
+        {
+            _reg.Dispose();
+            _subscription?.Dispose();
+            throw;
+        }
     }
 
     private static ValidationResult OnParameterChanging(ReadOnlySpan<ParameterChangingInfo> info, object? state)
     {
         var self = (ExternalTimeSource)state!;
-        foreach (var (descriptor, oldValue, newValue) in info)
+
+        lock (self._gate)
         {
-            if (descriptor.Name != UseSimTime)
+            if (self._disposed)
             {
-                continue;
+                return ValidationResult.Failure("Time source is disposed.");
             }
 
-            if (oldValue == newValue)
+            foreach (var (descriptor, oldValue, newValue) in info)
             {
-                continue;
-            }
-
-            if (newValue.AsBoolean())
-            {
-                if (self._node.Clock.Type != RclClockType.Ros)
+                if (descriptor.Name != UseSimTime)
                 {
-                    return ValidationResult.Failure("use_sim_time parameter can't be true while not using ROS clock.");
+                    continue;
                 }
 
-                self._overrideEnabled = self._node.Clock.Impl.IsRosTimeOverrideEnabled;
-
-                // Suppress asynchronous scheduling because clock updates may be published very frequently.
-                self._subscription = self._node.CreateNativeSubscription<Clock>("/clock",
-                    new(qos: self._qos, allowSynchronousContinuations: true));
-                _ = self.UpdateClockAsync(self._subscription);
-
-                self._node.Context.DefaultLogger.LogDebug("use_sim_time is enabled.");
-            }
-            else
-            {
-                self._subscription?.Dispose();
-                if (self._overrideEnabled)
+                if (oldValue == newValue)
                 {
-                    self._node.Clock.Impl.ToggleRosTimeOverride(false);
-                    self._overrideEnabled = false;
+                    continue;
                 }
 
-                self._node.Context.DefaultLogger.LogDebug("use_sim_time is disabled.");
+                if (newValue.AsBoolean())
+                {
+                    if (self._node.Clock.Type != RclClockType.Ros)
+                    {
+                        return ValidationResult.Failure("use_sim_time parameter can't be true while not using ROS clock.");
+                    }
+
+                    self._overrideEnabled = self._node.Clock.Impl.IsRosTimeOverrideEnabled;
+
+                    // Suppress asynchronous scheduling because clock updates may be published very frequently.
+                    self._subscription = self._node.CreateNativeSubscription<Clock>("/clock",
+                        new(qos: self._qos, allowSynchronousContinuations: true));
+                    _ = self.UpdateClockAsync(self._subscription);
+
+                    self._node.Context.DefaultLogger.LogDebug("use_sim_time is enabled.");
+                }
+                else
+                {
+                    self._subscription?.Dispose();
+
+                    if (self._overrideEnabled)
+                    {
+                        self._node.Clock.Impl.ToggleRosTimeOverride(false);
+                        self._overrideEnabled = false;
+                    }
+
+                    self._node.Context.DefaultLogger.LogDebug("use_sim_time is disabled.");
+                }
             }
+
+            return ValidationResult.Success();
         }
-
-        return ValidationResult.Success();
     }
 
     private async Task UpdateClockAsync(IRclNativeSubscription sub)
     {
         await foreach (var e in sub.ReadAllAsync().ConfigureAwait(false))
         {
-            using (e) UpdateClock(e);
+            using (e)
+            {
+                UpdateClock(e);
+            }
         }
     }
 
@@ -90,6 +115,7 @@ class ExternalTimeSource : IDisposable
         }
 
         long t;
+
         if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
         {
             ref var clock = ref buffer.AsRef<Clock.Priv>();
@@ -106,14 +132,34 @@ class ExternalTimeSource : IDisposable
 
     public void Dispose()
     {
-        _reg.Dispose();
-        _node.Parameters.Undeclare(UseSimTime);
-
-        _subscription?.Dispose();
-        if (_overrideEnabled)
+        lock (_gate)
         {
-            _node.Clock.Impl.ToggleRosTimeOverride(false);
-            _overrideEnabled = false;
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            _reg.Dispose();
+
+            try
+            {
+                _node.Parameters.Undeclare(UseSimTime);
+            }
+            catch (ObjectDisposedException) when (_node.Context.Handle.IsClosing)
+            {
+                // Undeclare already removed the parameter; a closed domain cannot publish its event.
+            }
+            finally
+            {
+                _subscription?.Dispose();
+
+                if (_overrideEnabled)
+                {
+                    _node.Clock.Impl.ToggleRosTimeOverride(false);
+                    _overrideEnabled = false;
+                }
+            }
         }
     }
 }

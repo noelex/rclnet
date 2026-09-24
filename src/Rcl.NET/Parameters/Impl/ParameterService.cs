@@ -13,7 +13,7 @@ partial class ParameterService : IParameterService, IDisposable
     [ThreadStatic]
     private static bool _recursionFlag;
 
-    private SpinLock _lock;
+    private readonly object _lock = new();
 
     private readonly RclNodeImpl _node;
     private readonly IDictionary<string, Variant> _overrides;
@@ -25,15 +25,20 @@ partial class ParameterService : IParameterService, IDisposable
     {
         _node = node;
 
-        rcl_arguments_t* global_args = null, local_args = GetNodeArguments(node.Handle);
-        if (node.Options.UseGlobalArguments)
+        using (var local = SafeArgumentsHandle.Borrow(node.Handle))
         {
-            global_args = &node.Context.Handle.Object->global_arguments;
+            using (var global = node.Options.UseGlobalArguments ? SafeArgumentsHandle.Borrow(node.Context.Handle) : null)
+            {
+                using var localLease = local.Acquire();
+                using var globalLease = global is null ? default : global.Acquire();
+                _overrides = Utils.ResolveParameterOverrides(node.FullyQualifiedName, paramOverrides,
+                    localLease.Object, global is null ? null : globalLease.Object);
+            }
+
         }
 
-        _overrides = Utils.ResolveParameterOverrides(node.FullyQualifiedName, paramOverrides, local_args, global_args);
-
         var completelyInitialized = false;
+
         try
         {
             if (RosEnvironment.IsFoxy)
@@ -87,24 +92,9 @@ partial class ParameterService : IParameterService, IDisposable
                 _setParametersAtomicallyService?.Dispose();
                 _parameterEvents?.Dispose();
             }
+
         }
 
-    }
-
-    private unsafe static rcl_arguments_t* GetNodeArguments(SafeNodeHandle node)
-    {
-        var handle = rcl_node_get_options(node.Object);
-        if (RosEnvironment.IsFoxy)
-        {
-            return &((RclFoxy.rcl_node_options_t*)handle)->arguments;
-        }
-        else if (RosEnvironment.IsHumble || RosEnvironment.IsIron || RosEnvironment.IsJazzy ||
-            RosEnvironment.IsKilted || RosEnvironment.IsLyrical)
-        {
-            return &((RclHumble.rcl_node_options_t*)handle)->arguments;
-        }
-
-        throw new NotImplementedException();
     }
 
     private static Variant GetDefaultValue(ValueKind type)
@@ -127,44 +117,52 @@ partial class ParameterService : IParameterService, IDisposable
 
     public IDisposable RegisterParameterChangingEvent(ParameterChangingEventHandler callback, object? state = null)
     {
-        using (ScopedLock.Lock(ref _lock))
+        lock (_lock)
         {
             var cb = new ParameterChangingCallback(this, callback, state);
             _onParameterChangingCallbacks.Add(cb);
             return cb;
         }
+
     }
 
     private void UnregisterParameterChangingCallback(ParameterChangingCallback cb)
     {
-        using (ScopedLock.Lock(ref _lock))
+        lock (_lock)
         {
             _onParameterChangingCallbacks.Remove(cb);
         }
+
     }
 
     private ValidationResult NotifyParameterChanging(ReadOnlySpan<ParameterChangingInfo> parameters)
     {
         SpanOwner<ParameterChangingCallback> callbacksSnapshot;
-        using (ScopedLock.Lock(ref _lock))
+
+        lock (_lock)
         {
             callbacksSnapshot = SpanOwner<ParameterChangingCallback>.Allocate(_onParameterChangingCallbacks.Count);
+
             for (var i = 0; i < _onParameterChangingCallbacks.Count; i++)
             {
                 callbacksSnapshot.Span[i] = _onParameterChangingCallbacks[i];
             }
+
         }
 
         // Prevent callbacks from declaring / setting parameters.
         using var gurad = new RecursionGuard(ref _recursionFlag);
         var result = ValidationResult.Success();
+
         foreach (var cb in callbacksSnapshot.Span)
         {
             result = cb.Callback(parameters, cb.State);
+
             if (!result.IsSuccessful)
             {
                 break;
             }
+
         }
 
         return result;
@@ -176,6 +174,7 @@ partial class ParameterService : IParameterService, IDisposable
         var ps = new ParameterStore(descriptor);
 
         var result = ps.Initialize(value);
+
         if (!result.IsSuccessful)
         {
             return result;
@@ -184,6 +183,7 @@ partial class ParameterService : IParameterService, IDisposable
         using var info = SpanOwner<ParameterChangingInfo>.Allocate(1);
         info.Span[0] = new(ps.Descriptor, default, value);
         result = NotifyParameterChanging(info.Span);
+
         if (!result.IsSuccessful)
         {
             return result;
@@ -275,6 +275,7 @@ partial class ParameterService : IParameterService, IDisposable
         {
             Set(k, v);
         }
+
     }
 
     public void SetAtomically(IDictionary<string, Variant> parameters)
@@ -293,12 +294,14 @@ partial class ParameterService : IParameterService, IDisposable
         foreach (var (k, v) in parameters)
         {
             result = TryGetStore(k, out var ps);
+
             if (!result.IsSuccessful)
             {
                 return result;
             }
 
             result = ps.Validate(v);
+
             if (!result.IsSuccessful)
             {
                 return result;
@@ -309,6 +312,7 @@ partial class ParameterService : IParameterService, IDisposable
         }
 
         result = NotifyParameterChanging(info.Span);
+
         if (!result.IsSuccessful)
         {
             return result;
@@ -326,12 +330,14 @@ partial class ParameterService : IParameterService, IDisposable
     private ValidationResult SetAndNotify(string name, Variant value)
     {
         var result = TryGetStore(name, out var ps);
+
         if (!result.IsSuccessful)
         {
             return result;
         }
 
         result = ps.Validate(value);
+
         if (!result.IsSuccessful)
         {
             return result;
@@ -340,6 +346,7 @@ partial class ParameterService : IParameterService, IDisposable
         using var info = SpanOwner<ParameterChangingInfo>.Allocate(1);
         info.Span[0] = new(ps.Descriptor, ps.Value, value);
         result = NotifyParameterChanging(info.Span);
+
         if (!result.IsSuccessful)
         {
             return result;
@@ -354,6 +361,7 @@ partial class ParameterService : IParameterService, IDisposable
     public Variant[] Get(params string[] names)
     {
         var result = new Variant[names.Length];
+
         for (var i = 0; i < result.Length; i++)
         {
             result[i] = Get(names[i]);
@@ -366,12 +374,14 @@ partial class ParameterService : IParameterService, IDisposable
     {
         prefix = prefix == "" ? prefix : prefix + ".";
         var result = new Dictionary<string, Variant>();
+
         foreach (var (k, v) in _parameters)
         {
             if (k.StartsWith(prefix))
             {
                 result[k.Substring(prefix.Length)] = v.Value;
             }
+
         }
 
         return result;
@@ -385,6 +395,7 @@ partial class ParameterService : IParameterService, IDisposable
     public ParameterDescriptor[] Describe(params string[] names)
     {
         var result = new ParameterDescriptor[names.Length];
+
         for (var i = 0; i < result.Length; i++)
         {
             result[i] = Describe(names[i]);
@@ -416,6 +427,7 @@ partial class ParameterService : IParameterService, IDisposable
         {
             throw new RclException(result.Message);
         }
+
     }
 
     public void Dispose()
@@ -429,5 +441,7 @@ partial class ParameterService : IParameterService, IDisposable
         {
             Provider.UnregisterParameterChangingCallback(this);
         }
+
     }
+
 }

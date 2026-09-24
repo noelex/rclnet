@@ -57,6 +57,7 @@ internal abstract class RclPubisherEvent : RclWaitObject<SafePublisherEventHandl
 
     private unsafe void TakeEvent(void* data)
     {
-        RclException.ThrowIfNonSuccess(rcl_take_event(Handle.Object, data));
+        using var lease = Handle.Acquire();
+        RclException.ThrowIfNonSuccess(rcl_take_event(lease.Object, data));
     }
 }

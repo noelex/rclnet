@@ -12,11 +12,12 @@ public class PubSubTests
     public async Task PubSubStronglyTypedMessages()
     {
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var publisherNode = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var subscriberNode = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var topic = NameGenerator.GenerateTopicName();
-        using var pub = node.CreatePublisher<Time>(topic);
-        using var sub = node.CreateSubscription<Time>(topic);
+        using var pub = publisherNode.CreatePublisher<Time>(topic);
+        using var sub = subscriberNode.CreateSubscription<Time>(topic);
 
         var task = ReadOneAsync(sub.ReadAllAsync());
         await WaitForSubscribersAsync(pub);
@@ -42,11 +43,12 @@ public class PubSubTests
     public async Task PubSubNativeMessages()
     {
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var publisherNode = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var subscriberNode = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var topic = NameGenerator.GenerateTopicName();
-        using var pub = node.CreatePublisher<Time>(topic);
-        using var sub = node.CreateNativeSubscription<Time>(topic);
+        using var pub = publisherNode.CreatePublisher<Time>(topic);
+        using var sub = subscriberNode.CreateNativeSubscription<Time>(topic);
 
         using var buffer = RosMessageBuffer.Create<Time>();
         WriteNativeTime(buffer, 1, 2);
@@ -106,7 +108,8 @@ public class PubSubTests
     public async Task ConcurrentCallsToReadAllAsync()
     {
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var publisherNode = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var subscriberNode = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var topic = NameGenerator.GenerateTopicName();
 
@@ -115,8 +118,8 @@ public class PubSubTests
         var qos = new QosProfile(Reliability: ReliabilityPolicy.Reliable, Depth: 2000);
 
         Task<int[]> aggregateTask;
-        using var pub = node.CreatePublisher<Time>(topic, new(qos: qos));
-        using (var sub = node.CreateSubscription<Time>(topic, new(qos: qos, queueSize: 128)))
+        using var pub = publisherNode.CreatePublisher<Time>(topic, new(qos: qos));
+        using (var sub = subscriberNode.CreateSubscription<Time>(topic, new(qos: qos, queueSize: 128)))
         {
             aggregateTask = Task.WhenAll(
                 CountAsync(sub.ReadAllAsync()),
@@ -152,32 +155,50 @@ public class PubSubTests
         }
     }
 
-    [SkippableFact]
-    public async Task IncompatibleQosEvents()
+    [SkippableTheory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task IncompatibleQosEvents(bool nativeSubscription, bool publisherFirst)
     {
         Skip.If(RosEnvironment.IsFoxy && RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp",
             "Incompatible QoS event is not supported by rmw_fastrtps_cpp on foxy.");
 
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);
-        using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var publisherNode = ctx.CreateNode(NameGenerator.GenerateNodeName());
+        using var subscriberNode = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var topic = NameGenerator.GenerateTopicName();
         TaskCompletionSource<QosPolicyKind> offeredQosIncompatible = new(), requestQosIncompatible = new();
 
         // Pub = BestEffort and Sub = Reliable is incompatible.
-        using var pub = node.CreatePublisher<Time>(topic, new(
-            qos: new(Reliability: ReliabilityPolicy.BestEffort),
-            offeredQosIncompatibleHandler: OnOfferedQosIncompatible));
-
-        using var sub = node.CreateSubscription<Time>(topic, new(
-            qos: new(Reliability: ReliabilityPolicy.Reliable),
-            requestedQosIncompatibleHandler: OnRequestedQosIncompatible));
+        using var first = publisherFirst ? CreatePublisher() : CreateSubscription();
+        using var second = publisherFirst ? CreateSubscription() : CreatePublisher();
 
         await Task.WhenAll(offeredQosIncompatible.Task, requestQosIncompatible.Task)
             .WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.Equal(QosPolicyKind.Reliability, offeredQosIncompatible.Task.Result);
         Assert.Equal(QosPolicyKind.Reliability, requestQosIncompatible.Task.Result);
+
+        IDisposable CreatePublisher()
+        {
+            return publisherNode.CreatePublisher<Time>(topic, new(
+                qos: new(Reliability: ReliabilityPolicy.BestEffort),
+                offeredQosIncompatibleHandler: OnOfferedQosIncompatible));
+        }
+
+        IDisposable CreateSubscription()
+        {
+            var options = new SubscriptionOptions(
+                qos: new(Reliability: ReliabilityPolicy.Reliable),
+                requestedQosIncompatibleHandler: OnRequestedQosIncompatible);
+
+            return nativeSubscription
+                ? subscriberNode.CreateNativeSubscription<Time>(topic, options)
+                : subscriberNode.CreateSubscription<Time>(topic, options);
+        }
 
         void OnOfferedQosIncompatible(IncompatibleQosEvent e)
         {

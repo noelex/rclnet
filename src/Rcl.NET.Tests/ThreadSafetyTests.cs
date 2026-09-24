@@ -5,29 +5,82 @@ namespace Rcl.NET.Tests;
 
 public class ThreadSafetyTests
 {
-    private static readonly int s_concurrency = Environment.ProcessorCount;
+    private static readonly int s_concurrency = Math.Max(2, Environment.ProcessorCount);
 
     [SkippableTheory]
-    [InlineData(RclClockType.Steady)]
-    [InlineData(RclClockType.System)]
-    [InlineData(RclClockType.Ros)]
-    public async Task ConcurrentTimerCreationAndDisposal_MultipleContexts(RclClockType clockType)
+    [InlineData(RclClockType.Steady, false)]
+    [InlineData(RclClockType.System, false)]
+    [InlineData(RclClockType.Ros, false)]
+    [InlineData(RclClockType.Steady, true)]
+    [InlineData(RclClockType.System, true)]
+    [InlineData(RclClockType.Ros, true)]
+    public async Task ConcurrentTimerCreationAndDisposal_MultipleContexts(RclClockType clockType, bool synchronousDispose)
     {
-        Skip.If(TestConfig.GitHubActions, "Tests for concurrent context creation and disposable are disabled in CI.");
+        // A standalone C++ RCL program with independent contexts and endpoints also crashes on
+        // Humble and Iron / Fast DDS, without .NET or SafeHandle. Humble's native stack identifies
+        // a null call in StatefulWriter::deliver_sample_to_intraprocesses during endpoint teardown.
+        // Restrict the exclusion to this overlapping multi-context endpoint scenario.
+        Skip.If((RosEnvironment.IsHumble || RosEnvironment.IsIron)
+            && RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp",
+            "Humble/Iron / Fast DDS: native concurrent endpoint teardown crashes.");
 
-        await Task.WhenAll(
-            Enumerable.Range(0, s_concurrency)
-            .Select(x => Random.Shared.Next(1, 5))
-            .Select(CreateContextAndTestTimerAsync)
-        );
+        // Both managed tests and a standalone C++ RCL reproduction abort in Lyrical / Cyclone
+        // at ddsi_fini's ddsrt_avl_is_empty(&gv->typelib) assertion when contexts close concurrently.
+        // Context-only and single-context endpoint tests remain enabled.
+        Skip.If(RosEnvironment.IsLyrical && RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp",
+            "Lyrical / Cyclone DDS: native concurrent teardown assertion fails.");
 
-        async Task CreateContextAndTestTimerAsync(int timeout)
+        await RunConcurrently(async index =>
         {
-            await using var context = new RclContext(TestConfig.DefaultContextArguments);
-            using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+            var context = new RclContext(TestConfig.DefaultContextArguments);
 
-            await CreateTimerWaitAndDisposeAsync(node, clockType, timeout);
-        }
+            try
+            {
+                using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+                await CreateTimerWaitAndDisposeAsync(node, clockType, index % 4 + 1);
+            }
+            finally
+            {
+                await RclContext.YieldBackground();
+                Assert.False(context.IsCurrent);
+
+                if (synchronousDispose)
+                {
+                    context.Dispose();
+                }
+                else
+                {
+                    await context.DisposeAsync();
+                }
+            }
+        });
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ConcurrentContextCreationAndDisposal(bool synchronousDispose)
+    {
+        await RunConcurrently(async _ =>
+        {
+            var context = new RclContext(TestConfig.DefaultContextArguments);
+
+            try
+            {
+                await Task.Yield();
+            }
+            finally
+            {
+                if (synchronousDispose)
+                {
+                    context.Dispose();
+                }
+                else
+                {
+                    await context.DisposeAsync();
+                }
+            }
+        });
     }
 
     [Theory]
@@ -39,22 +92,27 @@ public class ThreadSafetyTests
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
 
-        await Task.WhenAll(
-            Enumerable.Range(0, s_concurrency)
-            .Select(x => Random.Shared.Next(1, 5))
-            .Select(x => CreateTimerWaitAndDisposeAsync(node, clockType, x))
-        );
+        await RunConcurrently(index => CreateTimerWaitAndDisposeAsync(node, clockType, index % 4 + 1));
     }
 
     [Fact]
     public async Task ConcurrentGuardConditionCreation_SingleContext()
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
-        await Task.WhenAll(
-            Enumerable.Range(0, s_concurrency)
-            .Select(x => Random.Shared.Next(1, 5))
-            .Select(x => CreateGuardConditionWaitAndDisposeAsync(context, x))
-        );
+        await RunConcurrently(index => CreateGuardConditionWaitAndDisposeAsync(context, index % 4 + 1));
+    }
+
+    private static async Task RunConcurrently(Func<int, Task> action)
+    {
+        var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var workers = Enumerable.Range(0, s_concurrency).Select(index => Task.Run(async () =>
+        {
+            await start.Task;
+            await action(index);
+        })).ToArray();
+
+        start.SetResult();
+        await Task.WhenAll(workers).WaitAsync(TimeSpan.FromSeconds(30));
     }
 
     private static async Task CreateTimerWaitAndDisposeAsync(IRclNode node, RclClockType type, int timeout)

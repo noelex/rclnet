@@ -22,7 +22,17 @@ internal unsafe class RclPublisher<T> : RclNativePublisher, IRclPublisher<T> whe
     public ValueTask PublishAsync(T message)
     {
         var buffer = CreateBuffer();
-        message.WriteTo(buffer.Data, Options.TextEncoding);
+
+        try
+        {
+            message.WriteTo(buffer.Data, Options.TextEncoding);
+        }
+        catch
+        {
+            buffer.Dispose();
+            throw;
+        }
+
         return PublishAsync(buffer, true);
     }
 }

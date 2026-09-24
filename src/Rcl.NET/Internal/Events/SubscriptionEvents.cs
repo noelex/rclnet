@@ -13,7 +13,6 @@ internal class RclSubscriptionLivelinessChangedEvent : RclSubscriptionEvent
         : base(context, subscription, rcl_subscription_event_type_t.RCL_SUBSCRIPTION_LIVELINESS_CHANGED)
     {
         _handler = handler;
-        RegisterWaitHandle();
     }
 
     protected override void OnLivelinessChanged(LivelinessChangedEvent info)
@@ -33,7 +32,6 @@ internal class RclSubscriptionRequestedDeadlineMissedEvent : RclSubscriptionEven
         : base(context, subscription, rcl_subscription_event_type_t.RCL_SUBSCRIPTION_REQUESTED_DEADLINE_MISSED)
     {
         _handler = handler;
-        RegisterWaitHandle();
     }
 
     protected override void OnRequestedDeadlineMissed(RequestedDeadlineMissedEvent info)
@@ -53,7 +51,6 @@ internal class RclSubscriptionRequestedIncompatibleQosEvent : RclSubscriptionEve
         : base(context, subscription, rcl_subscription_event_type_t.RCL_SUBSCRIPTION_REQUESTED_INCOMPATIBLE_QOS)
     {
         _handler = handler;
-        RegisterWaitHandle();
     }
 
     protected override void OnIncomatibleQos(IncompatibleQosEvent info)

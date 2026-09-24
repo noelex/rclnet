@@ -8,6 +8,36 @@ namespace Rcl.NET.Tests;
 public class RosGraphTests
 {
     [Fact]
+    public async Task ServiceChangesReachEveryNodeInTheSameContext()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var first = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var second = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var third = context.CreateNode(NameGenerator.GenerateNodeName());
+        var nodes = new[] { first, second, third };
+        var serviceName = "/" + NameGenerator.GenerateServiceName().TrimStart('/');
+
+        // Register every watcher before changing the graph. A shared native guard must
+        // notify every node, even when no subsequent graph change can wake a missed waiter.
+        await context.Yield();
+        var appeared = nodes.Select(node => node.Graph.TryWaitForServiceServerAsync(serviceName, 5000)).ToArray();
+        using var server = first.CreateService<
+            Rosidl.Messages.Rcl.ListParametersService,
+            Rosidl.Messages.Rcl.ListParametersServiceRequest,
+            Rosidl.Messages.Rcl.ListParametersServiceResponse>(serviceName,
+            (request, state) => new Rosidl.Messages.Rcl.ListParametersServiceResponse());
+
+        Assert.All(await Task.WhenAll(appeared), found => Assert.True(found));
+
+        await context.Yield();
+        var disappeared = nodes.Select(node => node.Graph.TryWatchAsync(
+            (graph, change) => !graph.IsServiceServerAvailable(serviceName), 5000)).ToArray();
+        server.Dispose();
+
+        Assert.All(await Task.WhenAll(disappeared), removed => Assert.True(removed));
+    }
+
+    [Fact]
     public async Task TestWaitForNode()
     {
         await using var ctx = new RclContext(TestConfig.DefaultContextArguments);

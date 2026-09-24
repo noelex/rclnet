@@ -5,6 +5,14 @@ namespace Rcl;
 /// <summary>
 /// Represents a context for hosting nodes and wait primitives. 
 /// </summary>
+/// <remarks>
+/// Disposal closes admission, terminates pending waits and requests, and drains native
+/// wait registrations. Concurrent disposal calls observe the same shutdown result.
+/// Synchronous disposal from the event loop only requests shutdown to avoid waiting on itself.
+/// Shutdown waits for an executing synchronous callback, but not for independently owned
+/// children or asynchronous user handlers. Those children must still be disposed by their owners;
+/// they can keep native context storage and logging alive after shutdown completes.
+/// </remarks>
 public interface IRclContext : IDisposable, IAsyncDisposable
 {
     /// <summary>

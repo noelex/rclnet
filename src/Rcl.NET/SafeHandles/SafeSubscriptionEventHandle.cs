@@ -4,11 +4,16 @@ internal unsafe class SafeSubscriptionEventHandle : RclObjectHandle<rcl_event_t>
 {
     public SafeSubscriptionEventHandle(SafeSubscriptionHandle subscription, rcl_subscription_event_type_t eventType)
     {
-        *Object = rcl_get_zero_initialized_event();
         try
         {
-            RclException.ThrowIfNonSuccess(
-                rcl_subscription_event_init(Object, subscription.Object, eventType));
+            lock (subscription.Context.LifecycleGate)
+            {
+                SetDependencies(subscription);
+                *DangerousObject = rcl_get_zero_initialized_event();
+                RclException.ThrowIfNonSuccess(
+                    rcl_subscription_event_init(DangerousObject, subscription.DangerousObject, eventType));
+                MarkInitialized();
+            }
         }
         catch
         {
@@ -17,8 +22,8 @@ internal unsafe class SafeSubscriptionEventHandle : RclObjectHandle<rcl_event_t>
         }
     }
 
-    protected override unsafe void ReleaseHandleCore(rcl_event_t* ptr)
+    protected override unsafe bool ReleaseHandleCore(rcl_event_t* ptr)
     {
-        rcl_event_fini(ptr);
+        return CheckReleaseResult(rcl_event_fini(ptr), nameof(rcl_event_fini));
     }
 }

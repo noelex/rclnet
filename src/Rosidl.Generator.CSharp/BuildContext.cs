@@ -7,9 +7,6 @@ namespace Rosidl.Generator.CSharp;
 
 static class Attributes
 {
-    public static readonly CSharpAttribute SuppressGCTransition
-        = new CSharpFreeAttribute("global::System.Runtime.InteropServices.SuppressGCTransitionAttribute");
-
     public static readonly CSharpAttribute StructLayoutSequential
         = new CSharpFreeAttribute("global::System.Runtime.InteropServices.StructLayoutAttribute(global::System.Runtime.InteropServices.LayoutKind.Sequential)");
 

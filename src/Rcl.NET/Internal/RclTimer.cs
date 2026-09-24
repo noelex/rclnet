@@ -15,26 +15,30 @@ internal class RclTimer : RclWaitObject<SafeTimerHandle>, IRclTimer
 
     protected override unsafe void OnWaitCompleted()
     {
-        rcl_timer_call(Handle.Object);
+        using var lease = Handle.Acquire();
+        rcl_timer_call(lease.Object);
     }
 
     public unsafe bool IsPaused
     {
         get
         {
+            using var lease = Handle.Acquire();
             bool ret;
-            rcl_timer_is_canceled(Handle.Object, &ret);
+            rcl_timer_is_canceled(lease.Object, &ret);
             return ret;
         }
     }
 
     public unsafe void Pause()
     {
-        rcl_timer_cancel(Handle.Object);
+        using var lease = Handle.Acquire();
+        rcl_timer_cancel(lease.Object);
     }
 
     public unsafe void Resume()
     {
-        rcl_timer_reset(Handle.Object);
+        using var lease = Handle.Acquire();
+        rcl_timer_reset(lease.Object);
     }
 }

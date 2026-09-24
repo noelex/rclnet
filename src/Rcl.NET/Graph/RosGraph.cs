@@ -32,7 +32,10 @@ namespace Rcl.Graph;
 /// </remarks>
 public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 {
-    enum UpdateOp { Add = 1, Remove = 2 }
+    enum UpdateOp
+    {
+        Add = 1, Remove = 2
+    }
 
     private long _subscriberId;
     private readonly RclNodeImpl _node;
@@ -134,10 +137,11 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     private unsafe void BuildNodes()
     {
+        using var lease = _node.Handle.Acquire();
         rcutils_string_array_t names, namespaces, enclaves;
 
         RclException.ThrowIfNonSuccess(
-            rcl_get_node_names_with_enclaves(_node.Handle.Object,
+            rcl_get_node_names_with_enclaves(lease.Object,
                 RclAllocator.Default.Object,
                 &names,
                 &namespaces,
@@ -169,6 +173,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                 while (_nodesEnumerator.MoveNext())
                 {
                     var (k, node) = _nodesEnumerator.Current;
+
                     if (discoveredNodes.Span.IndexOf(k) < 0)
                     {
                         if (_nodes.Remove(k, out var v))
@@ -193,6 +198,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                     while (_servicesEnumerator.MoveNext())
                     {
                         var (k, v) = _servicesEnumerator.Current;
+
                         if (v.ClientCount == 0 && v.ServerCount == 0)
                         {
                             _services.Remove(k, out _);
@@ -235,12 +241,13 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     private unsafe void BuildTopics(bool disableTopicNameDemangling = false)
     {
+        using var lease = _node.Handle.Acquire();
         var allocator = RclAllocator.Default.Object;
         rcl_names_and_types_t nts;
 
         RclException.ThrowIfNonSuccess(
             rcl_get_topic_names_and_types(
-                _node.Handle.Object,
+                lease.Object,
                 &allocator,
                 disableTopicNameDemangling,
                 &nts));
@@ -263,6 +270,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             {
                 var (k, v) = _topicsEnumerator.Current;
                 var found = false;
+
                 foreach (var item in items.Span)
                 {
                     if (item.Name == k)
@@ -299,11 +307,12 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     private unsafe void FetchServiceEndpoints(RosNode node, byte* name, byte* ns)
     {
+        using var lease = _node.Handle.Acquire();
         var allocator = RclAllocator.Default.Object;
         rcl_names_and_types_t nts;
 
         var ret = rcl_get_service_names_and_types_by_node(
-                _node.Handle.Object,
+                lease.Object,
                 &allocator,
                 name,
                 ns,
@@ -327,11 +336,12 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         }
 
         ret = rcl_get_client_names_and_types_by_node(
-                  _node.Handle.Object,
+                  lease.Object,
                   &allocator,
                   name,
                   ns,
                   &nts);
+
         if (ret == rcl_ret_t.RCL_RET_NODE_NAME_NON_EXISTENT ||
             ret == rcl_ret_t.RCL_RET_OK)
         {
@@ -347,6 +357,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     private unsafe void FetchTopicEndpoints(RosTopic topic, bool disableTopicNameDemangling = false)
     {
+        using var lease = _node.Handle.Acquire();
         var nameSize = InteropHelpers.GetUtf8BufferSize(topic.Name);
         Span<byte> nameBuffer = stackalloc byte[nameSize];
         InteropHelpers.FillUtf8Buffer(topic.Name, nameBuffer);
@@ -360,7 +371,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         rmw_topic_endpoint_info_array_t endpoints;
         RclException.ThrowIfNonSuccess(
             rcl_get_publishers_info_by_topic(
-                _node.Handle.Object,
+                lease.Object,
                 &allocator.Value,
                 namePtr,
                 disableTopicNameDemangling,
@@ -375,6 +386,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                     // Access info_array through accessor to deal with layout difference between different distros.
                     items.Span[i] = new(accessor.GetInfoFromArray(endpoints.info_array, i), accessor);
                 }
+
                 topic.UpdatePublishers(this, items.Span, _nodes);
             }
             finally
@@ -385,7 +397,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
         RclException.ThrowIfNonSuccess(
             rcl_get_subscriptions_info_by_topic(
-                _node.Handle.Object,
+                lease.Object,
                 &allocator.Value,
                 namePtr,
                 disableTopicNameDemangling,
@@ -399,6 +411,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                 {
                     items.Span[i] = new(accessor.GetInfoFromArray(endpoints.info_array, i), accessor);
                 }
+
                 topic.UpdateSubscribers(this, items.Span, _nodes);
             }
             finally
@@ -415,6 +428,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             for (var i = 0; i < (int)src->names.size.Value; i++)
             {
                 var name = StringMarshal.CreatePooledString((byte*)src->names.data[i])!;
+
                 for (var j = 0; j < (int)src->types[i].size.Value; j++)
                 {
                     var type = StringMarshal

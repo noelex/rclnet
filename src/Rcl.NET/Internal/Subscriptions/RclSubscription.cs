@@ -18,7 +18,7 @@ internal unsafe class RclSubscription<T> :
     IRclSubscription<T> where T : IMessage
 {
     private readonly RclNodeImpl _node;
-    private readonly RosMessageBuffer _messageBuffer = RosMessageBuffer.Create<T>();
+    private readonly RosMessageBuffer _messageBuffer;
     private readonly Channel<T> _messageChannel;
     private readonly QosProfile _actualQos;
     private readonly Encoding _textEncoding;
@@ -35,9 +35,12 @@ internal unsafe class RclSubscription<T> :
         : base(node.Context, new(node.Handle, T.GetTypeSupportHandle(), topicName, options))
     {
         var completelyInitialized = false;
+
         try
         {
+            using var lease = Handle.Acquire();
             _node = node;
+            _messageBuffer = RosMessageBuffer.Create<T>();
             var opts = new BoundedChannelOptions(options.QueueSize)
             {
                 SingleWriter = true,
@@ -49,14 +52,14 @@ internal unsafe class RclSubscription<T> :
             _messageChannel = Channel.CreateBounded<T>(opts);
 
             ref var actualQos = ref Unsafe.AsRef<rmw_qos_profile_t>(
-                rcl_subscription_get_actual_qos(Handle.Object));
+                rcl_subscription_get_actual_qos(lease.Object));
             _actualQos = QosProfile.Create(in actualQos);
 
             _textEncoding = options.TextEncoding;
-            Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object))!;
+            Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(lease.Object))!;
             Endpoints = GetEndpoints();
 
-            if (options.ContentFilter != null && !RclHumble.rcl_subscription_is_cft_enabled(Handle.Object))
+            if (options.ContentFilter != null && !RclHumble.rcl_subscription_is_cft_enabled(lease.Object))
             {
                 throw new NotSupportedException($"Content filter is configured but the feature is " +
                     $"not supported by current RMW implementation '{RosEnvironment.RmwImplementationIdentifier}'.");
@@ -64,14 +67,17 @@ internal unsafe class RclSubscription<T> :
 
             InitializeEvents(options,
                 ref _livelinessEvent, ref _deadlineMissedEvent, ref _qosEvent);
+            RclWaitObject<SafeSubscriptionEventHandle>.RegisterWaitHandles(Context, _livelinessEvent, _deadlineMissedEvent, _qosEvent);
+            RegisterWaitHandle();
             completelyInitialized = true;
         }
         finally
         {
-            if (!completelyInitialized) Dispose();
+            if (!completelyInitialized)
+            {
+                Dispose();
+            }
         }
-
-        RegisterWaitHandle();
     }
 
     public QosProfile ActualQos => _actualQos;
@@ -82,20 +88,28 @@ internal unsafe class RclSubscription<T> :
     {
         get
         {
+            using var lease = Handle.Acquire();
             size_t count;
             RclException.ThrowIfNonSuccess(
-                rcl_subscription_get_publisher_count(Handle.Object, &count));
+                rcl_subscription_get_publisher_count(lease.Object, &count));
             return (int)count.Value;
         }
     }
 
     public bool IsValid
-         => rcl_subscription_is_valid(Handle.Object);
+    {
+        get
+        {
+            using var lease = Handle.Acquire();
+            return rcl_subscription_is_valid(lease.Object);
+        }
+    }
 
     public NetworkFlowEndpoint[] Endpoints { get; }
 
     protected override void OnWaitCompleted()
     {
+        using var lease = Handle.Acquire();
         // TODO: Parse this as RclFoxy.rmw_message_info_t
         // if need to access header fields on foxy.
         // Defined as RclHumble.rmw_message_info_t only because it has bigger size
@@ -108,10 +122,11 @@ internal unsafe class RclSubscription<T> :
 
         try
         {
-            if (rcl_ret_t.RCL_RET_OK == rcl_take(Handle.Object, _messageBuffer.Data.ToPointer(), &header, null))
+            if (rcl_ret_t.RCL_RET_OK == rcl_take(lease.Object, _messageBuffer.Data.ToPointer(), &header, null))
             {
                 var msg = (T)T.CreateFrom(_messageBuffer.Data, _textEncoding);
                 _messageChannel.Writer.TryWrite(msg);
+
                 foreach (var (_, obs) in _observers)
                 {
                     obs.OnNext(msg);
@@ -129,36 +144,42 @@ internal unsafe class RclSubscription<T> :
         return _messageChannel.Reader.ReadAllAsync(cancellationToken);
     }
 
-    public override void Dispose()
+    protected override void DisposeCore()
     {
-        _node.Context.DefaultLogger.LogDebug($"Disposing RclSubscription '{Name}' ...");
-        _livelinessEvent?.Dispose();
-        _deadlineMissedEvent?.Dispose();
-        _qosEvent?.Dispose();
+        Cleanup.Dispose(_livelinessEvent);
+        Cleanup.Dispose(_deadlineMissedEvent);
+        Cleanup.Dispose(_qosEvent);
 
-        // Stop future receives before queuing buffer destruction on the event loop.
-        base.Dispose();
-        if (_messageChannel.Writer.TryComplete())
+        base.DisposeCore();
+    }
+
+    protected override void OnDetached()
+    {
+        // Native take and synchronous observers have exited before this buffer is destroyed.
+        _messageChannel?.Writer.TryComplete();
+
+        if (!_messageBuffer.IsEmpty)
         {
-            // A receive callback can still be taking or finalizing this buffer,
-            // including when a synchronous message observer disposes the subscription.
-            Context.SynchronizationContext.Post(static state =>
-                ((RclSubscription<T>)state!)._messageBuffer.Dispose(), this);
-            foreach (var (_, obs) in _observers)
-            {
-                obs.OnCompleted();
-            }
-            _observers.Clear();
+            _messageBuffer.Dispose();
         }
 
-        _node.Context.DefaultLogger.LogDebug($"Disposed RclSubscription '{Name}'.");
+        foreach (var (_, observer) in _observers)
+        {
+            Cleanup.Run(static state => ((IObserver<T>)state!).OnCompleted(), observer);
+        }
+
+        _observers.Clear();
     }
 
     public IDisposable Subscribe(IObserver<T> observer)
     {
-        var id = Interlocked.Increment(ref _subscriberId);
-        _observers[id] = observer;
-        return new Subscription(this, id);
+        lock (Context.RegistrationGate)
+        {
+            Handle.ThrowIfOperationClosed();
+            var id = Interlocked.Increment(ref _subscriberId);
+            _observers[id] = observer;
+            return new Subscription(this, id);
+        }
     }
 
     private void Unsubscribe(int id)
@@ -168,6 +189,8 @@ internal unsafe class RclSubscription<T> :
 
     private unsafe NetworkFlowEndpoint[] GetEndpoints()
     {
+        using var lease = Handle.Acquire();
+
         if (!RosEnvironment.IsSupported(RosEnvironment.Humble))
         {
             return Array.Empty<NetworkFlowEndpoint>();
@@ -179,7 +202,7 @@ internal unsafe class RclSubscription<T> :
         try
         {
             RclException.ThrowIfNonSuccess(
-                RclHumble.rcl_subscription_get_network_flow_endpoints(Handle.Object, &allocator, &endpoints));
+                RclHumble.rcl_subscription_get_network_flow_endpoints(lease.Object, &allocator, &endpoints));
             return InteropHelpers.ConvertNetworkFlowEndpoints(ref endpoints);
         }
         catch (Exception e)
@@ -214,6 +237,7 @@ internal unsafe class RclSubscription<T> :
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessChangedEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -230,6 +254,7 @@ internal unsafe class RclSubscription<T> :
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register RequestedDeadlineMissedEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -246,6 +271,7 @@ internal unsafe class RclSubscription<T> :
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register RequestedQosIncompatibleEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
