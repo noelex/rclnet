@@ -317,13 +317,28 @@ public class ServiceTests
         await introspectTask;
         Assert.Equal(4, events.Count);
 
-        Assert.Equal(ServiceEventInfo.REQUEST_SENT, events.ElementAt(0).Key);
-        Assert.Equal(ServiceEventInfo.REQUEST_RECEIVED, events.ElementAt(1).Key);
-        Assert.Equal(ServiceEventInfo.RESPONSE_SENT, events.ElementAt(2).Key);
-        Assert.Equal(ServiceEventInfo.RESPONSE_RECEIVED, events.ElementAt(3).Key);
+        // Client and server publish through separate DDS writers. Cross-writer arrival
+        // order is not guaranteed; RCL also emits REQUEST_SENT after sending the request.
+        var eventTypes = events.Keys.ToArray();
+        Assert.Equal(new[]
+        {
+            ServiceEventInfo.REQUEST_SENT, ServiceEventInfo.REQUEST_RECEIVED,
+            ServiceEventInfo.RESPONSE_SENT, ServiceEventInfo.RESPONSE_RECEIVED
+        }.OrderBy(type => type), eventTypes.OrderBy(type => type));
+        Assert.True(Array.IndexOf(eventTypes, ServiceEventInfo.REQUEST_SENT)
+            < Array.IndexOf(eventTypes, ServiceEventInfo.RESPONSE_RECEIVED));
+        Assert.True(Array.IndexOf(eventTypes, ServiceEventInfo.REQUEST_RECEIVED)
+            < Array.IndexOf(eventTypes, ServiceEventInfo.RESPONSE_SENT));
 
         Assert.Equal(client.Gid, new(MemoryMarshal.Cast<sbyte, byte>(events[ServiceEventInfo.REQUEST_SENT].Info.ClientGid)));
         Assert.Equal(client.Gid, new(MemoryMarshal.Cast<sbyte, byte>(events[ServiceEventInfo.RESPONSE_RECEIVED].Info.ClientGid)));
+        Assert.Equal(events[ServiceEventInfo.REQUEST_RECEIVED].Info.ClientGid,
+            events[ServiceEventInfo.RESPONSE_SENT].Info.ClientGid);
+
+        foreach (var item in events.Values)
+        {
+            Assert.Equal(events[ServiceEventInfo.REQUEST_SENT].Info.SequenceNumber, item.Info.SequenceNumber);
+        }
 
         if(state == ServiceIntrospectionState.Full)
         {
