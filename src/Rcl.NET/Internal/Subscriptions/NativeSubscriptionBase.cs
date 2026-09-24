@@ -247,9 +247,9 @@ internal unsafe abstract class NativeSubscriptionBase :
 
     protected override void DisposeCore()
     {
-        RclContext.DisposeResource(_livelinessEvent);
-        RclContext.DisposeResource(_deadlineMissedEvent);
-        RclContext.DisposeResource(_qosEvent);
+        Cleanup.Dispose(_livelinessEvent);
+        Cleanup.Dispose(_deadlineMissedEvent);
+        Cleanup.Dispose(_qosEvent);
 
         base.DisposeCore();
     }

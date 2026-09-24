@@ -92,7 +92,7 @@ public class OperationLifecycleTests : IDisposable
     }
 
     [Fact]
-    public async Task WrappersRejectNativeCallsBeforeQueuedReleaseRuns()
+    public async Task WrappersRequestReleaseWithoutWaitingForEventLoop()
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
@@ -118,7 +118,7 @@ public class OperationLifecycleTests : IDisposable
             client.Dispose();
             service.Dispose();
             node.Dispose();
-            Assert.False(((RclNativePublisher)publisher).Handle.IsReleaseRequested);
+            Assert.True(((RclNativePublisher)publisher).Handle.IsReleaseRequested);
             Assert.Throws<ObjectDisposedException>(() => _ = publisher.Subscribers);
             Assert.Throws<ObjectDisposedException>(() => publisher.AssertLiveliness());
             Assert.Throws<ObjectDisposedException>(() => _ = subscription.Publishers);

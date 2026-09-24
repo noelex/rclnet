@@ -88,7 +88,7 @@ unsafe class ReusableTimer : IDisposable
             finally
             {
                 registration.Dispose();
-                ctx.AfterDetach(registration, static s => ((IDisposable)s!).Dispose(), handle);
+                handle.RequestRelease();
             }
         }
     }

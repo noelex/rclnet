@@ -158,19 +158,19 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
 
     protected override void DisposeCore()
     {
-        RclContext.DisposeResource(_timeProvider);
-        RclContext.DisposeResource(_timeSource);
-        RclContext.DisposeResource(_parameters);
-        RclContext.RunCleanup(static state => ((CancellationTokenSource)state!).Cancel(), _cts);
+        Cleanup.Dispose(_timeProvider);
+        Cleanup.Dispose(_timeSource);
+        Cleanup.Dispose(_parameters);
+        Cleanup.Run(static state => ((CancellationTokenSource)state!).Cancel(), _cts);
         _cts.Dispose();
-        RclContext.DisposeResource(_graphSignal);
+        Cleanup.Dispose(_graphSignal);
         base.DisposeCore();
 
         if (_ownsClock && Clock != null)
         {
             var clockHandle = Clock.Impl.Handle;
             clockHandle.TryBeginClose();
-            Context.ScheduleCleanup(static state => ((SafeClockHandle)state!).Dispose(), clockHandle);
+            clockHandle.RequestRelease();
         }
     }
 }

@@ -145,9 +145,9 @@ internal unsafe class RclSubscription<T> :
 
     protected override void DisposeCore()
     {
-        RclContext.DisposeResource(_livelinessEvent);
-        RclContext.DisposeResource(_deadlineMissedEvent);
-        RclContext.DisposeResource(_qosEvent);
+        Cleanup.Dispose(_livelinessEvent);
+        Cleanup.Dispose(_deadlineMissedEvent);
+        Cleanup.Dispose(_qosEvent);
 
         base.DisposeCore();
     }
@@ -163,7 +163,7 @@ internal unsafe class RclSubscription<T> :
         }
 
         foreach (var (_, observer) in _observers)
-            RclContext.RunCleanup(static state => ((IObserver<T>)state!).OnCompleted(), observer);
+            Cleanup.Run(static state => ((IObserver<T>)state!).OnCompleted(), observer);
 
         _observers.Clear();
     }

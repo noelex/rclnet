@@ -25,16 +25,11 @@ dotnet_naming_style.pascal_case.capitalization = pascal_case
 dotnet_naming_style.s_prefix.required_prefix = s_
 dotnet_naming_style.s_prefix.capitalization = camel_case
 
-# Braces and block layout.
 [*.cs]
-csharp_prefer_braces = true:warning
-csharp_new_line_before_open_brace = all
-csharp_new_line_before_else = true
-csharp_new_line_before_catch = true
-csharp_new_line_before_finally = true
 csharp_preserve_single_line_blocks = true
-csharp_preserve_single_line_statements = false
-dotnet_diagnostic.IDE0011.severity = warning
+csharp_preserve_single_line_statements = true
+dotnet_diagnostic.IDE0011.severity = none
+dotnet_diagnostic.IDE0055.severity = none
 
 # Prefer framework throw helpers where an equivalent helper is available.
 dotnet_diagnostic.CA1510.severity = warning

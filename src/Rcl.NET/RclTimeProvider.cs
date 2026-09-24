@@ -117,7 +117,7 @@ internal sealed class RclTimeProviderTimer : ITimer
     private bool _scheduled;
     private bool _firstTick;
     private bool _disposed;
-    private bool _handleReleased;
+    private bool _detached;
     private int _pendingCallbacks;
 
     internal RclTimeProviderTimer(RclTimeProvider owner, RclContext context, RclClock clock,
@@ -152,7 +152,7 @@ internal sealed class RclTimeProviderTimer : ITimer
             }
 
             _registration.Dispose();
-            context.AfterDetach(_registration, static state => ((SafeTimerHandle)state!).Dispose(), _handle);
+            _handle.RequestRelease();
             throw;
         }
     }
@@ -267,7 +267,7 @@ internal sealed class RclTimeProviderTimer : ITimer
         {
             lock (_gate)
             {
-                if (--_pendingCallbacks == 0 && _handleReleased)
+                if (--_pendingCallbacks == 0 && _detached)
                 {
                     _disposeCompletion?.TrySetResult();
                 }
@@ -295,17 +295,16 @@ internal sealed class RclTimeProviderTimer : ITimer
         }
 
         _registration.Dispose();
-        _context.AfterDetach(_registration, static state => ((RclTimeProviderTimer)state!).ReleaseHandle(), this);
+        _handle.RequestRelease();
+        _context.AfterDetach(_registration, static state => ((RclTimeProviderTimer)state!).CompleteDetach(), this);
         _owner.Remove(this);
     }
 
-    private void ReleaseHandle()
+    private void CompleteDetach()
     {
-        _handle.Dispose();
-
         lock (_gate)
         {
-            _handleReleased = true;
+            _detached = true;
 
             if (_pendingCallbacks == 0)
             {
@@ -320,7 +319,7 @@ internal sealed class RclTimeProviderTimer : ITimer
 
         lock (_gate)
         {
-            if (_pendingCallbacks == 0 && _handleReleased)
+            if (_pendingCallbacks == 0 && _detached)
             {
                 return ValueTask.CompletedTask;
             }

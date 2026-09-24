@@ -128,7 +128,7 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
 
             try
             {
-                _shutdownSucceeded = CheckReleaseResult(rcl_shutdown(DangerousObject), nameof(rcl_shutdown));
+                _shutdownSucceeded = CheckReleaseResult(ShutdownCore(), nameof(rcl_shutdown));
             }
             catch (Exception error)
             {
@@ -139,6 +139,8 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
             return _shutdownSucceeded;
         }
     }
+
+    protected virtual rcl_ret_t ShutdownCore() => rcl_shutdown(DangerousObject);
 
     protected override bool ReleaseHandleCore(rcl_context_t* ptr)
     {

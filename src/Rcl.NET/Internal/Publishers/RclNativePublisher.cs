@@ -264,9 +264,9 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
     protected override void DisposeCore()
     {
-        RclContext.DisposeResource(_deadlineMissedEvent);
-        RclContext.DisposeResource(_qosEvent);
-        RclContext.DisposeResource(_livelinessEvent);
+        Cleanup.Dispose(_deadlineMissedEvent);
+        Cleanup.Dispose(_qosEvent);
+        Cleanup.Dispose(_livelinessEvent);
 
         base.DisposeCore();
     }

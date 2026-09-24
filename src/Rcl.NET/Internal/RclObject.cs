@@ -23,7 +23,7 @@ internal abstract class RclObject<T> : IDisposable where T : RclObjectHandle
 
     protected virtual void DisposeCore()
     {
-        Handle.Dispose();
+        Handle.RequestRelease();
     }
 }
 
@@ -43,14 +43,5 @@ internal abstract class RclContextualObject<T> : RclObject<T> where T : RclObjec
         {
             return Handle.TryBeginClose();
         }
-    }
-
-    protected override void DisposeCore()
-    {
-        Context.ScheduleCleanup(state =>
-        {
-            var self = (RclContextualObject<T>)state!;
-            self.Handle.Dispose();
-        }, this);
     }
 }

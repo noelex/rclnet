@@ -262,7 +262,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         foreach (var pending in snapshot)
         {
-            pending.Fail(new ObjectDisposedException(GetType().Name));
+            pending.Fail(new ObjectDisposedException(GetType().Name), asynchronous: true);
         }
     }
 }

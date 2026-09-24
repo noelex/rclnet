@@ -59,9 +59,9 @@ internal sealed class PendingOperation<T>
 
     internal bool Succeed(T result) => Complete(result, null);
 
-    internal bool Fail(Exception error) => Complete(default!, error);
+    internal bool Fail(Exception error, bool asynchronous = false) => Complete(default!, error, asynchronous);
 
-    private bool Complete(T result, Exception? error)
+    private bool Complete(T result, Exception? error, bool asynchronous = false)
     {
         if (Interlocked.CompareExchange(ref _terminal, 1, 0) != 0)
         {
@@ -72,6 +72,11 @@ internal sealed class PendingOperation<T>
 
         try
         {
+            if (asynchronous)
+            {
+                _source.RunContinuationsAsynchronously = true;
+            }
+
             if (error is null)
             {
                 _source.SetResult(result);

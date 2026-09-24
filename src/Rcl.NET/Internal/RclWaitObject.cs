@@ -160,7 +160,7 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
         {
             foreach (var pending in snapshot)
             {
-                pending.Fail(new ObjectDisposedException(GetType().Name));
+                pending.Fail(new ObjectDisposedException(GetType().Name), asynchronous: true);
             }
         }
         finally
@@ -171,7 +171,7 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
 
     protected override void DisposeCore()
     {
-        RclContext.RunCleanup(static state => ((RclWaitObject<T>)state!).Stop(), this);
+        Cleanup.Run(static state => ((RclWaitObject<T>)state!).Stop(), this);
         _registration.Dispose();
 
         if (_registration.IsEmpty)

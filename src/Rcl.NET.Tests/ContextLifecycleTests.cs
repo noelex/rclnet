@@ -3,15 +3,15 @@ namespace Rcl.NET.Tests;
 public class ContextLifecycleTests
 {
     [Fact]
-    public void ExternalDisposeDrainsAcceptedCallbacks()
+    public async Task ExternalDisposePreservesAcceptedCallbacks()
     {
         using var context = new RclContext(TestConfig.DefaultContextArguments);
-        bool executed = false;
-        context.SynchronizationContext.Post(_ => executed = true, null);
+        var executed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        context.SynchronizationContext.Post(_ => executed.SetResult(), null);
 
         context.Dispose();
 
-        Assert.True(executed);
+        await executed.Task.WaitAsync(TimeSpan.FromSeconds(10));
         Assert.True(context.DisposeAsync().IsCompletedSuccessfully);
         context.Dispose();
     }
