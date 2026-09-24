@@ -141,6 +141,11 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
                 {
                     _graph.Build();
                 }
+                catch (ObjectDisposedException) when (Handle.IsClosing || Context.Handle.IsClosing)
+                {
+                    // Closing can race with a graph refresh already dispatched by the event loop.
+                    return;
+                }
                 catch (Exception e)
                 {
                     Logger.LogWarning("Unable to build ROS graph: " + e.Message);

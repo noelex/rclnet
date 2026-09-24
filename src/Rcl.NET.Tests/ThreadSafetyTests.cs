@@ -16,14 +16,6 @@ public class ThreadSafetyTests
     [InlineData(RclClockType.Ros, true)]
     public async Task ConcurrentTimerCreationAndDisposal_MultipleContexts(RclClockType clockType, bool synchronousDispose)
     {
-        // Foxy / Cyclone blocks in native DDS entity deletion during concurrent context teardown.
-        // The pre-rewrite implementation also reproduces it; native Linux stacks wait inside
-        // dds_delete_impl_pinned from rcl_service_fini/rcl_node_fini. Keep other Linux scenarios enabled.
-        // Related teardown-hang report (not confirmed to be the same internal defect):
-        // https://github.com/ros2/rmw_cyclonedds/issues/104
-        Skip.If(RosEnvironment.IsFoxy && RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp",
-            "Foxy / Cyclone DDS: native concurrent teardown hangs.");
-
         // A standalone C++ RCL program with independent contexts and endpoints also crashes on
         // Humble and Iron / Fast DDS, without .NET or SafeHandle. Humble's native stack identifies
         // a null call in StatefulWriter::deliver_sample_to_intraprocesses during endpoint teardown.

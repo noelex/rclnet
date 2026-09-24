@@ -75,21 +75,21 @@ public class RclTestFramework : XunitTestFramework
 
         protected override Task<RunSummary> RunTestCaseAsync(IXunitTestCase testCase)
         {
-            // The tested Windows Foxy binaries use Cyclone DDS 0.7.0. Reusing a thread slot resets its
+            // The tested Linux and Windows Foxy binaries use Cyclone DDS 0.7.0. Reusing a thread slot resets its
             // vtime while a pending GC request can still hold the old, larger value. GC then
-            // stops progressing and dds_reader_close waits indefinitely during subscription fini.
+            // stops progressing and reader/writer close waits indefinitely during native endpoint fini.
             // RclContext event-loop threads and async workers expose this across serial tests;
             // limiting concurrent test methods therefore does not prevent the hang.
-            // A native dump showed an old vtime of 1185 versus 16 in an already vacant slot.
-            // Preserving vtime in a diagnostic Cyclone build allowed the full suite to complete.
+            // Native debugging showed a saved vtime of 1329 versus 448 on Linux, and 1185 versus 16
+            // on Windows. Applying the upstream fix to diagnostic builds eliminated these hangs.
             // Reconsider this distro/RMW exclusion when the bundled Cyclone binary is upgraded.
             // Upstream fix:
             // https://github.com/eclipse-cyclonedds/cyclonedds/commit/9acd956b8797120247d2a54a2dddef95a2c48825
-            if (OperatingSystem.IsWindows() && RosEnvironment.IsFoxy
+            if (RosEnvironment.IsFoxy
                 && RosEnvironment.RmwImplementationIdentifier == "rmw_cyclonedds_cpp")
             {
                 return new XunitTestCaseRunner(testCase, testCase.DisplayName,
-                    "Windows Foxy / Cyclone DDS: upstream thread-state reuse can hang native teardown.",
+                    "Foxy / Cyclone DDS: upstream thread-state reuse can hang native teardown.",
                     _constructorArguments, testCase.TestMethodArguments, MessageBus,
                     new ExceptionAggregator(Aggregator), CancellationTokenSource).RunAsync();
             }

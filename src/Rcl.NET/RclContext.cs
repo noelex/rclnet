@@ -639,6 +639,8 @@ public sealed class RclContext : IRclContext
 
         var callbacks = new Queue<CallbackWorkItem>();
         var waitHandles = new Dictionary<nint, WaitSetRegistration>();
+        var guardConditions = new Dictionary<nint, nint>();
+        var nativeGuardConditions = new HashSet<nint>();
 
         List<Exception>? errors = null;
         size_t idx;
@@ -673,7 +675,16 @@ public sealed class RclContext : IRclContext
                         switch (value.WaitHandle)
                         {
                             case SafeGuardConditionHandle guardCondition:
-                                RclException.ThrowIfNonSuccess(rcl_wait_set_add_guard_condition(ws, guardCondition.DangerousObject, &idx));
+                                // Multiple nodes may share one RMW graph guard. Wait only once,
+                                // then notify every registration whose lifetime this snapshot owns.
+                                var nativeGuard = rcl_guard_condition_get_rmw_handle(guardCondition.DangerousObject);
+                                guardConditions.Add(guardCondition.DangerousGetHandle(), nativeGuard);
+
+                                if (nativeGuardConditions.Add(nativeGuard))
+                                {
+                                    RclException.ThrowIfNonSuccess(rcl_wait_set_add_guard_condition(ws, guardCondition.DangerousObject, &idx));
+                                }
+
                                 break;
                             case SafeTimerHandle timer:
                                 RclException.ThrowIfNonSuccess(rcl_wait_set_add_timer(ws, timer.DangerousObject, &idx));
@@ -742,14 +753,29 @@ public sealed class RclContext : IRclContext
 
                 // Check for guard conditions.
                 // Skips interrupt & shutdown signal.
+                nativeGuardConditions.Clear();
+
                 for (uint i = 2; i < ws->size_of_guard_conditions; i++)
                 {
-                    CallIfCompleted(waitHandles, new nint(ws->guard_conditions[i]));
+                    if (ws->guard_conditions[i] != null)
+                    {
+                        nativeGuardConditions.Add(guardConditions[new nint(ws->guard_conditions[i])]);
+                    }
+                }
+
+                foreach (var (guard, nativeGuard) in guardConditions)
+                {
+                    if (nativeGuardConditions.Contains(nativeGuard))
+                    {
+                        CallIfCompleted(waitHandles, guard);
+                    }
                 }
 
                 // A cleanup callback may release native handles or callback buffers.
                 RclException.ThrowIfNonSuccess(rcl_wait_set_clear(ws));
                 waitHandles.Clear();
+                guardConditions.Clear();
+                nativeGuardConditions.Clear();
                 DrainCleanup();
 
                 // Admission and close share the registration gate. Only callbacks that
@@ -807,6 +833,8 @@ public sealed class RclContext : IRclContext
             Attempt(StopRegistrations);
             Attempt(_waitSet.RequestRelease);
             waitHandles.Clear();
+            guardConditions.Clear();
+            nativeGuardConditions.Clear();
             Attempt(() => DrainCleanup(stopping: true));
 
             lock (RegistrationGate)
