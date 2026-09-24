@@ -101,7 +101,6 @@ jobs:
           dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds)
-        if: ${{ matrix.ros_distribution != 'foxy' }}
         working-directory: src/Rcl.NET.Tests
         env:
           RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
@@ -314,7 +313,7 @@ jobs:
           dotnet test -c Release -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
 
       - name: Test (cyclonedds) (Legacy)
-        if: ${{ matrix.is_legacy_distro && matrix.ros_distribution != 'foxy' }}
+        if: ${{ matrix.is_legacy_distro }}
         shell: cmd
         working-directory: src/Rcl.NET.Tests
         env:

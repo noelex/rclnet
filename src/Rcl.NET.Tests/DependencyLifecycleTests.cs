@@ -26,7 +26,7 @@ public class DependencyLifecycleTests : IDisposable
         node.Dispose();
         Assert.False(node.IsClosed);
         Assert.Throws<ObjectDisposedException>(() => new SafePublisherEventHandle(publisher,
-            rcl_publisher_event_type_t.RCL_PUBLISHER_OFFERED_INCOMPATIBLE_QOS));
+            rcl_publisher_event_type_t.RCL_PUBLISHER_LIVELINESS_LOST));
 
         using (var lease = publisher.Acquire())
         {
@@ -84,8 +84,8 @@ public class DependencyLifecycleTests : IDisposable
         using var node = NewNode(context);
         using var publisher = new SafePublisherHandle(node, Time.GetTypeSupportHandle(), "/lifecycle_events", PublisherOptions.Default);
         using var subscription = new SafeSubscriptionHandle(node, Time.GetTypeSupportHandle(), "/lifecycle_events", SubscriptionOptions.Default);
-        using var publisherEvent = new SafePublisherEventHandle(publisher, rcl_publisher_event_type_t.RCL_PUBLISHER_OFFERED_INCOMPATIBLE_QOS);
-        using var subscriptionEvent = new SafeSubscriptionEventHandle(subscription, rcl_subscription_event_type_t.RCL_SUBSCRIPTION_REQUESTED_INCOMPATIBLE_QOS);
+        using var publisherEvent = new SafePublisherEventHandle(publisher, rcl_publisher_event_type_t.RCL_PUBLISHER_LIVELINESS_LOST);
+        using var subscriptionEvent = new SafeSubscriptionEventHandle(subscription, rcl_subscription_event_type_t.RCL_SUBSCRIPTION_LIVELINESS_CHANGED);
         publisher.Dispose();
         subscription.Dispose();
         node.Dispose();

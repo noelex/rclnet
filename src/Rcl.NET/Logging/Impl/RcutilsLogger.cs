@@ -1,5 +1,6 @@
 ﻿using Microsoft.Toolkit.HighPerformance.Buffers;
 using Rcl.Interop;
+using Rcl.SafeHandles;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -66,7 +67,10 @@ internal class RcutilsLogger : IRclLogger
                 location.function_name = pBuf + functionNameOffset;
                 location.file_name = pBuf + fileOffset;
 
-                rcutils_log(&location, (int)severity, pBuf + catergoryOffset, pBuf + messageOffset, nint.Zero);
+                lock (SafeContextHandle.LoggingGate)
+                {
+                    rcutils_log(&location, (int)severity, pBuf + catergoryOffset, pBuf + messageOffset, nint.Zero);
+                }
             }
         }
     }

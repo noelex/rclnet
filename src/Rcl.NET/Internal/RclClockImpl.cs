@@ -16,10 +16,13 @@ class RclClockImpl : RclObject<SafeClockHandle>
         get
         {
             using var lease = Handle.Acquire();
-            using var stateLock = ScopedLock.Lock(ref Handle.SyncRoot);
-            bool enabled;
-            rcl_is_enabled_ros_time_override(lease.Object, &enabled);
-            return enabled;
+
+            lock (Handle.SyncRoot)
+            {
+                bool enabled;
+                rcl_is_enabled_ros_time_override(lease.Object, &enabled);
+                return enabled;
+            }
         }
     }
 
@@ -27,7 +30,7 @@ class RclClockImpl : RclObject<SafeClockHandle>
     {
         using var lease = Handle.Acquire();
 
-        using (ScopedLock.Lock(ref Handle.SyncRoot))
+        lock (Handle.SyncRoot)
         {
             if (enabled)
             {
@@ -44,7 +47,7 @@ class RclClockImpl : RclObject<SafeClockHandle>
     {
         using var lease = Handle.Acquire();
 
-        using (ScopedLock.Lock(ref Handle.SyncRoot))
+        lock (Handle.SyncRoot)
         {
             RclException.ThrowIfNonSuccess(rcl_set_ros_time_override(lease.Object, nanoseconds));
         }

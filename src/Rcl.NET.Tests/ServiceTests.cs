@@ -8,7 +8,7 @@ namespace Rcl.NET.Tests;
 
 public class ServiceTests
 {
-    private const int RequestTimeout = 10_000, ServerOnlineTimeout = 1000;
+    private const int RequestTimeout = 10_000, ServerOnlineTimeout = 5000;
 
     [Fact]
     public async Task ClientRequestTimeout()
@@ -42,7 +42,8 @@ public class ServiceTests
                 return response;
             });
 
-        using var client = node.CreateClient<
+        using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = clientNode.CreateClient<
             ListParametersService,
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
@@ -75,7 +76,8 @@ public class ServiceTests
                     return response;
                 });
 
-            using var client = node.CreateClient<
+            using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
+            using var client = clientNode.CreateClient<
                 ListParametersService,
                 ListParametersServiceRequest,
                 ListParametersServiceResponse>(service);
@@ -119,13 +121,17 @@ public class ServiceTests
                 return Task.FromResult(response);
             }, null);
 
-        using var client = node.CreateClient<
+        using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = clientNode.CreateClient<
             ListParametersService,
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
 
         Assert.True(await client.TryWaitForServerAsync(ServerOnlineTimeout));
         var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
+
+        Assert.Equal(response.Result.Names, actualResponse.Result.Names);
+        Assert.Equal(response.Result.Prefixes, actualResponse.Result.Prefixes);
     }
 
     [Fact]

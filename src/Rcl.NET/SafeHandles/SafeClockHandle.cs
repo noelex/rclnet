@@ -2,7 +2,7 @@ namespace Rcl.SafeHandles;
 
 unsafe class SafeClockHandle : RclObjectHandle<rcl_clock_t>
 {
-    internal SpinLock SyncRoot = new();
+    internal readonly object SyncRoot = new();
 
     public SafeClockHandle(RclClockType clockType)
     {
@@ -23,7 +23,7 @@ unsafe class SafeClockHandle : RclObjectHandle<rcl_clock_t>
 
     protected override bool ReleaseHandleCore(rcl_clock_t* ptr)
     {
-        using (ScopedLock.Lock(ref SyncRoot))
+        lock (SyncRoot)
         {
             return CheckReleaseResult(rcl_clock_fini(ptr), nameof(rcl_clock_fini));
         }

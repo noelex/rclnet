@@ -163,7 +163,9 @@ internal unsafe class RclSubscription<T> :
         }
 
         foreach (var (_, observer) in _observers)
+        {
             Cleanup.Run(static state => ((IObserver<T>)state!).OnCompleted(), observer);
+        }
 
         _observers.Clear();
     }

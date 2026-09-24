@@ -13,7 +13,7 @@ partial class ParameterService : IParameterService, IDisposable
     [ThreadStatic]
     private static bool _recursionFlag;
 
-    private SpinLock _lock;
+    private readonly object _lock = new();
 
     private readonly RclNodeImpl _node;
     private readonly IDictionary<string, Variant> _overrides;
@@ -117,7 +117,7 @@ partial class ParameterService : IParameterService, IDisposable
 
     public IDisposable RegisterParameterChangingEvent(ParameterChangingEventHandler callback, object? state = null)
     {
-        using (ScopedLock.Lock(ref _lock))
+        lock (_lock)
         {
             var cb = new ParameterChangingCallback(this, callback, state);
             _onParameterChangingCallbacks.Add(cb);
@@ -128,7 +128,7 @@ partial class ParameterService : IParameterService, IDisposable
 
     private void UnregisterParameterChangingCallback(ParameterChangingCallback cb)
     {
-        using (ScopedLock.Lock(ref _lock))
+        lock (_lock)
         {
             _onParameterChangingCallbacks.Remove(cb);
         }
@@ -139,7 +139,7 @@ partial class ParameterService : IParameterService, IDisposable
     {
         SpanOwner<ParameterChangingCallback> callbacksSnapshot;
 
-        using (ScopedLock.Lock(ref _lock))
+        lock (_lock)
         {
             callbacksSnapshot = SpanOwner<ParameterChangingCallback>.Allocate(_onParameterChangingCallbacks.Count);
 

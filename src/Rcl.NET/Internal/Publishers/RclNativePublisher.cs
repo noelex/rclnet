@@ -214,43 +214,24 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
     protected ValueTask PublishAsync(RosMessageBuffer message, bool disposeBuffer)
     {
-        var vts = ObjectPool.Rent<ManualResetValueTaskSource<bool>>();
-        var args = ObjectPool.Rent<PublishArgs>().Init(this, message, vts, disposeBuffer);
+        var pending = new PendingOperation<bool>(false, static (operation, error) => operation.Fail(error));
+        var args = ObjectPool.Rent<PublishArgs>().Init(this, message, pending, disposeBuffer);
 
-        // Allow the continuation to run synchronously on the thread pool to reduce
-        // scheduling overhead, otherwise we will need 2 scheduling for 1 publish.
-        // May cause stack overflow in very rare but possible case.
-        vts.RunContinuationsAsynchronously = false;
-        vts.OnFinally(static state =>
+        try
         {
-            var args = (PublishArgs)state!;
-
-            if (args.ShouldDisposeBuffer)
-            {
-                args.Buffer.Dispose();
-            }
-
-            args.TaskSource.Reset();
-            ObjectPool.Return(args.TaskSource);
-
-            args.Reset();
-            ObjectPool.Return(args);
-        }, args);
-
-        ThreadPool.UnsafeQueueUserWorkItem(static args =>
+            ThreadPool.UnsafeQueueUserWorkItem(static args => args.Run(), args, true);
+        }
+        catch (Exception error)
         {
-            try
-            {
-                args.This.Publish(args.Buffer);
-                args.TaskSource.SetResult(true);
-            }
-            catch (Exception e)
-            {
-                args.TaskSource.SetException(e);
-            }
-        }, args, true);
+            Cleanup.Run(static state => ((PublishArgs)state!).Release(), args);
+            pending.Fail(error);
+        }
+        finally
+        {
+            pending.FinishSetup();
+        }
 
-        return new(vts, vts.Version);
+        return pending.VoidTask;
     }
 
     public RosMessageBuffer CreateBuffer() => _introspection.CreateBuffer();
@@ -277,24 +258,73 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
         public RclNativePublisher This { get; private set; } = null!;
 
-        public ManualResetValueTaskSource<bool> TaskSource { get; private set; } = null!;
+        public PendingOperation<bool> Completion { get; private set; } = null!;
 
         public bool ShouldDisposeBuffer { get; protected set; }
+
+        public void Run()
+        {
+            var completion = Completion;
+            Exception? failure = null;
+
+            try
+            {
+                try
+                {
+                    This.Publish(Buffer);
+                }
+                finally
+                {
+                    Release();
+                }
+            }
+            catch (Exception error)
+            {
+                failure = error;
+            }
+
+            // No access to pooled arguments after publication: a synchronous consumer
+            // may start another publish before this producer returns.
+            if (failure == null)
+            {
+                completion.Succeed(true);
+            }
+            else
+            {
+                completion.Fail(failure);
+            }
+        }
+
+        public void Release()
+        {
+            try
+            {
+                if (ShouldDisposeBuffer)
+                {
+                    Buffer.Dispose();
+                }
+            }
+            finally
+            {
+                Reset();
+                ObjectPool.Return(this);
+            }
+        }
 
         public void Reset()
         {
             Buffer = RosMessageBuffer.Empty;
             This = null!;
-            TaskSource = null!;
+            Completion = null!;
             ShouldDisposeBuffer = false;
         }
 
         public PublishArgs Init(RclNativePublisher self, RosMessageBuffer buffer,
-            ManualResetValueTaskSource<bool> taskSource, bool shouldDisposeBuffer)
+            PendingOperation<bool> completion, bool shouldDisposeBuffer)
         {
             Buffer = buffer;
             This = self;
-            TaskSource = taskSource;
+            Completion = completion;
             ShouldDisposeBuffer = shouldDisposeBuffer;
 
             return this;
