@@ -355,8 +355,7 @@ public class DependencyLifecycleTests : IDisposable
         publisher.Publish(buffer);
         Assert.Throws<ObjectDisposedException>(() => node.CreatePublisher<Time>("/rejected"));
         publisher.Dispose();
-        await context.Yield();
-        Assert.True(SpinWait.SpinUntil(() => node.Handle.IsClosed, TimeSpan.FromSeconds(10)));
+        await LifecycleAssert.EventuallyAsync(() => node.Handle.IsClosed);
     }
 
     [Theory]

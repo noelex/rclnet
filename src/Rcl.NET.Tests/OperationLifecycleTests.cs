@@ -87,7 +87,7 @@ public class OperationLifecycleTests : IDisposable
             await copying.WaitAsync(TimeSpan.FromSeconds(10));
         }
 
-        Assert.True(SpinWait.SpinUntil(() => handle.IsClosed, TimeSpan.FromSeconds(10)));
+        await LifecycleAssert.EventuallyAsync(() => handle.IsClosed);
         Assert.False(checkpoint.TimedOut);
     }
 
@@ -299,7 +299,7 @@ public class OperationLifecycleTests : IDisposable
         });
         Assert.Null(failure);
         // The event loop releases the registration ref after the configuration lease exits.
-        Assert.True(SpinWait.SpinUntil(() => handle.IsClosed, TimeSpan.FromSeconds(10)));
+        await LifecycleAssert.EventuallyAsync(() => handle.IsClosed);
     }
 
     private sealed class PausingObject : RclObject<FakeRclHandle>

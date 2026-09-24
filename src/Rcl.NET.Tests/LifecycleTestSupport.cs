@@ -1,7 +1,26 @@
 using Rcl.SafeHandles;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Rcl.NET.Tests;
+
+internal static class LifecycleAssert
+{
+    internal static async Task EventuallyAsync(Func<bool> condition,
+        [CallerArgumentExpression(nameof(condition))] string? expression = null)
+    {
+        var started = Stopwatch.GetTimestamp();
+
+        while (!condition())
+        {
+            Assert.True(Stopwatch.GetElapsedTime(started) < TimeSpan.FromSeconds(10),
+                $"Timed out waiting for {expression}.");
+            // Cleanup may need the event loop currently executing this test continuation.
+            await Task.Delay(10).ConfigureAwait(false);
+        }
+    }
+}
 
 internal sealed class LifecycleCheckpoint : IDisposable
 {

@@ -69,8 +69,8 @@ public class RegistrationLifecycleTests : IDisposable
         using var probe = new Probe(context);
         probe.Dispose();
         Assert.IsType<ObjectDisposedException>(Record.Exception(probe.Publish));
-        await context.Yield();
         await probe.Detached.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        await probe.NativeReleased.WaitAsync(TimeSpan.FromSeconds(10));
         Assert.True(probe.Handle.IsClosed);
         Assert.Equal(1, probe.DetachCount);
         Assert.Equal(1, probe.NativeReleases);
@@ -86,9 +86,9 @@ public class RegistrationLifecycleTests : IDisposable
         probe.Dispose();
         probe.Handle.Dispose();
 
-        await context.Yield();
         await probe.Detached.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        Assert.True(SpinWait.SpinUntil(() => probe.Handle.IsClosed, TimeSpan.FromSeconds(10)));
+        await probe.NativeReleased.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.True(probe.Handle.IsClosed);
         Assert.Equal(1, probe.NativeReleases);
         Assert.Equal(1, probe.DetachCount);
     }
@@ -112,9 +112,9 @@ public class RegistrationLifecycleTests : IDisposable
 
         registration.Dispose();
         registration.Dispose();
-        await context.Yield();
-        // A posted continuation can run before cleanup from the next wait-set iteration.
-        Assert.True(SpinWait.SpinUntil(() => handle.IsClosed, TimeSpan.FromSeconds(10)));
+        // This continuation is on the event loop. Await release instead of blocking its cleanup.
+        await handle.Released.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.True(handle.IsClosed);
         Assert.Equal(1, handle.Releases);
     }
 
@@ -134,8 +134,8 @@ public class RegistrationLifecycleTests : IDisposable
         handle.Dispose();
         Assert.False(handle.IsClosed);
         first.Dispose();
-        await context.Yield();
-        Assert.True(SpinWait.SpinUntil(() => handle.IsClosed, TimeSpan.FromSeconds(10)));
+        await handle.Released.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.True(handle.IsClosed);
         Assert.Equal(1, handle.Releases);
     }
 
@@ -168,10 +168,8 @@ public class RegistrationLifecycleTests : IDisposable
 
         await received.Task.WaitAsync(TimeSpan.FromSeconds(10));
         newRegistration.Dispose();
-        await context.Yield();
-        Assert.True(SpinWait.SpinUntil(() =>
-            Volatile.Read(ref oldRegistration.Entry!.Detached) && Volatile.Read(ref newRegistration.Entry!.Detached),
-            TimeSpan.FromSeconds(10)));
+        await LifecycleAssert.EventuallyAsync(() =>
+            Volatile.Read(ref oldRegistration.Entry!.Detached) && Volatile.Read(ref newRegistration.Entry!.Detached));
         Assert.False(checkpoint.TimedOut);
     }
 
@@ -219,7 +217,8 @@ public class RegistrationLifecycleTests : IDisposable
         }
 
         await probe.Detached.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        Assert.True(SpinWait.SpinUntil(() => probe.Handle.IsClosed, TimeSpan.FromSeconds(10)));
+        await probe.NativeReleased.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.True(probe.Handle.IsClosed);
         Assert.Equal(1, probe.NativeReleases);
         Assert.Equal(1, probe.DetachCount);
     }
@@ -546,7 +545,7 @@ public class RegistrationLifecycleTests : IDisposable
         }
 
         await checkedBuffers.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        Assert.True(SpinWait.SpinUntil(() => service.Destroyed == 2, TimeSpan.FromSeconds(10)));
+        await LifecycleAssert.EventuallyAsync(() => Volatile.Read(ref service.Destroyed) == 2);
     }
 
     [Fact]
@@ -590,6 +589,7 @@ public class RegistrationLifecycleTests : IDisposable
     private sealed class TrackedGuard : SafeGuardConditionHandle
     {
         internal int Releases;
+        internal readonly TaskCompletionSource Released = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         internal TrackedGuard(SafeContextHandle context) : base(context)
         {
@@ -598,7 +598,9 @@ public class RegistrationLifecycleTests : IDisposable
         protected override unsafe bool ReleaseHandleCore(rcl_guard_condition_t* ptr)
         {
             Interlocked.Increment(ref Releases);
-            return base.ReleaseHandleCore(ptr);
+            var result = base.ReleaseHandleCore(ptr);
+            Released.TrySetResult();
+            return result;
         }
     }
 
@@ -608,6 +610,8 @@ public class RegistrationLifecycleTests : IDisposable
         internal int DetachCount;
 
         internal int NativeReleases => ((TrackedGuard)Handle).Releases;
+
+        internal Task NativeReleased => ((TrackedGuard)Handle).Released.Task;
 
         internal readonly TaskCompletionSource Detached = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
