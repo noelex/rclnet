@@ -298,7 +298,8 @@ public class OperationLifecycleTests : IDisposable
             }
         });
         Assert.Null(failure);
-        Assert.True(handle.IsClosed);
+        // The event loop releases the registration ref after the configuration lease exits.
+        Assert.True(SpinWait.SpinUntil(() => handle.IsClosed, TimeSpan.FromSeconds(10)));
     }
 
     private sealed class PausingObject : RclObject<FakeRclHandle>
