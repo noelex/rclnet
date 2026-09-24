@@ -10,27 +10,30 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
         SafeContextHandle context, SafeClockHandle clock, long period)
     {
         _clock = clock;
-        *Object = rcl_get_zero_initialized_timer();
 
         try
         {
-            using (ScopedLock.Lock(ref _clock.SyncRoot))
+            lock (context.LifecycleGate)
             {
-                if (RosEnvironment.IsSupported(RosEnvironment.Jazzy))
+                SetDependencies(context, clock);
+                *Object = rcl_get_zero_initialized_timer();
+                using (ScopedLock.Lock(ref _clock.SyncRoot))
                 {
-                    RclException.ThrowIfNonSuccess(
-                        RclJazzy.rcl_timer_init2(Object, clock.Object, context.Object,
-                          period, null, RclAllocator.Default.Object, true));
+                    if (RosEnvironment.IsSupported(RosEnvironment.Jazzy))
+                    {
+                        RclException.ThrowIfNonSuccess(
+                            RclJazzy.rcl_timer_init2(Object, clock.DangerousObject, context.DangerousObject,
+                              period, null, RclAllocator.Default.Object, true));
+                    }
+                    else
+                    {
+                        RclException.ThrowIfNonSuccess(
+                            rcl_timer_init(Object, clock.DangerousObject, context.DangerousObject,
+                              period, null, RclAllocator.Default.Object));
+                    }
                 }
-                else
-                {
-                    RclException.ThrowIfNonSuccess(
-                        rcl_timer_init(Object, clock.Object, context.Object,
-                          period, null, RclAllocator.Default.Object));
-                }
-                _clock.AddTimerRef();
+                MarkInitialized();
             }
-            MarkInitialized();
         }
         catch
         {
@@ -43,8 +46,7 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
     {
         using (ScopedLock.Lock(ref _clock.SyncRoot))
         {
-            try { return CheckReleaseResult(rcl_timer_fini(ptr), nameof(rcl_timer_fini)); }
-            finally { _clock.ReleaseTimerRef(); }
+            return CheckReleaseResult(rcl_timer_fini(ptr), nameof(rcl_timer_fini));
         }
     }
 }

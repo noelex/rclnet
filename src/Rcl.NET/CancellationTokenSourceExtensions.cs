@@ -48,11 +48,15 @@ unsafe class ReusableTimer : IDisposable
     public void Start(CancellationTokenSource cts,
         RclContext context, RclClockImpl clock, TimeSpan period)
     {
+        var handle = new SafeTimerHandle(context.Handle, clock.Handle, (long)period.TotalNanoseconds);
         _context = context;
-        _handle = new SafeTimerHandle(context.Handle, clock.Handle, (long)period.TotalNanoseconds);
-        _registration = context.Register(_handle, OnWaitCompleted, cts);
-
-        context.DefaultLogger.LogDebug($"Started new ReusableTimer {_handle.DangerousGetHandle()} with period {period}.");
+        _handle = handle;
+        try
+        {
+            _registration = context.Register(handle, OnWaitCompleted, cts);
+            context.DefaultLogger.LogDebug($"Started new ReusableTimer {handle.DangerousGetHandle()} with period {period}.");
+        }
+        catch { Reset(); throw; }
     }
 
     public void Reset()
@@ -60,13 +64,16 @@ unsafe class ReusableTimer : IDisposable
         var ctx = Interlocked.Exchange(ref _context, null);
         if (ctx != null)
         {
-            ctx.DefaultLogger.LogDebug($"Released ReusableTimer {_handle!.DangerousGetHandle()}.");
-
-            _registration.Dispose();
+            var handle = _handle!;
+            var registration = _registration;
             _registration = WaitHandleRegistration.Empty;
-
-            ctx.SynchronizationContext.Post(static s => ((IDisposable)s!).Dispose(), _handle);
             _handle = null;
+            try { ctx.DefaultLogger.LogDebug($"Released ReusableTimer {handle.DangerousGetHandle()}."); }
+            finally
+            {
+                registration.Dispose();
+                ctx.SynchronizationContext.Post(static s => ((IDisposable)s!).Dispose(), handle);
+            }
         }
     }
 
@@ -138,7 +145,8 @@ public static class CancellationTokenSourceExtensions
 
         var pool = rclContext.GetOrAddFeature<ObjectPool<ReusableTimer>>(ReusableTimerPoolFeature, x => new());
         var timer = pool.Rent();
-        timer.Start(source, rclContext, rclClock.Impl, timeout);
+        try { timer.Start(source, rclContext, rclClock.Impl, timeout); }
+        catch { pool.Return(timer); throw; }
 
         return new TimeoutRegistration(pool, timer);
     }

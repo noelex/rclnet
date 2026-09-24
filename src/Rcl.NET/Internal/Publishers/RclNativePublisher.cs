@@ -47,6 +47,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
             RclException.ThrowIfNonSuccess(rmw_get_gid_for_publisher(rmwHandle, &gid));
             Gid = new(gid.GetGidSpan()[..GraphId.Size]);
 
+            Handle.ThrowIfOperationClosed();
             completelyInitialized = true;
         }
         finally

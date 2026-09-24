@@ -19,21 +19,28 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         string serviceName,
         TypeSupportHandle typeSupport,
         ClientOptions options)
-        : base(node.Context, new(node.Handle, typeSupport, serviceName, options.Qos))
+        : base(node.Context, new(node.Handle, node.Clock.Impl.Handle, typeSupport, serviceName, options.Qos))
     {
-        _node = node;
-        _typesupport = typeSupport;
-        Name = StringMarshal.CreatePooledString(rcl_client_get_service_name(Handle.Object))!;
-
-        if (RosEnvironment.IsSupported(RosEnvironment.Iron))
+        try
         {
-            RclIron.rmw_gid_t gid;
-            var handle = rcl_client_get_rmw_handle(Handle.Object);
-            RclException.ThrowIfNonSuccess(RclIron.rmw_get_gid_for_client(handle, &gid));
-            Gid = new(gid.GetGidSpan());
-        }
+            _node = node;
+            _typesupport = typeSupport;
+            Name = StringMarshal.CreatePooledString(rcl_client_get_service_name(Handle.Object))!;
 
-        RegisterWaitHandle();
+            if (RosEnvironment.IsSupported(RosEnvironment.Iron))
+            {
+                RclIron.rmw_gid_t gid;
+                var handle = rcl_client_get_rmw_handle(Handle.Object);
+                RclException.ThrowIfNonSuccess(RclIron.rmw_get_gid_for_client(handle, &gid));
+                Gid = new(gid.GetGidSpan());
+            }
+        }
+        catch
+        {
+            Handle.Dispose();
+            _shutdownSignal.Dispose();
+            throw;
+        }
     }
 
     public unsafe bool IsServerAvailable
@@ -145,7 +152,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         var completion = ObjectPool.Rent<ManualResetValueTaskSource<RosMessageBuffer>>();
         var timeoutCts = new CancellationTokenSource(timeout, _node.TimeProvider);
 
-        // Yielding back to the event loop is required to avoid the situation that response 
+        // Yielding back to the event loop is required to avoid the situation that response
         // has already been received at the point we add the ValueTaskSource into _pendingRequests,
         // causing the ValueTask never receive its corresponding response.
         //
@@ -182,7 +189,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         //     Console.WriteLine("Request completed synchronously.");
 
         //     // This is supposed to be called by ValueTaskSource after the ValueTask completes.
-        //     // But since we failed to register the completion here, which means we already received 
+        //     // But since we failed to register the completion here, which means we already received
         //     // the response, so we call Return here to free up resources.
         //     _pendingRequests.Remove(sequence, out _);
         //     completionArgs.Return();

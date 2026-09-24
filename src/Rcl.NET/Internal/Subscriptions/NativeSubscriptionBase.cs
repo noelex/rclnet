@@ -65,8 +65,6 @@ internal unsafe abstract class NativeSubscriptionBase :
         {
             if (!completelyInitialized) Dispose();
         }
-
-        RegisterWaitHandle();
     }
 
     private unsafe NetworkFlowEndpoint[] GetEndpoints()
@@ -226,7 +224,7 @@ internal unsafe abstract class NativeSubscriptionBase :
         _deadlineMissedEvent?.Dispose();
         _qosEvent?.Dispose();
 
-        if (_messageChannel.Writer.TryComplete())
+        if (_messageChannel?.Writer.TryComplete() == true)
         {
             while (_messageChannel.Reader.TryRead(out var buffer))
             {

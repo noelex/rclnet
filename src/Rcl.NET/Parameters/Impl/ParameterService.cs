@@ -25,13 +25,12 @@ partial class ParameterService : IParameterService, IDisposable
     {
         _node = node;
 
-        rcl_arguments_t* global_args = null, local_args = GetNodeArguments(node.Handle);
-        if (node.Options.UseGlobalArguments)
+        using (var local = SafeArgumentsHandle.Borrow(node.Handle))
+        using (var global = node.Options.UseGlobalArguments ? SafeArgumentsHandle.Borrow(node.Context.Handle) : null)
         {
-            global_args = &node.Context.Handle.Object->global_arguments;
+            _overrides = Utils.ResolveParameterOverrides(node.FullyQualifiedName, paramOverrides,
+                local.Object, global is null ? null : global.Object);
         }
-
-        _overrides = Utils.ResolveParameterOverrides(node.FullyQualifiedName, paramOverrides, local_args, global_args);
 
         var completelyInitialized = false;
         try
@@ -89,22 +88,6 @@ partial class ParameterService : IParameterService, IDisposable
             }
         }
 
-    }
-
-    private unsafe static rcl_arguments_t* GetNodeArguments(SafeNodeHandle node)
-    {
-        var handle = rcl_node_get_options(node.Object);
-        if (RosEnvironment.IsFoxy)
-        {
-            return &((RclFoxy.rcl_node_options_t*)handle)->arguments;
-        }
-        else if (RosEnvironment.IsHumble || RosEnvironment.IsIron || RosEnvironment.IsJazzy ||
-            RosEnvironment.IsKilted || RosEnvironment.IsLyrical)
-        {
-            return &((RclHumble.rcl_node_options_t*)handle)->arguments;
-        }
-
-        throw new NotImplementedException();
     }
 
     private static Variant GetDefaultValue(ValueKind type)

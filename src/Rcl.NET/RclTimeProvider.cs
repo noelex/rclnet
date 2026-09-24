@@ -52,7 +52,8 @@ public sealed class RclTimeProvider : TimeProvider, IDisposable
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             timer = new RclTimeProviderTimer(this, _context, _clock, callback, state, dueTime, period);
-            _timers.Add(timer);
+            try { _timers.Add(timer); }
+            catch { timer.Dispose(); throw; }
         }
 
         return timer;

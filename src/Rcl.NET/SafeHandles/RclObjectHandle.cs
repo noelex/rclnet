@@ -17,9 +17,10 @@ internal abstract class RclObjectHandle : SafeHandleZeroOrMinusOneIsInvalid
 
     internal bool IsClosing => Volatile.Read(ref _closing) != 0;
     internal bool IsReleaseRequested => Volatile.Read(ref _releaseRequested) != 0;
+    internal SafeContextHandle Context => (SafeContextHandle)_shutdownDomain!;
     protected bool NeedsCleanup => _initialization != InitializationState.Storage;
 
-    internal bool TryBeginClose() => Interlocked.CompareExchange(ref _closing, 1, 0) == 0;
+    internal virtual bool TryBeginClose() => Interlocked.CompareExchange(ref _closing, 1, 0) == 0;
     internal void RequestRelease() => Dispose();
 
     protected override void Dispose(bool disposing)
@@ -73,7 +74,7 @@ internal abstract class RclObjectHandle : SafeHandleZeroOrMinusOneIsInvalid
             throw new ObjectDisposedException(GetType().Name);
     }
 
-    private void ThrowIfDescendantClosed()
+    internal void ThrowIfDescendantClosed()
     {
         ThrowIfOperationClosed();
         _dependency0?.ThrowIfDescendantClosed();
@@ -176,6 +177,7 @@ internal unsafe abstract class RclObjectHandle<T> : RclObjectHandle where T : un
 
     internal T* DangerousObject => (T*)handle;
     protected abstract bool ReleaseHandleCore(T* ptr);
+    protected virtual bool ReleaseAdditionalResources() => true;
 
     protected override bool ReleaseHandle()
     {
@@ -203,7 +205,13 @@ internal unsafe abstract class RclObjectHandle<T> : RclObjectHandle where T : un
         finally { SetHandle(IntPtr.Zero); }
 
         // Derived native-state locks have been left before a parent can release.
-        return ReleaseDependencies() && success;
+        success = ReleaseDependencies() && success;
+        try { return ReleaseAdditionalResources() && success; }
+        catch (Exception error)
+        {
+            ReportReleaseException("additional resources", error);
+            return false;
+        }
     }
 }
 

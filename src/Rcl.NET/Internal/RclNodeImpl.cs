@@ -18,6 +18,8 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
     private readonly RclTimeProvider _timeProvider;
     private readonly CancellationTokenSource _cts = new();
     private readonly RclGuardConditionImpl _graphSignal;
+    private readonly bool _ownsClock;
+    private int _disposed;
 
     public unsafe RclNodeImpl(
         RclContext context,
@@ -27,42 +29,48 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         NodeOptions? options = null)
         : base(context, new(context.Handle, name, @namespace, options ?? NodeOptions.Default))
     {
-        Options = options ?? NodeOptions.Default;
-        Clock = clockOverride ?? Options.Clock switch
+        try
         {
-            RclClockType.Ros => new(Options.Clock),
-            RclClockType.Steady => RclClock.SteadyClock,
-            RclClockType.System => RclClock.SystemClock,
-            _ => throw new RclException($"Unsupported clock type '{Options.Clock}'.")
-        };
-        _timeProvider = new(context, Clock);
-
-        Name = StringMarshal.CreatePooledString(rcl_node_get_name(Handle.Object))!;
-        Namespace = StringMarshal.CreatePooledString(rcl_node_get_namespace(Handle.Object))!;
-        FullyQualifiedName = StringMarshal.CreatePooledString(rcl_node_get_fully_qualified_name(Handle.Object))!;
-        Logger = context.CreateLogger(StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object))!);
-
-        _graph = new(this, Options.GraphEventFilter ?? (static _ => true));
-        _graphSignal = new RclGuardConditionImpl(context,
-            new(rcl_node_get_graph_guard_condition(Handle.Object)));
-        _ = GraphBuilder(_graphSignal, _cts.Token);
-
-        var overrides = Options.ParameterOverrides ?? s_emptyParameterOverrides;
-        _parameters = new ParameterService(this, overrides);
-
-        // Create the time source only when we're not using clockOverride.
-        if (clockOverride == null)
-        {
-            _timeSource = new ExternalTimeSource(this, Options.ClockQos);
-        }
-
-        if (Options.DeclareParameterFromOverrides)
-        {
-            foreach (var (k, v) in overrides)
+            Options = options ?? NodeOptions.Default;
+            _ownsClock = clockOverride == null && Options.Clock == RclClockType.Ros;
+            Clock = clockOverride ?? Options.Clock switch
             {
-                _parameters.Declare(k, v);
+                RclClockType.Ros => new(Options.Clock),
+                RclClockType.Steady => RclClock.SteadyClock,
+                RclClockType.System => RclClock.SystemClock,
+                _ => throw new RclException($"Unsupported clock type '{Options.Clock}'.")
+            };
+            _timeProvider = new(context, Clock);
+
+            Name = StringMarshal.CreatePooledString(rcl_node_get_name(Handle.Object))!;
+            Namespace = StringMarshal.CreatePooledString(rcl_node_get_namespace(Handle.Object))!;
+            FullyQualifiedName = StringMarshal.CreatePooledString(rcl_node_get_fully_qualified_name(Handle.Object))!;
+            Logger = context.CreateLogger(StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object))!);
+
+            _graph = new(this, Options.GraphEventFilter ?? (static _ => true));
+            _graphSignal = new RclGuardConditionImpl(context,
+                SafeGuardConditionHandle.BorrowGraphGuard(Handle));
+
+            var overrides = Options.ParameterOverrides ?? s_emptyParameterOverrides;
+            _parameters = new ParameterService(this, overrides);
+
+            // Create the time source only when we're not using clockOverride.
+            if (clockOverride == null)
+            {
+                _timeSource = new ExternalTimeSource(this, Options.ClockQos);
             }
+
+            if (Options.DeclareParameterFromOverrides)
+            {
+                foreach (var (k, v) in overrides)
+                {
+                    _parameters.Declare(k, v);
+                }
+            }
+            Handle.ThrowIfDescendantClosed();
+            _ = GraphBuilder(_graphSignal, _cts.Token);
         }
+        catch { Dispose(); throw; }
     }
 
     public IParameterService Parameters => _parameters;
@@ -132,26 +140,25 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
 
     public override void Dispose()
     {
-        _timeProvider.Dispose();
-        _timeSource?.Dispose();
-        _parameters.Dispose();
-        _cts.Cancel();
-        _cts.Dispose();
-
-        // Graph signal must be disposed before node because the graph signal is owned by the node handle.
-        // When the node is diposed, the graph signal is also disposed internally, which is invisible to us.
-        // This will cause segfault when the event loop tries to wait for the already disposed graph signal.
-        //
-        // It's safe to dispose the signal here as the diposal happens on the event loop internally.
-        _graphSignal.Dispose();
-        base.Dispose();
-
-        // Dispose the clock only when the node owns it.
-        // _timeSource == null: Using a overrided clock which the node doesn't own.
-        // Clock.Type != RclClockType.Ros: Using shared system/steady clock.
-        if (_timeSource != null && Clock.Type == RclClockType.Ros)
+        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+        Handle.TryBeginClose();
+        try
         {
-            Context.SynchronizationContext.Post(x => ((IDisposable)x!).Dispose(), Clock);
+            try { _timeProvider?.Dispose(); }
+            finally
+            {
+                try { _timeSource?.Dispose(); }
+                finally { _parameters?.Dispose(); }
+            }
+        }
+        finally
+        {
+            _cts.Cancel();
+            _cts.Dispose();
+            _graphSignal?.Dispose();
+            base.Dispose();
+            if (_ownsClock && Clock != null)
+                Context.SynchronizationContext.Post(static x => ((IDisposable)x!).Dispose(), Clock);
         }
     }
 }

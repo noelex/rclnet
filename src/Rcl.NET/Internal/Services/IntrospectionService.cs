@@ -15,6 +15,7 @@ internal class IntrospectionService : IntrospectionServiceBase
         : base(node, serviceName, typesupport, options)
     {
         _handler = handler;
+        RegisterWaitHandle();
     }
 
     protected unsafe override void DispatchRequest(

@@ -97,6 +97,7 @@ internal class ActionServer : IActionServer
                 _cancelGoalService?.Dispose();
                 _getResultService?.Dispose();
                 _sendGoalService?.Dispose();
+                _shutdownSignal.Dispose();
             }
         }
     }

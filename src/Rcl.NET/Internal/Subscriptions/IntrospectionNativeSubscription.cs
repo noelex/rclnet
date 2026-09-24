@@ -19,7 +19,12 @@ internal unsafe class IntrospectionNativeSubscription
         SubscriptionOptions options)
         : base(node, topicName, typeSupport, options)
     {
-        _introspection = MessageIntrospection.Create(typeSupport);
+        try
+        {
+            _introspection = MessageIntrospection.Create(typeSupport);
+            RegisterWaitHandle();
+        }
+        catch { Dispose(); throw; }
     }
 
     protected override unsafe RosMessageBuffer TakeMessage()

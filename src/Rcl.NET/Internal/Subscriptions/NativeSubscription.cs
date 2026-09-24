@@ -13,6 +13,7 @@ internal unsafe class NativeSubscription<T> :
         SubscriptionOptions options)
         : base(node, topicName, T.GetTypeSupportHandle(), options)
     {
+        RegisterWaitHandle();
     }
 
     protected override RosMessageBuffer TakeMessage()

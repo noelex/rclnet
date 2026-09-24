@@ -23,20 +23,25 @@ class RclClockImpl : RclObject<SafeClockHandle>
 
     public unsafe void ToggleRosTimeOverride(bool enabled)
     {
-        if (enabled)
+        using var lease = Handle.Acquire();
+        using (ScopedLock.Lock(ref Handle.SyncRoot))
         {
-            rcl_enable_ros_time_override(Handle.Object);
-        }
-        else
-        {
-            rcl_disable_ros_time_override(Handle.Object);
+            if (enabled)
+            {
+                rcl_enable_ros_time_override(lease.Object);
+            }
+            else
+            {
+                rcl_disable_ros_time_override(lease.Object);
+            }
         }
     }
 
     public unsafe void SetRosTimeOverride(long nanoseconds)
     {
-        RclException.ThrowIfNonSuccess(
-            rcl_set_ros_time_override(Handle.Object, nanoseconds));
+        using var lease = Handle.Acquire();
+        using (ScopedLock.Lock(ref Handle.SyncRoot))
+            RclException.ThrowIfNonSuccess(rcl_set_ros_time_override(lease.Object, nanoseconds));
     }
 
     internal unsafe long Nanoseconds

@@ -18,7 +18,7 @@ internal unsafe class RclSubscription<T> :
     IRclSubscription<T> where T : IMessage
 {
     private readonly RclNodeImpl _node;
-    private readonly RosMessageBuffer _messageBuffer = RosMessageBuffer.Create<T>();
+    private readonly RosMessageBuffer _messageBuffer;
     private readonly Channel<T> _messageChannel;
     private readonly QosProfile _actualQos;
     private readonly Encoding _textEncoding;
@@ -27,6 +27,7 @@ internal unsafe class RclSubscription<T> :
 
     private readonly ConcurrentDictionary<int, IObserver<T>> _observers = new();
     private int _subscriberId;
+    private int _bufferDisposeRequested;
 
     public RclSubscription(
         RclNodeImpl node,
@@ -38,6 +39,7 @@ internal unsafe class RclSubscription<T> :
         try
         {
             _node = node;
+            _messageBuffer = RosMessageBuffer.Create<T>();
             var opts = new BoundedChannelOptions(options.QueueSize)
             {
                 SingleWriter = true,
@@ -64,14 +66,13 @@ internal unsafe class RclSubscription<T> :
 
             InitializeEvents(options,
                 ref _livelinessEvent, ref _deadlineMissedEvent, ref _qosEvent);
+            RegisterWaitHandle();
             completelyInitialized = true;
         }
         finally
         {
             if (!completelyInitialized) Dispose();
         }
-
-        RegisterWaitHandle();
     }
 
     public QosProfile ActualQos => _actualQos;
@@ -131,27 +132,26 @@ internal unsafe class RclSubscription<T> :
 
     public override void Dispose()
     {
-        _node.Context.DefaultLogger.LogDebug($"Disposing RclSubscription '{Name}' ...");
         _livelinessEvent?.Dispose();
         _deadlineMissedEvent?.Dispose();
         _qosEvent?.Dispose();
 
         // Stop future receives before queuing buffer destruction on the event loop.
         base.Dispose();
-        if (_messageChannel.Writer.TryComplete())
+        if (Interlocked.Exchange(ref _bufferDisposeRequested, 1) == 0)
         {
             // A receive callback can still be taking or finalizing this buffer,
             // including when a synchronous message observer disposes the subscription.
-            Context.SynchronizationContext.Post(static state =>
-                ((RclSubscription<T>)state!)._messageBuffer.Dispose(), this);
+            _messageChannel?.Writer.TryComplete();
+            if (!_messageBuffer.IsEmpty)
+                Context.SynchronizationContext.Post(static state =>
+                    ((RclSubscription<T>)state!)._messageBuffer.Dispose(), this);
             foreach (var (_, obs) in _observers)
             {
                 obs.OnCompleted();
             }
             _observers.Clear();
         }
-
-        _node.Context.DefaultLogger.LogDebug($"Disposed RclSubscription '{Name}'.");
     }
 
     public IDisposable Subscribe(IObserver<T> observer)

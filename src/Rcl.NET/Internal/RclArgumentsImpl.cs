@@ -12,11 +12,6 @@ unsafe class RclArgumentsImpl : IDisposable
         _handle = new SafeArgumentsHandle(args);
     }
 
-    public RclArgumentsImpl(IntPtr handle)
-    {
-        _handle = new SafeArgumentsHandle(handle);
-    }
-
     public int[] GetUnparsedArgumentIndices()
     {
         var count = rcl_arguments_get_count_unparsed(_handle.Object);

@@ -22,6 +22,7 @@ internal class ConcurrentIntrospectionService : IntrospectionServiceBase
     {
         _node = node;
         _handler = handler;
+        RegisterWaitHandle();
     }
 
     protected override unsafe void DispatchRequest(

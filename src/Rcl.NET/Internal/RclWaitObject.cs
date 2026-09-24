@@ -27,7 +27,8 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
     /// </remarks>
     protected void RegisterWaitHandle()
     {
-        _registration = Context.Register(this, OnSignalReceived, this);
+        try { _registration = Context.Register(this, OnSignalReceived, this); }
+        catch { Dispose(); throw; }
     }
 
     protected virtual void OnWaitCompleted()

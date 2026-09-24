@@ -17,13 +17,20 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
         string serviceName,
         TypeSupportHandle typesupport,
         ServerOptions options)
-        : base(node.Context, new(node.Handle, typesupport, serviceName, options.Qos))
+        : base(node.Context, new(node.Handle, node.Clock.Impl.Handle, typesupport, serviceName, options.Qos))
     {
-        _node = node;
-        _typesupport = new ServiceIntrospection(typesupport);
+        try
+        {
+            _node = node;
+            _typesupport = new ServiceIntrospection(typesupport);
 
-        Name = StringMarshal.CreatePooledString(rcl_service_get_service_name(Handle.Object))!;
-        RegisterWaitHandle();
+            Name = StringMarshal.CreatePooledString(rcl_service_get_service_name(Handle.Object))!;
+        }
+        catch
+        {
+            Handle.Dispose();
+            throw;
+        }
     }
 
     protected virtual RosMessageBuffer CreateRequestBuffer()

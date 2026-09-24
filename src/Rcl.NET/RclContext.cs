@@ -22,7 +22,6 @@ namespace Rcl;
 /// </remarks>
 public sealed class RclContext : IRclContext
 {
-    private static int s_contextRefCount = 0;
     private static readonly ObjectPool<ManualResetValueTaskSource<bool>> s_tcsPool = ObjectPool<ManualResetValueTaskSource<bool>>.Shared;
 
     private readonly RclSynchronizationContext _rclSyncContext;
@@ -34,6 +33,7 @@ public sealed class RclContext : IRclContext
 
     private readonly SafeGuardConditionHandle _interruptSignal, _shutdownSignal;
     private readonly SafeContextHandle _context;
+    private readonly SafeWaitSetHandle _waitSet;
     private readonly Thread _mainLoopRunner;
 
     private readonly ConcurrentDictionary<string, object> _features = new();
@@ -89,26 +89,25 @@ public sealed class RclContext : IRclContext
         _rclSyncContext = new RclSynchronizationContext(this);
         _context = new SafeContextHandle(args);
 
-        var allocator = RclAllocator.Default.Object;
-
-        if (Interlocked.Increment(ref s_contextRefCount) == 1)
+        try
         {
-            RclException.ThrowIfNonSuccess(
-                rcl_logging_configure(&_context.Object->global_arguments, &allocator));
+            _loggerFactory = loggerFactory ?? new RcutilsLoggerFactory();
+            DefaultLogger = CreateLogger("rclnet");
+            _interruptSignal = new SafeGuardConditionHandle(_context);
+            _shutdownSignal = new SafeGuardConditionHandle(_context);
+            _waitSet = new SafeWaitSetHandle(_context);
+            _useSyncContext = useSynchronizationContext;
+            _mainLoopRunner = new(Run) { Name = "RCL Event Loop" };
+            _mainLoopRunner.Start();
         }
-
-        _loggerFactory = loggerFactory ?? new RcutilsLoggerFactory();
-        DefaultLogger = CreateLogger("rclnet");
-
-        _interruptSignal = new SafeGuardConditionHandle(_context);
-        _shutdownSignal = new SafeGuardConditionHandle(_context);
-        _useSyncContext = useSynchronizationContext;
-
-        _mainLoopRunner = new(Run)
+        catch
         {
-            Name = "RCL Event Loop"
-        };
-        _mainLoopRunner.Start();
+            _waitSet?.Dispose();
+            _shutdownSignal?.Dispose();
+            _interruptSignal?.Dispose();
+            _context.Dispose();
+            throw;
+        }
     }
 
     /// <summary>
@@ -221,22 +220,44 @@ public sealed class RclContext : IRclContext
         return Yield();
     }
 
-    private unsafe void Interrupt() => rcl_trigger_guard_condition(_interruptSignal.Object);
+    private unsafe void Interrupt()
+    {
+        bool added = false;
+        try
+        {
+            _interruptSignal.DangerousAddRef(ref added);
+            rcl_trigger_guard_condition(_interruptSignal.DangerousObject);
+        }
+        catch (ObjectDisposedException) { /* A late unregister needs no wakeup after the loop exits. */ }
+        finally { if (added) _interruptSignal.DangerousRelease(); }
+    }
 
     internal void NotifyTimerChanged() => Interrupt();
 
     private unsafe void DisposeCore(bool blocking)
     {
-        if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
+        bool close;
+        KeyValuePair<string, object>[] features;
+        lock (_context.LifecycleGate)
         {
-            foreach (var feature in _features)
+            close = Interlocked.CompareExchange(ref _disposed, 1, 0) == 0;
+            if (close)
+            {
+                _context.TryBeginClose();
+                features = _features.ToArray();
+                _features.Clear();
+            }
+            else features = Array.Empty<KeyValuePair<string, object>>();
+        }
+        if (close)
+        {
+            foreach (var feature in features)
             {
                 if (feature.Value is IDisposable d)
                 {
                     d.Dispose();
                 }
             }
-            _features.Clear();
 
             rcl_trigger_guard_condition(_shutdownSignal.Object);
 
@@ -386,8 +407,8 @@ public sealed class RclContext : IRclContext
             SynchronizationContext.SetSynchronizationContext(SynchronizationContext);
         }
 
-        var ws = rcl_get_zero_initialized_wait_set();
-        rcl_wait_set_init(&ws, 0, 0, 0, 0, 0, 0, _context.Object, RclAllocator.Default.Object);
+        // The runner exclusively owns this wait set until the finally below.
+        var ws = _waitSet.DangerousObject;
 
         var callbacks = new List<CallbackWorkItem>();
         var waitHandles = new Dictionary<nint, WaitSetWorkItem>();
@@ -395,167 +416,167 @@ public sealed class RclContext : IRclContext
         bool isShutdownRequested = false;
         size_t idx;
 
-        while (!isShutdownRequested)
+        try
         {
-            try
+            while (!isShutdownRequested)
             {
-                using (ScopedLock.Lock(ref _handleLock))
+                try
                 {
-                    rcl_wait_set_resize(&ws,
-                        _cSubscriptions,
-                        _cGuardConditions + 2, // +2 For interrupt & shutdown guard conditions.
-                        _cTimers,
-                        _cClients,
-                        _cServices,
-                        _cEvents);
-
-                    rcl_wait_set_add_guard_condition(&ws, _interruptSignal.Object, &idx);
-                    rcl_wait_set_add_guard_condition(&ws, _shutdownSignal.Object, &idx);
-
-                    foreach (var (key, value) in _waitHandles)
+                    using (ScopedLock.Lock(ref _handleLock))
                     {
-                        waitHandles.Add(value.WaitHandle.DangerousGetHandle(), value);
+                        rcl_wait_set_resize(ws,
+                            _cSubscriptions,
+                            _cGuardConditions + 2, // +2 For interrupt & shutdown guard conditions.
+                            _cTimers,
+                            _cClients,
+                            _cServices,
+                            _cEvents);
 
-                        switch (value.WaitHandle)
+                        rcl_wait_set_add_guard_condition(ws, _interruptSignal.Object, &idx);
+                        rcl_wait_set_add_guard_condition(ws, _shutdownSignal.Object, &idx);
+
+                        foreach (var (key, value) in _waitHandles)
                         {
-                            case SafeGuardConditionHandle guardCondition:
-                                rcl_wait_set_add_guard_condition(&ws, guardCondition.Object, &idx);
-                                break;
-                            case SafeTimerHandle timer:
-                                rcl_wait_set_add_timer(&ws, timer.Object, &idx);
-                                break;
-                            case SafeSubscriptionHandle subscription:
-                                rcl_wait_set_add_subscription(&ws, subscription.Object, &idx);
-                                break;
-                            case SafeServiceHandle service:
-                                rcl_wait_set_add_service(&ws, service.Object, &idx);
-                                break;
-                            case SafeClientHandle client:
-                                rcl_wait_set_add_client(&ws, client.Object, &idx);
-                                break;
-                            case SafePublisherEventHandle pubEvent:
-                                rcl_wait_set_add_event(&ws, (rcl_event_t*)pubEvent.DangerousGetHandle().ToPointer(), &idx);
-                                break;
-                            case SafeSubscriptionEventHandle subEvent:
-                                rcl_wait_set_add_event(&ws, (rcl_event_t*)subEvent.DangerousGetHandle().ToPointer(), &idx);
-                                break;
+                            waitHandles.Add(value.WaitHandle.DangerousGetHandle(), value);
+
+                            switch (value.WaitHandle)
+                            {
+                                case SafeGuardConditionHandle guardCondition:
+                                    rcl_wait_set_add_guard_condition(ws, guardCondition.Object, &idx);
+                                    break;
+                                case SafeTimerHandle timer:
+                                    rcl_wait_set_add_timer(ws, timer.Object, &idx);
+                                    break;
+                                case SafeSubscriptionHandle subscription:
+                                    rcl_wait_set_add_subscription(ws, subscription.Object, &idx);
+                                    break;
+                                case SafeServiceHandle service:
+                                    rcl_wait_set_add_service(ws, service.Object, &idx);
+                                    break;
+                                case SafeClientHandle client:
+                                    rcl_wait_set_add_client(ws, client.Object, &idx);
+                                    break;
+                                case SafePublisherEventHandle pubEvent:
+                                    rcl_wait_set_add_event(ws, (rcl_event_t*)pubEvent.DangerousGetHandle().ToPointer(), &idx);
+                                    break;
+                                case SafeSubscriptionEventHandle subEvent:
+                                    rcl_wait_set_add_event(ws, (rcl_event_t*)subEvent.DangerousGetHandle().ToPointer(), &idx);
+                                    break;
+                            }
+                        }
+                    }
+
+                    var waitResult = rcl_wait(ws, -1);
+
+                    // RCL can shorten an infinite wait to the next timer deadline and
+                    // return timeout before a timer is ready. Keep processing callbacks
+                    // and rebuilding the wait set instead of terminating the event loop.
+                    if (waitResult != Rcl.Interop.rcl_ret_t.RCL_RET_TIMEOUT)
+                    {
+                        RclException.ThrowIfNonSuccess(waitResult);
+                    }
+
+                    // The order of the following checks matters,
+                    // higher priority wait objects should be checked first.
+
+                    // Check for timers.
+                    for (uint i = 0; i < ws->size_of_timers; i++)
+                    {
+                        CallIfCompleted(waitHandles, new nint(ws->timers[i]));
+                    }
+
+                    // Check for subscriptions.
+                    for (uint i = 0; i < ws->size_of_subscriptions; i++)
+                    {
+                        CallIfCompleted(waitHandles, new nint(ws->subscriptions[i]));
+                    }
+
+                    // Check for incoming service calls.
+                    for (uint i = 0; i < ws->size_of_services; i++)
+                    {
+                        CallIfCompleted(waitHandles, new nint(ws->services[i]));
+                    }
+
+                    // Check for outgoing service calls.
+                    for (uint i = 0; i < ws->size_of_clients; i++)
+                    {
+                        CallIfCompleted(waitHandles, new nint(ws->clients[i]));
+                    }
+
+                    // Check for events.
+                    for (uint i = 0; i < ws->size_of_events; i++)
+                    {
+                        CallIfCompleted(waitHandles, new nint(ws->events[i]));
+                    }
+
+                    // Check for guard conditions.
+                    // Skips interrupt & shutdown signal.
+                    for (uint i = 2; i < ws->size_of_guard_conditions; i++)
+                    {
+                        CallIfCompleted(waitHandles, new nint(ws->guard_conditions[i]));
+                    }
+
+                    // Are we shutting down?
+                    if (_shutdownSignal.DangerousGetHandle() == new nint(ws->guard_conditions[1]))
+                    {
+                        // TODO: _shutdownSignal occasionally gets triggered unexpectedly
+                        // when running with cyclonedds on Ubuntu.
+                        // Make sure context disposal is actually requested before exiting
+                        // the event loop.
+                        if (Volatile.Read(ref _disposed) == 1)
+                        {
+                            isShutdownRequested = true;
+                        }
+                    }
+
+                    // Snapshot callbacks.
+                    using (ScopedLock.Lock(ref _callbackLock))
+                    {
+                        while (_callbacks.TryDequeue(out var cb))
+                        {
+                            callbacks.Add(cb);
+                        }
+                    }
+
+                    // Invoke custom callbacks.
+                    foreach (var cb in callbacks)
+                    {
+                        try
+                        {
+                            cb.Callback(cb.State);
+                            cb.CompletionSource?.SetResult(true);
+                        }
+                        catch (Exception ex)
+                        {
+                            if (cb.CompletionSource is null)
+                            {
+                                DefaultLogger.LogFatal("Unhandled exception was thrown by a user callback: " + ex.Message);
+                                DefaultLogger.LogFatal(ex.StackTrace);
+                                throw;
+                            }
+                            else
+                            {
+                                cb.CompletionSource?.SetException(ex);
+                            }
                         }
                     }
                 }
-
-                var waitResult = rcl_wait(&ws, -1);
-
-                // RCL can shorten an infinite wait to the next timer deadline and
-                // return timeout before a timer is ready. Keep processing callbacks
-                // and rebuilding the wait set instead of terminating the event loop.
-                if (waitResult != Rcl.Interop.rcl_ret_t.RCL_RET_TIMEOUT)
+                finally
                 {
-                    RclException.ThrowIfNonSuccess(waitResult);
-                }
-
-                // The order of the following checks matters,
-                // higher priority wait objects should be checked first.
-
-                // Check for timers.
-                for (uint i = 0; i < ws.size_of_timers; i++)
-                {
-                    CallIfCompleted(waitHandles, new nint(ws.timers[i]));
-                }
-
-                // Check for subscriptions.
-                for (uint i = 0; i < ws.size_of_subscriptions; i++)
-                {
-                    CallIfCompleted(waitHandles, new nint(ws.subscriptions[i]));
-                }
-
-                // Check for incoming service calls.
-                for (uint i = 0; i < ws.size_of_services; i++)
-                {
-                    CallIfCompleted(waitHandles, new nint(ws.services[i]));
-                }
-
-                // Check for outgoing service calls.
-                for (uint i = 0; i < ws.size_of_clients; i++)
-                {
-                    CallIfCompleted(waitHandles, new nint(ws.clients[i]));
-                }
-
-                // Check for events.
-                for (uint i = 0; i < ws.size_of_events; i++)
-                {
-                    CallIfCompleted(waitHandles, new nint(ws.events[i]));
-                }
-
-                // Check for guard conditions.
-                // Skips interrupt & shutdown signal.
-                for (uint i = 2; i < ws.size_of_guard_conditions; i++)
-                {
-                    CallIfCompleted(waitHandles, new nint(ws.guard_conditions[i]));
-                }
-
-                // Are we shutting down?
-                if (_shutdownSignal.DangerousGetHandle() == new nint(ws.guard_conditions[1]))
-                {
-                    // TODO: _shutdownSignal occasionally gets triggered unexpectedly 
-                    // when running with cyclonedds on Ubuntu.
-                    // Make sure context disposal is actually requested before exiting
-                    // the event loop.
-                    if (Volatile.Read(ref _disposed) == 1)
-                    {
-                        isShutdownRequested = true;
-                    }
-                }
-
-                // Snapshot callbacks.
-                using (ScopedLock.Lock(ref _callbackLock))
-                {
-                    while (_callbacks.TryDequeue(out var cb))
-                    {
-                        callbacks.Add(cb);
-                    }
-                }
-
-                // Invoke custom callbacks.
-                foreach (var cb in callbacks)
-                {
-                    try
-                    {
-                        cb.Callback(cb.State);
-                        cb.CompletionSource?.SetResult(true);
-                    }
-                    catch (Exception ex)
-                    {
-                        if (cb.CompletionSource is null)
-                        {
-                            DefaultLogger.LogFatal("Unhandled exception was thrown by a user callback: " + ex.Message);
-                            DefaultLogger.LogFatal(ex.StackTrace);
-                            throw;
-                        }
-                        else
-                        {
-                            cb.CompletionSource?.SetException(ex);
-                        }
-                    }
+                    waitHandles.Clear();
+                    callbacks.Clear();
                 }
             }
-            finally
-            {
-                waitHandles.Clear();
-                callbacks.Clear();
-            }
         }
-
-        rcl_wait_set_fini(&ws);
-        _interruptSignal.Dispose();
-        _shutdownSignal.Dispose();
-        _context.Dispose();
-
-        if (Interlocked.Decrement(ref s_contextRefCount) == 0)
+        finally
         {
-            rcl_logging_fini();
+            _waitSet.Dispose();
+            _interruptSignal.Dispose();
+            _shutdownSignal.Dispose();
+            _context.Shutdown();
+            _context.Dispose();
         }
-
-        _shutdownComplete.SetResult();
+        _shutdownComplete.TrySetResult();
     }
 
     private void CallIfCompleted(Dictionary<nint, WaitSetWorkItem> registry, nint completedHandle)
@@ -577,7 +598,11 @@ public sealed class RclContext : IRclContext
 
     internal T GetOrAddFeature<T>(string name, Func<string, T> featureFactory) where T : class
     {
-        return (T)_features.GetOrAdd(name, featureFactory);
+        lock (_context.LifecycleGate)
+        {
+            _context.ThrowIfOperationClosed();
+            return (T)_features.GetOrAdd(name, featureFactory);
+        }
     }
 
     private record struct WaitSetWorkItem(RclObjectHandle WaitHandle, Action<RclObjectHandle, object?> Callback, object? State);
@@ -607,7 +632,8 @@ public sealed class RclContext : IRclContext
             }
             else
             {
-                _context.RegisterCallback(d, state, null);
+                try { _context.RegisterCallback(d, state, null); }
+                catch (ObjectDisposedException) { base.Post(d, state); }
             }
         }
 

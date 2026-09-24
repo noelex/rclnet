@@ -79,6 +79,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
                 _getResultClient?.Dispose();
                 _sendGoalClient?.Dispose();
                 _cancelGoalClient?.Dispose();
+                _cts.Dispose();
             }
         }
     }

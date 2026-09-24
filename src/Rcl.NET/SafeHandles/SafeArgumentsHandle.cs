@@ -35,8 +35,23 @@ unsafe class SafeArgumentsHandle : RclObjectHandle<rcl_arguments_t>
         }
     }
 
-    public SafeArgumentsHandle(IntPtr handle) : base(handle)
+    private SafeArgumentsHandle(rcl_arguments_t* pointer, RclObjectHandle owner)
+        : base((IntPtr)pointer, owner) { }
+
+    internal static SafeArgumentsHandle Borrow(SafeContextHandle context)
     {
+        using var lease = context.Acquire();
+        return new(&lease.Object->global_arguments, context);
+    }
+
+    internal static SafeArgumentsHandle Borrow(SafeNodeHandle node)
+    {
+        using var lease = node.Acquire();
+        var options = rcl_node_get_options(lease.Object);
+        var arguments = RosEnvironment.IsFoxy
+            ? &((RclFoxy.rcl_node_options_t*)options)->arguments
+            : &((RclHumble.rcl_node_options_t*)options)->arguments;
+        return new(arguments, node);
     }
 
     protected override bool ReleaseHandleCore(rcl_arguments_t* ptr)

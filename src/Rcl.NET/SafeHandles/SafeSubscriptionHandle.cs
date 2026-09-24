@@ -11,31 +11,37 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
         SafeNodeHandle node, TypeSupportHandle typeSupportHandle, string topicName, SubscriptionOptions options)
     {
         _node = node;
-        *Object = rcl_get_zero_initialized_subscription();
 
         try
         {
-            var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);
-            byte* name = stackalloc byte[nameSize];
-            InteropHelpers.FillUtf8Buffer(topicName, new(name, nameSize));
+            lock (node.Context.LifecycleGate)
+            {
+                SetDependencies(node);
+                // Validate before allocating content-filter options handed to native init.
+                _ = typeSupportHandle.GetMessageTypeSupport();
+                *Object = rcl_get_zero_initialized_subscription();
+                var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);
+                byte* name = stackalloc byte[nameSize];
+                InteropHelpers.FillUtf8Buffer(topicName, new(name, nameSize));
 
-            if (RosEnvironment.IsFoxy)
-            {
-                InitFoxy(name, typeSupportHandle, options);
+                if (RosEnvironment.IsFoxy)
+                {
+                    InitFoxy(name, typeSupportHandle, options);
+                }
+                else if (RosEnvironment.IsHumble)
+                {
+                    InitHumble(name, typeSupportHandle, options);
+                }
+                else if (RosEnvironment.IsLyrical)
+                {
+                    InitLyrical(name, typeSupportHandle, options);
+                }
+                else
+                {
+                    InitIronToKilted(name, typeSupportHandle, options);
+                }
+                MarkInitialized();
             }
-            else if (RosEnvironment.IsHumble)
-            {
-                InitHumble(name, typeSupportHandle, options);
-            }
-            else if (RosEnvironment.IsLyrical)
-            {
-                InitLyrical(name, typeSupportHandle, options);
-            }
-            else
-            {
-                InitIronToKilted(name, typeSupportHandle, options);
-            }
-            MarkInitialized();
         }
         catch
         {
@@ -53,11 +59,10 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
         RclException.ThrowIfNonSuccess(
                 rcl_subscription_init(
                     Object,
-                    _node.Object,
+                    _node.DangerousObject,
                     typeSupport.GetMessageTypeSupport(),
                     name,
                     &opts));
-
     }
 
     private void InitHumble(byte* name, TypeSupportHandle typeSupport, SubscriptionOptions options)
@@ -104,7 +109,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
         RclException.ThrowIfNonSuccess(
             rcl_subscription_init(
                 Object,
-                _node.Object,
+                _node.DangerousObject,
                 typeSupport.GetMessageTypeSupport(),
                 name,
                 &opts));
@@ -154,7 +159,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
         RclException.ThrowIfNonSuccess(
             rcl_subscription_init(
                 Object,
-                _node.Object,
+                _node.DangerousObject,
                 typeSupport.GetMessageTypeSupport(),
                 name,
                 &opts));
@@ -204,7 +209,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
         RclException.ThrowIfNonSuccess(
             rcl_subscription_init(
                 Object,
-                _node.Object,
+                _node.DangerousObject,
                 typeSupport.GetMessageTypeSupport(),
                 name,
                 &opts));
@@ -212,6 +217,6 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
 
     protected override bool ReleaseHandleCore(rcl_subscription_t* ptr)
     {
-        return CheckReleaseResult(rcl_subscription_fini(ptr, _node.Object), nameof(rcl_subscription_fini));
+        return CheckReleaseResult(rcl_subscription_fini(ptr, _node.DangerousObject), nameof(rcl_subscription_fini));
     }
 }

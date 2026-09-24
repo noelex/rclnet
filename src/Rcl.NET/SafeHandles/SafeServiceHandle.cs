@@ -9,30 +9,34 @@ internal unsafe class SafeServiceHandle : RclObjectHandle<rcl_service_t>
     private readonly SafeNodeHandle _node;
 
     public SafeServiceHandle(
-        SafeNodeHandle node, TypeSupportHandle typeSupportHandle, string serviceName, QosProfile qos)
+        SafeNodeHandle node, SafeClockHandle clock, TypeSupportHandle typeSupportHandle, string serviceName, QosProfile qos)
     {
         _node = node;
-        *Object = rcl_get_zero_initialized_service();
         try
         {
-            var opts = rcl_service_get_default_options();
-            opts.qos = qos.ToRmwQosProfile();
-
-            var nameSize = InteropHelpers.GetUtf8BufferSize(serviceName);
-            Span<byte> nameBuffer = stackalloc byte[nameSize];
-            InteropHelpers.FillUtf8Buffer(serviceName, nameBuffer);
-
-            fixed (byte* pname = nameBuffer)
+            lock (node.Context.LifecycleGate)
             {
-                RclException.ThrowIfNonSuccess(
-                    rcl_service_init(
-                        Object,
-                        node.Object,
-                        typeSupportHandle.GetServiceTypeSupport(),
-                        pname,
-                        &opts));
+                SetDependencies(node, clock);
+                *Object = rcl_get_zero_initialized_service();
+                var opts = rcl_service_get_default_options();
+                opts.qos = qos.ToRmwQosProfile();
+
+                var nameSize = InteropHelpers.GetUtf8BufferSize(serviceName);
+                Span<byte> nameBuffer = stackalloc byte[nameSize];
+                InteropHelpers.FillUtf8Buffer(serviceName, nameBuffer);
+
+                fixed (byte* pname = nameBuffer)
+                {
+                    RclException.ThrowIfNonSuccess(
+                        rcl_service_init(
+                            Object,
+                            node.DangerousObject,
+                            typeSupportHandle.GetServiceTypeSupport(),
+                            pname,
+                            &opts));
+                }
+                MarkInitialized();
             }
-            MarkInitialized();
         }
         catch
         {
@@ -43,6 +47,6 @@ internal unsafe class SafeServiceHandle : RclObjectHandle<rcl_service_t>
 
     protected override bool ReleaseHandleCore(rcl_service_t* ptr)
     {
-        return CheckReleaseResult(rcl_service_fini(ptr, _node.Object), nameof(rcl_service_fini));
+        return CheckReleaseResult(rcl_service_fini(ptr, _node.DangerousObject), nameof(rcl_service_fini));
     }
 }
