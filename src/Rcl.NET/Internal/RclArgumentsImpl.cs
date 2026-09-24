@@ -16,13 +16,14 @@ unsafe class RclArgumentsImpl : IDisposable
     {
         using var lease = _handle.Acquire();
         var count = rcl_arguments_get_count_unparsed(lease.Object);
+
         if (count == 0)
         {
             return Array.Empty<int>();
         }
 
-
         int* p = null;
+
         try
         {
             rcl_arguments_get_unparsed(lease.Object, _allocator.Object, &p);
@@ -30,7 +31,10 @@ unsafe class RclArgumentsImpl : IDisposable
         }
         finally
         {
-            if (p != null) _allocator.Deallocate(p);
+            if (p != null)
+            {
+                _allocator.Deallocate(p);
+            }
         }
     }
 
@@ -38,12 +42,14 @@ unsafe class RclArgumentsImpl : IDisposable
     {
         using var lease = _handle.Acquire();
         var count = rcl_arguments_get_count_unparsed_ros(lease.Object);
+
         if (count == 0)
         {
             return Array.Empty<int>();
         }
 
         int* p = null;
+
         try
         {
             rcl_arguments_get_unparsed_ros(lease.Object, _allocator.Object, &p);
@@ -51,7 +57,10 @@ unsafe class RclArgumentsImpl : IDisposable
         }
         finally
         {
-            if (p != null) _allocator.Deallocate(p);
+            if (p != null)
+            {
+                _allocator.Deallocate(p);
+            }
         }
     }
 
@@ -59,6 +68,7 @@ unsafe class RclArgumentsImpl : IDisposable
     {
         using var lease = _handle.Acquire();
         var count = rcl_arguments_get_param_files_count(lease.Object);
+
         if (count == 0)
         {
             return Array.Empty<string>();
@@ -67,9 +77,11 @@ unsafe class RclArgumentsImpl : IDisposable
         var items = new string[count];
 
         sbyte** p = null;
+
         try
         {
             rcl_arguments_get_param_files(lease.Object, _allocator.Object, &p);
+
             for (var i = 0; i < count; i++)
             {
                 items[i] = new(p[i]);
@@ -77,7 +89,10 @@ unsafe class RclArgumentsImpl : IDisposable
         }
         finally
         {
-            if (p != null) _allocator.Deallocate(p);
+            if (p != null)
+            {
+                _allocator.Deallocate(p);
+            }
         }
 
         return items;
@@ -102,6 +117,7 @@ unsafe class RclArgumentsImpl : IDisposable
 
             var pNodeParam = &p->@params[i];
             var sz = pNodeParam->num_params.Value.ToUInt32();
+
             for (var j = 0; j < sz; j++)
             {
                 var k = new string(pNodeParam->parameter_names[j]);
@@ -154,9 +170,14 @@ unsafe class RclArgumentsImpl : IDisposable
         else if (v->string_array_value != null)
         {
             var sz = v->string_array_value->size;
-            if (sz == 0) return Array.Empty<string>();
+
+            if (sz == 0)
+            {
+                return Array.Empty<string>();
+            }
 
             var results = new string[sz];
+
             for (var i = 0; i < results.Length; i++)
             {
                 results[i] = new(v->string_array_value->data[i]);

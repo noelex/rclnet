@@ -12,6 +12,7 @@ unsafe class SafeArgumentsHandle : RclObjectHandle<rcl_arguments_t>
             *DangerousObject = rcl_get_zero_initialized_arguments();
 
             int argc = args.Length;
+
             if (argc > 0)
             {
                 var bufferSize = InteropHelpers.GetUtf8BufferSize(args);
@@ -26,6 +27,7 @@ unsafe class SafeArgumentsHandle : RclObjectHandle<rcl_arguments_t>
             {
                 RclException.ThrowIfNonSuccess(rcl_parse_arguments(0, null, allocator.Object, DangerousObject));
             }
+
             MarkInitialized();
         }
         catch
@@ -36,7 +38,9 @@ unsafe class SafeArgumentsHandle : RclObjectHandle<rcl_arguments_t>
     }
 
     private SafeArgumentsHandle(rcl_arguments_t* pointer, RclObjectHandle owner)
-        : base((IntPtr)pointer, owner) { }
+        : base((IntPtr)pointer, owner)
+    {
+    }
 
     internal static SafeArgumentsHandle Borrow(SafeContextHandle context)
     {

@@ -18,7 +18,10 @@ public class HandleFoundationTests
         Assert.True(handle.TryBeginClose());
         Assert.False(handle.TryBeginClose());
         Assert.False(handle.IsReleaseRequested);
-        Assert.Throws<ObjectDisposedException>(() => { using var rejected = handle.Acquire(); });
+        Assert.Throws<ObjectDisposedException>(() =>
+        {
+            using var rejected = handle.Acquire();
+        });
         handle.RequestRelease();
         handle.RequestRelease();
         Assert.True(handle.IsReleaseRequested);
@@ -36,14 +39,29 @@ public class HandleFoundationTests
     public unsafe void EmptyLeaseRejectsAccess()
     {
         RclHandleLease<int> lease = default;
-        try { _ = lease.Object; Assert.Fail("Default lease returned a pointer."); }
-        catch (ObjectDisposedException) { }
+
+        try
+        {
+            _ = lease.Object;
+            Assert.Fail("Default lease returned a pointer.");
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+
         lease.Dispose();
         using var handle = new FoundationHandle(new());
         lease = handle.Acquire();
         lease.Dispose();
-        try { _ = lease.Object; Assert.Fail("Disposed lease returned a pointer."); }
-        catch (ObjectDisposedException) { }
+
+        try
+        {
+            _ = lease.Object;
+            Assert.Fail("Disposed lease returned a pointer.");
+        }
+        catch (ObjectDisposedException)
+        {
+        }
     }
 
     [Fact]
@@ -53,13 +71,24 @@ public class HandleFoundationTests
         using var handle = new FoundationHandle(events);
         bool added = false;
         handle.DangerousAddRef(ref added);
+
         try
         {
             handle.Dispose();
-            Assert.Throws<ObjectDisposedException>(() => { using var rejected = handle.Acquire(); });
+            Assert.Throws<ObjectDisposedException>(() =>
+{
+    using var rejected = handle.Acquire();
+});
             Assert.Empty(events);
         }
-        finally { if (added) handle.DangerousRelease(); }
+        finally
+        {
+            if (added)
+            {
+                handle.DangerousRelease();
+            }
+        }
+
         Assert.Single(events);
     }
 
@@ -73,20 +102,29 @@ public class HandleFoundationTests
         {
             using var lease = handle.Acquire();
             checkpoint.Pause();
-            unsafe { *lease.Object = 7; }
+
+            unsafe
+            {
+                *lease.Object = 7;
+            }
         });
+
         try
         {
             await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
             handle.Dispose();
             Assert.Empty(events);
-            Assert.Throws<ObjectDisposedException>(() => { using var rejected = handle.Acquire(); });
+            Assert.Throws<ObjectDisposedException>(() =>
+{
+    using var rejected = handle.Acquire();
+});
         }
         finally
         {
             checkpoint.Resume();
             await operation.WaitAsync(TimeSpan.FromSeconds(10));
         }
+
         Assert.False(checkpoint.TimedOut);
         Assert.Single(events);
     }
@@ -115,7 +153,11 @@ public class HandleFoundationTests
         using var parent = new FoundationHandle(events, "parent");
         using var child = new FoundationHandle(events, "child", parent);
         parent.Dispose();
-        using (var lease = child.Acquire()) { }
+
+        using (var lease = child.Acquire())
+        {
+        }
+
         Assert.Throws<ObjectDisposedException>(() => new FoundationHandle(events, "rejected", child));
         Assert.Empty(events);
         child.Dispose();
@@ -130,7 +172,10 @@ public class HandleFoundationTests
         using var child = new FoundationHandle(events, "child", domain);
         var lease = child.Acquire();
         domain.Dispose();
-        Assert.Throws<ObjectDisposedException>(() => { using var rejected = child.Acquire(); });
+        Assert.Throws<ObjectDisposedException>(() =>
+{
+    using var rejected = child.Acquire();
+});
         *lease.Object = 8;
         lease.Dispose();
         child.Dispose();
@@ -180,17 +225,26 @@ public class HandleFoundationTests
         var events = new ConcurrentQueue<string>();
         using var owner = new FoundationHandle(events, "owner");
         IntPtr storage = Marshal.AllocHGlobal(sizeof(int));
+
         try
         {
             using var borrowed = new BorrowedFoundationHandle(storage, owner);
             owner.Dispose();
-            using (var lease = borrowed.Acquire()) { *lease.Object = 123; }
+
+            using (var lease = borrowed.Acquire())
+            {
+                *lease.Object = 123;
+            }
+
             borrowed.Dispose();
             Assert.Equal(0, borrowed.FiniCalls);
             Assert.Equal(123, *(int*)storage);
             Assert.Equal(new[] { "owner:fini" }, events);
         }
-        finally { Marshal.FreeHGlobal(storage); }
+        finally
+        {
+            Marshal.FreeHGlobal(storage);
+        }
     }
 
     [Theory]
@@ -212,8 +266,16 @@ public class HandleFoundationTests
     {
         var events = new ConcurrentQueue<string>();
         using var handle = new FoundationHandle(events, initialized: false);
-        if (partial) handle.RequireCleanup();
-        Assert.Throws<ObjectDisposedException>(() => { using var rejected = handle.Acquire(); });
+
+        if (partial)
+        {
+            handle.RequireCleanup();
+        }
+
+        Assert.Throws<ObjectDisposedException>(() =>
+{
+    using var rejected = handle.Acquire();
+});
         handle.Dispose();
         Assert.Equal(partial ? 1 : 0, events.Count);
         Assert.Equal(IntPtr.Zero, handle.DangerousGetHandle());
@@ -263,7 +325,11 @@ public class HandleFoundationTests
         Assert.Equal(nameof(FoundationHandle), child.Error.HandleType);
         Assert.Equal(throwCleanup ? "native cleanup" : "fake_fini", child.Error.Api);
         Assert.Equal(throwCleanup ? (int?)null : 1, child.Error.ReturnCode);
-        if (!throwDiagnostics) Assert.Contains(child.Error, HandleReleaseDiagnostics.Snapshot());
+
+        if (!throwDiagnostics)
+        {
+            Assert.Contains(child.Error, HandleReleaseDiagnostics.Snapshot());
+        }
     }
 
     [Fact]
@@ -271,11 +337,13 @@ public class HandleFoundationTests
     {
         var events = new ConcurrentQueue<string>();
         var weak = AbandonHandle(events);
+
         for (int i = 0; i < 10 && events.Count < 2; i++)
         {
             GC.Collect();
             GC.WaitForPendingFinalizers();
         }
+
         Assert.False(weak.IsAlive);
         Assert.Equal(new[] { "child:fini", "parent:fini" }, events);
     }
@@ -286,7 +354,8 @@ public class HandleFoundationTests
         var parent = new FoundationHandle(events, "parent");
         var child = new FoundationHandle(events, "child", parent)
         {
-            ThrowCleanup = true, ThrowDiagnostics = true
+            ThrowCleanup = true,
+            ThrowDiagnostics = true
         };
         parent.Dispose();
         return new WeakReference(child);
@@ -296,9 +365,19 @@ public class HandleFoundationTests
     public void OperationLeaseDoesNotAllocate()
     {
         using var handle = new FoundationHandle(new());
-        for (int i = 0; i < 10000; i++) { using var lease = handle.Acquire(); }
+
+        for (int i = 0; i < 10000; i++)
+        {
+            using var lease = handle.Acquire();
+        }
+
         long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 10000; i++) { using var lease = handle.Acquire(); }
+
+        for (int i = 0; i < 10000; i++)
+        {
+            using var lease = handle.Acquire();
+        }
+
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
 
@@ -358,31 +437,62 @@ public class HandleFoundationTests
         {
             _events = events;
             _name = name;
+
             try
             {
-                if (domainRoot) SetShutdownDomain(this);
-                if (first != null) SetDependencies(first, second);
-                if (initialized) MarkInitialized();
+                if (domainRoot)
+                {
+                    SetShutdownDomain(this);
+                }
+
+                if (first != null)
+                {
+                    SetDependencies(first, second);
+                }
+
+                if (initialized)
+                {
+                    MarkInitialized();
+                }
             }
-            catch { Dispose(); throw; }
+            catch
+            {
+                Dispose();
+                throw;
+            }
         }
 
         internal void Attach(RclObjectHandle first, RclObjectHandle? second = null) => SetDependencies(first, second);
+
         internal void RequireCleanup() => MarkCleanupRequired();
 
         protected override bool ReleaseHandleCore(int* ptr)
         {
             _events.Enqueue($"{_name}:fini");
             OnRelease?.Invoke();
-            if (ThrowCleanup) throw new InvalidOperationException("Injected fini failure.");
-            if (NativeError) return CheckReleaseResult(RclCommon.rcl_event_fini(null), "rcl_event_fini");
+
+            if (ThrowCleanup)
+            {
+                throw new InvalidOperationException("Injected fini failure.");
+            }
+
+            if (NativeError)
+            {
+                return CheckReleaseResult(RclCommon.rcl_event_fini(null), "rcl_event_fini");
+            }
+
             return CheckReleaseResult((rcl_ret_t)ErrorCode, "fake_fini");
         }
 
         protected override void WriteReleaseError(HandleReleaseError error)
         {
             Error = error;
-            if (ThrowDiagnostics) throw new InvalidOperationException("Injected diagnostic failure.");
+
+            if (ThrowDiagnostics)
+            {
+                throw new InvalidOperationException("Injected diagnostic failure.");
+            }
+
             base.WriteReleaseError(error);
         }
 
@@ -397,7 +507,11 @@ public class HandleFoundationTests
     private sealed unsafe class BorrowedFoundationHandle : RclObjectHandle<int>
     {
         internal int FiniCalls;
-        internal BorrowedFoundationHandle(IntPtr storage, RclObjectHandle owner) : base(storage, owner) { }
+
+        internal BorrowedFoundationHandle(IntPtr storage, RclObjectHandle owner) : base(storage, owner)
+        {
+        }
+
         protected override bool ReleaseHandleCore(int* ptr)
         {
             FiniCalls++;
@@ -408,7 +522,11 @@ public class HandleFoundationTests
     private sealed class TrackingClockHandle : SafeClockHandle
     {
         internal bool? ReleaseResult;
-        internal TrackingClockHandle() : base(RclClockType.Steady) { }
+
+        internal TrackingClockHandle() : base(RclClockType.Steady)
+        {
+        }
+
         protected override bool ReleaseHandle()
         {
             bool result = base.ReleaseHandle();

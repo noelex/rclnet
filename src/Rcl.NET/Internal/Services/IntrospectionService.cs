@@ -23,12 +23,14 @@ internal class IntrospectionService : IntrospectionServiceBase
     {
         // TODO: Reuse buffers by finializing rather than detroying after use.
         using (request)
-        using (response)
         {
-            _handler.ProcessRequest(request, response);
+            using (response)
+            {
+                _handler.ProcessRequest(request, response);
 
-            RclException.ThrowIfNonSuccess(
-                SendResponse(id, response.Data));
+                RclException.ThrowIfNonSuccess(
+                    SendResponse(id, response.Data));
+            }
         }
     }
 }

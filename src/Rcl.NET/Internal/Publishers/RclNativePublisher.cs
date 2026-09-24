@@ -26,6 +26,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
         : base(node.Context, new(node.Handle, typesupport, topicName, options))
     {
         bool completelyInitialized = false;
+
         try
         {
             using var lease = Handle.Acquire();
@@ -53,13 +54,17 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
         }
         finally
         {
-            if (!completelyInitialized) Dispose();
+            if (!completelyInitialized)
+            {
+                Dispose();
+            }
         }
     }
 
     private unsafe NetworkFlowEndpoint[] GetEndpoints()
     {
         using var lease = Handle.Acquire();
+
         if (!RosEnvironment.IsSupported(RosEnvironment.Humble))
         {
             return Array.Empty<NetworkFlowEndpoint>();
@@ -67,7 +72,6 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
         var allocator = RclAllocator.Default.Object;
         var endpoints = RclHumble.rmw_get_zero_initialized_network_flow_endpoint_array();
-
 
         try
         {
@@ -107,6 +111,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessLostEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -123,6 +128,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register OfferedDeadlineMissedEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -139,6 +145,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register OfferedQosIncompatibleEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -257,9 +264,9 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
     protected override void DisposeCore()
     {
-        _deadlineMissedEvent?.Dispose();
-        _qosEvent?.Dispose();
-        _livelinessEvent?.Dispose();
+        RclContext.DisposeResource(_deadlineMissedEvent);
+        RclContext.DisposeResource(_qosEvent);
+        RclContext.DisposeResource(_livelinessEvent);
 
         base.DisposeCore();
     }

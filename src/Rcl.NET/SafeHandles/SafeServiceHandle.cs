@@ -14,6 +14,7 @@ internal unsafe class SafeServiceHandle : RclObjectHandle<rcl_service_t>
         SafeNodeHandle node, SafeClockHandle clock, TypeSupportHandle typeSupportHandle, string serviceName, QosProfile qos)
     {
         _node = node;
+
         try
         {
             lock (node.Context.LifecycleGate)
@@ -37,6 +38,7 @@ internal unsafe class SafeServiceHandle : RclObjectHandle<rcl_service_t>
                             pname,
                             &opts));
                 }
+
                 MarkInitialized();
             }
         }

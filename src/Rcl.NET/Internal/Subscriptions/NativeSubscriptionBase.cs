@@ -28,6 +28,7 @@ internal unsafe abstract class NativeSubscriptionBase :
         : base(node.Context, new(node.Handle, typeSupport, topicName, options))
     {
         var completelyInitialized = false;
+
         try
         {
             using var lease = Handle.Acquire();
@@ -64,13 +65,19 @@ internal unsafe abstract class NativeSubscriptionBase :
         }
         finally
         {
-            if (!completelyInitialized) Dispose();
+            if (!completelyInitialized)
+            {
+                Dispose();
+            }
+
         }
+
     }
 
     private unsafe NetworkFlowEndpoint[] GetEndpoints()
     {
         using var lease = Handle.Acquire();
+
         if (!RosEnvironment.IsSupported(RosEnvironment.Humble))
         {
             return Array.Empty<NetworkFlowEndpoint>();
@@ -96,7 +103,9 @@ internal unsafe abstract class NativeSubscriptionBase :
             {
                 RclHumble.rmw_network_flow_endpoint_array_fini(&endpoints);
             }
+
         }
+
     }
 
     private void InitializeEvents(
@@ -117,6 +126,7 @@ internal unsafe abstract class NativeSubscriptionBase :
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessChangedEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -133,6 +143,7 @@ internal unsafe abstract class NativeSubscriptionBase :
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register RequestedDeadlineMissedEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -149,9 +160,11 @@ internal unsafe abstract class NativeSubscriptionBase :
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register RequestedQosIncompatibleEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
+
     }
 
     private void OnLivelinessChanged(LivelinessChangedEvent info)
@@ -194,6 +207,7 @@ internal unsafe abstract class NativeSubscriptionBase :
                 rcl_subscription_get_publisher_count(lease.Object, &count));
             return (int)count.Value;
         }
+
     }
 
     public bool IsValid
@@ -203,6 +217,7 @@ internal unsafe abstract class NativeSubscriptionBase :
             using var lease = Handle.Acquire();
             return rcl_subscription_is_valid(lease.Object);
         }
+
     }
 
     public NetworkFlowEndpoint[] Endpoints { get; }
@@ -210,6 +225,7 @@ internal unsafe abstract class NativeSubscriptionBase :
     protected override void OnWaitCompleted()
     {
         var msg = TakeMessage();
+
         if (!msg.IsEmpty)
         {
             // Just in case FullMode is set to Wait, simply drop the incoming message.
@@ -217,7 +233,9 @@ internal unsafe abstract class NativeSubscriptionBase :
             {
                 msg.Dispose();
             }
+
         }
+
     }
 
     protected abstract RosMessageBuffer TakeMessage();
@@ -229,18 +247,24 @@ internal unsafe abstract class NativeSubscriptionBase :
 
     protected override void DisposeCore()
     {
-        _livelinessEvent?.Dispose();
-        _deadlineMissedEvent?.Dispose();
-        _qosEvent?.Dispose();
+        RclContext.DisposeResource(_livelinessEvent);
+        RclContext.DisposeResource(_deadlineMissedEvent);
+        RclContext.DisposeResource(_qosEvent);
 
+        base.DisposeCore();
+    }
+
+    protected override void OnDetached()
+    {
         if (_messageChannel?.Writer.TryComplete() == true)
         {
             while (_messageChannel.Reader.TryRead(out var buffer))
             {
                 buffer.Dispose();
             }
+
         }
 
-        base.DisposeCore();
     }
+
 }

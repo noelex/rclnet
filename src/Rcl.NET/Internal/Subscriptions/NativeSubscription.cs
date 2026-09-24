@@ -30,6 +30,7 @@ internal unsafe class NativeSubscription<T> :
         RclHumble.rmw_message_info_t header;
 
         var rosMessage = RosMessageBuffer.Create<T>();
+
         if (rcl_ret_t.RCL_RET_OK ==
             rcl_take(lease.Object, rosMessage.Data.ToPointer(), &header, null))
         {

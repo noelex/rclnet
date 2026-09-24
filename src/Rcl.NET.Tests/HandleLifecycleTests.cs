@@ -10,6 +10,7 @@ public class HandleLifecycleTests
         var releases = new ConcurrentQueue<string>();
         using var handle = new FakeRclHandle(releases);
         bool added = false;
+
         try
         {
             handle.DangerousAddRef(ref added);
@@ -20,7 +21,10 @@ public class HandleLifecycleTests
         }
         finally
         {
-            if (added) handle.DangerousRelease();
+            if (added)
+            {
+                handle.DangerousRelease();
+            }
         }
 
         Assert.True(handle.IsClosed);
@@ -34,6 +38,7 @@ public class HandleLifecycleTests
         using var checkpoint = new LifecycleCheckpoint();
         using var handle = new FakeRclHandle(releases, checkpoint: checkpoint);
         var disposing = Task.Run(handle.Dispose);
+
         try
         {
             await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));

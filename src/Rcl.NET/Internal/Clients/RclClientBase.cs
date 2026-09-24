@@ -3,7 +3,6 @@ using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
-using System.Collections.Concurrent;
 
 namespace Rcl.Internal.Clients;
 
@@ -11,8 +10,10 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 {
     private readonly TypeSupportHandle _typesupport;
     private readonly RclNodeImpl _node;
-    private readonly ConcurrentDictionary<long, ManualResetValueTaskSource<RosMessageBuffer>> _pendingRequests = new();
-    private readonly CancellationTokenSource _shutdownSignal = new();
+    private readonly object _pendingGate = new();
+    private readonly Action<PendingOperation<RosMessageBuffer>, Exception> _cancelPending;
+    private readonly Dictionary<long, PendingOperation<RosMessageBuffer>> _pendingRequests = new();
+    private bool _pendingClosed;
 
     public unsafe RclClientBase(
         RclNodeImpl node,
@@ -25,6 +26,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         {
             using var lease = Handle.Acquire();
             _node = node;
+            _cancelPending = Cancel;
             _typesupport = typeSupport;
             Name = StringMarshal.CreatePooledString(rcl_client_get_service_name(lease.Object))!;
 
@@ -39,7 +41,6 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         catch
         {
             Handle.Dispose();
-            _shutdownSignal.Dispose();
             throw;
         }
     }
@@ -50,9 +51,13 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         {
             using var lease = Handle.Acquire();
             bool available;
+
             lock (Handle.NativeGate)
+            {
                 RclException.ThrowIfNonSuccess(
-                    rcl_service_server_is_available(_node.Handle.DangerousObject, lease.Object, &available));
+                rcl_service_server_is_available(_node.Handle.DangerousObject, lease.Object, &available));
+            }
+
             return available;
         }
     }
@@ -69,6 +74,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         {
             using var lease = Handle.Acquire();
             Handle.ThrowIfDescendantClosed();
+
             lock (Handle.NativeGate)
             {
                 var ret = RclIron.rcl_client_configure_service_introspection(
@@ -108,8 +114,11 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         get
         {
             using var lease = Handle.Acquire();
+
             lock (Handle.NativeGate)
+            {
                 return rcl_client_is_valid(lease.Object);
+            }
         }
     }
 
@@ -123,37 +132,28 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         try
         {
             rcl_ret_t result;
+
             using (var lease = Handle.Acquire())
-            lock (Handle.NativeGate)
-                result = rcl_take_response_with_info(lease.Object, &header, responseBuffer.Data.ToPointer());
+            {
+                lock (Handle.NativeGate)
+                {
+                    result = rcl_take_response_with_info(lease.Object, &header, responseBuffer.Data.ToPointer());
+                }
+            }
+
             if (result == rcl_ret_t.RCL_RET_OK)
             {
-                if (_pendingRequests.TryRemove(header.request_id.sequence_number, out var future))
+                PendingOperation<RosMessageBuffer>? pending;
+
+                lock (_pendingGate)
                 {
-                    future.SetResult(responseBuffer);
-                    keepBuffer = true;
+                    _pendingRequests.Remove(header.request_id.sequence_number, out pending);
                 }
-                // var future = _pendingRequests.GetOrAdd(
-                //     header.request_id.sequence_number, static x =>
-                //     {
-                //         var mts = ObjectPool.Rent<ManualResetValueTaskSource<RosMessageBuffer>>();
-                //         mts.OnFinally(x =>
-                //         {
-                //             var m = ((ManualResetValueTaskSource<RosMessageBuffer>)x!);
-                //             m.Reset();
-                //             ObjectPool.Return(m);
-                //         }, mts);
 
-                //         // Attach a tag so that we can check whether the ValueTaskSource
-                //         // is taken or newly created here.
-                //         mts.Tag = mts;
-                //         return mts;
-                //     });
-
-                // if (future.Tag != future)
-                // {
-                //     _pendingRequests.Remove(header.request_id.sequence_number, out _);
-                // }
+                if (pending != null)
+                {
+                    keepBuffer = pending.Succeed(responseBuffer);
+                }
             }
         }
         finally
@@ -170,73 +170,77 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     public async Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
         Handle.ThrowIfOperationClosed();
-        // TODO: Maybe use private ObjectPools?
-        var timeoutCts = new CancellationTokenSource(timeout, _node.TimeProvider);
-        var completion = ObjectPool.Rent<ManualResetValueTaskSource<RosMessageBuffer>>();
+        cancellationToken.ThrowIfCancellationRequested();
 
-        // Yielding back to the event loop is required to avoid the situation that response
-        // has already been received at the point we add the ValueTaskSource into _pendingRequests,
-        // causing the ValueTask never receive its corresponding response.
-        //
-        // If rcl_send_request allow us to indicate the sequence number, then we could have
-        // the ValueTaskSource registered before calling rcl_send_request, then no yielding is
-        // needed andthis method can just return a plain ValueTask to save some allocations.
-        long sequence;
+        if (timeout != Timeout.InfiniteTimeSpan)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(timeout, TimeSpan.Zero);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(timeout.TotalMilliseconds, uint.MaxValue - 1, nameof(timeout));
+        }
+
+        var pending = new PendingOperation<RosMessageBuffer>(true, _cancelPending);
+        bool published = false;
+
         try
         {
-            await _node.Context.YieldIfNotCurrent();
-            sequence = SendRequest(request.Data);
+            // The response path removes entries under the same gate after native take.
+            // Thus even an immediate response cannot overtake sequence publication.
+            SendAndPublish();
+            pending.SetupCancellation(cancellationToken, timeout, _node.TimeProvider);
         }
-        catch
+        catch (Exception error)
         {
-            timeoutCts.Dispose();
-            ObjectPool.Return(completion);
-            throw;
+            if (published)
+            {
+                Cancel(pending, error);
+            }
+            else
+            {
+                pending.Fail(error);
+            }
+        }
+        finally
+        {
+            pending.FinishSetup();
         }
 
-        // The request must be added to _pendingRequests before registering cancellation token callback.
-        // Because if the cancellation token is already completed upon registration, the callback is
-        // called in place, and if the request is not in _pendingRequests, the request can never complete.
+        return await pending.Task.ConfigureAwait(false);
 
-        _pendingRequests[sequence] = completion;
-
-        var cancelArgs = ObjectPool.Rent<CancellationArgs>()
-            .Reset(sequence, this, timeout, cancellationToken);
-
-        var outerReg = cancellationToken.Register(static s => ((CancellationArgs)s!).CancelWithOuterToken(), cancelArgs);
-        var disposeReg = _shutdownSignal.Token.Register(static s => ((CancellationArgs)s!).CancelAsDisposed(), cancelArgs);
-        var timeoutReg = timeoutCts.Token.Register(static s => ((CancellationArgs)s!).CancelAsTimedOut(), cancelArgs);
-
-        var completionArgs =
-            ObjectPool.Rent<CompletionArgs>()
-            .Reset(sequence, this, completion, outerReg, disposeReg, timeoutReg, timeoutCts, cancelArgs);
-
-        completion.RunContinuationsAsynchronously = true;
-        completion.OnFinally(state => ((CompletionArgs)state!).Return(), completionArgs);
-
-        // var added = _pendingRequests.GetOrAdd(sequence, completion);
-        // if (added != completion)
-        // {
-        //     Console.WriteLine("Request completed synchronously.");
-
-        //     // This is supposed to be called by ValueTaskSource after the ValueTask completes.
-        //     // But since we failed to register the completion here, which means we already received
-        //     // the response, so we call Return here to free up resources.
-        //     _pendingRequests.Remove(sequence, out _);
-        //     completionArgs.Return();
-        // }
-
-        return await new ValueTask<RosMessageBuffer>(completion, completion.Version).ConfigureAwait(false);
-
-        unsafe long SendRequest(IntPtr requestData)
+        unsafe void SendAndPublish()
         {
             using var lease = Handle.Acquire();
-            long sequence;
-            lock (Handle.NativeGate)
-                RclException.ThrowIfNonSuccess(
-                    rcl_send_request(lease.Object, requestData.ToPointer(), &sequence));
-            return sequence;
+
+            lock (_pendingGate)
+            {
+                Handle.ThrowIfOperationClosed();
+                ObjectDisposedException.ThrowIf(_pendingClosed, this);
+                long sequence;
+
+                lock (Handle.NativeGate)
+                {
+                    RclException.ThrowIfNonSuccess(rcl_send_request(lease.Object, request.Data.ToPointer(), &sequence));
+                }
+
+                pending.Key = sequence;
+                _pendingRequests.Add(sequence, pending);
+                published = true;
+            }
         }
+    }
+
+    private void Cancel(PendingOperation<RosMessageBuffer> pending, Exception error)
+    {
+        lock (_pendingGate)
+        {
+            if (!_pendingRequests.TryGetValue(pending.Key, out var current) || !ReferenceEquals(current, pending))
+            {
+                return;
+            }
+
+            _pendingRequests.Remove(pending.Key);
+        }
+
+        pending.Fail(error);
     }
 
     public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, int timeoutMilliseconds, CancellationToken cancellationToken = default)
@@ -245,140 +249,20 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, CancellationToken cancellationToken = default)
         => InvokeAsync(request, Timeout.InfiniteTimeSpan, cancellationToken);
 
-    protected override void DisposeCore()
+    protected override void OnStopped()
     {
-        if (!_shutdownSignal.IsCancellationRequested)
+        PendingOperation<RosMessageBuffer>[] snapshot;
+
+        lock (_pendingGate)
         {
-            _shutdownSignal.Cancel();
-            _shutdownSignal.Dispose();
+            _pendingClosed = true;
+            snapshot = _pendingRequests.Values.ToArray();
+            _pendingRequests.Clear();
         }
 
-        base.DisposeCore();
-    }
-
-    private class CancellationArgs
-    {
-        public long Sequence { get; private set; }
-
-        public RclClientBase This { get; private set; } = null!;
-
-        public TimeSpan Timeout { get; private set; }
-
-        public CancellationToken OuterCancellation { get; private set; }
-
-        public CancellationArgs Reset(
-            long sequence,
-            RclClientBase @this,
-            TimeSpan timeout,
-            CancellationToken outerCancellationToken)
+        foreach (var pending in snapshot)
         {
-            Sequence = sequence;
-            This = @this;
-            Timeout = timeout;
-            OuterCancellation = outerCancellationToken;
-            return this;
-        }
-
-        public void CancelWithOuterToken()
-        {
-            if (This._pendingRequests.TryRemove(Sequence, out var ctx))
-            {
-                ctx.SetException(new OperationCanceledException(OuterCancellation));
-            }
-        }
-
-        public void CancelAsDisposed()
-        {
-            if (This._pendingRequests.TryRemove(Sequence, out var ctx))
-            {
-                ctx.SetException(new ObjectDisposedException(This.GetType().Name));
-            }
-        }
-
-        public void CancelAsTimedOut()
-        {
-            if (This._pendingRequests.TryRemove(Sequence, out var ctx))
-            {
-                ctx.SetException(new TimeoutException($"ROS service request timed out after {Timeout}."));
-            }
-        }
-
-        public void Return()
-        {
-            Sequence = default;
-            This = default!;
-            Timeout = default;
-            OuterCancellation = default;
-
-            ObjectPool.Return(this);
-        }
-    }
-
-    private class CompletionArgs
-    {
-        public long Sequence { get; private set; }
-
-        public RclClientBase This { get; private set; } = null!;
-
-        public ManualResetValueTaskSource<RosMessageBuffer> Completion { get; private set; } = null!;
-
-        public CancellationTokenRegistration OuterCanellationReg { get; private set; }
-
-        public CancellationTokenRegistration ShutdownCanellationReg { get; private set; }
-
-        public CancellationTokenRegistration TimeoutCanellationReg { get; private set; }
-
-        public CancellationTokenSource TimeoutSource { get; private set; } = null!;
-
-        public CancellationArgs CancellationArgs { get; private set; } = null!;
-
-        public CompletionArgs Reset(
-            long sequence,
-            RclClientBase @this,
-            ManualResetValueTaskSource<RosMessageBuffer> completion,
-            CancellationTokenRegistration outerCancellation,
-            CancellationTokenRegistration shutdownCancellation,
-            CancellationTokenRegistration timeoutCancellation,
-            CancellationTokenSource timeoutSource,
-            CancellationArgs canelArgs)
-        {
-            Sequence = sequence;
-            This = @this;
-            Completion = completion;
-            OuterCanellationReg = outerCancellation;
-            ShutdownCanellationReg = shutdownCancellation;
-            TimeoutCanellationReg = timeoutCancellation;
-            TimeoutSource = timeoutSource;
-            CancellationArgs = canelArgs;
-            return this;
-        }
-
-        public void Return()
-        {
-            // Cancel CancellationTokenRegistrations
-            OuterCanellationReg.Dispose();
-            ShutdownCanellationReg.Dispose();
-            TimeoutCanellationReg.Dispose();
-
-            TimeoutSource.Dispose();
-
-            // Reset and return the ValueTaskSource
-            Completion.Reset();
-            ObjectPool.Return(Completion);
-
-            // Reset and return the CancellationArgs
-            CancellationArgs.Return();
-
-            // Reset fields and return current instance to the pool.
-            Sequence = default;
-            @This = default!;
-            Completion = default!;
-            OuterCanellationReg = default;
-            ShutdownCanellationReg = default;
-            TimeoutCanellationReg = default;
-            TimeoutSource = default!;
-            CancellationArgs = default!;
-            ObjectPool.Return(this);
+            pending.Fail(new ObjectDisposedException(GetType().Name));
         }
     }
 }

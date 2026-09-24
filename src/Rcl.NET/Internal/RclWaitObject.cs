@@ -4,213 +4,181 @@ namespace Rcl.Internal;
 
 internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObject where T : RclObjectHandle
 {
-    private SpinLock _syncRoot = new();
+    private readonly object _pendingGate = new();
+    private readonly Action<PendingOperation<bool>, Exception> _cancelPending;
     private WaitHandleRegistration _registration;
+    private readonly Dictionary<long, PendingOperation<bool>> _awaiters = new();
+    private readonly List<PendingOperation<bool>> _awaiterSnapshot = new();
+    private long _id;
+    private int _stopped, _detached;
 
-    private readonly Dictionary<int, ManualResetValueTaskSource<bool>> _awaiters = new();
-    private readonly List<ManualResetValueTaskSource<bool>> _awaiterSnapshot = new();
+    protected bool IsDisposed => Volatile.Read(ref _stopped) != 0;
 
-    private int _id, _disposed;
+    protected RclWaitObject(RclContext context, T handle) : base(context, handle) => _cancelPending = Cancel;
 
-    protected bool IsDisposed => _disposed != 0;
-
-    protected RclWaitObject(RclContext context, T handle) : base(context, handle)
-    {
-
-    }
-
-    /// <summary>
-    /// Register the wait handle in RclContext.
-    /// </summary>
-    /// <remarks>
-    /// This method must be called AFTER the implementation is ready to receive events.
-    /// </remarks>
+    // Publish only after the derived implementation is ready for callbacks.
     protected void RegisterWaitHandle()
     {
-        try { _registration = Context.Register(this, OnSignalReceived, this); }
-        catch { Dispose(); throw; }
+        try
+        {
+            Context.Register(Handle, OnSignalReceived, this, ref _registration,
+                static state => ((RclWaitObject<T>)state!).Stop(),
+                static state => ((RclWaitObject<T>)state!).Detached());
+        }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     protected virtual void OnWaitCompleted()
     {
+    }
 
+    protected virtual void OnStopped()
+    {
+    }
+
+    protected virtual void OnDetached()
+    {
+    }
+
+    private void Detached()
+    {
+        if (Interlocked.Exchange(ref _detached, 1) == 0)
+        {
+            OnDetached();
+        }
     }
 
     private static void OnSignalReceived(RclObjectHandle handle, object? state)
     {
         var self = (RclWaitObject<T>)state!;
 
-        if (Volatile.Read(ref self._disposed) == 1)
+        if (self.IsDisposed)
         {
             return;
         }
 
         self.OnWaitCompleted();
 
-        using (ScopedLock.Lock(ref self._syncRoot))
+        lock (self._pendingGate)
         {
-            // Snapshot awaiters to prevent prematurely completing "future" awaiters
-            // which will be registered in synchronous continuation.
-            foreach (var (_, v) in self._awaiters)
-            {
-                self._awaiterSnapshot.Add(v);
-            }
-
-            // In case RunContinuationsAsynchronously = true,
-            // callbacks registered with OnCompletedInternal are executed asynchronously,
-            // which means the awaiter is not guaranteed to be removed before next trigger.
-            // So we remove the awaiter here to avoid calling SetResult twice on the same
-            // ValueTaskSource.
+            self._awaiterSnapshot.AddRange(self._awaiters.Values);
             self._awaiters.Clear();
         }
 
-        foreach (var awaiter in self._awaiterSnapshot)
+        try
         {
-            awaiter.SetResult(true);
+            foreach (var pending in self._awaiterSnapshot)
+            {
+                pending.Succeed(true);
+            }
         }
-        self._awaiterSnapshot.Clear();
-    }
-
-    private void AddAwaiter(int token, ManualResetValueTaskSource<bool> item)
-    {
-        using (ScopedLock.Lock(ref _syncRoot))
+        finally
         {
-            _awaiters[token] = item;
+            self._awaiterSnapshot.Clear();
         }
     }
 
-    private bool RemoveAwaiter(int token)
+    private void Cancel(PendingOperation<bool> pending, Exception error)
     {
-        using (ScopedLock.Lock(ref _syncRoot))
+        lock (_pendingGate)
         {
-            return _awaiters.Remove(token);
+            if (!_awaiters.TryGetValue(pending.Key, out var current) || !ReferenceEquals(current, pending))
+            {
+                return;
+            }
+
+            _awaiters.Remove(pending.Key);
         }
+
+        pending.Fail(error);
     }
 
     public ValueTask WaitOneAsync(bool runContinuationAsynchronously, CancellationToken cancellationToken = default)
     {
         Handle.ThrowIfOperationClosed();
-        if (Volatile.Read(ref _disposed) == 1)
+        var pending = new PendingOperation<bool>(runContinuationAsynchronously, _cancelPending)
         {
-            throw new ObjectDisposedException(GetType().Name);
+            Key = Interlocked.Increment(ref _id)
+        };
+        bool published = false;
+
+        try
+        {
+            lock (_pendingGate)
+            {
+                Handle.ThrowIfOperationClosed();
+                ObjectDisposedException.ThrowIf(IsDisposed, this);
+                _awaiters.Add(pending.Key, pending);
+                published = true;
+            }
+
+            pending.SetupCancellation(cancellationToken, Timeout.InfiniteTimeSpan);
+        }
+        catch (Exception error)
+        {
+            if (published)
+            {
+                Cancel(pending, error);
+            }
+            else
+            {
+                pending.Fail(error);
+            }
+        }
+        finally
+        {
+            pending.FinishSetup();
         }
 
-        // TODO: Maybe use private ObjectPools?
-        var id = Interlocked.Increment(ref _id);
-        var tcs = ObjectPool.Rent<ManualResetValueTaskSource<bool>>();
-        tcs.RunContinuationsAsynchronously = runContinuationAsynchronously;
-
-        var cancellationArgs = ObjectPool.Rent<CancellationCallbackArgs>()
-            .Reset(this, id, tcs, cancellationToken);
-        var reg = cancellationToken.Register(
-            static state => ((CancellationCallbackArgs)state!).TryCancel(), cancellationArgs);
-
-        var completionArg =
-            ObjectPool.Rent<CompletedCallbackArgs>()
-            .Reset(this, reg, id, tcs, cancellationArgs);
-        tcs.OnFinally(static state =>
-            ((RclWaitObject<T>.CompletedCallbackArgs)state!).Return(), completionArg);
-
-        AddAwaiter(id, tcs);
-        return new ValueTask(tcs, tcs.Version);
+        return pending.VoidTask;
     }
 
     public ValueTask WaitOneAsync(CancellationToken cancellationToken = default)
         => WaitOneAsync(true, cancellationToken);
 
+    private void Stop()
+    {
+        PendingOperation<bool>[] snapshot;
+
+        lock (_pendingGate)
+        {
+            if (_stopped != 0)
+            {
+                return;
+            }
+
+            Volatile.Write(ref _stopped, 1);
+            snapshot = _awaiters.Values.ToArray();
+            _awaiters.Clear();
+        }
+
+        try
+        {
+            foreach (var pending in snapshot)
+            {
+                pending.Fail(new ObjectDisposedException(GetType().Name));
+            }
+        }
+        finally
+        {
+            OnStopped();
+        }
+    }
+
     protected override void DisposeCore()
     {
-        if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
+        RclContext.RunCleanup(static state => ((RclWaitObject<T>)state!).Stop(), this);
+        _registration.Dispose();
+
+        if (_registration.IsEmpty)
         {
-            _registration.Dispose();
-            base.DisposeCore();
-
-            Dictionary<int, ManualResetValueTaskSource<bool>> snapshot;
-            using (ScopedLock.Lock(ref _syncRoot))
-            {
-                snapshot = new(_awaiters);
-                _awaiters.Clear();
-            }
-
-            foreach (var (_, v) in snapshot)
-            {
-                v.SetException(new ObjectDisposedException(GetType().Name));
-            }
-        }
-    }
-
-    private class CancellationCallbackArgs
-    {
-        public RclWaitObject<T> This { get; private set; } = null!;
-        public int Id { get; private set; }
-        public ManualResetValueTaskSource<bool> Completion { get; private set; } = null!;
-        public CancellationToken Cancellation { get; private set; }
-
-        public CancellationCallbackArgs Reset(
-            RclWaitObject<T> self,
-            int id,
-            ManualResetValueTaskSource<bool> completion,
-            CancellationToken cancellationToken)
-        {
-            This = self;
-            Id = id;
-            Completion = completion;
-            Cancellation = cancellationToken;
-            return this;
+            Context.ScheduleCleanup(static state => ((RclWaitObject<T>)state!).Detached(), this);
         }
 
-        public void TryCancel()
-        {
-            if (This.RemoveAwaiter(Id))
-            {
-                Completion.SetException(new OperationCanceledException(Cancellation));
-            }
-        }
-
-        public void Return()
-        {
-            This = default!;
-            Id = default;
-            Completion = default!;
-            Cancellation = default;
-
-            ObjectPool.Return(this);
-        }
-    }
-
-    private class CompletedCallbackArgs
-    {
-        public RclWaitObject<T> This { get; private set; } = null!;
-        public CancellationTokenRegistration Registration { get; private set; }
-        public int Id { get; private set; }
-        public ManualResetValueTaskSource<bool> Completion { get; private set; } = null!;
-
-        public CancellationCallbackArgs CancellationArgs { get; private set; } = null!;
-
-        public CompletedCallbackArgs Reset(
-            RclWaitObject<T> self,
-            CancellationTokenRegistration reg,
-            int id,
-            ManualResetValueTaskSource<bool> completion,
-            CancellationCallbackArgs cancellationArgs)
-        {
-            This = self;
-            Registration = reg;
-            Id = id;
-            Completion = completion;
-            CancellationArgs = cancellationArgs;
-            return this;
-        }
-
-        public void Return()
-        {
-            Registration.Dispose();
-            Completion.Reset();
-
-            CancellationArgs.Return();
-
-            ObjectPool.Return(Completion);
-            ObjectPool.Return(this);
-        }
+        base.DisposeCore();
     }
 }

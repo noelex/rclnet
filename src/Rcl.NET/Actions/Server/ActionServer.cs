@@ -7,6 +7,7 @@ using Rosidl.Messages.UniqueIdentifier;
 using Rosidl.Runtime;
 using System.Diagnostics;
 using System.Text;
+
 namespace Rcl.Actions.Server;
 
 internal class ActionServer : IActionServer
@@ -49,6 +50,7 @@ internal class ActionServer : IActionServer
         _functions = new MessageBufferHelper(typesupportName);
 
         var done = false;
+
         try
         {
             _sendGoalService = new IntrospectionService(node,
@@ -125,6 +127,7 @@ internal class ActionServer : IActionServer
                 _goals.Remove(goal.GoalId);
                 goal.Dispose();
             }
+
             candidates.Clear();
         }
     }
@@ -144,7 +147,9 @@ internal class ActionServer : IActionServer
         };
         var goal = _typesupport.GoalService.Request.GetMemberPointer(request.Data, 1);
 
-        if (!_goals.ContainsKey(goalId) && _handler.CanAccept(goalId, new RosMessageBuffer(goal, static (a, b) => { })))
+        if (!_goals.ContainsKey(goalId) && _handler.CanAccept(goalId, new RosMessageBuffer(goal, static (a, b) =>
+{
+})))
         {
             // Make a copy of the goal because we don't own the request buffer.
             var copiedGoal = _functions.CreateGoalBuffer();
@@ -238,12 +243,14 @@ internal class ActionServer : IActionServer
         var goalId = RosidlRuntime.NativeAbi == RosidlNativeAbi.V1
             ? request.AsRef<GetResultRequest>().GoalId.ToGuid()
             : request.AsRef<GetResultRequestV2>().GoalId.ToGuid();
+
         if (_goals.TryGetValue(goalId, out var ctx))
         {
             await ctx.Completion.WaitAsync(cancellationToken).ConfigureAwait(false);
 
             // ActionGoalStatus maps directly to the ABI-independent int8 status member.
             _typesupport.ResultService.Response.UnsafeAsRef<ActionGoalStatus>(response.Data, 0) = ctx.Status;
+
             if (ctx.Status == ActionGoalStatus.Succeeded)
             {
                 _functions.CopyResult(ctx.ResultBuffer.Data,
@@ -258,7 +265,11 @@ internal class ActionServer : IActionServer
             if (_resultTimeout == TimeSpan.Zero)
             {
                 await _node.Context.YieldIfNotCurrent();
-                using (ctx) _goals.Remove(ctx.GoalId);
+
+                using (ctx)
+                {
+                    _goals.Remove(ctx.GoalId);
+                }
             }
         }
         else
@@ -353,45 +364,53 @@ internal class ActionServer : IActionServer
         {
             ref var value = ref response.AsRef<CancelGoalServiceResponse.Priv>();
             value.ReturnCode = returnCode;
+
             if (goals.Length == 0)
             {
                 return;
             }
 
             Span<GoalInfo.Priv> nativeGoals = stackalloc GoalInfo.Priv[goals.Length];
+
             for (var i = 0; i < goals.Length; i++)
             {
                 nativeGoals[i].GoalId.CopyFrom(goals[i].GoalId);
                 nativeGoals[i].Stamp.CopyFrom(goals[i].CreationTime);
             }
+
             value.GoalsCanceling.CopyFrom(nativeGoals);
             return;
         }
 
         ref var valueV2 = ref response.AsRef<CancelGoalServiceResponse.PrivV2>();
         valueV2.ReturnCode = returnCode;
+
         if (goals.Length == 0)
         {
             return;
         }
 
         Span<GoalInfo.PrivV2> nativeGoalsV2 = stackalloc GoalInfo.PrivV2[goals.Length];
+
         for (var i = 0; i < goals.Length; i++)
         {
             nativeGoalsV2[i].GoalId.CopyFrom(goals[i].GoalId);
             nativeGoalsV2[i].Stamp.CopyFrom(goals[i].CreationTime);
         }
+
         valueV2.GoalsCanceling.CopyFrom(nativeGoalsV2);
     }
 
     private void NotifyStatusChange()
     {
         using var statusBuffer = RosMessageBuffer.Create<GoalStatusArray>();
+
         if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
         {
             ref var statusArray = ref statusBuffer.AsRef<GoalStatusArray.Priv>();
             Span<GoalStatus.Priv> goals = stackalloc GoalStatus.Priv[_goals.Count];
             var index = 0;
+
             foreach (var goal in _goals.Values)
             {
                 goals[index].GoalInfo.GoalId.CopyFrom(goal.GoalId);
@@ -399,6 +418,7 @@ internal class ActionServer : IActionServer
                 goals[index].Status = (sbyte)goal.Status;
                 index++;
             }
+
             statusArray.StatusList.CopyFrom(goals);
         }
         else
@@ -406,6 +426,7 @@ internal class ActionServer : IActionServer
             ref var statusArray = ref statusBuffer.AsRef<GoalStatusArray.PrivV2>();
             Span<GoalStatus.PrivV2> goals = stackalloc GoalStatus.PrivV2[_goals.Count];
             var index = 0;
+
             foreach (var goal in _goals.Values)
             {
                 goals[index].GoalInfo.GoalId.CopyFrom(goal.GoalId);
@@ -413,6 +434,7 @@ internal class ActionServer : IActionServer
                 goals[index].Status = (sbyte)goal.Status;
                 index++;
             }
+
             statusArray.StatusList.CopyFrom(goals);
         }
 
@@ -429,6 +451,7 @@ internal class ActionServer : IActionServer
             _node.Context.SynchronizationContext.Send(static (state) =>
             {
                 var self = (ActionServer)state!;
+
                 foreach (var ctx in self._goals.Values)
                 {
                     ctx.Dispose();
@@ -436,7 +459,6 @@ internal class ActionServer : IActionServer
 
                 self._goals.Clear();
             }, this);
-
 
             _feedbackPublisher?.Dispose();
             _statusPublisher?.Dispose();
@@ -462,6 +484,7 @@ internal class ActionServer : IActionServer
             CreationTime = accepted;
 
             _feedbackMessageBuffer = _server._typesupport.FeedbackMessage.CreateBuffer();
+
             if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
             {
                 _server._typesupport.FeedbackMessage.AsRef<UUID.Priv>(_feedbackMessageBuffer.Data, 0).CopyFrom(id);

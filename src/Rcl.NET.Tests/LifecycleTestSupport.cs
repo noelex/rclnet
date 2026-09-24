@@ -9,6 +9,7 @@ internal sealed class LifecycleCheckpoint : IDisposable
     private readonly TaskCompletionSource _entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public Task Entered => _entered.Task;
+
     public bool TimedOut { get; private set; }
 
     public void Pause()

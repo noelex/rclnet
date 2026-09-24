@@ -508,7 +508,6 @@ namespace Rcl.Interop
             public RclCommon.rcutils_allocator_t allocator;
         }
 
-
         /// <summary>
         /// Allocation of memory for an rmw publisher
         /// </summary>
@@ -2963,7 +2962,6 @@ namespace Rcl.Interop
         [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
         public static extern RclCommon.rmw_qos_profile_t* rcl_publisher_get_actual_qos(RclCommon.rcl_publisher_t* publisher);
 
-
         /// <summary>
         /// Return a rcl_subscription_t struct with members set to `NULL`.
         /// </summary>
@@ -4317,6 +4315,12 @@ namespace Rcl.Interop
         /// </remarks>
         [DllImport("rcl", CallingConvention = CallingConvention.Cdecl)]
         public static extern rcl_ret_t rcl_wait_set_fini(RclCommon.rcl_wait_set_t* wait_set);
+
+        /// <summary>Clears all native entity references from an initialized wait set.</summary>
+        /// <param name="wait_set">The wait set to clear.</param>
+        /// <returns>The native operation result.</returns>
+        [DllImport("rcl", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        public static extern rcl_ret_t rcl_wait_set_clear(RclCommon.rcl_wait_set_t* wait_set);
 
         /// <summary>
         /// Store a pointer to the given subscription in the next empty spot in the set.

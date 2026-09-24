@@ -45,6 +45,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         _typesupport = new ActionIntrospection(TAction.GetTypeSupportHandle());
 
         var done = false;
+
         try
         {
             _cancelGoalClient = new(node, cancelGoalServiceName,
@@ -95,9 +96,13 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
     private async Task ReadFeedbacksAsync(CancellationToken cancellationToken = default)
     {
         var introspection = _typesupport.FeedbackMessage;
+
         await foreach (var buffer in _feedbackSubscription.ReadAllAsync(cancellationToken).ConfigureAwait(false))
         {
-            using (buffer) ProcessFeedbackMessage(introspection, buffer);
+            using (buffer)
+            {
+                ProcessFeedbackMessage(introspection, buffer);
+            }
         }
     }
 
@@ -115,6 +120,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
             RosidlNativeAbi.V2 => introspection.AsRef<UUID.PrivV2>(buffer.Data, 0).ToGuid(),
             _ => throw new UnreachableException(),
         };
+
         if (!_goals.TryGetValue(goalId, out var ctx) || !ctx.HasFeedbackListeners)
         {
             return;
@@ -129,7 +135,10 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
     {
         await foreach (var buffer in _statusSubscription.ReadAllAsync(cancellationToken).ConfigureAwait(false))
         {
-            using (buffer) ProcessStatusArray(buffer);
+            using (buffer)
+            {
+                ProcessStatusArray(buffer);
+            }
         }
     }
 
@@ -169,6 +178,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         // bool accepted;
         // Time.Priv stamp;
         Debug.Assert(_typesupport.GoalService.Response.MemberCount == 2);
+
         if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
         {
             Debug.Assert(_typesupport.GoalService.Response.SizeOf == Unsafe.SizeOf<SendGoalResponse>());
@@ -200,7 +210,10 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         }
         finally
         {
-            if (!accepted) tracker.Dispose();
+            if (!accepted)
+            {
+                tracker.Dispose();
+            }
         }
     }
 
@@ -234,7 +247,10 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         }
         finally
         {
-            if (!accepted) tracker.Dispose();
+            if (!accepted)
+            {
+                tracker.Dispose();
+            }
         }
     }
 
@@ -255,6 +271,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         Debug.Assert(requestIntrospection.MemberCount == 2);
         Debug.Assert(requestIntrospection.GetMemberName(0) == "goal_id");
         Debug.Assert(requestIntrospection.GetMemberName(1) == "goal");
+
         if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
         {
             requestIntrospection.AsRef<UUID.Priv>(requestBuffer, 0).CopyFrom(goalId);
@@ -263,6 +280,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
         {
             requestIntrospection.AsRef<UUID.PrivV2>(requestBuffer, 0).CopyFrom(goalId);
         }
+
         if (!_bufferHelper.CopyGoal(goalBuffer, requestIntrospection.GetMemberPointer(requestBuffer, 1)))
         {
             throw new RclException("Unable to copy goal buffer, send goal failed.");

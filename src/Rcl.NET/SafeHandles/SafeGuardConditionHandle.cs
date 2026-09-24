@@ -11,7 +11,10 @@ unsafe class SafeGuardConditionHandle : RclObjectHandle<rcl_guard_condition_t>
                 SetDependencies(context);
                 *DangerousObject = rcl_get_zero_initialized_guard_condition();
                 RclException.ThrowIfNonSuccess(
-                    rcl_guard_condition_init(DangerousObject, context.DangerousObject, new() { allocator = RclAllocator.Default.Object }));
+                    rcl_guard_condition_init(DangerousObject, context.DangerousObject, new()
+                    {
+                        allocator = RclAllocator.Default.Object
+                    }));
                 MarkInitialized();
             }
         }
@@ -23,7 +26,9 @@ unsafe class SafeGuardConditionHandle : RclObjectHandle<rcl_guard_condition_t>
     }
 
     private SafeGuardConditionHandle(rcl_guard_condition_t* handle, SafeNodeHandle owner)
-        : base(new(handle), owner) { }
+        : base(new(handle), owner)
+    {
+    }
 
     internal static SafeGuardConditionHandle BorrowGraphGuard(SafeNodeHandle node)
     {

@@ -17,6 +17,7 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
             {
                 SetDependencies(context, clock);
                 *DangerousObject = rcl_get_zero_initialized_timer();
+
                 using (ScopedLock.Lock(ref _clock.SyncRoot))
                 {
                     if (RosEnvironment.IsSupported(RosEnvironment.Jazzy))
@@ -32,6 +33,7 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
                               period, null, RclAllocator.Default.Object));
                     }
                 }
+
                 MarkInitialized();
             }
         }

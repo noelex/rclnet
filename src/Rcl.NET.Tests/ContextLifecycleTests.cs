@@ -22,6 +22,7 @@ public class ContextLifecycleTests
         using var checkpoint = new LifecycleCheckpoint();
         var context = new RclContext(TestConfig.DefaultContextArguments);
         context.SynchronizationContext.Post(_ => checkpoint.Pause(), null);
+
         try
         {
             await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
@@ -50,6 +51,7 @@ public class ContextLifecycleTests
             context.Dispose();
             returned.SetResult(context.IsCurrent && !context.DisposeAsync().IsCompleted);
         }, null);
+
         try
         {
             Assert.True(await returned.Task.WaitAsync(TimeSpan.FromSeconds(10)));

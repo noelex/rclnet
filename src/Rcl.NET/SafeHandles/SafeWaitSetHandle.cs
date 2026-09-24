@@ -15,7 +15,11 @@ internal unsafe sealed class SafeWaitSetHandle : RclObjectHandle<rcl_wait_set_t>
                 MarkInitialized();
             }
         }
-        catch { Dispose(); throw; }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     protected override bool ReleaseHandleCore(rcl_wait_set_t* ptr)

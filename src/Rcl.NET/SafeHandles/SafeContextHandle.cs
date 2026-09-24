@@ -11,13 +11,24 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
     private bool _shutdownSucceeded = true;
 
     internal object LifecycleGate { get; } = new();
-    internal static int LoggingReferences { get { lock (LoggingGate) return s_loggingReferences; } }
+
+    internal static int LoggingReferences
+    {
+        get
+        {
+            lock (LoggingGate)
+            {
+                return s_loggingReferences;
+            }
+        }
+    }
 
     public SafeContextHandle(string[] args)
     {
         SetShutdownDomain(this);
         rcl_init_options_t opts = default;
         bool optionsInitialized = false;
+
         try
         {
             opts = rcl_get_zero_initialized_init_options();
@@ -25,6 +36,7 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
             RclException.ThrowIfNonSuccess(rcl_init_options_init(&opts, RclAllocator.Default.Object));
             optionsInitialized = true;
             int argc = args.Length;
+
             if (argc > 0)
             {
                 var bufferSize = InteropHelpers.GetUtf8BufferSize(args);
@@ -37,12 +49,15 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
             {
                 RclException.ThrowIfNonSuccess(rcl_init(0, null, &opts, DangerousObject));
             }
+
             MarkInitialized();
+
             lock (LoggingGate)
             {
                 if (s_loggingReferences == 0)
                 {
                     var allocator = RclAllocator.Default.Object;
+
                     try
                     {
                         RclException.ThrowIfNonSuccess(rcl_logging_configure(&DangerousObject->global_arguments, &allocator));
@@ -50,11 +65,19 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
                     catch
                     {
                         // Failed configure can leave rosout/external logging partially initialized.
-                        try { CheckReleaseResult(rcl_logging_fini(), nameof(rcl_logging_fini)); }
-                        catch (Exception error) { ReportReleaseException(nameof(rcl_logging_fini), error); }
+                        try
+                        {
+                            CheckReleaseResult(rcl_logging_fini(), nameof(rcl_logging_fini));
+                        }
+                        catch (Exception error)
+                        {
+                            ReportReleaseException(nameof(rcl_logging_fini), error);
+                        }
+
                         throw;
                     }
                 }
+
                 s_loggingReferences++;
                 _ownsLogging = true;
             }
@@ -68,15 +91,24 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
         {
             if (optionsInitialized)
             {
-                try { CheckReleaseResult(rcl_init_options_fini(&opts), nameof(rcl_init_options_fini)); }
-                catch (Exception error) { ReportReleaseException(nameof(rcl_init_options_fini), error); }
+                try
+                {
+                    CheckReleaseResult(rcl_init_options_fini(&opts), nameof(rcl_init_options_fini));
+                }
+                catch (Exception error)
+                {
+                    ReportReleaseException(nameof(rcl_init_options_fini), error);
+                }
             }
         }
     }
 
     internal override bool TryBeginClose()
     {
-        lock (LifecycleGate) return base.TryBeginClose();
+        lock (LifecycleGate)
+        {
+            return base.TryBeginClose();
+        }
     }
 
     // The event loop retains the owner ref while requesting shutdown. Children may
@@ -86,14 +118,24 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
         lock (LifecycleGate)
         {
             TryBeginClose();
-            if (_shutdownRequested) return _shutdownSucceeded;
+
+            if (_shutdownRequested)
+            {
+                return _shutdownSucceeded;
+            }
+
             _shutdownRequested = true;
-            try { _shutdownSucceeded = CheckReleaseResult(rcl_shutdown(DangerousObject), nameof(rcl_shutdown)); }
+
+            try
+            {
+                _shutdownSucceeded = CheckReleaseResult(rcl_shutdown(DangerousObject), nameof(rcl_shutdown));
+            }
             catch (Exception error)
             {
                 _shutdownSucceeded = false;
                 ReportReleaseException(nameof(rcl_shutdown), error);
             }
+
             return _shutdownSucceeded;
         }
     }
@@ -101,7 +143,11 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
     protected override bool ReleaseHandleCore(rcl_context_t* ptr)
     {
         bool success = Shutdown();
-        try { return CheckReleaseResult(rcl_context_fini(ptr), nameof(rcl_context_fini)) && success; }
+
+        try
+        {
+            return CheckReleaseResult(rcl_context_fini(ptr), nameof(rcl_context_fini)) && success;
+        }
         catch (Exception error)
         {
             ReportReleaseException(nameof(rcl_context_fini), error);
@@ -113,7 +159,11 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
     {
         lock (LoggingGate)
         {
-            if (!_ownsLogging) return true;
+            if (!_ownsLogging)
+            {
+                return true;
+            }
+
             _ownsLogging = false;
             return --s_loggingReferences != 0 || CheckReleaseResult(rcl_logging_fini(), nameof(rcl_logging_fini));
         }

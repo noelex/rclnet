@@ -51,29 +51,44 @@ unsafe class ReusableTimer : IDisposable
         var handle = new SafeTimerHandle(context.Handle, clock.Handle, (long)period.TotalNanoseconds);
         _context = context;
         _handle = handle;
+
         try
         {
-            _registration = context.Register(handle, OnWaitCompleted, cts);
+            context.Register(handle, OnWaitCompleted, cts, ref _registration);
             context.DefaultLogger.LogDebug($"Started new ReusableTimer {handle.DangerousGetHandle()} with period {period}.");
         }
-        catch { Reset(); throw; }
+        catch
+        {
+            Reset();
+            throw;
+        }
     }
 
     public void Reset()
     {
         var ctx = Interlocked.Exchange(ref _context, null);
+
         if (ctx != null)
         {
             var handle = _handle!;
-            handle.TryBeginClose();
+
+            lock (ctx.RegistrationGate)
+            {
+                handle.TryBeginClose();
+            }
+
             var registration = _registration;
             _registration = WaitHandleRegistration.Empty;
             _handle = null;
-            try { ctx.DefaultLogger.LogDebug($"Released ReusableTimer {handle.DangerousGetHandle()}."); }
+
+            try
+            {
+                ctx.DefaultLogger.LogDebug($"Released ReusableTimer {handle.DangerousGetHandle()}.");
+            }
             finally
             {
                 registration.Dispose();
-                ctx.SynchronizationContext.Post(static s => ((IDisposable)s!).Dispose(), handle);
+                ctx.AfterDetach(registration, static s => ((IDisposable)s!).Dispose(), handle);
             }
         }
     }
@@ -124,10 +139,7 @@ public static class CancellationTokenSourceExtensions
     public static TimeoutRegistration CancelAfter(
         this CancellationTokenSource source, TimeSpan timeout, IRclClock clock, IRclContext context)
     {
-        if (timeout < Timeout.InfiniteTimeSpan)
-        {
-            throw new ArgumentOutOfRangeException(nameof(timeout), "Specified timeout value is out of range.");
-        }
+        ArgumentOutOfRangeException.ThrowIfLessThan(timeout, Timeout.InfiniteTimeSpan);
 
         if (timeout == Timeout.InfiniteTimeSpan)
         {
@@ -147,8 +159,16 @@ public static class CancellationTokenSourceExtensions
 
         var pool = rclContext.GetOrAddFeature<ObjectPool<ReusableTimer>>(ReusableTimerPoolFeature, x => new());
         var timer = pool.Rent();
-        try { timer.Start(source, rclContext, rclClock.Impl, timeout); }
-        catch { pool.Return(timer); throw; }
+
+        try
+        {
+            timer.Start(source, rclContext, rclClock.Impl, timeout);
+        }
+        catch
+        {
+            pool.Return(timer);
+            throw;
+        }
 
         return new TimeoutRegistration(pool, timer);
     }

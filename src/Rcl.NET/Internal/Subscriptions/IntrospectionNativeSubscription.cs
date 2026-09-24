@@ -24,7 +24,11 @@ internal unsafe class IntrospectionNativeSubscription
             _introspection = MessageIntrospection.Create(typeSupport);
             RegisterWaitHandle();
         }
-        catch { Dispose(); throw; }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     protected override unsafe RosMessageBuffer TakeMessage()

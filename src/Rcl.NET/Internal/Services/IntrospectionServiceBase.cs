@@ -47,8 +47,11 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
         get
         {
             using var lease = Handle.Acquire();
+
             lock (Handle.NativeGate)
+            {
                 return rcl_service_is_valid(lease.Object);
+            }
         }
     }
 
@@ -59,11 +62,15 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
         var requestBuffer = CreateRequestBuffer();
 
         rcl_ret_t result;
+
         try
         {
             using var lease = Handle.Acquire();
+
             lock (Handle.NativeGate)
+            {
                 result = rcl_take_request_with_info(lease.Object, &header, requestBuffer.Data.ToPointer());
+            }
         }
         catch
         {
@@ -73,7 +80,18 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
 
         if (result == rcl_ret_t.RCL_RET_OK)
         {
-            var responseBuffer = CreateResponseBuffer();
+            RosMessageBuffer responseBuffer;
+
+            try
+            {
+                responseBuffer = CreateResponseBuffer();
+            }
+            catch
+            {
+                requestBuffer.Dispose();
+                throw;
+            }
+
             DispatchRequest(requestBuffer, responseBuffer, header.request_id);
         }
         else
@@ -92,8 +110,11 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
     protected unsafe rcl_ret_t SendResponse(rmw_request_id_t id, IntPtr data)
     {
         using var lease = Handle.Acquire();
+
         lock (Handle.NativeGate)
+        {
             return rcl_send_response(lease.Object, &id, data.ToPointer());
+        }
     }
 
     public unsafe void ConfigureIntrospection(ServiceIntrospectionState state, QosProfile? qos = null)
@@ -108,6 +129,7 @@ internal abstract class IntrospectionServiceBase : RclWaitObject<SafeServiceHand
         {
             using var lease = Handle.Acquire();
             Handle.ThrowIfDescendantClosed();
+
             lock (Handle.NativeGate)
             {
                 var ret = RclIron.rcl_service_configure_service_introspection(

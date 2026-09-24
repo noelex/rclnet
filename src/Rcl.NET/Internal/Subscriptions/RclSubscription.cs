@@ -27,7 +27,6 @@ internal unsafe class RclSubscription<T> :
 
     private readonly ConcurrentDictionary<int, IObserver<T>> _observers = new();
     private int _subscriberId;
-    private int _bufferDisposeRequested;
 
     public RclSubscription(
         RclNodeImpl node,
@@ -36,6 +35,7 @@ internal unsafe class RclSubscription<T> :
         : base(node.Context, new(node.Handle, T.GetTypeSupportHandle(), topicName, options))
     {
         var completelyInitialized = false;
+
         try
         {
             using var lease = Handle.Acquire();
@@ -72,7 +72,10 @@ internal unsafe class RclSubscription<T> :
         }
         finally
         {
-            if (!completelyInitialized) Dispose();
+            if (!completelyInitialized)
+            {
+                Dispose();
+            }
         }
     }
 
@@ -122,6 +125,7 @@ internal unsafe class RclSubscription<T> :
             {
                 var msg = (T)T.CreateFrom(_messageBuffer.Data, _textEncoding);
                 _messageChannel.Writer.TryWrite(msg);
+
                 foreach (var (_, obs) in _observers)
                 {
                     obs.OnNext(msg);
@@ -141,33 +145,38 @@ internal unsafe class RclSubscription<T> :
 
     protected override void DisposeCore()
     {
-        _livelinessEvent?.Dispose();
-        _deadlineMissedEvent?.Dispose();
-        _qosEvent?.Dispose();
+        RclContext.DisposeResource(_livelinessEvent);
+        RclContext.DisposeResource(_deadlineMissedEvent);
+        RclContext.DisposeResource(_qosEvent);
 
-        // Stop future receives before queuing buffer destruction on the event loop.
         base.DisposeCore();
-        if (Interlocked.Exchange(ref _bufferDisposeRequested, 1) == 0)
+    }
+
+    protected override void OnDetached()
+    {
+        // Native take and synchronous observers have exited before this buffer is destroyed.
+        _messageChannel?.Writer.TryComplete();
+
+        if (!_messageBuffer.IsEmpty)
         {
-            // A receive callback can still be taking or finalizing this buffer,
-            // including when a synchronous message observer disposes the subscription.
-            _messageChannel?.Writer.TryComplete();
-            if (!_messageBuffer.IsEmpty)
-                Context.SynchronizationContext.Post(static state =>
-                    ((RclSubscription<T>)state!)._messageBuffer.Dispose(), this);
-            foreach (var (_, obs) in _observers)
-            {
-                obs.OnCompleted();
-            }
-            _observers.Clear();
+            _messageBuffer.Dispose();
         }
+
+        foreach (var (_, observer) in _observers)
+            RclContext.RunCleanup(static state => ((IObserver<T>)state!).OnCompleted(), observer);
+
+        _observers.Clear();
     }
 
     public IDisposable Subscribe(IObserver<T> observer)
     {
-        var id = Interlocked.Increment(ref _subscriberId);
-        _observers[id] = observer;
-        return new Subscription(this, id);
+        lock (Context.RegistrationGate)
+        {
+            Handle.ThrowIfOperationClosed();
+            var id = Interlocked.Increment(ref _subscriberId);
+            _observers[id] = observer;
+            return new Subscription(this, id);
+        }
     }
 
     private void Unsubscribe(int id)
@@ -178,6 +187,7 @@ internal unsafe class RclSubscription<T> :
     private unsafe NetworkFlowEndpoint[] GetEndpoints()
     {
         using var lease = Handle.Acquire();
+
         if (!RosEnvironment.IsSupported(RosEnvironment.Humble))
         {
             return Array.Empty<NetworkFlowEndpoint>();
@@ -224,6 +234,7 @@ internal unsafe class RclSubscription<T> :
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessChangedEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -240,6 +251,7 @@ internal unsafe class RclSubscription<T> :
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register RequestedDeadlineMissedEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -256,6 +268,7 @@ internal unsafe class RclSubscription<T> :
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register RequestedQosIncompatibleEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }

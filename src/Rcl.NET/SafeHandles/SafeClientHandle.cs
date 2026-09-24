@@ -38,6 +38,7 @@ internal unsafe class SafeClientHandle : RclObjectHandle<rcl_client_t>
                             pname,
                             &opts));
                 }
+
                 MarkInitialized();
             }
         }

@@ -40,6 +40,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
                 {
                     InitIronToKilted(name, typeSupportHandle, options);
                 }
+
                 MarkInitialized();
             }
         }
@@ -82,6 +83,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
 
             var argc = options.ContentFilter.Arguments.Length;
             rcl_ret_t ret;
+
             if (argc > 0)
             {
                 var bufferSize = InteropHelpers.GetUtf8BufferSize(options.ContentFilter.Arguments);
@@ -132,6 +134,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
 
             var argc = options.ContentFilter.Arguments.Length;
             rcl_ret_t ret;
+
             if (argc > 0)
             {
                 var bufferSize = InteropHelpers.GetUtf8BufferSize(options.ContentFilter.Arguments);
@@ -182,6 +185,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
 
             var argc = options.ContentFilter.Arguments.Length;
             rcl_ret_t ret;
+
             if (argc > 0)
             {
                 var bufferSize = InteropHelpers.GetUtf8BufferSize(options.ContentFilter.Arguments);

@@ -48,12 +48,21 @@ public sealed class RclTimeProvider : TimeProvider, IDisposable
     {
         ArgumentNullException.ThrowIfNull(callback);
         RclTimeProviderTimer timer;
+
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             timer = new RclTimeProviderTimer(this, _context, _clock, callback, state, dueTime, period);
-            try { _timers.Add(timer); }
-            catch { timer.Dispose(); throw; }
+
+            try
+            {
+                _timers.Add(timer);
+            }
+            catch
+            {
+                timer.Dispose();
+                throw;
+            }
         }
 
         return timer;
@@ -74,14 +83,22 @@ public sealed class RclTimeProvider : TimeProvider, IDisposable
     public void Dispose()
     {
         RclTimeProviderTimer[] timers;
+
         lock (_gate)
         {
-            if (_disposed) return;
+            if (_disposed)
+            {
+                return;
+            }
+
             _disposed = true;
             timers = _timers.ToArray();
         }
 
-        foreach (var timer in timers) timer.Dispose();
+        foreach (var timer in timers)
+        {
+            timer.Dispose();
+        }
     }
 }
 
@@ -94,7 +111,7 @@ internal sealed class RclTimeProviderTimer : ITimer
     private readonly object? _state;
     private readonly ExecutionContext? _executionContext;
     private readonly object _gate = new();
-    private readonly WaitHandleRegistration _registration;
+    private WaitHandleRegistration _registration;
     private TaskCompletionSource? _disposeCompletion;
     private TimeSpan _period;
     private bool _scheduled;
@@ -115,6 +132,7 @@ internal sealed class RclTimeProviderTimer : ITimer
         _state = state;
         _executionContext = ExecutionContext.Capture();
         _handle = new SafeTimerHandle(context.Handle, clock.Impl.Handle, 1_000_000);
+
         try
         {
             unsafe
@@ -122,24 +140,29 @@ internal sealed class RclTimeProviderTimer : ITimer
                 using var lease = _handle.Acquire();
                 RclException.ThrowIfNonSuccess(rcl_timer_cancel(lease.Object));
             }
-            _registration = context.Register(_handle, static (_, state) => ((RclTimeProviderTimer)state!).OnTimer(), this);
+
+            context.Register(_handle, static (_, state) => ((RclTimeProviderTimer)state!).OnTimer(), this, ref _registration);
             Change(dueTime, period);
         }
         catch
         {
-            _handle.TryBeginClose();
+            lock (context.RegistrationGate)
+            {
+                _handle.TryBeginClose();
+            }
+
             _registration.Dispose();
-            context.SynchronizationContext.Post(static state => ((SafeTimerHandle)state!).Dispose(), _handle);
+            context.AfterDetach(_registration, static state => ((SafeTimerHandle)state!).Dispose(), _handle);
             throw;
         }
     }
 
     private static void Validate(TimeSpan value, string name)
     {
-        if (value != Timeout.InfiniteTimeSpan &&
-            (value < TimeSpan.Zero || value.TotalMilliseconds > uint.MaxValue - 1))
+        if (value != Timeout.InfiniteTimeSpan)
         {
-            throw new ArgumentOutOfRangeException(name);
+            ArgumentOutOfRangeException.ThrowIfLessThan(value, TimeSpan.Zero, name);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(value.TotalMilliseconds, uint.MaxValue - 1, name);
         }
     }
 
@@ -150,7 +173,11 @@ internal sealed class RclTimeProviderTimer : ITimer
 
         lock (_gate)
         {
-            if (_disposed) return false;
+            if (_disposed)
+            {
+                return false;
+            }
+
             using var lease = _handle.Acquire();
             _period = period;
             _firstTick = true;
@@ -177,11 +204,20 @@ internal sealed class RclTimeProviderTimer : ITimer
     {
         lock (_gate)
         {
-            if (_disposed || !_scheduled) return;
+            if (_disposed || !_scheduled)
+            {
+                return;
+            }
+
             using var lease = _handle.Acquire();
             bool ready;
             RclException.ThrowIfNonSuccess(rcl_timer_is_ready(lease.Object, &ready));
-            if (!ready) return;
+
+            if (!ready)
+            {
+                return;
+            }
+
             RclException.ThrowIfNonSuccess(rcl_timer_call(lease.Object));
 
             if (_period == TimeSpan.Zero || _period == Timeout.InfiniteTimeSpan)
@@ -211,7 +247,10 @@ internal sealed class RclTimeProviderTimer : ITimer
         {
             lock (_gate)
             {
-                if (_disposed) return;
+                if (_disposed || _context.Handle.IsClosing)
+                {
+                    return;
+                }
             }
 
             if (_executionContext is null)
@@ -238,40 +277,54 @@ internal sealed class RclTimeProviderTimer : ITimer
 
     private void InvokeUserCallback() => _callback(_state);
 
-    public unsafe void Dispose()
+    public void Dispose()
     {
         lock (_gate)
         {
-            if (_disposed) return;
+            if (_disposed)
+            {
+                return;
+            }
+
             _disposed = true;
-            _handle.TryBeginClose();
-            // Cleanup retains the owner ref until the queued release below, even after domain close.
-            RclException.ThrowIfNonSuccess(rcl_timer_cancel(_handle.DangerousObject));
-            // Concurrent disposal must not return before native release is queued,
-            // otherwise the owning node can queue its clock release first.
-            _registration.Dispose();
-            _context.SynchronizationContext.Post(static state => ((RclTimeProviderTimer)state!).ReleaseHandle(), this);
+
+            lock (_context.RegistrationGate)
+            {
+                _handle.TryBeginClose();
+            }
         }
 
+        _registration.Dispose();
+        _context.AfterDetach(_registration, static state => ((RclTimeProviderTimer)state!).ReleaseHandle(), this);
         _owner.Remove(this);
     }
 
     private void ReleaseHandle()
     {
         _handle.Dispose();
+
         lock (_gate)
         {
             _handleReleased = true;
-            if (_pendingCallbacks == 0) _disposeCompletion?.TrySetResult();
+
+            if (_pendingCallbacks == 0)
+            {
+                _disposeCompletion?.TrySetResult();
+            }
         }
     }
 
     public ValueTask DisposeAsync()
     {
         Dispose();
+
         lock (_gate)
         {
-            if (_pendingCallbacks == 0 && _handleReleased) return ValueTask.CompletedTask;
+            if (_pendingCallbacks == 0 && _handleReleased)
+            {
+                return ValueTask.CompletedTask;
+            }
+
             _disposeCompletion ??= new(TaskCreationOptions.RunContinuationsAsynchronously);
             return new ValueTask(_disposeCompletion.Task);
         }

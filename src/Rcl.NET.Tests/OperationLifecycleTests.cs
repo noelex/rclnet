@@ -25,12 +25,16 @@ public class OperationLifecycleTests : IDisposable
         using var checkpoint = new LifecycleCheckpoint();
         using var wrapper = new PausingObject(new FakeRclHandle(releases), checkpoint);
         var disposing = Task.Run(wrapper.Dispose);
+
         try
         {
             await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
             Assert.True(wrapper.Handle.IsClosing);
             Assert.False(wrapper.Handle.IsReleaseRequested);
-            Assert.Throws<ObjectDisposedException>(() => { using var lease = wrapper.Handle.Acquire(); });
+            Assert.Throws<ObjectDisposedException>(() =>
+{
+    using var lease = wrapper.Handle.Acquire();
+});
             wrapper.Dispose();
             Assert.Empty(releases);
         }
@@ -39,6 +43,7 @@ public class OperationLifecycleTests : IDisposable
             checkpoint.Resume();
             await disposing.WaitAsync(TimeSpan.FromSeconds(10));
         }
+
         Assert.Equal(new[] { "handle:enter", "handle:exit" }, releases);
         Assert.False(checkpoint.TimedOut);
     }
@@ -54,6 +59,7 @@ public class OperationLifecycleTests : IDisposable
         var copying = Task.Run(() =>
         {
             using var lease = handle.Acquire();
+
             unsafe
             {
                 var name = rcl_publisher_get_topic_name(lease.Object);
@@ -65,6 +71,7 @@ public class OperationLifecycleTests : IDisposable
                 RclException.ThrowIfNonSuccess(rcl_publish(lease.Object, buffer.Data.ToPointer(), null));
             }
         });
+
         try
         {
             await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
@@ -79,6 +86,7 @@ public class OperationLifecycleTests : IDisposable
             checkpoint.Resume();
             await copying.WaitAsync(TimeSpan.FromSeconds(10));
         }
+
         Assert.True(handle.IsClosed);
         Assert.False(checkpoint.TimedOut);
     }
@@ -98,6 +106,7 @@ public class OperationLifecycleTests : IDisposable
             "/operation_close", (request, state) => new ListParametersServiceResponse());
         using var checkpoint = new LifecycleCheckpoint();
         context.SynchronizationContext.Post(_ => checkpoint.Pause(), null);
+
         try
         {
             await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
@@ -121,7 +130,11 @@ public class OperationLifecycleTests : IDisposable
             Assert.Throws<ObjectDisposedException>(() => _ = node.DomaindId);
             Assert.Throws<ObjectDisposedException>(() => _ = node.Clock.Now);
         }
-        finally { checkpoint.Resume(); }
+        finally
+        {
+            checkpoint.Resume();
+        }
+
         await context.Yield();
         Assert.False(checkpoint.TimedOut);
     }
@@ -151,13 +164,18 @@ public class OperationLifecycleTests : IDisposable
         using var checkpoint = new LifecycleCheckpoint();
         context.SynchronizationContext.Post(_ => checkpoint.Pause(), null);
         Task<ListParametersServiceResponse> pending;
+
         try
         {
             await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
             pending = client.InvokeAsync(new ListParametersServiceRequest(), Timeout.Infinite);
             client.Dispose();
         }
-        finally { checkpoint.Resume(); }
+        finally
+        {
+            checkpoint.Resume();
+        }
+
         await Assert.ThrowsAsync<ObjectDisposedException>(() => pending.WaitAsync(TimeSpan.FromSeconds(10)));
         Assert.False(checkpoint.TimedOut);
     }
@@ -199,25 +217,37 @@ public class OperationLifecycleTests : IDisposable
         var name = NameGenerator.GenerateServiceName();
         using var service = concurrentService
             ? node.CreateConcurrentService<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(
-                name, async (request, state, token) => { await Task.Yield(); return new ListParametersServiceResponse(); }, null)
+                name, async (request, state, token) =>
+{
+    await Task.Yield();
+    return new ListParametersServiceResponse();
+}, null)
             : node.CreateService<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(
                 name, (request, state) => new ListParametersServiceResponse());
         using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(name);
         Assert.True(await client.TryWaitForServerAsync(10_000));
         using var start = new ManualResetEventSlim();
+
         Task Configure(Action<ServiceIntrospectionState> configure) => Task.Run(() =>
         {
             Assert.True(start.Wait(TimeSpan.FromSeconds(10)));
+
             for (var i = 0; i < 40; i++)
+            {
                 configure((ServiceIntrospectionState)(i % 3));
+            }
         });
+
         var configuringClient = Configure(state => client.ConfigureIntrospection(state));
         var configuringService = Configure(state => service.ConfigureIntrospection(state));
         var requests = Task.Run(async () =>
         {
             Assert.True(start.Wait(TimeSpan.FromSeconds(10)));
+
             for (var i = 0; i < 40; i++)
+            {
                 await client.InvokeAsync(new ListParametersServiceRequest(), 10_000);
+            }
         });
         start.Set();
         await Task.WhenAll(configuringClient, configuringService, requests).WaitAsync(TimeSpan.FromSeconds(30));
@@ -241,7 +271,10 @@ public class OperationLifecycleTests : IDisposable
                 started.Set();
                 client.ConfigureIntrospection(ServiceIntrospectionState.Full);
             }
-            catch (Exception error) { failure = error; }
+            catch (Exception error)
+            {
+                failure = error;
+            }
         });
         await Task.Run(() =>
         {
@@ -259,7 +292,10 @@ public class OperationLifecycleTests : IDisposable
                     Assert.False(handle.IsClosed);
                 }
             }
-            finally { Assert.True(configuring.Join(TimeSpan.FromSeconds(10))); }
+            finally
+            {
+                Assert.True(configuring.Join(TimeSpan.FromSeconds(10)));
+            }
         });
         Assert.Null(failure);
         Assert.True(handle.IsClosed);
@@ -268,6 +304,7 @@ public class OperationLifecycleTests : IDisposable
     private sealed class PausingObject : RclObject<FakeRclHandle>
     {
         private readonly LifecycleCheckpoint _checkpoint;
+
         public PausingObject(FakeRclHandle handle, LifecycleCheckpoint checkpoint) : base(handle)
             => _checkpoint = checkpoint;
 

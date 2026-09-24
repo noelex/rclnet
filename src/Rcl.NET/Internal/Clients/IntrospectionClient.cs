@@ -15,7 +15,11 @@ internal class IntrospectionClient : RclClientBase
             _typesupport = new ServiceIntrospection(typeSupport);
             RegisterWaitHandle();
         }
-        catch { Dispose(); throw; }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     protected override RosMessageBuffer CreateResponseBuffer()

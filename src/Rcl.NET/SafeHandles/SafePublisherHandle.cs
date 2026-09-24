@@ -37,6 +37,7 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
                         InitIronOrLater(pname, typeSupportHandle, options);
                     }
                 }
+
                 MarkInitialized();
             }
         }

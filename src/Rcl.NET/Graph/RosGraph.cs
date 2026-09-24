@@ -32,7 +32,10 @@ namespace Rcl.Graph;
 /// </remarks>
 public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 {
-    enum UpdateOp { Add = 1, Remove = 2 }
+    enum UpdateOp
+    {
+        Add = 1, Remove = 2
+    }
 
     private long _subscriberId;
     private readonly RclNodeImpl _node;
@@ -170,6 +173,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                 while (_nodesEnumerator.MoveNext())
                 {
                     var (k, node) = _nodesEnumerator.Current;
+
                     if (discoveredNodes.Span.IndexOf(k) < 0)
                     {
                         if (_nodes.Remove(k, out var v))
@@ -194,6 +198,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                     while (_servicesEnumerator.MoveNext())
                     {
                         var (k, v) = _servicesEnumerator.Current;
+
                         if (v.ClientCount == 0 && v.ServerCount == 0)
                         {
                             _services.Remove(k, out _);
@@ -265,6 +270,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             {
                 var (k, v) = _topicsEnumerator.Current;
                 var found = false;
+
                 foreach (var item in items.Span)
                 {
                     if (item.Name == k)
@@ -335,6 +341,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                   name,
                   ns,
                   &nts);
+
         if (ret == rcl_ret_t.RCL_RET_NODE_NAME_NON_EXISTENT ||
             ret == rcl_ret_t.RCL_RET_OK)
         {
@@ -379,6 +386,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                     // Access info_array through accessor to deal with layout difference between different distros.
                     items.Span[i] = new(accessor.GetInfoFromArray(endpoints.info_array, i), accessor);
                 }
+
                 topic.UpdatePublishers(this, items.Span, _nodes);
             }
             finally
@@ -403,6 +411,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                 {
                     items.Span[i] = new(accessor.GetInfoFromArray(endpoints.info_array, i), accessor);
                 }
+
                 topic.UpdateSubscribers(this, items.Span, _nodes);
             }
             finally
@@ -419,6 +428,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             for (var i = 0; i < (int)src->names.size.Value; i++)
             {
                 var name = StringMarshal.CreatePooledString((byte*)src->names.data[i])!;
+
                 for (var j = 0; j < (int)src->types[i].size.Value; j++)
                 {
                     var type = StringMarshal

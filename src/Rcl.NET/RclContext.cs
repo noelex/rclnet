@@ -26,9 +26,22 @@ public sealed class RclContext : IRclContext
 
     private readonly RclSynchronizationContext _rclSyncContext;
 
-    private SpinLock _handleLock = new(), _callbackLock = new();
+    private SpinLock _callbackLock = new();
+
+    internal object RegistrationGate { get; } = new();
+
+    private readonly Queue<WaitSetRegistration> _removedRegistrations = new();
+    private readonly Dictionary<nint, WaitSetRegistration> _registeredAddresses = new();
+    private readonly Queue<(Action<object?> Callback, object? State)> _cleanup = new();
+    private CleanupState _cleanupState;
+
+    private enum CleanupState
+    {
+        Running, Draining, Stopped
+    }
+
     private readonly Queue<CallbackWorkItem> _callbacks = new();
-    private readonly Dictionary<long, WaitSetWorkItem> _waitHandles = new();
+    private readonly Dictionary<long, WaitSetRegistration> _waitHandles = new();
     private uint _cGuardConditions, _cTimers, _cEvents, _cSubscriptions, _cServices, _cClients;
 
     private readonly SafeGuardConditionHandle _interruptSignal, _shutdownSignal;
@@ -51,6 +64,7 @@ public sealed class RclContext : IRclContext
         if (!RosEnvironment.IsSupported(RosEnvironment.Distribution))
         {
             string message;
+
             if (RosEnvironment.Distribution == string.Empty)
             {
                 message =
@@ -67,6 +81,7 @@ public sealed class RclContext : IRclContext
 
         var lib = NativeLibrary.Load("rcutils", System.Reflection.Assembly.GetExecutingAssembly(), null);
         var isInitialized = Unsafe.AsRef<bool>(NativeLibrary.GetExport(lib, "g_rcutils_logging_initialized").ToPointer());
+
         if (!isInitialized)
         {
             RclException.ThrowIfNonSuccess(rcutils_logging_initialize());
@@ -97,7 +112,10 @@ public sealed class RclContext : IRclContext
             _shutdownSignal = new SafeGuardConditionHandle(_context);
             _waitSet = new SafeWaitSetHandle(_context);
             _useSyncContext = useSynchronizationContext;
-            _mainLoopRunner = new(Run) { Name = "RCL Event Loop" };
+            _mainLoopRunner = new(Run)
+            {
+                Name = "RCL Event Loop"
+            };
             _mainLoopRunner.Start();
         }
         catch
@@ -225,13 +243,23 @@ public sealed class RclContext : IRclContext
     private static unsafe void TriggerInfrastructureSignal(SafeGuardConditionHandle signal)
     {
         bool added = false;
+
         try
         {
             signal.DangerousAddRef(ref added);
             rcl_trigger_guard_condition(signal.DangerousObject);
         }
-        catch (ObjectDisposedException) { /* No wakeup is needed after the loop exits. */ }
-        finally { if (added) signal.DangerousRelease(); }
+        catch (ObjectDisposedException)
+        {
+            // No wakeup is needed after the loop exits.
+        }
+        finally
+        {
+            if (added)
+            {
+                signal.DangerousRelease();
+            }
+        }
     }
 
     internal void NotifyTimerChanged() => Interrupt();
@@ -240,19 +268,30 @@ public sealed class RclContext : IRclContext
     {
         bool close;
         KeyValuePair<string, object>[] features;
+
         lock (_context.LifecycleGate)
         {
-            close = Interlocked.CompareExchange(ref _disposed, 1, 0) == 0;
-            if (close)
+            lock (RegistrationGate)
             {
-                _context.TryBeginClose();
-                features = _features.ToArray();
-                _features.Clear();
+                close = Interlocked.CompareExchange(ref _disposed, 1, 0) == 0;
+
+                if (close)
+                {
+                    _context.TryBeginClose();
+                    features = _features.ToArray();
+                    _features.Clear();
+                }
+                else
+                {
+                    features = Array.Empty<KeyValuePair<string, object>>();
+                }
             }
-            else features = Array.Empty<KeyValuePair<string, object>>();
         }
+
         if (close)
         {
+            StopRegistrations();
+
             foreach (var feature in features)
             {
                 if (feature.Value is IDisposable d)
@@ -294,7 +333,7 @@ public sealed class RclContext : IRclContext
 
     private void ThrowIfDisposed()
     {
-        if (Volatile.Read(ref _disposed) == 1) throw new ObjectDisposedException(nameof(RclContext));
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) == 1, typeof(RclContext));
     }
 
     private void RegisterCallback(SendOrPostCallback callback, object? state, ManualResetValueTaskSource<bool>? completion)
@@ -309,98 +348,261 @@ public sealed class RclContext : IRclContext
         Interrupt();
     }
 
-    private void RegisterWaitHandle(long token, RclObjectHandle handle, Action<RclObjectHandle, object?> callback, object? state)
+    internal void Register(RclObjectHandle handle, Action<RclObjectHandle, object?> callback,
+        object? state, ref WaitHandleRegistration owner, Action<object?>? closed = null, Action<object?>? detached = null)
     {
-        ThrowIfDisposed();
+        bool added = false;
 
-        if (handle.IsInvalid || handle.IsClosed)
+        try
         {
-            var name = handle.GetType().Name;
-            throw new ObjectDisposedException(name, $"Unable to register '{name}' as it's already disposed.");
-        }
+            handle.DangerousAddRef(ref added);
 
-        using (ScopedLock.Lock(ref _handleLock))
-        {
-            _waitHandles[token] = new(handle, callback, state);
-            switch (handle)
+            lock (RegistrationGate)
             {
-                case SafeGuardConditionHandle:
-                    _cGuardConditions++;
-                    break;
-                case SafeTimerHandle:
-                    _cTimers++;
-                    break;
-                case SafeSubscriptionHandle:
-                    _cSubscriptions++;
-                    break;
-                case SafeServiceHandle:
-                    _cServices++;
-                    break;
-                case SafeClientHandle:
-                    _cClients++;
-                    break;
-                case SafePublisherEventHandle:
-                case SafeSubscriptionEventHandle:
-                    _cEvents++;
-                    break;
+                ThrowIfDisposed();
+                ObjectDisposedException.ThrowIf(_cleanupState != CleanupState.Running, typeof(RclContext));
+                handle.ThrowIfOperationClosed();
+
+                if (!ReferenceEquals(handle.Context, _context))
+                {
+                    throw new InvalidOperationException("The wait handle belongs to another context.");
+                }
+
+                if (!owner.IsEmpty)
+                {
+                    throw new InvalidOperationException("Registration is already published.");
+                }
+
+                var address = handle.DangerousGetHandle();
+
+                if (_registeredAddresses.ContainsKey(address))
+                {
+                    throw new InvalidOperationException("The native entity is already registered.");
+                }
+
+                var entry = new WaitSetRegistration(this, ++_waitHandleToken, handle, callback, state, closed, detached);
+                _registeredAddresses.Add(address, entry);
+
+                try
+                {
+                    _waitHandles.Add(entry.Token, entry);
+                }
+                catch
+                {
+                    _registeredAddresses.Remove(address);
+                    throw;
+                }
+
+                CountHandle(handle, true);
+                owner = new(entry);
+                added = false;
+            }
+        }
+        finally
+        {
+            if (added)
+            {
+                handle.DangerousRelease();
             }
         }
 
         Interrupt();
     }
 
-    private void UnregisterWaitHandle(long token)
+    private void CountHandle(RclObjectHandle handle, bool adding)
     {
-        using (ScopedLock.Lock(ref _handleLock))
+        switch (handle)
         {
-            if (_waitHandles.Remove(token, out var v))
+            case SafeGuardConditionHandle:
+                if (adding) _cGuardConditions++; else _cGuardConditions--;
+                break;
+            case SafeTimerHandle:
+                if (adding) _cTimers++; else _cTimers--;
+                break;
+            case SafeSubscriptionHandle:
+                if (adding) _cSubscriptions++; else _cSubscriptions--;
+                break;
+            case SafeServiceHandle:
+                if (adding) _cServices++; else _cServices--;
+                break;
+            case SafeClientHandle:
+                if (adding) _cClients++; else _cClients--;
+                break;
+            case SafePublisherEventHandle:
+            case SafeSubscriptionEventHandle:
+                if (adding) _cEvents++; else _cEvents--;
+                break;
+        }
+    }
+
+    internal void UnregisterWaitHandle(WaitSetRegistration entry)
+    {
+        lock (RegistrationGate)
+        {
+            RemoveRegistration(entry);
+        }
+
+        Interrupt();
+    }
+
+    private void RemoveRegistration(WaitSetRegistration entry)
+    {
+        if (entry.RemoveRequested)
+        {
+            return;
+        }
+
+        entry.RemoveRequested = true;
+        _waitHandles.Remove(entry.Token);
+        _registeredAddresses.Remove(entry.WaitHandle.DangerousGetHandle());
+        CountHandle(entry.WaitHandle, false);
+        _removedRegistrations.Enqueue(entry);
+    }
+
+    private void StopRegistrations()
+    {
+        WaitSetRegistration[] entries;
+
+        lock (RegistrationGate)
+        {
+            if (_cleanupState != CleanupState.Stopped)
             {
-                switch (v.WaitHandle)
+                _cleanupState = CleanupState.Draining;
+            }
+
+            entries = _waitHandles.Values.ToArray();
+
+            foreach (var entry in entries)
+            {
+                RemoveRegistration(entry);
+            }
+        }
+
+        foreach (var entry in entries)
+        {
+            if (entry.Closed != null)
+            {
+                RunCleanup(entry.Closed, entry.State);
+            }
+        }
+    }
+
+    internal void AfterDetach(WaitHandleRegistration registration, Action<object?> callback, object? state)
+    {
+        lock (RegistrationGate)
+        {
+            if (registration.Entry is { Detached: false } entry)
+            {
+                (entry.Cleanup ??= new()).Add((callback, state));
+                return;
+            }
+        }
+
+        ScheduleCleanup(callback, state);
+    }
+
+    internal void ScheduleCleanup(Action<object?> callback, object? state)
+    {
+        bool queued;
+
+        lock (RegistrationGate)
+        {
+            queued = _cleanupState != CleanupState.Stopped;
+
+            if (queued)
+            {
+                _cleanup.Enqueue((callback, state));
+            }
+        }
+
+        if (queued)
+        {
+            Interrupt();
+        }
+        else
+        {
+            RunCleanup(callback, state);
+        }
+    }
+
+    internal static void RunCleanup(Action<object?> callback, object? state)
+    {
+        try
+        {
+            callback(state);
+        }
+        catch (Exception error)
+        {
+            try
+            {
+                HandleReleaseDiagnostics.Record(new("RclContext", "managed cleanup", null, error.ToString()));
+            }
+            catch
+            {
+                // Diagnostics cannot interrupt remaining cleanup.
+            }
+        }
+    }
+
+    internal static void DisposeResource(IDisposable? resource)
+    {
+        if (resource != null)
+        {
+            RunCleanup(static state => ((IDisposable)state!).Dispose(), resource);
+        }
+    }
+
+    // Called only after clearing both native and managed snapshots, or after wait-set fini.
+    private void DrainCleanup(bool stopping = false)
+    {
+        while (true)
+        {
+            WaitSetRegistration? entry = null;
+            (Action<object?> Callback, object? State) work = default;
+            List<(Action<object?> Callback, object? State)>? dependentCleanup = null;
+
+            lock (RegistrationGate)
+            {
+                if (_removedRegistrations.TryDequeue(out entry))
                 {
-                    case SafeGuardConditionHandle:
-                        _cGuardConditions--;
-                        break;
-                    case SafeTimerHandle:
-                        _cTimers--;
-                        break;
-                    case SafeSubscriptionHandle:
-                        _cSubscriptions--;
-                        break;
-                    case SafeServiceHandle:
-                        _cServices--;
-                        break;
-                    case SafeClientHandle:
-                        _cClients--;
-                        break;
-                    case SafePublisherEventHandle:
-                    case SafeSubscriptionEventHandle:
-                        _cEvents--;
-                        break;
+                    entry.Detached = true;
+                    dependentCleanup = entry.Cleanup;
+                    entry.Cleanup = null;
+                }
+                else if (!_cleanup.TryDequeue(out work))
+                {
+                    if (stopping)
+                    {
+                        _cleanupState = CleanupState.Stopped;
+                    }
+
+                    return;
                 }
             }
+
+            if (entry != null)
+            {
+                if (entry.OnDetached != null)
+                {
+                    RunCleanup(entry.OnDetached, entry.State);
+                }
+
+                entry.WaitHandle.DangerousRelease();
+
+                if (dependentCleanup != null)
+                {
+                    foreach (var item in dependentCleanup)
+                    {
+                        RunCleanup(item.Callback, item.State);
+                    }
+                }
+            }
+            else
+            {
+                RunCleanup(work.Callback!, work.State);
+            }
         }
-
-        Interrupt();
     }
-
-    internal WaitHandleRegistration Register(SafeTimerHandle handle, Action<RclObjectHandle, object?> callback, object? state = null)
-    {
-        var token = Interlocked.Increment(ref _waitHandleToken);
-        RegisterWaitHandle(token, handle, callback, state);
-        return new WaitHandleRegistration(this, static (ctx, x) => ctx.UnregisterWaitHandle(x), token);
-    }
-
-    private WaitHandleRegistration RegisterCore<T>(RclContextualObject<T> waitObject, Action<RclObjectHandle, object?> callback, object? state = null)
-        where T : RclObjectHandle
-    {
-        var token = Interlocked.Increment(ref _waitHandleToken);
-        RegisterWaitHandle(token, waitObject.Handle, callback, state);
-        return new WaitHandleRegistration(this, static (ctx, x) => ctx.UnregisterWaitHandle(x), token);
-    }
-
-    internal WaitHandleRegistration Register<T>(RclWaitObject<T> guardCondition, Action<RclObjectHandle, object?> callback, object? state = null)
-        where T : RclObjectHandle
-            => RegisterCore(guardCondition, callback, state);
 
     private unsafe void Run()
     {
@@ -413,7 +615,7 @@ public sealed class RclContext : IRclContext
         var ws = _waitSet.DangerousObject;
 
         var callbacks = new List<CallbackWorkItem>();
-        var waitHandles = new Dictionary<nint, WaitSetWorkItem>();
+        var waitHandles = new Dictionary<nint, WaitSetRegistration>();
 
         bool isShutdownRequested = false;
         size_t idx;
@@ -424,7 +626,7 @@ public sealed class RclContext : IRclContext
             {
                 try
                 {
-                    using (ScopedLock.Lock(ref _handleLock))
+                    lock (RegistrationGate)
                     {
                         rcl_wait_set_resize(ws,
                             _cSubscriptions,
@@ -439,7 +641,7 @@ public sealed class RclContext : IRclContext
 
                         foreach (var (key, value) in _waitHandles)
                         {
-                            // Keep release queued after dispatch; closing alone must not invalidate this snapshot.
+                            // Each entry owns a registration ref until both snapshots have been cleared.
                             waitHandles.Add(value.WaitHandle.DangerousGetHandle(), value);
 
                             switch (value.WaitHandle)
@@ -532,6 +734,11 @@ public sealed class RclContext : IRclContext
                         }
                     }
 
+                    // A cleanup callback may release native handles or callback buffers.
+                    RclException.ThrowIfNonSuccess(rcl_wait_set_clear(ws));
+                    waitHandles.Clear();
+                    DrainCleanup();
+
                     // Snapshot callbacks.
                     using (ScopedLock.Lock(ref _callbackLock))
                     {
@@ -566,30 +773,47 @@ public sealed class RclContext : IRclContext
                 }
                 finally
                 {
+                    RclException.ThrowIfNonSuccess(rcl_wait_set_clear(ws));
                     waitHandles.Clear();
                     callbacks.Clear();
+                    DrainCleanup();
                 }
             }
         }
         finally
         {
             _waitSet.Dispose();
+            waitHandles.Clear();
+            StopRegistrations();
+            DrainCleanup(stopping: true);
             _interruptSignal.Dispose();
             _shutdownSignal.Dispose();
             _context.Shutdown();
             _context.Dispose();
         }
+
         _shutdownComplete.TrySetResult();
     }
 
-    private void CallIfCompleted(Dictionary<nint, WaitSetWorkItem> registry, nint completedHandle)
+    private void CallIfCompleted(Dictionary<nint, WaitSetRegistration> registry, nint completedHandle)
     {
-        if (completedHandle == nint.Zero) return;
+        if (completedHandle == nint.Zero)
+        {
+            return;
+        }
 
         var wh = registry[completedHandle];
+
         try
         {
-            if (wh.WaitHandle.IsClosing || _context.IsClosing) return;
+            lock (RegistrationGate)
+            {
+                if (wh.RemoveRequested || wh.WaitHandle.IsClosing || _context.IsClosing)
+                {
+                    return;
+                }
+            }
+
             wh.Callback(wh.WaitHandle, wh.State);
         }
         catch (ObjectDisposedException ex) when (
@@ -614,8 +838,6 @@ public sealed class RclContext : IRclContext
             return (T)_features.GetOrAdd(name, featureFactory);
         }
     }
-
-    private record struct WaitSetWorkItem(RclObjectHandle WaitHandle, Action<RclObjectHandle, object?> Callback, object? State);
 
     private record struct CallbackWorkItem(SendOrPostCallback Callback, object? State, ManualResetValueTaskSource<bool>? CompletionSource);
 
@@ -642,8 +864,14 @@ public sealed class RclContext : IRclContext
             }
             else
             {
-                try { _context.RegisterCallback(d, state, null); }
-                catch (ObjectDisposedException) { base.Post(d, state); }
+                try
+                {
+                    _context.RegisterCallback(d, state, null);
+                }
+                catch (ObjectDisposedException)
+                {
+                    base.Post(d, state);
+                }
             }
         }
 

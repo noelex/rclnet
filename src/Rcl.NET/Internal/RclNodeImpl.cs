@@ -67,10 +67,15 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
                     _parameters.Declare(k, v);
                 }
             }
+
             Handle.ThrowIfDescendantClosed();
             _ = GraphBuilder(_graphSignal, _cts.Token);
         }
-        catch { Dispose(); throw; }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     public IParameterService Parameters => _parameters;
@@ -153,27 +158,19 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
 
     protected override void DisposeCore()
     {
-        try
+        RclContext.DisposeResource(_timeProvider);
+        RclContext.DisposeResource(_timeSource);
+        RclContext.DisposeResource(_parameters);
+        RclContext.RunCleanup(static state => ((CancellationTokenSource)state!).Cancel(), _cts);
+        _cts.Dispose();
+        RclContext.DisposeResource(_graphSignal);
+        base.DisposeCore();
+
+        if (_ownsClock && Clock != null)
         {
-            try { _timeProvider?.Dispose(); }
-            finally
-            {
-                try { _timeSource?.Dispose(); }
-                finally { _parameters?.Dispose(); }
-            }
-        }
-        finally
-        {
-            _cts.Cancel();
-            _cts.Dispose();
-            _graphSignal?.Dispose();
-            base.DisposeCore();
-            if (_ownsClock && Clock != null)
-            {
-                var clockHandle = Clock.Impl.Handle;
-                clockHandle.TryBeginClose();
-                Context.SynchronizationContext.Post(static x => ((SafeClockHandle)x!).Dispose(), clockHandle);
-            }
+            var clockHandle = Clock.Impl.Handle;
+            clockHandle.TryBeginClose();
+            Context.ScheduleCleanup(static state => ((SafeClockHandle)state!).Dispose(), clockHandle);
         }
     }
 }

@@ -25,7 +25,11 @@ class ExternalTimeSource : IDisposable
         _qos = clockQoS;
 
         _reg = node.Parameters.RegisterParameterChangingEvent(OnParameterChanging, this);
-        try { node.Parameters.Declare(UseSimTime, false); }
+
+        try
+        {
+            node.Parameters.Declare(UseSimTime, false);
+        }
         catch
         {
             _reg.Dispose();
@@ -37,9 +41,14 @@ class ExternalTimeSource : IDisposable
     private static ValidationResult OnParameterChanging(ReadOnlySpan<ParameterChangingInfo> info, object? state)
     {
         var self = (ExternalTimeSource)state!;
+
         lock (self._gate)
         {
-            if (self._disposed) return ValidationResult.Failure("Time source is disposed.");
+            if (self._disposed)
+            {
+                return ValidationResult.Failure("Time source is disposed.");
+            }
+
             foreach (var (descriptor, oldValue, newValue) in info)
             {
                 if (descriptor.Name != UseSimTime)
@@ -71,6 +80,7 @@ class ExternalTimeSource : IDisposable
                 else
                 {
                     self._subscription?.Dispose();
+
                     if (self._overrideEnabled)
                     {
                         self._node.Clock.Impl.ToggleRosTimeOverride(false);
@@ -89,7 +99,10 @@ class ExternalTimeSource : IDisposable
     {
         await foreach (var e in sub.ReadAllAsync().ConfigureAwait(false))
         {
-            using (e) UpdateClock(e);
+            using (e)
+            {
+                UpdateClock(e);
+            }
         }
     }
 
@@ -102,6 +115,7 @@ class ExternalTimeSource : IDisposable
         }
 
         long t;
+
         if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
         {
             ref var clock = ref buffer.AsRef<Clock.Priv>();
@@ -120,10 +134,18 @@ class ExternalTimeSource : IDisposable
     {
         lock (_gate)
         {
-            if (_disposed) return;
+            if (_disposed)
+            {
+                return;
+            }
+
             _disposed = true;
             _reg.Dispose();
-            try { _node.Parameters.Undeclare(UseSimTime); }
+
+            try
+            {
+                _node.Parameters.Undeclare(UseSimTime);
+            }
             catch (ObjectDisposedException) when (_node.Context.Handle.IsClosing)
             {
                 // Undeclare already removed the parameter; a closed domain cannot publish its event.
@@ -131,6 +153,7 @@ class ExternalTimeSource : IDisposable
             finally
             {
                 _subscription?.Dispose();
+
                 if (_overrideEnabled)
                 {
                     _node.Clock.Impl.ToggleRosTimeOverride(false);

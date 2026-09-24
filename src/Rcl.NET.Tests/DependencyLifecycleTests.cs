@@ -27,10 +27,20 @@ public class DependencyLifecycleTests : IDisposable
         Assert.False(node.IsClosed);
         Assert.Throws<ObjectDisposedException>(() => new SafePublisherEventHandle(publisher,
             rcl_publisher_event_type_t.RCL_PUBLISHER_OFFERED_INCOMPATIBLE_QOS));
+
         using (var lease = publisher.Acquire())
-        using (var buffer = RosMessageBuffer.Create<Time>())
-            RclException.ThrowIfNonSuccess(rcl_publish(lease.Object, buffer.Data.ToPointer(), null));
-        using (var lease = subscription.Acquire()) Assert.True(rcl_subscription_is_valid(lease.Object));
+        {
+            using (var buffer = RosMessageBuffer.Create<Time>())
+            {
+                RclException.ThrowIfNonSuccess(rcl_publish(lease.Object, buffer.Data.ToPointer(), null));
+            }
+        }
+
+        using (var lease = subscription.Acquire())
+        {
+            Assert.True(rcl_subscription_is_valid(lease.Object));
+        }
+
         Assert.Throws<ObjectDisposedException>(() => new SafePublisherHandle(node, Time.GetTypeSupportHandle(), "/rejected", PublisherOptions.Default));
         publisher.Dispose();
         Assert.False(node.IsClosed);
@@ -51,8 +61,15 @@ public class DependencyLifecycleTests : IDisposable
         clock.Dispose();
         Assert.False(node.IsClosed);
         Assert.False(clock.IsClosed);
-        using (var lease = client.Acquire()) { }
-        using (var lease = service.Acquire()) { }
+
+        using (var lease = client.Acquire())
+        {
+        }
+
+        using (var lease = service.Acquire())
+        {
+        }
+
         client.Dispose();
         Assert.False(clock.IsClosed);
         service.Dispose();
@@ -92,7 +109,12 @@ public class DependencyLifecycleTests : IDisposable
         using var globalArguments = SafeArgumentsHandle.Borrow(context);
         node.Dispose();
         Assert.False(node.IsClosed);
-        using (var lease = localArguments.Acquire()) Assert.Equal(0, rcl_arguments_get_count_unparsed(lease.Object));
+
+        using (var lease = localArguments.Acquire())
+        {
+            Assert.Equal(0, rcl_arguments_get_count_unparsed(lease.Object));
+        }
+
         graph.Dispose();
         Assert.False(node.IsClosed);
         localArguments.Dispose();
@@ -127,15 +149,20 @@ public class DependencyLifecycleTests : IDisposable
         using var firstTimer = new SafeTimerHandle(first, clock, 1000000);
         using var secondTimer = new SafeTimerHandle(second, clock, 1000000);
         first.Dispose();
-        Assert.Throws<ObjectDisposedException>(() => { using var lease = firstTimer.Acquire(); });
+        Assert.Throws<ObjectDisposedException>(() =>
+{
+    using var lease = firstTimer.Acquire();
+});
         using var thirdTimer = new SafeTimerHandle(second, clock, 1000000);
         clock.Dispose();
         Assert.Throws<ObjectDisposedException>(() => new SafeTimerHandle(second, clock, 1000000));
+
         using (var lease = secondTimer.Acquire())
         {
             bool ready;
             RclException.ThrowIfNonSuccess(rcl_timer_is_ready(lease.Object, &ready));
         }
+
         firstTimer.Dispose();
         Assert.True(first.IsClosed);
         Assert.False(clock.IsClosed);
@@ -193,6 +220,7 @@ public class DependencyLifecycleTests : IDisposable
         using var context = new SafeContextHandle(TestConfig.DefaultContextArguments);
         Task construction;
         using var started = new ManualResetEventSlim();
+
         lock (context.LifecycleGate)
         {
             construction = Task.Run(() =>
@@ -203,6 +231,7 @@ public class DependencyLifecycleTests : IDisposable
             Assert.True(started.Wait(TimeSpan.FromSeconds(10)));
             context.TryBeginClose();
         }
+
         await construction.WaitAsync(TimeSpan.FromSeconds(10));
         context.Dispose();
         Assert.True(context.IsClosed);
@@ -225,8 +254,17 @@ public class DependencyLifecycleTests : IDisposable
         });
         await entered.Entered.WaitAsync(TimeSpan.FromSeconds(10));
         var closing = Task.Run(() => context.TryBeginClose());
-        try { entered.Resume(); await Task.WhenAll(construction, closing).WaitAsync(TimeSpan.FromSeconds(10)); }
-        finally { entered.Resume(); }
+
+        try
+        {
+            entered.Resume();
+            await Task.WhenAll(construction, closing).WaitAsync(TimeSpan.FromSeconds(10));
+        }
+        finally
+        {
+            entered.Resume();
+        }
+
         Assert.False(entered.TimedOut);
         Assert.NotNull(guard);
         context.Dispose();
@@ -267,19 +305,38 @@ public class DependencyLifecycleTests : IDisposable
         RclContext? context = null;
         var factory = new CallbackLoggerFactory(name =>
         {
-            if (name == "rclnet") return;
-            if (closeDuringConstruction) context!.Dispose();
-            else throw new InvalidOperationException("Injected node logger failure.");
+            if (name == "rclnet")
+            {
+                return;
+            }
+
+            if (closeDuringConstruction)
+            {
+                context!.Dispose();
+            }
+            else
+            {
+                throw new InvalidOperationException("Injected node logger failure.");
+            }
         });
         context = new RclContext(TestConfig.DefaultContextArguments, factory);
+
         try
         {
             if (closeDuringConstruction)
+            {
                 Assert.Throws<ObjectDisposedException>(() => context.CreateNode(NameGenerator.GenerateNodeName()));
+            }
             else
+            {
                 Assert.Throws<InvalidOperationException>(() => context.CreateNode(NameGenerator.GenerateNodeName()));
+            }
         }
-        finally { await context.DisposeAsync(); }
+        finally
+        {
+            await context.DisposeAsync();
+        }
+
         Assert.True(SpinWait.SpinUntil(() => context.Handle.IsClosed && SafeContextHandle.LoggingReferences == before,
             TimeSpan.FromSeconds(10)), "Constructor rollback left a native or logging reference outstanding.");
     }
@@ -310,6 +367,7 @@ public class DependencyLifecycleTests : IDisposable
         var context = new RclContext(TestConfig.DefaultContextArguments);
         var node = (RclNodeImpl)context.CreateNode(NameGenerator.GenerateNodeName());
         var options = new SubscriptionOptions(queueSize: -1);
+
         try
         {
             Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -325,6 +383,7 @@ public class DependencyLifecycleTests : IDisposable
             await context.Yield();
             await context.DisposeAsync();
         }
+
         Assert.True(node.Handle.IsClosed);
         Assert.True(context.Handle.IsClosed);
     }
@@ -406,6 +465,9 @@ public class DependencyLifecycleTests : IDisposable
     private sealed class SilentLogger(string name) : IRclLogger
     {
         public string Name => name;
-        public void Log(LogSeverity severity, string? message, string file = "", string functionName = "", int lineNumber = 0) { }
+
+        public void Log(LogSeverity severity, string? message, string file = "", string functionName = "", int lineNumber = 0)
+        {
+        }
     }
 }
