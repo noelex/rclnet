@@ -35,6 +35,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
             {
                 InitIronToKilted(name, typeSupportHandle, options);
             }
+            MarkInitialized();
         }
         catch
         {
@@ -209,8 +210,8 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
                 &opts));
     }
 
-    protected override void ReleaseHandleCore(rcl_subscription_t* ptr)
+    protected override bool ReleaseHandleCore(rcl_subscription_t* ptr)
     {
-        rcl_subscription_fini(ptr, _node.Object);
+        return CheckReleaseResult(rcl_subscription_fini(ptr, _node.Object), nameof(rcl_subscription_fini));
     }
 }

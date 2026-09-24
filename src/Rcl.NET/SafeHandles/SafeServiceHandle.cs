@@ -32,6 +32,7 @@ internal unsafe class SafeServiceHandle : RclObjectHandle<rcl_service_t>
                         pname,
                         &opts));
             }
+            MarkInitialized();
         }
         catch
         {
@@ -40,8 +41,8 @@ internal unsafe class SafeServiceHandle : RclObjectHandle<rcl_service_t>
         }
     }
 
-    protected override void ReleaseHandleCore(rcl_service_t* ptr)
+    protected override bool ReleaseHandleCore(rcl_service_t* ptr)
     {
-        rcl_service_fini(ptr, _node.Object);
+        return CheckReleaseResult(rcl_service_fini(ptr, _node.Object), nameof(rcl_service_fini));
     }
 }

@@ -2,10 +2,8 @@ using System.Collections.Concurrent;
 
 namespace Rcl.NET.Tests;
 
-/// <summary>Tests the SafeHandle behavior on which lifecycle leases will rely.</summary>
 public class HandleLifecycleTests
 {
-    /// <summary>A held reference delays release despite repeated disposal.</summary>
     [Fact]
     public void ReferenceDelaysReleaseUntilReturned()
     {
@@ -29,7 +27,6 @@ public class HandleLifecycleTests
         Assert.Equal(new[] { "handle:enter", "handle:exit" }, releases.ToArray());
     }
 
-    /// <summary>IsClosed is published before native cleanup completes.</summary>
     [Fact]
     public async Task ClosedDoesNotMeanReleaseCompleted()
     {
@@ -54,7 +51,6 @@ public class HandleLifecycleTests
         Assert.Equal(new[] { "handle:enter", "handle:exit" }, releases.ToArray());
     }
 
-    /// <summary>A physically released handle rejects another reference.</summary>
     [Fact]
     public void ReleasedHandleRejectsAddRef()
     {

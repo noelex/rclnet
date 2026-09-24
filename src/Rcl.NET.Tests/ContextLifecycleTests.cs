@@ -1,9 +1,7 @@
 namespace Rcl.NET.Tests;
 
-/// <summary>Captures the supported Context shutdown behavior before lifecycle migration.</summary>
 public class ContextLifecycleTests
 {
-    /// <summary>External synchronous disposal drains accepted work and tolerates repeated disposal.</summary>
     [Fact]
     public void ExternalDisposeDrainsAcceptedCallbacks()
     {
@@ -18,7 +16,6 @@ public class ContextLifecycleTests
         context.Dispose();
     }
 
-    /// <summary>All asynchronous disposal callers wait for an active callback to exit.</summary>
     [Fact]
     public async Task DisposeAsyncWaitsForActiveCallback()
     {
@@ -43,7 +40,6 @@ public class ContextLifecycleTests
         }
     }
 
-    /// <summary>Disposal on the event loop returns without waiting for itself.</summary>
     [Fact]
     public async Task EventLoopDisposeDoesNotWaitForItself()
     {

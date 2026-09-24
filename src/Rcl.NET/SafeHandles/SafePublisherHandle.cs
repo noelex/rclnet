@@ -34,6 +34,7 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
                     InitIronOrLater(pname, typeSupportHandle, options);
                 }
             }
+            MarkInitialized();
         }
         catch
         {
@@ -88,8 +89,8 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
                 &nativeOptions));
     }
 
-    protected override void ReleaseHandleCore(rcl_publisher_t* ptr)
+    protected override bool ReleaseHandleCore(rcl_publisher_t* ptr)
     {
-        rcl_publisher_fini(ptr, _node.Object);
+        return CheckReleaseResult(rcl_publisher_fini(ptr, _node.Object), nameof(rcl_publisher_fini));
     }
 }

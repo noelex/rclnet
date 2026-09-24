@@ -38,6 +38,7 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
                     default: throw new NotImplementedException();
                 }
             }
+            MarkInitialized();
         }
         catch
         {
@@ -100,8 +101,9 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
         }
     }
 
-    protected override void ReleaseHandleCore(rcl_node_t* ptr)
+    protected override bool ReleaseHandleCore(rcl_node_t* ptr)
     {
-        using (ScopedLock.Lock(ref s_nodeCreationLock)) rcl_node_fini(ptr);
+        using (ScopedLock.Lock(ref s_nodeCreationLock))
+            return CheckReleaseResult(rcl_node_fini(ptr), nameof(rcl_node_fini));
     }
 }

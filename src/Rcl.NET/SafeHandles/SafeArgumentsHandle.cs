@@ -6,23 +6,32 @@ unsafe class SafeArgumentsHandle : RclObjectHandle<rcl_arguments_t>
 {
     public SafeArgumentsHandle(string[] args)
     {
-        var allocator = RclAllocator.Default;
-        *Object = rcl_get_zero_initialized_arguments();
-
-        int argc = args.Length;
-        if (argc > 0)
+        try
         {
-            var bufferSize = InteropHelpers.GetUtf8BufferSize(args);
-            Span<int> argOffsets = stackalloc int[argc];
-            Span<byte> argBuffer = stackalloc byte[bufferSize];
-            var argv = stackalloc byte*[argc];
-            InteropHelpers.FillUtf8Buffer(args, argBuffer, argv);
+            var allocator = RclAllocator.Default;
+            *Object = rcl_get_zero_initialized_arguments();
 
-            rcl_parse_arguments(argc, argv, allocator.Object, Object);
+            int argc = args.Length;
+            if (argc > 0)
+            {
+                var bufferSize = InteropHelpers.GetUtf8BufferSize(args);
+                Span<int> argOffsets = stackalloc int[argc];
+                Span<byte> argBuffer = stackalloc byte[bufferSize];
+                var argv = stackalloc byte*[argc];
+                InteropHelpers.FillUtf8Buffer(args, argBuffer, argv);
+
+                RclException.ThrowIfNonSuccess(rcl_parse_arguments(argc, argv, allocator.Object, Object));
+            }
+            else
+            {
+                RclException.ThrowIfNonSuccess(rcl_parse_arguments(0, null, allocator.Object, Object));
+            }
+            MarkInitialized();
         }
-        else
+        catch
         {
-            rcl_parse_arguments(0, null, allocator.Object, Object);
+            Dispose();
+            throw;
         }
     }
 
@@ -30,8 +39,8 @@ unsafe class SafeArgumentsHandle : RclObjectHandle<rcl_arguments_t>
     {
     }
 
-    protected override void ReleaseHandleCore(rcl_arguments_t* ptr)
+    protected override bool ReleaseHandleCore(rcl_arguments_t* ptr)
     {
-        rcl_arguments_fini(ptr);
+        return CheckReleaseResult(rcl_arguments_fini(ptr), nameof(rcl_arguments_fini));
     }
 }

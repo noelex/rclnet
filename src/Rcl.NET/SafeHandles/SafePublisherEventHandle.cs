@@ -9,6 +9,7 @@ internal unsafe class SafePublisherEventHandle : RclObjectHandle<rcl_event_t>
         {
             RclException.ThrowIfNonSuccess(
                 rcl_publisher_event_init(Object, publisher.Object, eventType));
+            MarkInitialized();
         }
         catch
         {
@@ -17,8 +18,8 @@ internal unsafe class SafePublisherEventHandle : RclObjectHandle<rcl_event_t>
         }
     }
 
-    protected override unsafe void ReleaseHandleCore(rcl_event_t* ptr)
+    protected override unsafe bool ReleaseHandleCore(rcl_event_t* ptr)
     {
-        rcl_event_fini(ptr);
+        return CheckReleaseResult(rcl_event_fini(ptr), nameof(rcl_event_fini));
     }
 }

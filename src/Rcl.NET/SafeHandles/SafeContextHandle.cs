@@ -6,6 +6,7 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
 {
     public SafeContextHandle(string[] args)
     {
+        SetShutdownDomain(this);
         *Object = rcl_get_zero_initialized_context();
         var opts = rcl_get_zero_initialized_init_options();
 
@@ -26,6 +27,7 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
             {
                 RclException.ThrowIfNonSuccess(rcl_init(0, null, &opts, Object));
             }
+            MarkInitialized();
         }
         catch
         {
@@ -38,8 +40,8 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
         }
     }
 
-    protected override void ReleaseHandleCore(rcl_context_t* ptr)
+    protected override bool ReleaseHandleCore(rcl_context_t* ptr)
     {
-        rcl_shutdown(ptr);
+        return CheckReleaseResult(rcl_shutdown(ptr), nameof(rcl_shutdown));
     }
 }

@@ -35,12 +35,14 @@ internal sealed unsafe class FakeRclHandle : RclObjectHandle<int>
         _releases = releases;
         _name = name;
         _checkpoint = checkpoint;
+        MarkInitialized();
     }
 
-    protected override void ReleaseHandleCore(int* ptr)
+    protected override bool ReleaseHandleCore(int* ptr)
     {
         _releases.Enqueue($"{_name}:enter");
         _checkpoint?.Pause();
         _releases.Enqueue($"{_name}:exit");
+        return true;
     }
 }

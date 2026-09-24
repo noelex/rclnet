@@ -3,15 +3,12 @@ using Xunit.Abstractions;
 
 namespace Rcl.NET.Tests;
 
-/// <summary>Records a repeatable native-call baseline without enforcing timing thresholds.</summary>
 public class LifecycleBaselineTests
 {
     private readonly ITestOutputHelper _output;
 
-    /// <summary>Creates the baseline recorder.</summary>
     public LifecycleBaselineTests(ITestOutputHelper output) => _output = output;
 
-    /// <summary>Measures steady clock reads after warmup; setup and reporting are excluded.</summary>
     [Fact]
     [Trait("Category", "PerformanceBaseline")]
     public void SteadyClockReadBaseline()

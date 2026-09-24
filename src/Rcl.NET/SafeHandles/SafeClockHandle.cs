@@ -14,6 +14,7 @@ unsafe class SafeClockHandle : RclObjectHandle<rcl_clock_t>
         {
             RclException.ThrowIfNonSuccess(
                 rcl_clock_init((rcl_clock_type_t)clockType, Object, &alloc));
+            MarkInitialized();
         }
         catch
         {
@@ -26,7 +27,7 @@ unsafe class SafeClockHandle : RclObjectHandle<rcl_clock_t>
 
     internal void ReleaseTimerRef() => _refCount--;
 
-    protected override void ReleaseHandleCore(rcl_clock_t* ptr)
+    protected override bool ReleaseHandleCore(rcl_clock_t* ptr)
     {
         using (ScopedLock.Lock(ref SyncRoot))
         {
@@ -36,7 +37,7 @@ unsafe class SafeClockHandle : RclObjectHandle<rcl_clock_t>
                     $"Unable to release a SafeClockHandle with active timer references. (type = {(RclClockType)ptr->type}, count = {_refCount})");
             }
 
-            rcl_clock_fini(ptr);
+            return CheckReleaseResult(rcl_clock_fini(ptr), nameof(rcl_clock_fini));
         }
     }
 }

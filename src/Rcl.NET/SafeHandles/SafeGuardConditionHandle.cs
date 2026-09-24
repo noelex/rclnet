@@ -9,6 +9,7 @@ unsafe class SafeGuardConditionHandle : RclObjectHandle<rcl_guard_condition_t>
         {
             RclException.ThrowIfNonSuccess(
                 rcl_guard_condition_init(Object, context.Object, new() { allocator = RclAllocator.Default.Object }));
+            MarkInitialized();
         }
         catch
         {
@@ -23,8 +24,8 @@ unsafe class SafeGuardConditionHandle : RclObjectHandle<rcl_guard_condition_t>
 
     }
 
-    protected override void ReleaseHandleCore(rcl_guard_condition_t* ptr)
+    protected override bool ReleaseHandleCore(rcl_guard_condition_t* ptr)
     {
-        rcl_guard_condition_fini(ptr);
+        return CheckReleaseResult(rcl_guard_condition_fini(ptr), nameof(rcl_guard_condition_fini));
     }
 }

@@ -30,6 +30,7 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
                 }
                 _clock.AddTimerRef();
             }
+            MarkInitialized();
         }
         catch
         {
@@ -38,12 +39,12 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
         }
     }
 
-    protected override void ReleaseHandleCore(rcl_timer_t* ptr)
+    protected override bool ReleaseHandleCore(rcl_timer_t* ptr)
     {
         using (ScopedLock.Lock(ref _clock.SyncRoot))
         {
-            rcl_timer_fini(ptr);
-            _clock.ReleaseTimerRef();
+            try { return CheckReleaseResult(rcl_timer_fini(ptr), nameof(rcl_timer_fini)); }
+            finally { _clock.ReleaseTimerRef(); }
         }
     }
 }
