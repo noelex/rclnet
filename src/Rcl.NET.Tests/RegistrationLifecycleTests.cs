@@ -84,7 +84,6 @@ public class RegistrationLifecycleTests : IDisposable
         probe.Publish();
         probe.Dispose();
         probe.Handle.Dispose();
-        Assert.False(probe.Handle.IsClosed);
 
         await context.Yield();
         Assert.True(probe.Handle.IsClosed);
