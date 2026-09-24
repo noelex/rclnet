@@ -63,7 +63,7 @@ public class CustomFunctionTypeConverter : ICSharpConverterPlugin
         // Add calling convention
         var csCallingConvention = cppFunctionType.CallingConvention.GetCSharpCallingConvention();
         fp.UnmanagedCallingConvention.Add(csCallingConvention.ToString());
-        //fp.UnmanagedCallingConvention.Add("SuppressGCTransition");
+        // A function pointer signature cannot guarantee a short, callback-free implementation.
         // csDelegate.Attributes.Add(new CSharpFreeAttribute($"UnmanagedFunctionPointer(CallingConvention.{csCallingConvention})"));
 
         var container = typedef != null

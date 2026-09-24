@@ -4,6 +4,8 @@ namespace Rosidl.Generator.CSharp.Helpers;
 
 internal static class PInvokeEmitHelper
 {
+    // Message operations may allocate or traverse unbounded strings and sequences.
+    // Only the static typesupport handle getters suppress the GC transition.
     public static CSharpRefType Ref(this CSharpType type, CSharpRefKind kind) => new CSharpRefType(kind, type);
 
     public static CSharpMethod EmitFinalize(this MethodBuildContext context, Func<string, string> symbolResolver)
@@ -27,7 +29,6 @@ internal static class PInvokeEmitHelper
                     _PInvoke(pMsg);
                 }
 
-                [{{Attributes.SuppressGCTransition}}]
                 [global::System.Runtime.InteropServices.DllImportAttribute("{{context.MessageContext.GeneratorLibraryName}}", EntryPoint = "{{symbolResolver("fini")}}")]
                 static extern {{method.ReturnType}} _PInvoke({{structType}}* msg);
                 """);
@@ -55,7 +56,6 @@ internal static class PInvokeEmitHelper
             writer.WriteLine($$"""
                 return _PInvoke(input, output);
 
-                [{{Attributes.SuppressGCTransition}}]
                 [global::System.Runtime.InteropServices.DllImportAttribute("{{context.MessageContext.GeneratorLibraryName}}", EntryPoint = "{{symbolResolver("copy")}}")]
                 static extern {{method.ReturnType}} _PInvoke({{structType}}* input, {{structType}}* output);
                 """);
@@ -86,7 +86,6 @@ internal static class PInvokeEmitHelper
                     return _PInvoke(plhs, prhs);
                 }
 
-                [{{Attributes.SuppressGCTransition}}]
                 [global::System.Runtime.InteropServices.DllImportAttribute("{{context.MessageContext.GeneratorLibraryName}}", EntryPoint = "{{symbolResolver("are_equal")}}")]
                 static extern {{method.ReturnType}} _PInvoke({{structType}}* lhs, {{structType}}* rhs);
                 """);
@@ -111,7 +110,6 @@ internal static class PInvokeEmitHelper
             writer.WriteLine($$"""
                 return _PInvoke();
 
-                [{{Attributes.SuppressGCTransition}}]
                 [global::System.Runtime.InteropServices.DllImportAttribute("{{context.MessageContext.GeneratorLibraryName}}", EntryPoint = "{{symbolResolver("create")}}")]
                 static extern {{method.ReturnType}} _PInvoke();
                 """);
@@ -138,7 +136,6 @@ internal static class PInvokeEmitHelper
             writer.WriteLine($$"""
                 _PInvoke(msg);
 
-                [{{Attributes.SuppressGCTransition}}]
                 [global::System.Runtime.InteropServices.DllImportAttribute("{{context.MessageContext.GeneratorLibraryName}}", EntryPoint = "{{symbolResolver("destroy")}}")]
                 static extern {{method.ReturnType}} _PInvoke({{structType}}* msg);
                 """);

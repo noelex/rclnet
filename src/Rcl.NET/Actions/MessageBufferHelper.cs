@@ -7,17 +7,17 @@ unsafe class MessageBufferHelper
 {
     public MessageBufferHelper(string actionTypesupportName)
     {
-        _createFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Feedback", "create");
-        _destroyFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Feedback", "destroy");
-        _copyFeedback = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Feedback", "copy");
+        _createFeedback = (delegate* unmanaged[Cdecl]<nint>)GetFunction(actionTypesupportName, "Feedback", "create");
+        _destroyFeedback = (delegate* unmanaged[Cdecl]<nint, void>)GetFunction(actionTypesupportName, "Feedback", "destroy");
+        _copyFeedback = (delegate* unmanaged[Cdecl]<nint, nint, bool>)GetFunction(actionTypesupportName, "Feedback", "copy");
 
-        _createResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Result", "create");
-        _destroyResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Result", "destroy");
-        _copyResult = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Result", "copy");
+        _createResult = (delegate* unmanaged[Cdecl]<nint>)GetFunction(actionTypesupportName, "Result", "create");
+        _destroyResult = (delegate* unmanaged[Cdecl]<nint, void>)GetFunction(actionTypesupportName, "Result", "destroy");
+        _copyResult = (delegate* unmanaged[Cdecl]<nint, nint, bool>)GetFunction(actionTypesupportName, "Result", "copy");
 
-        _createGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint>)GetFunction(actionTypesupportName, "Goal", "create");
-        _destroyGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void>)GetFunction(actionTypesupportName, "Goal", "destroy");
-        _copyGoal = (delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool>)GetFunction(actionTypesupportName, "Goal", "copy");
+        _createGoal = (delegate* unmanaged[Cdecl]<nint>)GetFunction(actionTypesupportName, "Goal", "create");
+        _destroyGoal = (delegate* unmanaged[Cdecl]<nint, void>)GetFunction(actionTypesupportName, "Goal", "destroy");
+        _copyGoal = (delegate* unmanaged[Cdecl]<nint, nint, bool>)GetFunction(actionTypesupportName, "Goal", "copy");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -57,10 +57,10 @@ unsafe class MessageBufferHelper
         return NativeLibrary.GetExport(lib, symName);
     }
 
-    private readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, nint, bool> _copyGoal, _copyFeedback, _copyResult;
+    private readonly delegate* unmanaged[Cdecl]<nint, nint, bool> _copyGoal, _copyFeedback, _copyResult;
 
-    private readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint> _createResult, _createGoal, _createFeedback;
+    private readonly delegate* unmanaged[Cdecl]<nint> _createResult, _createGoal, _createFeedback;
 
-    private readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<nint, void> _destroyResult, _destroyGoal, _destroyFeedback;
+    private readonly delegate* unmanaged[Cdecl]<nint, void> _destroyResult, _destroyGoal, _destroyFeedback;
 
 }
