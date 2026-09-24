@@ -43,6 +43,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
             InitializePublisherEvents(options,
                 ref _livelinessEvent, ref _deadlineMissedEvent, ref _qosEvent);
+            RclWaitObject<SafePublisherEventHandle>.RegisterWaitHandles(Context, _livelinessEvent, _deadlineMissedEvent, _qosEvent);
 
             rmw_gid_t gid;
             var rmwHandle = rcl_publisher_get_rmw_handle(lease.Object);

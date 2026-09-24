@@ -19,6 +19,56 @@ public class RegistrationLifecycleTests : IDisposable
     public void Dispose() => Assert.Empty(HandleReleaseDiagnostics.Snapshot().Except(_errorsBefore));
 
     [Fact]
+    public async Task FailedBatchPublicationRollsBackBeforeDispatch()
+    {
+        await using var context = NewContext();
+        using var first = new Probe(context);
+        using var closed = new Probe(context);
+        var callbacks = 0;
+        first.Callback = () => Interlocked.Increment(ref callbacks);
+        Trigger(first.Handle);
+        closed.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() =>
+            RclWaitObject<SafeGuardConditionHandle>.RegisterWaitHandles(context, first, null, closed));
+
+        await context.Yield();
+        Assert.Equal(0, Volatile.Read(ref callbacks));
+        first.Dispose();
+        await context.Yield();
+        Assert.True(first.Handle.IsClosed);
+        Assert.Equal(1, first.NativeReleases);
+        Assert.Equal(1, first.DetachCount);
+    }
+
+    [Fact]
+    public async Task BatchPublicationIsVisibleToImmediateContextClose()
+    {
+        var context = NewContext();
+        using var first = new Probe(context);
+        using var second = new Probe(context);
+
+        try
+        {
+            Task shutdown;
+
+            lock (context.RegistrationGate)
+            {
+                RclWaitObject<SafeGuardConditionHandle>.RegisterWaitHandles(context, first, null, second);
+                shutdown = context.DisposeAsync().AsTask();
+            }
+
+            await shutdown.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(1, first.DetachCount);
+            Assert.Equal(1, second.DetachCount);
+        }
+        finally
+        {
+            await context.DisposeAsync();
+        }
+    }
+
+    [Fact]
     public async Task CloseBeforePublicationRejectsRegistrationAndReturnsRefs()
     {
         await using var context = NewContext();

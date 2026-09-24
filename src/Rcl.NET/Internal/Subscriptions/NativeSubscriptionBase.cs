@@ -61,6 +61,7 @@ internal unsafe abstract class NativeSubscriptionBase :
 
             InitializeEvents(options,
                 ref _livelinessEvent, ref _deadlineMissedEvent, ref _qosEvent);
+            RclWaitObject<SafeSubscriptionEventHandle>.RegisterWaitHandles(Context, _livelinessEvent, _deadlineMissedEvent, _qosEvent);
             completelyInitialized = true;
         }
         finally

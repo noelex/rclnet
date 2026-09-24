@@ -13,7 +13,6 @@ internal class RclPublisherLivelinessLostEvent : RclPubisherEvent
         : base(context, publisher, rcl_publisher_event_type_t.RCL_PUBLISHER_LIVELINESS_LOST)
     {
         _handler = handler;
-        RegisterWaitHandle();
     }
 
     protected override void OnLivelinessLost(LivelinessLostEvent info)
@@ -33,7 +32,6 @@ internal class RclPublisherOfferedDeadlineMissedEvent : RclPubisherEvent
         : base(context, publisher, rcl_publisher_event_type_t.RCL_PUBLISHER_OFFERED_DEADLINE_MISSED)
     {
         _handler = handler;
-        RegisterWaitHandle();
     }
 
     protected override void OnOfferedDeadlineMissed(OfferedDeadlineMissedEvent info)
@@ -53,7 +51,6 @@ internal class RclPublisherIncompatibleQosEvent : RclPubisherEvent
         : base(context, publisher, rcl_publisher_event_type_t.RCL_PUBLISHER_OFFERED_INCOMPATIBLE_QOS)
     {
         _handler = handler;
-        RegisterWaitHandle();
     }
 
     protected override void OnIncomatibleQos(IncompatibleQosEvent info)

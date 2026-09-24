@@ -21,14 +21,54 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
     {
         try
         {
-            Context.Register(Handle, OnSignalReceived, this, ref _registration,
-                static state => ((RclWaitObject<T>)state!).Stop(),
-                static state => ((RclWaitObject<T>)state!).Detached());
+            RegisterWaitHandleCore();
         }
         catch
         {
             Dispose();
             throw;
+        }
+    }
+
+    private void RegisterWaitHandleCore()
+    {
+        Context.Register(Handle, OnSignalReceived, this, ref _registration,
+            static state => ((RclWaitObject<T>)state!).Stop(),
+            static state => ((RclWaitObject<T>)state!).Detached());
+    }
+
+    internal static void RegisterWaitHandles(RclContext context, params RclWaitObject<T>?[] waitObjects)
+    {
+        // Do not expose partial event masks to the native wait set. Close and snapshot
+        // creation use the same gate; rollback also finishes before either can proceed.
+        lock (context.RegistrationGate)
+        {
+            foreach (var waitObject in waitObjects)
+            {
+                if (waitObject != null && !ReferenceEquals(waitObject.Context, context))
+                {
+                    throw new ArgumentException("All wait objects must belong to the same context.", nameof(waitObjects));
+                }
+            }
+
+            var registered = 0;
+
+            try
+            {
+                for (; registered < waitObjects.Length; registered++)
+                {
+                    waitObjects[registered]?.RegisterWaitHandleCore();
+                }
+            }
+            catch
+            {
+                for (var i = 0; i < registered; i++)
+                {
+                    waitObjects[i]?._registration.Dispose();
+                }
+
+                throw;
+            }
         }
     }
 

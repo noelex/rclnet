@@ -155,8 +155,12 @@ public class PubSubTests
         }
     }
 
-    [SkippableFact]
-    public async Task IncompatibleQosEvents()
+    [SkippableTheory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task IncompatibleQosEvents(bool nativeSubscription, bool publisherFirst)
     {
         Skip.If(RosEnvironment.IsFoxy && RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp",
             "Incompatible QoS event is not supported by rmw_fastrtps_cpp on foxy.");
@@ -169,19 +173,32 @@ public class PubSubTests
         TaskCompletionSource<QosPolicyKind> offeredQosIncompatible = new(), requestQosIncompatible = new();
 
         // Pub = BestEffort and Sub = Reliable is incompatible.
-        using var pub = publisherNode.CreatePublisher<Time>(topic, new(
-            qos: new(Reliability: ReliabilityPolicy.BestEffort),
-            offeredQosIncompatibleHandler: OnOfferedQosIncompatible));
-
-        using var sub = subscriberNode.CreateSubscription<Time>(topic, new(
-            qos: new(Reliability: ReliabilityPolicy.Reliable),
-            requestedQosIncompatibleHandler: OnRequestedQosIncompatible));
+        using var first = publisherFirst ? CreatePublisher() : CreateSubscription();
+        using var second = publisherFirst ? CreateSubscription() : CreatePublisher();
 
         await Task.WhenAll(offeredQosIncompatible.Task, requestQosIncompatible.Task)
             .WaitAsync(TimeSpan.FromSeconds(5));
 
         Assert.Equal(QosPolicyKind.Reliability, offeredQosIncompatible.Task.Result);
         Assert.Equal(QosPolicyKind.Reliability, requestQosIncompatible.Task.Result);
+
+        IDisposable CreatePublisher()
+        {
+            return publisherNode.CreatePublisher<Time>(topic, new(
+                qos: new(Reliability: ReliabilityPolicy.BestEffort),
+                offeredQosIncompatibleHandler: OnOfferedQosIncompatible));
+        }
+
+        IDisposable CreateSubscription()
+        {
+            var options = new SubscriptionOptions(
+                qos: new(Reliability: ReliabilityPolicy.Reliable),
+                requestedQosIncompatibleHandler: OnRequestedQosIncompatible);
+
+            return nativeSubscription
+                ? subscriberNode.CreateNativeSubscription<Time>(topic, options)
+                : subscriberNode.CreateSubscription<Time>(topic, options);
+        }
 
         void OnOfferedQosIncompatible(IncompatibleQosEvent e)
         {

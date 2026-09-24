@@ -67,6 +67,7 @@ internal unsafe class RclSubscription<T> :
 
             InitializeEvents(options,
                 ref _livelinessEvent, ref _deadlineMissedEvent, ref _qosEvent);
+            RclWaitObject<SafeSubscriptionEventHandle>.RegisterWaitHandles(Context, _livelinessEvent, _deadlineMissedEvent, _qosEvent);
             RegisterWaitHandle();
             completelyInitialized = true;
         }
