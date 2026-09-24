@@ -2,6 +2,7 @@ using Rcl.Logging;
 using Rcl.Logging.Impl;
 using Rcl.SafeHandles;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -504,14 +505,15 @@ public sealed class RclContext : IRclContext
         }
     }
 
-    // Batch entries were never visible to a wait-set snapshot. Remove them under
-    // the publication gate, then finish detaching after the caller releases it.
+    /// <summary>Removes a batch registration before it becomes visible to a wait-set snapshot.</summary>
+    /// <remarks>
+    /// The caller must hold <see cref="RegistrationGate"/> throughout the batch rollback.
+    /// Call <see cref="CompleteRolledBackWaitHandle"/> only after releasing that gate.
+    /// </remarks>
     internal void RollbackWaitHandle(WaitSetRegistration entry)
     {
-        lock (RegistrationGate)
-        {
-            RemoveRegistration(entry, queueForCleanup: false);
-        }
+        Debug.Assert(Monitor.IsEntered(RegistrationGate));
+        RemoveRegistration(entry, queueForCleanup: false);
     }
 
     internal void CompleteRolledBackWaitHandle(WaitSetRegistration entry)
