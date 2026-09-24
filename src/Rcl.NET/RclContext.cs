@@ -252,6 +252,8 @@ public sealed class RclContext : IRclContext
 
     private void Interrupt() => TriggerInfrastructureSignal(_interruptSignal);
 
+    internal void NotifyRegistrationsChanged() => Interrupt();
+
     private void TriggerInfrastructureSignal(SafeGuardConditionHandle signal)
     {
         var error = TryTriggerInfrastructureSignal(signal);
@@ -397,7 +399,8 @@ public sealed class RclContext : IRclContext
     }
 
     internal void Register(RclObjectHandle handle, Action<RclObjectHandle, object?> callback,
-        object? state, ref WaitHandleRegistration owner, Action<object?>? closed = null, Action<object?>? detached = null)
+        object? state, ref WaitHandleRegistration owner, Action<object?>? closed = null,
+        Action<object?>? detached = null, bool notify = true)
     {
         bool added = false;
 
@@ -454,7 +457,10 @@ public sealed class RclContext : IRclContext
             }
         }
 
-        Interrupt();
+        if (notify)
+        {
+            NotifyRegistrationsChanged();
+        }
     }
 
     private void CountHandle(RclObjectHandle handle, bool adding)
@@ -485,26 +491,63 @@ public sealed class RclContext : IRclContext
 
     internal void UnregisterWaitHandle(WaitSetRegistration entry)
     {
+        bool removed;
+
         lock (RegistrationGate)
         {
-            RemoveRegistration(entry);
+            removed = RemoveRegistration(entry);
         }
 
-        Interrupt();
+        if (removed)
+        {
+            NotifyRegistrationsChanged();
+        }
     }
 
-    private void RemoveRegistration(WaitSetRegistration entry)
+    // Batch entries were never visible to a wait-set snapshot. Remove them under
+    // the publication gate, then finish detaching after the caller releases it.
+    internal void RollbackWaitHandle(WaitSetRegistration entry)
+    {
+        lock (RegistrationGate)
+        {
+            RemoveRegistration(entry, queueForCleanup: false);
+        }
+    }
+
+    internal void CompleteRolledBackWaitHandle(WaitSetRegistration entry)
+    {
+        List<(Action<object?> Callback, object? State)>? dependentCleanup;
+
+        lock (RegistrationGate)
+        {
+            dependentCleanup = entry.Cleanup;
+            entry.Cleanup = null;
+        }
+
+        CompleteDetachedRegistration(entry, dependentCleanup);
+    }
+
+    private bool RemoveRegistration(WaitSetRegistration entry, bool queueForCleanup = true)
     {
         if (entry.RemoveRequested)
         {
-            return;
+            return false;
         }
 
         entry.RemoveRequested = true;
         _waitHandles.Remove(entry.Token);
         _registeredAddresses.Remove(entry.WaitHandle.DangerousGetHandle());
         CountHandle(entry.WaitHandle, false);
-        _removedRegistrations.Enqueue(entry);
+        if (queueForCleanup)
+        {
+            _removedRegistrations.Enqueue(entry);
+        }
+        else
+        {
+            entry.Detached = true;
+        }
+
+        return true;
     }
 
     private void StopRegistrations()
@@ -610,24 +653,30 @@ public sealed class RclContext : IRclContext
 
             if (entry != null)
             {
-                if (entry.OnDetached != null)
-                {
-                    Cleanup.Run(entry.OnDetached, entry.State);
-                }
-
-                entry.WaitHandle.DangerousRelease();
-
-                if (dependentCleanup != null)
-                {
-                    foreach (var item in dependentCleanup)
-                    {
-                        Cleanup.Run(item.Callback, item.State);
-                    }
-                }
+                CompleteDetachedRegistration(entry, dependentCleanup);
             }
             else
             {
                 Cleanup.Run(work.Callback!, work.State);
+            }
+        }
+    }
+
+    private static void CompleteDetachedRegistration(WaitSetRegistration entry,
+        List<(Action<object?> Callback, object? State)>? dependentCleanup)
+    {
+        if (entry.OnDetached != null)
+        {
+            Cleanup.Run(entry.OnDetached, entry.State);
+        }
+
+        entry.WaitHandle.DangerousRelease();
+
+        if (dependentCleanup != null)
+        {
+            foreach (var item in dependentCleanup)
+            {
+                Cleanup.Run(item.Callback, item.State);
             }
         }
     }

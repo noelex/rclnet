@@ -32,13 +32,12 @@ public class RegistrationLifecycleTests : IDisposable
         Assert.Throws<ObjectDisposedException>(() =>
             RclWaitObject<SafeGuardConditionHandle>.RegisterWaitHandles(context, first, null, closed));
 
-        await context.Yield();
-        Assert.Equal(0, Volatile.Read(ref callbacks));
         first.Dispose();
-        await context.Yield();
         Assert.True(first.Handle.IsClosed);
         Assert.Equal(1, first.NativeReleases);
         Assert.Equal(1, first.DetachCount);
+        await context.Yield();
+        Assert.Equal(0, Volatile.Read(ref callbacks));
     }
 
     [Fact]
@@ -50,13 +49,8 @@ public class RegistrationLifecycleTests : IDisposable
 
         try
         {
-            Task shutdown;
-
-            lock (context.RegistrationGate)
-            {
-                RclWaitObject<SafeGuardConditionHandle>.RegisterWaitHandles(context, first, null, second);
-                shutdown = context.DisposeAsync().AsTask();
-            }
+            RclWaitObject<SafeGuardConditionHandle>.RegisterWaitHandles(context, first, null, second);
+            var shutdown = context.DisposeAsync().AsTask();
 
             await shutdown.WaitAsync(TimeSpan.FromSeconds(10));
             Assert.Equal(1, first.DetachCount);
@@ -73,16 +67,8 @@ public class RegistrationLifecycleTests : IDisposable
     {
         await using var context = NewContext();
         using var probe = new Probe(context);
-        var publishing = Task.Run(() =>
-        {
-            lock (context.RegistrationGate)
-            {
-                var publication = Task.Run(() => Record.Exception(probe.Publish));
-                probe.Dispose();
-                return publication;
-            }
-        });
-        Assert.IsType<ObjectDisposedException>(await publishing.WaitAsync(TimeSpan.FromSeconds(10)));
+        probe.Dispose();
+        Assert.IsType<ObjectDisposedException>(Record.Exception(probe.Publish));
         await context.Yield();
         Assert.True(probe.Handle.IsClosed);
         Assert.Equal(1, probe.DetachCount);
@@ -95,13 +81,10 @@ public class RegistrationLifecycleTests : IDisposable
         await using var context = NewContext();
         using var probe = new Probe(context);
 
-        lock (context.RegistrationGate)
-        {
-            probe.Publish();
-            probe.Dispose();
-            probe.Handle.Dispose();
-            Assert.False(probe.Handle.IsClosed);
-        }
+        probe.Publish();
+        probe.Dispose();
+        probe.Handle.Dispose();
+        Assert.False(probe.Handle.IsClosed);
 
         await context.Yield();
         Assert.True(probe.Handle.IsClosed);

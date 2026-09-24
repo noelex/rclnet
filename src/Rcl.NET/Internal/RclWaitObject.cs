@@ -30,45 +30,76 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
         }
     }
 
-    private void RegisterWaitHandleCore()
+    private void RegisterWaitHandleCore(bool notify = true)
     {
         Context.Register(Handle, OnSignalReceived, this, ref _registration,
             static state => ((RclWaitObject<T>)state!).Stop(),
-            static state => ((RclWaitObject<T>)state!).Detached());
+            static state => ((RclWaitObject<T>)state!).Detached(), notify);
     }
 
     internal static void RegisterWaitHandles(RclContext context, params RclWaitObject<T>?[] waitObjects)
     {
         // Do not expose partial event masks to the native wait set. Close and snapshot
         // creation use the same gate; rollback also finishes before either can proceed.
-        lock (context.RegistrationGate)
+        List<WaitSetRegistration>? rolledBack = null;
+        var changed = false;
+
+        try
         {
-            foreach (var waitObject in waitObjects)
+            lock (context.RegistrationGate)
             {
-                if (waitObject != null && !ReferenceEquals(waitObject.Context, context))
+                foreach (var waitObject in waitObjects)
                 {
-                    throw new ArgumentException("All wait objects must belong to the same context.", nameof(waitObjects));
-                }
-            }
-
-            var registered = 0;
-
-            try
-            {
-                for (; registered < waitObjects.Length; registered++)
-                {
-                    waitObjects[registered]?.RegisterWaitHandleCore();
-                }
-            }
-            catch
-            {
-                for (var i = 0; i < registered; i++)
-                {
-                    waitObjects[i]?._registration.Dispose();
+                    if (waitObject != null && !ReferenceEquals(waitObject.Context, context))
+                    {
+                        throw new ArgumentException("All wait objects must belong to the same context.", nameof(waitObjects));
+                    }
                 }
 
-                throw;
+                var registered = 0;
+
+                try
+                {
+                    for (; registered < waitObjects.Length; registered++)
+                    {
+                        if (waitObjects[registered] is { } waitObject)
+                        {
+                            waitObject.RegisterWaitHandleCore(notify: false);
+                            changed = true;
+                        }
+                    }
+                }
+                catch
+                {
+                    rolledBack = new();
+
+                    for (var i = 0; i < registered; i++)
+                    {
+                        if (waitObjects[i]?._registration.Entry is { } entry)
+                        {
+                            context.RollbackWaitHandle(entry);
+                            rolledBack.Add(entry);
+                        }
+                    }
+
+                    throw;
+                }
             }
+        }
+        finally
+        {
+            if (rolledBack != null)
+            {
+                foreach (var entry in rolledBack)
+                {
+                    context.CompleteRolledBackWaitHandle(entry);
+                }
+            }
+        }
+
+        if (changed)
+        {
+            context.NotifyRegistrationsChanged();
         }
     }
 
