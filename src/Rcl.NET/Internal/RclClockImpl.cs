@@ -15,8 +15,10 @@ class RclClockImpl : RclObject<SafeClockHandle>
     {
         get
         {
+            using var lease = Handle.Acquire();
+            using var stateLock = ScopedLock.Lock(ref Handle.SyncRoot);
             bool enabled;
-            rcl_is_enabled_ros_time_override(Handle.Object, &enabled);
+            rcl_is_enabled_ros_time_override(lease.Object, &enabled);
             return enabled;
         }
     }
@@ -48,8 +50,9 @@ class RclClockImpl : RclObject<SafeClockHandle>
     {
         get
         {
+            using var lease = Handle.Acquire();
             rcl_time_point_value_t t;
-            rcl_clock_get_now(Handle.Object, &t);
+            rcl_clock_get_now(lease.Object, &t);
             return t.Value;
         }
     }

@@ -9,9 +9,9 @@ internal unsafe sealed class SafeWaitSetHandle : RclObjectHandle<rcl_wait_set_t>
             lock (context.LifecycleGate)
             {
                 SetDependencies(context);
-                *Object = rcl_get_zero_initialized_wait_set();
+                *DangerousObject = rcl_get_zero_initialized_wait_set();
                 RclException.ThrowIfNonSuccess(rcl_wait_set_init(
-                    Object, 0, 0, 0, 0, 0, 0, context.DangerousObject, RclAllocator.Default.Object));
+                    DangerousObject, 0, 0, 0, 0, 0, 0, context.DangerousObject, RclAllocator.Default.Object));
                 MarkInitialized();
             }
         }

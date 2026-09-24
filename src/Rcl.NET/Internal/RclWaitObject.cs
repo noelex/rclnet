@@ -89,6 +89,7 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
 
     public ValueTask WaitOneAsync(bool runContinuationAsynchronously, CancellationToken cancellationToken = default)
     {
+        Handle.ThrowIfOperationClosed();
         if (Volatile.Read(ref _disposed) == 1)
         {
             throw new ObjectDisposedException(GetType().Name);
@@ -117,12 +118,12 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
     public ValueTask WaitOneAsync(CancellationToken cancellationToken = default)
         => WaitOneAsync(true, cancellationToken);
 
-    public override void Dispose()
+    protected override void DisposeCore()
     {
         if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
         {
             _registration.Dispose();
-            base.Dispose();
+            base.DisposeCore();
 
             Dictionary<int, ManualResetValueTaskSource<bool>> snapshot;
             using (ScopedLock.Lock(ref _syncRoot))

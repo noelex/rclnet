@@ -18,6 +18,7 @@ internal unsafe class NativeSubscription<T> :
 
     protected override RosMessageBuffer TakeMessage()
     {
+        using var lease = Handle.Acquire();
         // TODO: Parse this as RclFoxy.rmw_message_info_t
         // if need to access header fields on foxy.
         // Defined as RclHumble.rmw_message_info_t only because it has bigger size
@@ -30,7 +31,7 @@ internal unsafe class NativeSubscription<T> :
 
         var rosMessage = RosMessageBuffer.Create<T>();
         if (rcl_ret_t.RCL_RET_OK ==
-            rcl_take(Handle.Object, rosMessage.Data.ToPointer(), &header, null))
+            rcl_take(lease.Object, rosMessage.Data.ToPointer(), &header, null))
         {
             return rosMessage;
         }

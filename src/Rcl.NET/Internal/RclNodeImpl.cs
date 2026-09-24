@@ -19,7 +19,6 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
     private readonly CancellationTokenSource _cts = new();
     private readonly RclGuardConditionImpl _graphSignal;
     private readonly bool _ownsClock;
-    private int _disposed;
 
     public unsafe RclNodeImpl(
         RclContext context,
@@ -31,6 +30,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
     {
         try
         {
+            using var lease = Handle.Acquire();
             Options = options ?? NodeOptions.Default;
             _ownsClock = clockOverride == null && Options.Clock == RclClockType.Ros;
             Clock = clockOverride ?? Options.Clock switch
@@ -42,10 +42,10 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
             };
             _timeProvider = new(context, Clock);
 
-            Name = StringMarshal.CreatePooledString(rcl_node_get_name(Handle.Object))!;
-            Namespace = StringMarshal.CreatePooledString(rcl_node_get_namespace(Handle.Object))!;
-            FullyQualifiedName = StringMarshal.CreatePooledString(rcl_node_get_fully_qualified_name(Handle.Object))!;
-            Logger = context.CreateLogger(StringMarshal.CreatePooledString(rcl_node_get_logger_name(Handle.Object))!);
+            Name = StringMarshal.CreatePooledString(rcl_node_get_name(lease.Object))!;
+            Namespace = StringMarshal.CreatePooledString(rcl_node_get_namespace(lease.Object))!;
+            FullyQualifiedName = StringMarshal.CreatePooledString(rcl_node_get_fully_qualified_name(lease.Object))!;
+            Logger = context.CreateLogger(StringMarshal.CreatePooledString(rcl_node_get_logger_name(lease.Object))!);
 
             _graph = new(this, Options.GraphEventFilter ?? (static _ => true));
             _graphSignal = new RclGuardConditionImpl(context,
@@ -92,17 +92,30 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
     public string FullyQualifiedName { get; }
 
     public unsafe ulong InstanceId
-         => rcl_node_get_rcl_instance_id(Handle.Object);
+    {
+        get
+        {
+            using var lease = Handle.Acquire();
+            return rcl_node_get_rcl_instance_id(lease.Object);
+        }
+    }
 
     public unsafe bool IsValid
-         => rcl_node_is_valid(Handle.Object);
+    {
+        get
+        {
+            using var lease = Handle.Acquire();
+            return rcl_node_is_valid(lease.Object);
+        }
+    }
 
     public unsafe nuint DomaindId
     {
         get
         {
+            using var lease = Handle.Acquire();
             size_t s;
-            rcl_node_get_domain_id(Handle.Object, &s);
+            rcl_node_get_domain_id(lease.Object, &s);
             return s;
         }
     }
@@ -138,10 +151,8 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         }
     }
 
-    public override void Dispose()
+    protected override void DisposeCore()
     {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
-        Handle.TryBeginClose();
         try
         {
             try { _timeProvider?.Dispose(); }
@@ -156,9 +167,13 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
             _cts.Cancel();
             _cts.Dispose();
             _graphSignal?.Dispose();
-            base.Dispose();
+            base.DisposeCore();
             if (_ownsClock && Clock != null)
-                Context.SynchronizationContext.Post(static x => ((IDisposable)x!).Dispose(), Clock);
+            {
+                var clockHandle = Clock.Impl.Handle;
+                clockHandle.TryBeginClose();
+                Context.SynchronizationContext.Post(static x => ((SafeClockHandle)x!).Dispose(), clockHandle);
+            }
         }
     }
 }

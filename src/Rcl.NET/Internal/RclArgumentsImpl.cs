@@ -14,7 +14,8 @@ unsafe class RclArgumentsImpl : IDisposable
 
     public int[] GetUnparsedArgumentIndices()
     {
-        var count = rcl_arguments_get_count_unparsed(_handle.Object);
+        using var lease = _handle.Acquire();
+        var count = rcl_arguments_get_count_unparsed(lease.Object);
         if (count == 0)
         {
             return Array.Empty<int>();
@@ -24,7 +25,7 @@ unsafe class RclArgumentsImpl : IDisposable
         int* p = null;
         try
         {
-            rcl_arguments_get_unparsed(_handle.Object, _allocator.Object, &p);
+            rcl_arguments_get_unparsed(lease.Object, _allocator.Object, &p);
             return new Span<int>(p, count).ToArray();
         }
         finally
@@ -35,7 +36,8 @@ unsafe class RclArgumentsImpl : IDisposable
 
     public int[] GetUnparsedRosArgumentIndices()
     {
-        var count = rcl_arguments_get_count_unparsed_ros(_handle.Object);
+        using var lease = _handle.Acquire();
+        var count = rcl_arguments_get_count_unparsed_ros(lease.Object);
         if (count == 0)
         {
             return Array.Empty<int>();
@@ -44,7 +46,7 @@ unsafe class RclArgumentsImpl : IDisposable
         int* p = null;
         try
         {
-            rcl_arguments_get_unparsed_ros(_handle.Object, _allocator.Object, &p);
+            rcl_arguments_get_unparsed_ros(lease.Object, _allocator.Object, &p);
             return new Span<int>(p, count).ToArray();
         }
         finally
@@ -55,7 +57,8 @@ unsafe class RclArgumentsImpl : IDisposable
 
     public string[] GetParamFiles()
     {
-        var count = rcl_arguments_get_param_files_count(_handle.Object);
+        using var lease = _handle.Acquire();
+        var count = rcl_arguments_get_param_files_count(lease.Object);
         if (count == 0)
         {
             return Array.Empty<string>();
@@ -66,7 +69,7 @@ unsafe class RclArgumentsImpl : IDisposable
         sbyte** p = null;
         try
         {
-            rcl_arguments_get_param_files(_handle.Object, _allocator.Object, &p);
+            rcl_arguments_get_param_files(lease.Object, _allocator.Object, &p);
             for (var i = 0; i < count; i++)
             {
                 items[i] = new(p[i]);
@@ -82,8 +85,9 @@ unsafe class RclArgumentsImpl : IDisposable
 
     public NodeParameter[] GetParameters()
     {
+        using var lease = _handle.Acquire();
         rcl_params_t* p;
-        rcl_arguments_get_param_overrides(_handle.Object, &p);
+        rcl_arguments_get_param_overrides(lease.Object, &p);
 
         var count = p->num_nodes;
 

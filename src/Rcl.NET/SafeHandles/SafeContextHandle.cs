@@ -21,7 +21,7 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
         try
         {
             opts = rcl_get_zero_initialized_init_options();
-            *Object = rcl_get_zero_initialized_context();
+            *DangerousObject = rcl_get_zero_initialized_context();
             RclException.ThrowIfNonSuccess(rcl_init_options_init(&opts, RclAllocator.Default.Object));
             optionsInitialized = true;
             int argc = args.Length;
@@ -31,11 +31,11 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
                 Span<byte> argBuffer = stackalloc byte[bufferSize];
                 var argv = stackalloc byte*[argc];
                 InteropHelpers.FillUtf8Buffer(args, argBuffer, argv);
-                RclException.ThrowIfNonSuccess(rcl_init(argc, argv, &opts, Object));
+                RclException.ThrowIfNonSuccess(rcl_init(argc, argv, &opts, DangerousObject));
             }
             else
             {
-                RclException.ThrowIfNonSuccess(rcl_init(0, null, &opts, Object));
+                RclException.ThrowIfNonSuccess(rcl_init(0, null, &opts, DangerousObject));
             }
             MarkInitialized();
             lock (LoggingGate)
@@ -45,7 +45,7 @@ unsafe class SafeContextHandle : RclObjectHandle<rcl_context_t>
                     var allocator = RclAllocator.Default.Object;
                     try
                     {
-                        RclException.ThrowIfNonSuccess(rcl_logging_configure(&Object->global_arguments, &allocator));
+                        RclException.ThrowIfNonSuccess(rcl_logging_configure(&DangerousObject->global_arguments, &allocator));
                     }
                     catch
                     {

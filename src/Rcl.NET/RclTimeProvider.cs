@@ -119,13 +119,15 @@ internal sealed class RclTimeProviderTimer : ITimer
         {
             unsafe
             {
-                RclException.ThrowIfNonSuccess(rcl_timer_cancel(_handle.Object));
+                using var lease = _handle.Acquire();
+                RclException.ThrowIfNonSuccess(rcl_timer_cancel(lease.Object));
             }
             _registration = context.Register(_handle, static (_, state) => ((RclTimeProviderTimer)state!).OnTimer(), this);
             Change(dueTime, period);
         }
         catch
         {
+            _handle.TryBeginClose();
             _registration.Dispose();
             context.SynchronizationContext.Post(static state => ((SafeTimerHandle)state!).Dispose(), _handle);
             throw;
@@ -149,6 +151,7 @@ internal sealed class RclTimeProviderTimer : ITimer
         lock (_gate)
         {
             if (_disposed) return false;
+            using var lease = _handle.Acquire();
             _period = period;
             _firstTick = true;
             _scheduled = dueTime != Timeout.InfiniteTimeSpan;
@@ -157,12 +160,12 @@ internal sealed class RclTimeProviderTimer : ITimer
             {
                 long previous;
                 RclException.ThrowIfNonSuccess(rcl_timer_exchange_period(
-                    _handle.Object, dueTime.Ticks * 100, &previous));
-                RclException.ThrowIfNonSuccess(rcl_timer_reset(_handle.Object));
+                    lease.Object, dueTime.Ticks * 100, &previous));
+                RclException.ThrowIfNonSuccess(rcl_timer_reset(lease.Object));
             }
             else
             {
-                RclException.ThrowIfNonSuccess(rcl_timer_cancel(_handle.Object));
+                RclException.ThrowIfNonSuccess(rcl_timer_cancel(lease.Object));
             }
         }
 
@@ -175,23 +178,24 @@ internal sealed class RclTimeProviderTimer : ITimer
         lock (_gate)
         {
             if (_disposed || !_scheduled) return;
+            using var lease = _handle.Acquire();
             bool ready;
-            RclException.ThrowIfNonSuccess(rcl_timer_is_ready(_handle.Object, &ready));
+            RclException.ThrowIfNonSuccess(rcl_timer_is_ready(lease.Object, &ready));
             if (!ready) return;
-            RclException.ThrowIfNonSuccess(rcl_timer_call(_handle.Object));
+            RclException.ThrowIfNonSuccess(rcl_timer_call(lease.Object));
 
             if (_period == TimeSpan.Zero || _period == Timeout.InfiniteTimeSpan)
             {
                 _scheduled = false;
-                RclException.ThrowIfNonSuccess(rcl_timer_cancel(_handle.Object));
+                RclException.ThrowIfNonSuccess(rcl_timer_cancel(lease.Object));
             }
             else if (_firstTick)
             {
                 // The native timer has one period; .NET timers have a distinct first delay.
                 long previous;
                 RclException.ThrowIfNonSuccess(rcl_timer_exchange_period(
-                    _handle.Object, _period.Ticks * 100, &previous));
-                RclException.ThrowIfNonSuccess(rcl_timer_reset(_handle.Object));
+                    lease.Object, _period.Ticks * 100, &previous));
+                RclException.ThrowIfNonSuccess(rcl_timer_reset(lease.Object));
                 _firstTick = false;
             }
 
@@ -240,7 +244,9 @@ internal sealed class RclTimeProviderTimer : ITimer
         {
             if (_disposed) return;
             _disposed = true;
-            RclException.ThrowIfNonSuccess(rcl_timer_cancel(_handle.Object));
+            _handle.TryBeginClose();
+            // Cleanup retains the owner ref until the queued release below, even after domain close.
+            RclException.ThrowIfNonSuccess(rcl_timer_cancel(_handle.DangerousObject));
             // Concurrent disposal must not return before native release is queued,
             // otherwise the owning node can queue its clock release first.
             _registration.Dispose();

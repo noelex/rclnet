@@ -9,7 +9,7 @@ unsafe class SafeArgumentsHandle : RclObjectHandle<rcl_arguments_t>
         try
         {
             var allocator = RclAllocator.Default;
-            *Object = rcl_get_zero_initialized_arguments();
+            *DangerousObject = rcl_get_zero_initialized_arguments();
 
             int argc = args.Length;
             if (argc > 0)
@@ -20,11 +20,11 @@ unsafe class SafeArgumentsHandle : RclObjectHandle<rcl_arguments_t>
                 var argv = stackalloc byte*[argc];
                 InteropHelpers.FillUtf8Buffer(args, argBuffer, argv);
 
-                RclException.ThrowIfNonSuccess(rcl_parse_arguments(argc, argv, allocator.Object, Object));
+                RclException.ThrowIfNonSuccess(rcl_parse_arguments(argc, argv, allocator.Object, DangerousObject));
             }
             else
             {
-                RclException.ThrowIfNonSuccess(rcl_parse_arguments(0, null, allocator.Object, Object));
+                RclException.ThrowIfNonSuccess(rcl_parse_arguments(0, null, allocator.Object, DangerousObject));
             }
             MarkInitialized();
         }

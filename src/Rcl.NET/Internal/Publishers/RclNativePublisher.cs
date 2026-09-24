@@ -28,13 +28,14 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
         bool completelyInitialized = false;
         try
         {
+            using var lease = Handle.Acquire();
             _node = node;
             ref var actualQos = ref Unsafe.AsRef<rmw_qos_profile_t>(
-                rcl_publisher_get_actual_qos(Handle.Object));
+                rcl_publisher_get_actual_qos(lease.Object));
             _actualQos = QosProfile.Create(in actualQos);
 
             _introspection = MessageIntrospection.Create(typesupport);
-            Name = StringMarshal.CreatePooledString(rcl_publisher_get_topic_name(Handle.Object))!;
+            Name = StringMarshal.CreatePooledString(rcl_publisher_get_topic_name(lease.Object))!;
             Options = options;
 
             Endpoints = GetEndpoints();
@@ -43,7 +44,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
                 ref _livelinessEvent, ref _deadlineMissedEvent, ref _qosEvent);
 
             rmw_gid_t gid;
-            var rmwHandle = rcl_publisher_get_rmw_handle(Handle.Object);
+            var rmwHandle = rcl_publisher_get_rmw_handle(lease.Object);
             RclException.ThrowIfNonSuccess(rmw_get_gid_for_publisher(rmwHandle, &gid));
             Gid = new(gid.GetGidSpan()[..GraphId.Size]);
 
@@ -58,6 +59,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
     private unsafe NetworkFlowEndpoint[] GetEndpoints()
     {
+        using var lease = Handle.Acquire();
         if (!RosEnvironment.IsSupported(RosEnvironment.Humble))
         {
             return Array.Empty<NetworkFlowEndpoint>();
@@ -70,7 +72,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
         try
         {
             RclException.ThrowIfNonSuccess(
-                RclHumble.rcl_publisher_get_network_flow_endpoints(Handle.Object, &allocator, &endpoints));
+                RclHumble.rcl_publisher_get_network_flow_endpoints(lease.Object, &allocator, &endpoints));
             return InteropHelpers.ConvertNetworkFlowEndpoints(ref endpoints);
         }
         catch (Exception e)
@@ -173,15 +175,22 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
     {
         get
         {
+            using var lease = Handle.Acquire();
             size_t count;
             RclException.ThrowIfNonSuccess(
-                rcl_publisher_get_subscription_count(Handle.Object, &count));
+                rcl_publisher_get_subscription_count(lease.Object, &count));
             return (int)count.Value;
         }
     }
 
     public bool IsValid
-         => rcl_publisher_is_valid(Handle.Object);
+    {
+        get
+        {
+            using var lease = Handle.Acquire();
+            return rcl_publisher_is_valid(lease.Object);
+        }
+    }
 
     public NetworkFlowEndpoint[] Endpoints { get; }
 
@@ -189,8 +198,9 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
     public void Publish(RosMessageBuffer message)
     {
+        using var lease = Handle.Acquire();
         RclException.ThrowIfNonSuccess(
-            rcl_publish(Handle.Object, message.Data.ToPointer(), null));
+            rcl_publish(lease.Object, message.Data.ToPointer(), null));
     }
 
     public ValueTask PublishAsync(RosMessageBuffer message) => PublishAsync(message, false);
@@ -240,17 +250,18 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
     public unsafe void AssertLiveliness()
     {
+        using var lease = Handle.Acquire();
         RclException.ThrowIfNonSuccess(
-            rcl_publisher_assert_liveliness(Handle.Object));
+            rcl_publisher_assert_liveliness(lease.Object));
     }
 
-    public override void Dispose()
+    protected override void DisposeCore()
     {
         _deadlineMissedEvent?.Dispose();
         _qosEvent?.Dispose();
         _livelinessEvent?.Dispose();
 
-        base.Dispose();
+        base.DisposeCore();
     }
 
     private class PublishArgs

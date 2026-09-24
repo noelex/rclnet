@@ -23,14 +23,15 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     {
         try
         {
+            using var lease = Handle.Acquire();
             _node = node;
             _typesupport = typeSupport;
-            Name = StringMarshal.CreatePooledString(rcl_client_get_service_name(Handle.Object))!;
+            Name = StringMarshal.CreatePooledString(rcl_client_get_service_name(lease.Object))!;
 
             if (RosEnvironment.IsSupported(RosEnvironment.Iron))
             {
                 RclIron.rmw_gid_t gid;
-                var handle = rcl_client_get_rmw_handle(Handle.Object);
+                var handle = rcl_client_get_rmw_handle(lease.Object);
                 RclException.ThrowIfNonSuccess(RclIron.rmw_get_gid_for_client(handle, &gid));
                 Gid = new(gid.GetGidSpan());
             }
@@ -47,8 +48,11 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     {
         get
         {
+            using var lease = Handle.Acquire();
             bool available;
-            rcl_service_server_is_available(_node.Handle.Object, Handle.Object, &available);
+            lock (Handle.NativeGate)
+                RclException.ThrowIfNonSuccess(
+                    rcl_service_server_is_available(_node.Handle.DangerousObject, lease.Object, &available));
             return available;
         }
     }
@@ -60,15 +64,24 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         var opts = RclIron.rcl_publisher_get_default_options();
         opts.qos = (qos ?? QosProfile.SystemDefault).ToRmwQosProfile();
 
-        var ret = RclIron.rcl_client_configure_service_introspection(
-            Handle.Object,
-            _node.Handle.Object,
-            _node.Clock.Impl.Handle.Object,
-            _typesupport.GetServiceTypeSupport(),
-            opts,
-            (RclIron.rcl_service_introspection_state_t)state);
+        // Configuration can create a publisher: admission precedes native-state locks.
+        lock (Context.Handle.LifecycleGate)
+        {
+            using var lease = Handle.Acquire();
+            Handle.ThrowIfDescendantClosed();
+            lock (Handle.NativeGate)
+            {
+                var ret = RclIron.rcl_client_configure_service_introspection(
+                    lease.Object,
+                    _node.Handle.DangerousObject,
+                    _node.Clock.Impl.Handle.DangerousObject,
+                    _typesupport.GetServiceTypeSupport(),
+                    opts,
+                    (RclIron.rcl_service_introspection_state_t)state);
 
-        RclException.ThrowIfNonSuccess(ret);
+                RclException.ThrowIfNonSuccess(ret);
+            }
+        }
     }
 
     public Task<bool> TryWaitForServerAsync(int timeoutMilliseconds, CancellationToken cancellationToken = default)
@@ -91,7 +104,14 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     public GraphId Gid { get; }
 
     public unsafe bool IsValid
-         => rcl_client_is_valid(Handle.Object);
+    {
+        get
+        {
+            using var lease = Handle.Acquire();
+            lock (Handle.NativeGate)
+                return rcl_client_is_valid(lease.Object);
+        }
+    }
 
     protected override unsafe void OnWaitCompleted()
     {
@@ -102,10 +122,11 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         try
         {
-            if (rcl_ret_t.RCL_RET_OK ==
-                rcl_take_response_with_info(
-                    Handle.Object, &header, responseBuffer.Data.ToPointer())
-            )
+            rcl_ret_t result;
+            using (var lease = Handle.Acquire())
+            lock (Handle.NativeGate)
+                result = rcl_take_response_with_info(lease.Object, &header, responseBuffer.Data.ToPointer());
+            if (result == rcl_ret_t.RCL_RET_OK)
             {
                 if (_pendingRequests.TryRemove(header.request_id.sequence_number, out var future))
                 {
@@ -148,9 +169,10 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
     public async Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
+        Handle.ThrowIfOperationClosed();
         // TODO: Maybe use private ObjectPools?
-        var completion = ObjectPool.Rent<ManualResetValueTaskSource<RosMessageBuffer>>();
         var timeoutCts = new CancellationTokenSource(timeout, _node.TimeProvider);
+        var completion = ObjectPool.Rent<ManualResetValueTaskSource<RosMessageBuffer>>();
 
         // Yielding back to the event loop is required to avoid the situation that response
         // has already been received at the point we add the ValueTaskSource into _pendingRequests,
@@ -159,9 +181,18 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         // If rcl_send_request allow us to indicate the sequence number, then we could have
         // the ValueTaskSource registered before calling rcl_send_request, then no yielding is
         // needed andthis method can just return a plain ValueTask to save some allocations.
-        await _node.Context.YieldIfNotCurrent();
-
-        var sequence = SendRequest(request.Data);
+        long sequence;
+        try
+        {
+            await _node.Context.YieldIfNotCurrent();
+            sequence = SendRequest(request.Data);
+        }
+        catch
+        {
+            timeoutCts.Dispose();
+            ObjectPool.Return(completion);
+            throw;
+        }
 
         // The request must be added to _pendingRequests before registering cancellation token callback.
         // Because if the cancellation token is already completed upon registration, the callback is
@@ -199,9 +230,11 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         unsafe long SendRequest(IntPtr requestData)
         {
+            using var lease = Handle.Acquire();
             long sequence;
-            RclException.ThrowIfNonSuccess(
-               rcl_send_request(Handle.Object, requestData.ToPointer(), &sequence));
+            lock (Handle.NativeGate)
+                RclException.ThrowIfNonSuccess(
+                    rcl_send_request(lease.Object, requestData.ToPointer(), &sequence));
             return sequence;
         }
     }
@@ -212,7 +245,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, CancellationToken cancellationToken = default)
         => InvokeAsync(request, Timeout.InfiniteTimeSpan, cancellationToken);
 
-    public override void Dispose()
+    protected override void DisposeCore()
     {
         if (!_shutdownSignal.IsCancellationRequested)
         {
@@ -220,7 +253,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             _shutdownSignal.Dispose();
         }
 
-        base.Dispose();
+        base.DisposeCore();
     }
 
     private class CancellationArgs

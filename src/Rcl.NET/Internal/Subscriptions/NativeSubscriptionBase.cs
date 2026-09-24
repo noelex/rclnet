@@ -30,6 +30,7 @@ internal unsafe abstract class NativeSubscriptionBase :
         var completelyInitialized = false;
         try
         {
+            using var lease = Handle.Acquire();
             _node = node;
             TypeSupport = typeSupport;
 
@@ -44,14 +45,14 @@ internal unsafe abstract class NativeSubscriptionBase :
             _messageChannel = Channel.CreateBounded<RosMessageBuffer>(opts, static x => x.Dispose());
 
             ref var actualQos = ref Unsafe.AsRef<rmw_qos_profile_t>(
-                rcl_subscription_get_actual_qos(Handle.Object));
+                rcl_subscription_get_actual_qos(lease.Object));
             _actualQos = QosProfile.Create(in actualQos);
 
-            Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object))!;
+            Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(lease.Object))!;
             Options = options;
             Endpoints = GetEndpoints();
 
-            if (options.ContentFilter != null && !RclHumble.rcl_subscription_is_cft_enabled(Handle.Object))
+            if (options.ContentFilter != null && !RclHumble.rcl_subscription_is_cft_enabled(lease.Object))
             {
                 throw new NotSupportedException($"Content filter is configured but the feature is " +
                     $"not supported by current RMW implementation '{RosEnvironment.RmwImplementationIdentifier}'.");
@@ -69,6 +70,7 @@ internal unsafe abstract class NativeSubscriptionBase :
 
     private unsafe NetworkFlowEndpoint[] GetEndpoints()
     {
+        using var lease = Handle.Acquire();
         if (!RosEnvironment.IsSupported(RosEnvironment.Humble))
         {
             return Array.Empty<NetworkFlowEndpoint>();
@@ -80,7 +82,7 @@ internal unsafe abstract class NativeSubscriptionBase :
         try
         {
             RclException.ThrowIfNonSuccess(
-                RclHumble.rcl_subscription_get_network_flow_endpoints(Handle.Object, &allocator, &endpoints));
+                RclHumble.rcl_subscription_get_network_flow_endpoints(lease.Object, &allocator, &endpoints));
             return InteropHelpers.ConvertNetworkFlowEndpoints(ref endpoints);
         }
         catch (Exception e)
@@ -186,15 +188,22 @@ internal unsafe abstract class NativeSubscriptionBase :
     {
         get
         {
+            using var lease = Handle.Acquire();
             size_t count;
             RclException.ThrowIfNonSuccess(
-                rcl_subscription_get_publisher_count(Handle.Object, &count));
+                rcl_subscription_get_publisher_count(lease.Object, &count));
             return (int)count.Value;
         }
     }
 
     public bool IsValid
-         => rcl_subscription_is_valid(Handle.Object);
+    {
+        get
+        {
+            using var lease = Handle.Acquire();
+            return rcl_subscription_is_valid(lease.Object);
+        }
+    }
 
     public NetworkFlowEndpoint[] Endpoints { get; }
 
@@ -218,7 +227,7 @@ internal unsafe abstract class NativeSubscriptionBase :
         return _messageChannel.Reader.ReadAllAsync(cancellationToken);
     }
 
-    public override void Dispose()
+    protected override void DisposeCore()
     {
         _livelinessEvent?.Dispose();
         _deadlineMissedEvent?.Dispose();
@@ -232,6 +241,6 @@ internal unsafe abstract class NativeSubscriptionBase :
             }
         }
 
-        base.Dispose();
+        base.DisposeCore();
     }
 }

@@ -124,6 +124,10 @@ class ExternalTimeSource : IDisposable
             _disposed = true;
             _reg.Dispose();
             try { _node.Parameters.Undeclare(UseSimTime); }
+            catch (ObjectDisposedException) when (_node.Context.Handle.IsClosing)
+            {
+                // Undeclare already removed the parameter; a closed domain cannot publish its event.
+            }
             finally
             {
                 _subscription?.Dispose();

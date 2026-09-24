@@ -169,12 +169,7 @@ internal unsafe abstract class RclObjectHandle<T> : RclObjectHandle where T : un
             throw new ObjectDisposedException(GetType().Name);
     }
 
-    // Legacy call sites and constructors migrate separately to Acquire/dependencies.
-    public T* Object
-    {
-        get { ThrowIfInvalidOrClosed(); return (T*)handle; }
-    }
-
+    // Only construction, cleanup, pinned dependencies and event-loop infrastructure bypass admission.
     internal T* DangerousObject => (T*)handle;
     protected abstract bool ReleaseHandleCore(T* ptr);
     protected virtual bool ReleaseAdditionalResources() => true;

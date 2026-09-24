@@ -28,8 +28,10 @@ partial class ParameterService : IParameterService, IDisposable
         using (var local = SafeArgumentsHandle.Borrow(node.Handle))
         using (var global = node.Options.UseGlobalArguments ? SafeArgumentsHandle.Borrow(node.Context.Handle) : null)
         {
+            using var localLease = local.Acquire();
+            using var globalLease = global is null ? default : global.Acquire();
             _overrides = Utils.ResolveParameterOverrides(node.FullyQualifiedName, paramOverrides,
-                local.Object, global is null ? null : global.Object);
+                localLease.Object, global is null ? null : globalLease.Object);
         }
 
         var completelyInitialized = false;

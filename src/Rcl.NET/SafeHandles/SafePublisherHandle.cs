@@ -17,7 +17,7 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
             lock (node.Context.LifecycleGate)
             {
                 SetDependencies(node);
-                *Object = rcl_get_zero_initialized_publisher();
+                *DangerousObject = rcl_get_zero_initialized_publisher();
                 var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);
                 Span<byte> nameBuffer = stackalloc byte[nameSize];
                 InteropHelpers.FillUtf8Buffer(topicName, nameBuffer);
@@ -54,7 +54,7 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
 
         RclException.ThrowIfNonSuccess(
             rcl_publisher_init(
-                Object,
+                DangerousObject,
                 _node.DangerousObject,
                 typeSupport.GetMessageTypeSupport(),
                 name,
@@ -70,7 +70,7 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
 
         RclException.ThrowIfNonSuccess(
             rcl_publisher_init(
-                Object,
+                DangerousObject,
                 _node.DangerousObject,
                 typeSupport.GetMessageTypeSupport(),
                 name,
@@ -86,7 +86,7 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
 
         RclException.ThrowIfNonSuccess(
             rcl_publisher_init(
-                Object,
+                DangerousObject,
                 _node.DangerousObject,
                 typeSupport.GetMessageTypeSupport(),
                 name,

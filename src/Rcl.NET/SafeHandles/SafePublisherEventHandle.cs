@@ -9,9 +9,9 @@ internal unsafe class SafePublisherEventHandle : RclObjectHandle<rcl_event_t>
             lock (publisher.Context.LifecycleGate)
             {
                 SetDependencies(publisher);
-                *Object = rcl_get_zero_initialized_event();
+                *DangerousObject = rcl_get_zero_initialized_event();
                 RclException.ThrowIfNonSuccess(
-                    rcl_publisher_event_init(Object, publisher.DangerousObject, eventType));
+                    rcl_publisher_event_init(DangerousObject, publisher.DangerousObject, eventType));
                 MarkInitialized();
             }
         }

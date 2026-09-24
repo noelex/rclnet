@@ -11,7 +11,12 @@ internal abstract class RclObject<T> : IDisposable where T : RclObjectHandle
 
     internal T Handle { get; }
 
-    public virtual void Dispose()
+    public void Dispose()
+    {
+        if (Handle.TryBeginClose()) DisposeCore();
+    }
+
+    protected virtual void DisposeCore()
     {
         Handle.Dispose();
     }
@@ -27,7 +32,7 @@ internal abstract class RclContextualObject<T> : RclObject<T> where T : RclObjec
 
     public RclContext Context { get; }
 
-    public override void Dispose()
+    protected override void DisposeCore()
     {
         Context.SynchronizationContext.Post(state =>
         {

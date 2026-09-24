@@ -8,6 +8,8 @@ internal unsafe class SafeClientHandle : RclObjectHandle<rcl_client_t>
 {
     private readonly SafeNodeHandle _node;
 
+    internal object NativeGate { get; } = new();
+
     public SafeClientHandle(
         SafeNodeHandle node, SafeClockHandle clock, TypeSupportHandle typeSupportHandle, string serviceName, QosProfile qos)
     {
@@ -18,7 +20,7 @@ internal unsafe class SafeClientHandle : RclObjectHandle<rcl_client_t>
             lock (node.Context.LifecycleGate)
             {
                 SetDependencies(node, clock);
-                *Object = rcl_get_zero_initialized_client();
+                *DangerousObject = rcl_get_zero_initialized_client();
                 var opts = rcl_client_get_default_options();
                 opts.qos = qos.ToRmwQosProfile();
 
@@ -30,7 +32,7 @@ internal unsafe class SafeClientHandle : RclObjectHandle<rcl_client_t>
                 {
                     RclException.ThrowIfNonSuccess(
                         rcl_client_init(
-                            Object,
+                            DangerousObject,
                             node.DangerousObject,
                             typeSupportHandle.GetServiceTypeSupport(),
                             pname,

@@ -28,7 +28,7 @@ internal class IntrospectionService : IntrospectionServiceBase
             _handler.ProcessRequest(request, response);
 
             RclException.ThrowIfNonSuccess(
-                rcl_send_response(Handle.Object, &id, response.Data.ToPointer()));
+                SendResponse(id, response.Data));
         }
     }
 }

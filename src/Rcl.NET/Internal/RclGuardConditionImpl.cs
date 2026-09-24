@@ -21,6 +21,7 @@ internal class RclGuardConditionImpl : RclWaitObject<SafeGuardConditionHandle>, 
     /// </summary>
     public unsafe void Trigger()
     {
-        rcl_trigger_guard_condition(Handle.Object);
+        using var lease = Handle.Acquire();
+        rcl_trigger_guard_condition(lease.Object);
     }
 }

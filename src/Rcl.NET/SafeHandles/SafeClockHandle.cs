@@ -8,10 +8,10 @@ unsafe class SafeClockHandle : RclObjectHandle<rcl_clock_t>
     {
         try
         {
-            *Object = new rcl_clock_t();
+            *DangerousObject = new rcl_clock_t();
             var alloc = RclAllocator.Default.Object;
             RclException.ThrowIfNonSuccess(
-                rcl_clock_init((rcl_clock_type_t)clockType, Object, &alloc));
+                rcl_clock_init((rcl_clock_type_t)clockType, DangerousObject, &alloc));
             MarkInitialized();
         }
         catch

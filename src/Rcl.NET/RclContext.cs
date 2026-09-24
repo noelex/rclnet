@@ -220,16 +220,18 @@ public sealed class RclContext : IRclContext
         return Yield();
     }
 
-    private unsafe void Interrupt()
+    private void Interrupt() => TriggerInfrastructureSignal(_interruptSignal);
+
+    private static unsafe void TriggerInfrastructureSignal(SafeGuardConditionHandle signal)
     {
         bool added = false;
         try
         {
-            _interruptSignal.DangerousAddRef(ref added);
-            rcl_trigger_guard_condition(_interruptSignal.DangerousObject);
+            signal.DangerousAddRef(ref added);
+            rcl_trigger_guard_condition(signal.DangerousObject);
         }
-        catch (ObjectDisposedException) { /* A late unregister needs no wakeup after the loop exits. */ }
-        finally { if (added) _interruptSignal.DangerousRelease(); }
+        catch (ObjectDisposedException) { /* No wakeup is needed after the loop exits. */ }
+        finally { if (added) signal.DangerousRelease(); }
     }
 
     internal void NotifyTimerChanged() => Interrupt();
@@ -259,7 +261,7 @@ public sealed class RclContext : IRclContext
                 }
             }
 
-            rcl_trigger_guard_condition(_shutdownSignal.Object);
+            TriggerInfrastructureSignal(_shutdownSignal);
 
             if (blocking && !IsCurrent)
             {
@@ -432,35 +434,36 @@ public sealed class RclContext : IRclContext
                             _cServices,
                             _cEvents);
 
-                        rcl_wait_set_add_guard_condition(ws, _interruptSignal.Object, &idx);
-                        rcl_wait_set_add_guard_condition(ws, _shutdownSignal.Object, &idx);
+                        rcl_wait_set_add_guard_condition(ws, _interruptSignal.DangerousObject, &idx);
+                        rcl_wait_set_add_guard_condition(ws, _shutdownSignal.DangerousObject, &idx);
 
                         foreach (var (key, value) in _waitHandles)
                         {
+                            // Keep release queued after dispatch; closing alone must not invalidate this snapshot.
                             waitHandles.Add(value.WaitHandle.DangerousGetHandle(), value);
 
                             switch (value.WaitHandle)
                             {
                                 case SafeGuardConditionHandle guardCondition:
-                                    rcl_wait_set_add_guard_condition(ws, guardCondition.Object, &idx);
+                                    rcl_wait_set_add_guard_condition(ws, guardCondition.DangerousObject, &idx);
                                     break;
                                 case SafeTimerHandle timer:
-                                    rcl_wait_set_add_timer(ws, timer.Object, &idx);
+                                    rcl_wait_set_add_timer(ws, timer.DangerousObject, &idx);
                                     break;
                                 case SafeSubscriptionHandle subscription:
-                                    rcl_wait_set_add_subscription(ws, subscription.Object, &idx);
+                                    rcl_wait_set_add_subscription(ws, subscription.DangerousObject, &idx);
                                     break;
                                 case SafeServiceHandle service:
-                                    rcl_wait_set_add_service(ws, service.Object, &idx);
+                                    rcl_wait_set_add_service(ws, service.DangerousObject, &idx);
                                     break;
                                 case SafeClientHandle client:
-                                    rcl_wait_set_add_client(ws, client.Object, &idx);
+                                    rcl_wait_set_add_client(ws, client.DangerousObject, &idx);
                                     break;
                                 case SafePublisherEventHandle pubEvent:
-                                    rcl_wait_set_add_event(ws, (rcl_event_t*)pubEvent.DangerousGetHandle().ToPointer(), &idx);
+                                    rcl_wait_set_add_event(ws, pubEvent.DangerousObject, &idx);
                                     break;
                                 case SafeSubscriptionEventHandle subEvent:
-                                    rcl_wait_set_add_event(ws, (rcl_event_t*)subEvent.DangerousGetHandle().ToPointer(), &idx);
+                                    rcl_wait_set_add_event(ws, subEvent.DangerousObject, &idx);
                                     break;
                             }
                         }
@@ -583,10 +586,17 @@ public sealed class RclContext : IRclContext
     {
         if (completedHandle == nint.Zero) return;
 
+        var wh = registry[completedHandle];
         try
         {
-            var wh = registry[completedHandle];
+            if (wh.WaitHandle.IsClosing || _context.IsClosing) return;
             wh.Callback(wh.WaitHandle, wh.State);
+        }
+        catch (ObjectDisposedException ex) when (
+            ex.ObjectName == wh.WaitHandle.GetType().Name &&
+            (wh.WaitHandle.IsClosing || _context.IsClosing))
+        {
+            // Close can win admission after the snapshot was taken.
         }
         catch (Exception ex)
         {

@@ -65,6 +65,7 @@ unsafe class ReusableTimer : IDisposable
         if (ctx != null)
         {
             var handle = _handle!;
+            handle.TryBeginClose();
             var registration = _registration;
             _registration = WaitHandleRegistration.Empty;
             _handle = null;
@@ -79,7 +80,8 @@ unsafe class ReusableTimer : IDisposable
 
     private static unsafe void OnWaitCompleted(RclObjectHandle handle, object? state)
     {
-        rcl_timer_cancel(((SafeTimerHandle)handle).Object);
+        using var lease = ((SafeTimerHandle)handle).Acquire();
+        rcl_timer_cancel(lease.Object);
         ((CancellationTokenSource)state!).Cancel();
     }
 

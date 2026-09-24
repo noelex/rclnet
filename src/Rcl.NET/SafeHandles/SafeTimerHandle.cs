@@ -16,19 +16,19 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
             lock (context.LifecycleGate)
             {
                 SetDependencies(context, clock);
-                *Object = rcl_get_zero_initialized_timer();
+                *DangerousObject = rcl_get_zero_initialized_timer();
                 using (ScopedLock.Lock(ref _clock.SyncRoot))
                 {
                     if (RosEnvironment.IsSupported(RosEnvironment.Jazzy))
                     {
                         RclException.ThrowIfNonSuccess(
-                            RclJazzy.rcl_timer_init2(Object, clock.DangerousObject, context.DangerousObject,
+                            RclJazzy.rcl_timer_init2(DangerousObject, clock.DangerousObject, context.DangerousObject,
                               period, null, RclAllocator.Default.Object, true));
                     }
                     else
                     {
                         RclException.ThrowIfNonSuccess(
-                            rcl_timer_init(Object, clock.DangerousObject, context.DangerousObject,
+                            rcl_timer_init(DangerousObject, clock.DangerousObject, context.DangerousObject,
                               period, null, RclAllocator.Default.Object));
                     }
                 }

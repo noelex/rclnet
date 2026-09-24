@@ -38,9 +38,7 @@ internal class ConcurrentIntrospectionService : IntrospectionServiceBase
         {
             await _handler.ProcessRequestAsync(request, response, _shutdownSignal.Token).ConfigureAwait(false);
 
-            // We may resume execution on a background thread,
-            // but since calling rcl_send_response is thread-safe,
-            // there's no need to yield back to RclContext event loop here.
+            // Reacquire the native handle after the asynchronous handler completes.
 
             var ret = SendResponse(requestId, response.Data);
 
@@ -51,14 +49,9 @@ internal class ConcurrentIntrospectionService : IntrospectionServiceBase
                 RclException.ThrowIfNonSuccess(ret);
             }
         }
-
-        unsafe rcl_ret_t SendResponse(rmw_request_id_t requestId, IntPtr responseData)
-        {
-            return rcl_send_response(Handle.Object, &requestId, responseData.ToPointer());
-        }
     }
 
-    public override void Dispose()
+    protected override void DisposeCore()
     {
         if (!_shutdownSignal.IsCancellationRequested)
         {
@@ -66,6 +59,6 @@ internal class ConcurrentIntrospectionService : IntrospectionServiceBase
             _shutdownSignal.Dispose();
         }
 
-        base.Dispose();
+        base.DisposeCore();
     }
 }

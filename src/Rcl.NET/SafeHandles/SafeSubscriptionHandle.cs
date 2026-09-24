@@ -19,7 +19,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
                 SetDependencies(node);
                 // Validate before allocating content-filter options handed to native init.
                 _ = typeSupportHandle.GetMessageTypeSupport();
-                *Object = rcl_get_zero_initialized_subscription();
+                *DangerousObject = rcl_get_zero_initialized_subscription();
                 var nameSize = InteropHelpers.GetUtf8BufferSize(topicName);
                 byte* name = stackalloc byte[nameSize];
                 InteropHelpers.FillUtf8Buffer(topicName, new(name, nameSize));
@@ -58,7 +58,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
 
         RclException.ThrowIfNonSuccess(
                 rcl_subscription_init(
-                    Object,
+                    DangerousObject,
                     _node.DangerousObject,
                     typeSupport.GetMessageTypeSupport(),
                     name,
@@ -108,7 +108,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
 
         RclException.ThrowIfNonSuccess(
             rcl_subscription_init(
-                Object,
+                DangerousObject,
                 _node.DangerousObject,
                 typeSupport.GetMessageTypeSupport(),
                 name,
@@ -158,7 +158,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
 
         RclException.ThrowIfNonSuccess(
             rcl_subscription_init(
-                Object,
+                DangerousObject,
                 _node.DangerousObject,
                 typeSupport.GetMessageTypeSupport(),
                 name,
@@ -208,7 +208,7 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
 
         RclException.ThrowIfNonSuccess(
             rcl_subscription_init(
-                Object,
+                DangerousObject,
                 _node.DangerousObject,
                 typeSupport.GetMessageTypeSupport(),
                 name,

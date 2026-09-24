@@ -9,9 +9,9 @@ unsafe class SafeGuardConditionHandle : RclObjectHandle<rcl_guard_condition_t>
             lock (context.LifecycleGate)
             {
                 SetDependencies(context);
-                *Object = rcl_get_zero_initialized_guard_condition();
+                *DangerousObject = rcl_get_zero_initialized_guard_condition();
                 RclException.ThrowIfNonSuccess(
-                    rcl_guard_condition_init(Object, context.DangerousObject, new() { allocator = RclAllocator.Default.Object }));
+                    rcl_guard_condition_init(DangerousObject, context.DangerousObject, new() { allocator = RclAllocator.Default.Object }));
                 MarkInitialized();
             }
         }

@@ -11,7 +11,7 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
             lock (context.LifecycleGate)
             {
                 SetDependencies(context);
-                *Object = rcl_get_zero_initialized_node();
+                *DangerousObject = rcl_get_zero_initialized_node();
                 var nameSize = InteropHelpers.GetUtf8BufferSize(name);
                 var nsSize = InteropHelpers.GetUtf8BufferSize(@namespace);
                 Span<byte> nameBuffer = stackalloc byte[nameSize];
@@ -54,14 +54,14 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
         }
 
         using var arguments = new SafeArgumentsHandle(options.Arguments);
-        opts.arguments = *arguments.Object;
+        opts.arguments = *arguments.DangerousObject;
 
         opts.use_global_arguments = options.UseGlobalArguments;
         opts.enable_rosout = options.EnableRosOut;
 
         lock (SafeContextHandle.LoggingGate)
             RclException.ThrowIfNonSuccess(
-                rcl_node_init(Object, namePtr, nsPtr, context.DangerousObject, &opts));
+                rcl_node_init(DangerousObject, namePtr, nsPtr, context.DangerousObject, &opts));
     }
 
     private void InitHumbleOrLater(byte* namePtr, byte* nsPtr, SafeContextHandle context, NodeOptions options)
@@ -69,7 +69,7 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
         var opts = RclHumble.rcl_node_get_default_options();
 
         using var arguments = new SafeArgumentsHandle(options.Arguments);
-        opts.arguments = *arguments.Object;
+        opts.arguments = *arguments.DangerousObject;
 
         opts.use_global_arguments = options.UseGlobalArguments;
         opts.enable_rosout = options.EnableRosOut;
@@ -77,7 +77,7 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
 
         lock (SafeContextHandle.LoggingGate)
             RclException.ThrowIfNonSuccess(
-                rcl_node_init(Object, namePtr, nsPtr, context.DangerousObject, &opts));
+                rcl_node_init(DangerousObject, namePtr, nsPtr, context.DangerousObject, &opts));
     }
 
     protected override bool ReleaseHandleCore(rcl_node_t* ptr)
