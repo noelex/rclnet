@@ -112,13 +112,14 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     internal void Build()
     {
+        // Failed discovery keeps both snapshots and events pending for the next successful build.
+        BuildNodes();
+        BuildTopics(disableTopicNameDemangling: false);
+        BuildActions();
+        PublishSnapshots();
+
         try
         {
-            BuildNodes();
-            BuildTopics(disableTopicNameDemangling: false);
-            BuildActions();
-
-            PublishSnapshots();
             FireEvents();
         }
         finally
@@ -129,13 +130,26 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     private void OnAdd<T>(Dictionary<T, UpdateOp> target, T item) where T : class
     {
-        target[item] = UpdateOp.Add;
-        TrackSnapshotChange(item);
+        TrackUpdate(target, item, UpdateOp.Add);
     }
 
     private void OnRemove<T>(Dictionary<T, UpdateOp> target, T item) where T : class
     {
-        target[item] = UpdateOp.Remove;
+        TrackUpdate(target, item, UpdateOp.Remove);
+    }
+
+    private void TrackUpdate<T>(Dictionary<T, UpdateOp> target, T item, UpdateOp operation) where T : class
+    {
+        if (target.TryGetValue(item, out var pending) && pending != operation)
+        {
+            // Opposite changes before publication cancel out, including across failed builds.
+            target.Remove(item);
+        }
+        else
+        {
+            target[item] = operation;
+        }
+
         TrackSnapshotChange(item);
     }
 

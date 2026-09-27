@@ -107,7 +107,7 @@ public partial class RosGraph
             Volatile.Write(ref _actionsSnapshot, (IReadOnlyCollection<RosAction>)_actions.Values);
         }
 
-        // Keep these pending across failed builds; event staging is cleared independently.
+        // Keep these pending across failed builds, just like the staged events.
         _changedNodes.Clear();
         _changedTopics.Clear();
         _changedServices.Clear();

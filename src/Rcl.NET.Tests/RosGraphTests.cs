@@ -294,9 +294,21 @@ public class RosGraphTests(ITestOutputHelper output)
             serviceName, static (request, state) => new());
         includedNodes.Add(first.Name);
         includedNodes.Add(second.Name);
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var watched = graph.TryWatchAsync((g, change) =>
+            g.Nodes.Any(x => x.Name.Name == addedNodeName), Timeout.Infinite, cancellation.Token);
+        var appeared = graph.TryWatchAsync((g, change) =>
+            change is NodeAppearedEvent e && e.Node.Name.Name == addedNodeName,
+            Timeout.Infinite, cancellation.Token);
+        var events = new List<RosGraphEvent>();
+        graph.GraphChanged += events.Add;
         fail = true;
         Assert.Throws<InvalidOperationException>(graph.Build);
+        Assert.Throws<InvalidOperationException>(graph.Build);
         Assert.Same(published, graph.Nodes);
+        Assert.Empty(events);
+        Assert.False(watched.IsCompleted);
+        Assert.False(appeared.IsCompleted);
 
         // Leave only the node already staged by the failed build, so recovery has no new node to add.
         var stagedNode = addedNodeName == first.Name ? first : second;
@@ -320,6 +332,90 @@ public class RosGraphTests(ITestOutputHelper output)
         Assert.Contains(recoveredService.Servers, x => x.Node == recoveredNode);
         Assert.DoesNotContain(graph.Nodes, x => x.Name.Name == unstagedNode.Name);
         Assert.DoesNotContain(published, x => x.Name.Name == first.Name || x.Name.Name == second.Name);
+        Assert.Single(events.OfType<NodeAppearedEvent>(), x => x.Node == recoveredNode);
+        Assert.True(await watched.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.True(await appeared.WaitAsync(TimeSpan.FromSeconds(5)));
+        await context.Yield();
+        events.Clear();
+        graph.Build();
+        Assert.Empty(events.OfType<RosGraphNodeEvent>());
+    }
+
+    [Fact]
+    public async Task FailedBuildDoesNotPublishTransientNodeEvents()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var owner = context.CreateNode(NameGenerator.GenerateNodeName());
+        var included = new HashSet<string> { owner.Name };
+        string? stagedName = null;
+        var fail = false;
+        var graph = new RosGraph((Rcl.Internal.RclNodeImpl)owner, name =>
+        {
+            if (!included.Contains(name.Name))
+            {
+                return false;
+            }
+
+            if (fail && stagedName != null)
+            {
+                throw new InvalidOperationException("Simulated graph build failure.");
+            }
+
+            if (fail && name.Name != owner.Name)
+            {
+                stagedName = name.Name;
+            }
+
+            return true;
+        });
+        await context.Yield();
+        graph.Build();
+        using var first = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var second = context.CreateNode(NameGenerator.GenerateNodeName());
+        included.Add(first.Name);
+        included.Add(second.Name);
+        var events = new List<RosGraphEvent>();
+        graph.GraphChanged += events.Add;
+        fail = true;
+        Assert.Throws<InvalidOperationException>(graph.Build);
+        Assert.NotNull(stagedName);
+        first.Dispose();
+        second.Dispose();
+        Assert.True(await owner.Graph.TryWatchAsync((g, change) =>
+            !g.IsNodeAvailable(first.FullyQualifiedName) && !g.IsNodeAvailable(second.FullyQualifiedName), 5000));
+        await context.Yield();
+        fail = false;
+        graph.Build();
+        Assert.Equal(owner.Name, Assert.Single(graph.Nodes).Name.Name);
+        Assert.Empty(events.OfType<RosGraphNodeEvent>());
+    }
+
+    [Fact]
+    public async Task GraphCallbackFailureDoesNotReplayPublishedEvents()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var owner = context.CreateNode(NameGenerator.GenerateNodeName());
+        var included = new HashSet<string> { owner.Name };
+        var graph = new RosGraph((Rcl.Internal.RclNodeImpl)owner, name => included.Contains(name.Name));
+        await context.Yield();
+        graph.Build();
+        using var added = context.CreateNode(NameGenerator.GenerateNodeName());
+        included.Add(added.Name);
+        Assert.True(await owner.Graph.TryWaitForNodeAsync(added.FullyQualifiedName, 5000));
+        await context.Yield();
+        var calls = 0;
+        graph.GraphChanged += change =>
+        {
+            if (change is NodeAppearedEvent e && e.Node.Name.Name == added.Name)
+            {
+                Assert.Contains(e.Node, graph.Nodes);
+                calls++;
+                throw new InvalidOperationException("Observer failure.");
+            }
+        };
+        Assert.Throws<InvalidOperationException>(graph.Build);
+        graph.Build();
+        Assert.Equal(1, calls);
     }
 
     [Fact]
