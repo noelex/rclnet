@@ -1,69 +1,90 @@
 namespace Rcl.Graph;
 
+[Flags]
+internal enum SnapshotChanges
+{
+    Publishers = 1,
+    Subscribers = 2,
+    Servers = 4,
+    Clients = 8,
+    ActionServers = 16,
+    ActionClients = 32
+}
+
 public partial class RosGraph
 {
     private bool _nodesChanged, _topicsChanged, _servicesChanged, _actionsChanged;
-    private readonly HashSet<RosNode> _changedNodes = new();
-    private readonly HashSet<RosTopic> _changedTopics = new();
-    private readonly HashSet<RosService> _changedServices = new();
-    private readonly HashSet<RosAction> _changedActions = new();
+    private readonly Dictionary<RosNode, SnapshotChanges> _changedNodes = new();
+    private readonly Dictionary<RosTopic, SnapshotChanges> _changedTopics = new();
+    private readonly Dictionary<RosService, SnapshotChanges> _changedServices = new();
+    private readonly Dictionary<RosAction, SnapshotChanges> _changedActions = new();
 
     private void TrackSnapshotChange<T>(T item) where T : class
     {
         switch (item)
         {
-            case RosNode node:
+            case RosNode:
                 _nodesChanged = true;
-                _changedNodes.Add(node);
                 break;
-            case RosTopic topic:
+            case RosTopic:
                 _topicsChanged = true;
-                _changedTopics.Add(topic);
                 break;
-            case RosService service:
+            case RosService:
                 _servicesChanged = true;
-                _changedServices.Add(service);
                 break;
-            case RosAction action:
+            case RosAction:
                 _actionsChanged = true;
-                _changedActions.Add(action);
                 break;
             case RosTopicEndPoint endpoint:
-                _changedNodes.Add(endpoint.Node);
-                _changedTopics.Add(endpoint.Topic);
+                var topicChanges = endpoint.EndPointType == TopicEndPointType.Publisher
+                    ? SnapshotChanges.Publishers : SnapshotChanges.Subscribers;
+                MarkChanged(_changedNodes, endpoint.Node, topicChanges);
+                MarkChanged(_changedTopics, endpoint.Topic, topicChanges);
                 break;
             case RosServiceEndPoint endpoint:
-                _changedNodes.Add(endpoint.Node);
-                _changedServices.Add(endpoint.Service);
+                var serviceChanges = endpoint.EndPointType == ServiceEndPointType.Server
+                    ? SnapshotChanges.Servers : SnapshotChanges.Clients;
+                MarkChanged(_changedNodes, endpoint.Node, serviceChanges);
+                MarkChanged(_changedServices, endpoint.Service, serviceChanges);
                 break;
             case RosActionEndPoint endpoint:
-                _changedNodes.Add(endpoint.Node);
-                _changedActions.Add(endpoint.Action);
+                var isServer = endpoint.EndPointType == ActionEndPointType.Server;
+                MarkChanged(_changedNodes, endpoint.Node,
+                    isServer ? SnapshotChanges.ActionServers : SnapshotChanges.ActionClients);
+                MarkChanged(_changedActions, endpoint.Action,
+                    isServer ? SnapshotChanges.Servers : SnapshotChanges.Clients);
                 break;
         }
+    }
+
+    private static void MarkChanged<T>(Dictionary<T, SnapshotChanges> target, T item, SnapshotChanges changes)
+        where T : notnull
+    {
+        target.TryGetValue(item, out var pending);
+        target[item] = pending | changes;
     }
 
     private void PublishSnapshots()
     {
         // Include removed objects so retained references and disappearance events see their final state.
-        foreach (var node in _changedNodes)
+        foreach (var (node, changes) in _changedNodes)
         {
-            node.PublishSnapshots();
+            node.PublishSnapshots(changes);
         }
 
-        foreach (var topic in _changedTopics)
+        foreach (var (topic, changes) in _changedTopics)
         {
-            topic.PublishSnapshots();
+            topic.PublishSnapshots(changes);
         }
 
-        foreach (var service in _changedServices)
+        foreach (var (service, changes) in _changedServices)
         {
-            service.PublishSnapshots();
+            service.PublishSnapshots(changes);
         }
 
-        foreach (var action in _changedActions)
+        foreach (var (action, changes) in _changedActions)
         {
-            action.PublishSnapshots();
+            action.PublishSnapshots(changes);
         }
 
         if (_nodesChanged)

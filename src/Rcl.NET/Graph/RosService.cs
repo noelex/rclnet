@@ -12,10 +12,17 @@ public class RosService
 
     private readonly ConcurrentDictionary<RosServiceEndPoint, RosServiceEndPoint> _servers = new(), _clients = new();
 
-    internal void PublishSnapshots()
+    internal void PublishSnapshots(SnapshotChanges changes)
     {
-        Volatile.Write(ref _serversSnapshot, (IReadOnlyCollection<RosServiceEndPoint>)_servers.Values);
-        Volatile.Write(ref _clientsSnapshot, (IReadOnlyCollection<RosServiceEndPoint>)_clients.Values);
+        if ((changes & SnapshotChanges.Servers) != 0)
+        {
+            Volatile.Write(ref _serversSnapshot, (IReadOnlyCollection<RosServiceEndPoint>)_servers.Values);
+        }
+
+        if ((changes & SnapshotChanges.Clients) != 0)
+        {
+            Volatile.Write(ref _clientsSnapshot, (IReadOnlyCollection<RosServiceEndPoint>)_clients.Values);
+        }
     }
 
     internal RosService(string name)

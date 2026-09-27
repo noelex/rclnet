@@ -197,6 +197,8 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                             // if the node disappears from graph.
                             v.UpdateServers(this, ReadOnlySpan<NameWithType>.Empty);
                             v.UpdateClients(this, ReadOnlySpan<NameWithType>.Empty);
+                            v.UpdateActionServers(this, ReadOnlySpan<NameWithType>.Empty);
+                            v.UpdateActionClients(this, ReadOnlySpan<NameWithType>.Empty);
                         }
                     }
                     else

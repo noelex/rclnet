@@ -32,14 +32,37 @@ public class RosNode
     private readonly IEnumerator<KeyValuePair<RosTopicEndPoint, RosTopicEndPoint>>
         _subscribersEnumerator, _publishersEnumerator;
 
-    internal void PublishSnapshots()
+    internal void PublishSnapshots(SnapshotChanges changes)
     {
-        Volatile.Write(ref _serversSnapshot, (IReadOnlyCollection<RosServiceEndPoint>)_servers.Values);
-        Volatile.Write(ref _clientsSnapshot, (IReadOnlyCollection<RosServiceEndPoint>)_clients.Values);
-        Volatile.Write(ref _publishersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_publishers.Values);
-        Volatile.Write(ref _subscribersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_subscribers.Values);
-        Volatile.Write(ref _actionServersSnapshot, (IReadOnlyCollection<RosActionEndPoint>)_actionServers.Values);
-        Volatile.Write(ref _actionClientsSnapshot, (IReadOnlyCollection<RosActionEndPoint>)_actionClients.Values);
+        if ((changes & SnapshotChanges.Servers) != 0)
+        {
+            Volatile.Write(ref _serversSnapshot, (IReadOnlyCollection<RosServiceEndPoint>)_servers.Values);
+        }
+
+        if ((changes & SnapshotChanges.Clients) != 0)
+        {
+            Volatile.Write(ref _clientsSnapshot, (IReadOnlyCollection<RosServiceEndPoint>)_clients.Values);
+        }
+
+        if ((changes & SnapshotChanges.Publishers) != 0)
+        {
+            Volatile.Write(ref _publishersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_publishers.Values);
+        }
+
+        if ((changes & SnapshotChanges.Subscribers) != 0)
+        {
+            Volatile.Write(ref _subscribersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_subscribers.Values);
+        }
+
+        if ((changes & SnapshotChanges.ActionServers) != 0)
+        {
+            Volatile.Write(ref _actionServersSnapshot, (IReadOnlyCollection<RosActionEndPoint>)_actionServers.Values);
+        }
+
+        if ((changes & SnapshotChanges.ActionClients) != 0)
+        {
+            Volatile.Write(ref _actionClientsSnapshot, (IReadOnlyCollection<RosActionEndPoint>)_actionClients.Values);
+        }
     }
 
     internal RosNode(NodeName name, string enclave)

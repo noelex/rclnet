@@ -15,10 +15,17 @@ public class RosTopic
     private readonly IEnumerator<KeyValuePair<GraphId, RosTopicEndPoint>>
         _publishersEnumerator, _subscribersEnumerator;
 
-    internal void PublishSnapshots()
+    internal void PublishSnapshots(SnapshotChanges changes)
     {
-        Volatile.Write(ref _publishersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_publishers.Values);
-        Volatile.Write(ref _subscribersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_subscribers.Values);
+        if ((changes & SnapshotChanges.Publishers) != 0)
+        {
+            Volatile.Write(ref _publishersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_publishers.Values);
+        }
+
+        if ((changes & SnapshotChanges.Subscribers) != 0)
+        {
+            Volatile.Write(ref _subscribersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_subscribers.Values);
+        }
     }
 
     internal RosTopic(string name)
