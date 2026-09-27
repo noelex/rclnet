@@ -5,7 +5,6 @@ using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Runtime;
 using Rosidl.Runtime.Interop;
-using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Channels;
@@ -25,7 +24,8 @@ internal unsafe class RclSubscription<T> :
 
     private readonly RclSubscriptionEvent? _livelinessEvent, _deadlineMissedEvent, _qosEvent;
 
-    private readonly ConcurrentDictionary<int, IObserver<T>> _observers = new();
+    private readonly Dictionary<int, IObserver<T>> _observers = new();
+    private IObserver<T>[] _observerSnapshot = Array.Empty<IObserver<T>>();
     private int _subscriberId;
 
     public RclSubscription(
@@ -127,7 +127,8 @@ internal unsafe class RclSubscription<T> :
                 var msg = (T)T.CreateFrom(_messageBuffer.Data, _textEncoding);
                 _messageChannel.Writer.TryWrite(msg);
 
-                foreach (var (_, obs) in _observers)
+                // Subscription changes apply to the next snapshot, without locking around callbacks.
+                foreach (var obs in Volatile.Read(ref _observerSnapshot))
                 {
                     obs.OnNext(msg);
                 }
@@ -163,12 +164,18 @@ internal unsafe class RclSubscription<T> :
             _messageBuffer.Dispose();
         }
 
-        foreach (var (_, observer) in _observers)
+        IObserver<T>[] observers;
+        lock (Context.RegistrationGate)
+        {
+            observers = _observerSnapshot;
+            _observers.Clear();
+            Volatile.Write(ref _observerSnapshot, Array.Empty<IObserver<T>>());
+        }
+
+        foreach (var observer in observers)
         {
             Cleanup.Run(static state => ((IObserver<T>)state!).OnCompleted(), observer);
         }
-
-        _observers.Clear();
     }
 
     public IDisposable Subscribe(IObserver<T> observer)
@@ -176,15 +183,22 @@ internal unsafe class RclSubscription<T> :
         lock (Context.RegistrationGate)
         {
             Handle.ThrowIfOperationClosed();
-            var id = Interlocked.Increment(ref _subscriberId);
+            var id = ++_subscriberId;
             _observers[id] = observer;
+            Volatile.Write(ref _observerSnapshot, _observers.Values.ToArray());
             return new Subscription(this, id);
         }
     }
 
     private void Unsubscribe(int id)
     {
-        _observers.Remove(id, out _);
+        lock (Context.RegistrationGate)
+        {
+            if (_observers.Remove(id))
+            {
+                Volatile.Write(ref _observerSnapshot, _observers.Values.ToArray());
+            }
+        }
     }
 
     private unsafe NetworkFlowEndpoint[] GetEndpoints()

@@ -1,6 +1,10 @@
+using Rcl.Actions;
+using Rcl.Actions.Client;
 using Rosidl.Messages.Builtin;
 using Rosidl.Messages.Rcl;
+using Rosidl.Messages.Tf2;
 using System.Diagnostics;
+using System.Text;
 using Xunit.Abstractions;
 
 namespace Rcl.NET.Tests;
@@ -50,7 +54,7 @@ public class HotPathAllocationTests(ITestOutputHelper output)
             await WaitForSubscriberAsync(publisher);
             await using var reader = subscription.ReadAllAsync(cancellation.Token).GetAsyncEnumerator();
             await _meter.MeasureAsync("typed-subscription-roundtrip", 1000, ReceiveAsync);
-            var observer = new CountingObserver();
+            var observer = new CountingObserver<Time>();
             using var registration = subscription.Subscribe(observer);
             await _meter.MeasureAsync("typed-subscription-one-observer-roundtrip", 1000, ReceiveAsync);
             await context.Yield();
@@ -75,6 +79,33 @@ public class HotPathAllocationTests(ITestOutputHelper output)
             Assert.True(await received);
             nativeReader.Current.Dispose();
         });
+    }
+
+    [Fact]
+    [Trait("Category", "PerformanceBaseline")]
+    public async Task ActionFeedbackAllocationBaselines()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = node.CreateActionClient<LookupTransformAction, LookupTransformActionGoal,
+            LookupTransformActionResult, LookupTransformActionFeedback>(NameGenerator.GenerateActionName());
+        var goal = new ActionGoalContext<LookupTransformActionResult, LookupTransformActionFeedback>(
+            Guid.NewGuid(), (IActionClientImpl)client, Encoding.UTF8);
+        var observer = new CountingObserver<LookupTransformActionFeedback>();
+
+        // Feed the normal receive path directly to isolate it from DDS and async scheduling allocations.
+        _meter.Measure("action-feedback-no-observer", 1000, Dispatch);
+        using var first = goal.Subscribe(observer);
+        _meter.Measure("action-feedback-one-observer", 1000, Dispatch);
+        using var second = goal.Subscribe(observer);
+        _meter.Measure("action-feedback-two-observers", 1000, Dispatch);
+        Assert.Equal(3000 * (AllocationMeter.SampleCount + 1), observer.Count);
+        goal.OnStatusChanged(ActionGoalStatus.Succeeded);
+
+        void Dispatch()
+        {
+            goal.OnFeedbackReceived(RosMessageBuffer.Create<LookupTransformActionFeedback>());
+        }
     }
 
     [Fact]
@@ -123,7 +154,8 @@ public class HotPathAllocationTests(ITestOutputHelper output)
         object? snapshot = null;
         _meter.Measure("graph-nodes-read", 10_000, () => snapshot = graph.Nodes, zeroAllocation: true);
         _meter.Measure("node-publishers-read", 10_000, () => snapshot = graphNode.Publishers, zeroAllocation: true);
-        _meter.Measure("graph-refresh-no-change", 1000, graph.Build, zeroAllocation: true);
+        // Discovery is asynchronous, so late graph changes can still allocate during this baseline.
+        _meter.Measure("graph-refresh-no-change", 1000, graph.Build);
 
         // Endpoint creation/removal is outside the measured interval; only the refresh is counted.
         for (int sample = -1; sample < AllocationMeter.SampleCount; sample++)
@@ -168,11 +200,11 @@ public class HotPathAllocationTests(ITestOutputHelper output)
         }
     }
 
-    private sealed class CountingObserver : IObserver<Time>
+    private sealed class CountingObserver<T> : IObserver<T>
     {
         public int Count { get; private set; }
 
-        public void OnNext(Time value)
+        public void OnNext(T value)
         {
             Count++;
         }

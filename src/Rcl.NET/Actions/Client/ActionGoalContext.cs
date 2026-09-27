@@ -1,5 +1,4 @@
 ﻿using Rosidl.Runtime;
-using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Channels;
@@ -11,7 +10,9 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
     where TResult : IActionResult
 {
     private readonly Channel<TFeedback> _feedbackChannel;
-    private readonly ConcurrentDictionary<int, IObserver<TFeedback>> _observers = new();
+    private readonly object _observersGate = new();
+    private readonly Dictionary<int, IObserver<TFeedback>> _observers = new();
+    private IObserver<TFeedback>[] _observerSnapshot = Array.Empty<IObserver<TFeedback>>();
     private readonly Encoding _textEncoding;
 
     private int _channelReaders = 0, _subscriberId;
@@ -32,7 +33,7 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
             .CreateBounded<TFeedback>(opts);
     }
 
-    public override bool HasFeedbackListeners => _channelReaders > 0 || !_observers.IsEmpty;
+    public override bool HasFeedbackListeners => _channelReaders > 0 || Volatile.Read(ref _observerSnapshot).Length > 0;
 
     public override void OnFeedbackReceived(RosMessageBuffer feedback)
     {
@@ -43,7 +44,8 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
         }
 
         _feedbackChannel.Writer.TryWrite(msg);
-        foreach (var (_, obs) in _observers)
+        // Subscription changes apply to the next snapshot, without locking around callbacks.
+        foreach (var obs in Volatile.Read(ref _observerSnapshot))
         {
             obs.OnNext(msg);
         }
@@ -68,9 +70,24 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
 
     public IDisposable Subscribe(IObserver<TFeedback> observer)
     {
-        var id = Interlocked.Increment(ref _subscriberId);
-        _observers[id] = observer;
-        return new Subscription(id, this);
+        lock (_observersGate)
+        {
+            var id = ++_subscriberId;
+            _observers[id] = observer;
+            Volatile.Write(ref _observerSnapshot, _observers.Values.ToArray());
+            return new Subscription(id, this);
+        }
+    }
+
+    private void Unsubscribe(int id)
+    {
+        lock (_observersGate)
+        {
+            if (_observers.Remove(id))
+            {
+                Volatile.Write(ref _observerSnapshot, _observers.Values.ToArray());
+            }
+        }
     }
 
     protected override void OnGoalStateChanged(ActionGoalStatus state)
@@ -85,7 +102,7 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
     {
         if (_feedbackChannel.Writer.TryComplete())
         {
-            foreach (var (_, obs) in _observers)
+            foreach (var obs in Volatile.Read(ref _observerSnapshot))
             {
                 obs.OnCompleted();
             }
@@ -151,7 +168,7 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
 
         public void Dispose()
         {
-            _tracker._observers.TryRemove(_id, out _);
+            _tracker.Unsubscribe(_id);
         }
     }
 }
