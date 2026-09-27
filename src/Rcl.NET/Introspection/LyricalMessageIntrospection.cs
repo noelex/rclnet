@@ -44,11 +44,11 @@ internal unsafe class LyricalMessageIntrospection : IMessageIntrospection
         new Span<byte>(ptr.ToPointer(), (int)_typesupport->SizeOf).Clear();
 
         _typesupport->InitFunction(ptr.ToPointer(), MessageInitialization.All);
-        return new RosMessageBuffer(ptr, (buf, state) =>
+        return new RosMessageBuffer(ptr, static (buf, state) =>
         {
             var self = (LyricalMessageIntrospection)state!;
-            self._typesupport->FiniFunction(ptr.ToPointer());
-            Marshal.FreeHGlobal(ptr);
+            self._typesupport->FiniFunction(buf.ToPointer());
+            Marshal.FreeHGlobal(buf);
         }, this);
     }
 
