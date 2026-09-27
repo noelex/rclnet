@@ -11,6 +11,7 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
     private readonly List<PendingOperation<bool>> _awaiterSnapshot = new();
     private long _id;
     private int _stopped, _detached;
+    private bool _pendingStopped;
 
     protected bool IsDisposed => Volatile.Read(ref _stopped) != 0;
 
@@ -104,6 +105,11 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
     }
 
     protected virtual void OnWaitCompleted()
+    {
+    }
+
+    // Publish pending terminal states here; callbacks belong in OnStopped.
+    protected virtual void StopPendingOperations()
     {
     }
 
@@ -219,6 +225,11 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
         {
             if (_stopped != 0)
             {
+                while (!_pendingStopped)
+                {
+                    Monitor.Wait(_pendingGate);
+                }
+
                 return;
             }
 
@@ -236,7 +247,21 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
         }
         finally
         {
-            OnStopped();
+            try
+            {
+                StopPendingOperations();
+            }
+            finally
+            {
+                // Context close waits for terminal publication, not callbacks or Dispose.
+                lock (_pendingGate)
+                {
+                    _pendingStopped = true;
+                    Monitor.PulseAll(_pendingGate);
+                }
+
+                OnStopped();
+            }
         }
     }
 

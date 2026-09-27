@@ -249,7 +249,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, CancellationToken cancellationToken = default)
         => InvokeAsync(request, Timeout.InfiniteTimeSpan, cancellationToken);
 
-    protected override void OnStopped()
+    protected override void StopPendingOperations()
     {
         PendingOperation<RosMessageBuffer>[] snapshot;
 

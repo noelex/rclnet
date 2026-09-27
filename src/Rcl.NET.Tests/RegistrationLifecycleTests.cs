@@ -1,4 +1,5 @@
 using Rcl.Internal;
+using Rcl.Internal.Clients;
 using Rcl.Internal.Services;
 using Rcl.Internal.Subscriptions;
 using Rcl.SafeHandles;
@@ -266,6 +267,88 @@ public class RegistrationLifecycleTests : IDisposable
         await context.DisposeAsync();
         await Assert.ThrowsAsync<ObjectDisposedException>(() => wait.WaitAsync(TimeSpan.FromSeconds(10)));
         await Assert.ThrowsAsync<ObjectDisposedException>(() => request.WaitAsync(TimeSpan.FromSeconds(10)));
+    }
+
+    [Fact]
+    public async Task ContextCloseWaitsForConcurrentClientStopToPublishPendingFailure()
+    {
+        await using var context = NewContext();
+        using var node = (RclNodeImpl)context.CreateNode(NameGenerator.GenerateNodeName());
+        using var stopping = new LifecycleCheckpoint();
+        using var stopped = new LifecycleCheckpoint();
+        using var client = new PausedClient(node, stopping, stopped);
+        using var requestBuffer = RosMessageBuffer.Create<ListParametersServiceRequest>();
+        var request = client.InvokeAsync(requestBuffer, Timeout.Infinite);
+        var disposing = Task.Run(client.Dispose);
+
+        try
+        {
+            await stopping.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.False(request.IsCompleted);
+            var shutdown = context.DisposeAsync().AsTask();
+            Assert.Same(shutdown, context.DisposeAsync().AsTask());
+            Assert.NotSame(shutdown, await Task.WhenAny(shutdown, Task.Delay(200)));
+
+            // The loop must not hold RegistrationGate while it waits for pending publication.
+            await Task.Run(() =>
+            {
+                lock (context.RegistrationGate)
+                {
+                }
+            }).WaitAsync(TimeSpan.FromSeconds(10));
+
+            stopping.Resume();
+            await stopped.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await shutdown.WaitAsync(TimeSpan.FromSeconds(10));
+            await Assert.ThrowsAsync<ObjectDisposedException>(() => request.WaitAsync(TimeSpan.FromSeconds(10)));
+            Assert.False(disposing.IsCompleted);
+        }
+        finally
+        {
+            stopping.Resume();
+            stopped.Resume();
+            await disposing.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+
+        Assert.False(stopping.TimedOut);
+        Assert.False(stopped.TimedOut);
+    }
+
+    [Fact]
+    public async Task ContextCloseDoesNotWaitForPendingWaitContinuation()
+    {
+        await using var context = NewContext();
+        using var guard = context.CreateGuardCondition();
+        using var continuation = new LifecycleCheckpoint();
+        var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var wait = guard.WaitOneAsync(runContinuationAsynchronously: false);
+        await Task.Run(() => wait.GetAwaiter().UnsafeOnCompleted(() =>
+        {
+            try
+            {
+                Assert.Throws<ObjectDisposedException>(() => ReadCompleted(wait));
+                continuation.Pause();
+                completed.SetResult();
+            }
+            catch (Exception error)
+            {
+                completed.SetException(error);
+            }
+        }));
+
+        try
+        {
+            await context.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+            await continuation.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.False(completed.Task.IsCompleted);
+        }
+        finally
+        {
+            continuation.Resume();
+            await completed.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+
+        Assert.False(continuation.TimedOut);
     }
 
     [Fact]
@@ -575,6 +658,8 @@ public class RegistrationLifecycleTests : IDisposable
 
     private static RclContext NewContext() => new(TestConfig.DefaultContextArguments);
 
+    private static void ReadCompleted(ValueTask task) => task.GetAwaiter().GetResult();
+
     private static T ReadCompleted<T>(PendingOperation<T> pending) => pending.Task.GetAwaiter().GetResult();
 
     private static ManualResetValueTaskSource<T> Source<T>(PendingOperation<T> pending)
@@ -628,6 +713,29 @@ public class RegistrationLifecycleTests : IDisposable
             Interlocked.Increment(ref DetachCount);
             Detached.TrySetResult();
         }
+    }
+
+    private sealed class PausedClient : RclClientBase
+    {
+        private readonly LifecycleCheckpoint _stopping, _stopped;
+
+        internal PausedClient(RclNodeImpl node, LifecycleCheckpoint stopping, LifecycleCheckpoint stopped)
+            : base(node, NameGenerator.GenerateServiceName(), ListParametersService.GetTypeSupportHandle(), ClientOptions.Default)
+        {
+            _stopping = stopping;
+            _stopped = stopped;
+            RegisterWaitHandle();
+        }
+
+        protected override RosMessageBuffer CreateResponseBuffer() => RosMessageBuffer.Create<ListParametersServiceResponse>();
+
+        protected override void StopPendingOperations()
+        {
+            _stopping.Pause();
+            base.StopPendingOperations();
+        }
+
+        protected override void OnStopped() => _stopped.Pause();
     }
 
     private sealed class Observer<T>(Action<T> next, Action completed) : IObserver<T>

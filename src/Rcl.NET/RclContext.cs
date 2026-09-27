@@ -571,6 +571,7 @@ public sealed class RclContext : IRclContext
             }
         }
 
+        // Stop may wait for pending publication on another thread; leave RegistrationGate first.
         foreach (var entry in entries)
         {
             if (entry.Closed != null)
