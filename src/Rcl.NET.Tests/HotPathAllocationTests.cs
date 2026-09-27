@@ -121,9 +121,9 @@ public class HotPathAllocationTests(ITestOutputHelper output)
         var graphNode = Assert.Single(graph.Nodes);
         int initialPublishers = graphNode.Publishers.Count;
         object? snapshot = null;
-        _meter.Measure("graph-nodes-read", 10_000, () => snapshot = graph.Nodes);
-        _meter.Measure("node-publishers-read", 10_000, () => snapshot = graphNode.Publishers);
-        _meter.Measure("graph-refresh-no-change", 1000, graph.Build);
+        _meter.Measure("graph-nodes-read", 10_000, () => snapshot = graph.Nodes, zeroAllocation: true);
+        _meter.Measure("node-publishers-read", 10_000, () => snapshot = graphNode.Publishers, zeroAllocation: true);
+        _meter.Measure("graph-refresh-no-change", 1000, graph.Build, zeroAllocation: true);
 
         // Endpoint creation/removal is outside the measured interval; only the refresh is counted.
         for (int sample = -1; sample < AllocationMeter.SampleCount; sample++)

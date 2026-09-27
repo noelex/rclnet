@@ -20,9 +20,9 @@ namespace Rcl.Graph;
 /// are allowed.
 /// </para>
 /// <para>
-/// Though concurrent access to the <see cref="RosGraph"/> object will never corrupt its internal state,
-/// but if a user attempts to query the graph from another thread while
-/// <see cref="RosGraph"/> is still building, inconsistent results might be returned.
+/// Collection properties return cached read-only snapshots, published after a successful build
+/// and before change events. A retained collection keeps its membership, but its objects may
+/// publish newer collections. Publication across different objects is not atomic.
 /// </para>
 /// <para>
 /// For retrieving consistent results, you can access the <see cref="RosGraph"/> object from
@@ -32,6 +32,11 @@ namespace Rcl.Graph;
 /// </remarks>
 public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 {
+    private IReadOnlyCollection<RosNode> _nodesSnapshot = Array.Empty<RosNode>();
+    private IReadOnlyCollection<RosTopic> _topicsSnapshot = Array.Empty<RosTopic>();
+    private IReadOnlyCollection<RosService> _servicesSnapshot = Array.Empty<RosService>();
+    private IReadOnlyCollection<RosAction> _actionsSnapshot = Array.Empty<RosAction>();
+
     enum UpdateOp
     {
         Add = 1, Remove = 2
@@ -88,22 +93,22 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     /// <summary>
     /// Returns nodes currently available in the ROS graph.
     /// </summary>
-    public IReadOnlyCollection<RosNode> Nodes => (IReadOnlyCollection<RosNode>)_nodes.Values;
+    public IReadOnlyCollection<RosNode> Nodes => Volatile.Read(ref _nodesSnapshot);
 
     /// <summary>
     /// Returns topics currently available in the ROS graph.
     /// </summary>
-    public IReadOnlyCollection<RosTopic> Topics => (IReadOnlyCollection<RosTopic>)_topics.Values;
+    public IReadOnlyCollection<RosTopic> Topics => Volatile.Read(ref _topicsSnapshot);
 
     /// <summary>
     /// Returns services currently available in the ROS graph.
     /// </summary>
-    public IReadOnlyCollection<RosService> Services => (IReadOnlyCollection<RosService>)_services.Values;
+    public IReadOnlyCollection<RosService> Services => Volatile.Read(ref _servicesSnapshot);
 
     /// <summary>
     /// Returns actions currently available in the ROS graph.
     /// </summary>
-    public IReadOnlyCollection<RosAction> Actions => (IReadOnlyCollection<RosAction>)_actions.Values;
+    public IReadOnlyCollection<RosAction> Actions => Volatile.Read(ref _actionsSnapshot);
 
     internal void Build()
     {
@@ -113,6 +118,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             BuildTopics(disableTopicNameDemangling: false);
             BuildActions();
 
+            PublishSnapshots();
             FireEvents();
         }
         finally
@@ -121,11 +127,17 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         }
     }
 
-    private static void OnAdd<T>(Dictionary<T, UpdateOp> target, T item) where T : class
-        => target[item] = UpdateOp.Add;
+    private void OnAdd<T>(Dictionary<T, UpdateOp> target, T item) where T : class
+    {
+        target[item] = UpdateOp.Add;
+        TrackSnapshotChange(item);
+    }
 
-    private static void OnRemove<T>(Dictionary<T, UpdateOp> target, T item) where T : class
-        => target[item] = UpdateOp.Remove;
+    private void OnRemove<T>(Dictionary<T, UpdateOp> target, T item) where T : class
+    {
+        target[item] = UpdateOp.Remove;
+        TrackSnapshotChange(item);
+    }
 
     private void Cleanup()
     {

@@ -7,6 +7,13 @@ namespace Rcl.Graph;
 /// </summary>
 public class RosNode
 {
+    private IReadOnlyCollection<RosServiceEndPoint> _serversSnapshot = Array.Empty<RosServiceEndPoint>();
+    private IReadOnlyCollection<RosServiceEndPoint> _clientsSnapshot = Array.Empty<RosServiceEndPoint>();
+    private IReadOnlyCollection<RosTopicEndPoint> _publishersSnapshot = Array.Empty<RosTopicEndPoint>();
+    private IReadOnlyCollection<RosTopicEndPoint> _subscribersSnapshot = Array.Empty<RosTopicEndPoint>();
+    private IReadOnlyCollection<RosActionEndPoint> _actionServersSnapshot = Array.Empty<RosActionEndPoint>();
+    private IReadOnlyCollection<RosActionEndPoint> _actionClientsSnapshot = Array.Empty<RosActionEndPoint>();
+
     private readonly ConcurrentDictionary<NameWithType, RosServiceEndPoint>
         _servers = new(), _clients = new();
 
@@ -24,6 +31,16 @@ public class RosNode
 
     private readonly IEnumerator<KeyValuePair<RosTopicEndPoint, RosTopicEndPoint>>
         _subscribersEnumerator, _publishersEnumerator;
+
+    internal void PublishSnapshots()
+    {
+        Volatile.Write(ref _serversSnapshot, (IReadOnlyCollection<RosServiceEndPoint>)_servers.Values);
+        Volatile.Write(ref _clientsSnapshot, (IReadOnlyCollection<RosServiceEndPoint>)_clients.Values);
+        Volatile.Write(ref _publishersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_publishers.Values);
+        Volatile.Write(ref _subscribersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_subscribers.Values);
+        Volatile.Write(ref _actionServersSnapshot, (IReadOnlyCollection<RosActionEndPoint>)_actionServers.Values);
+        Volatile.Write(ref _actionClientsSnapshot, (IReadOnlyCollection<RosActionEndPoint>)_actionClients.Values);
+    }
 
     internal RosNode(NodeName name, string enclave)
     {
@@ -57,32 +74,32 @@ public class RosNode
     /// <summary>
     /// Gets a list of <see cref="RosService"/> servers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosServiceEndPoint> Servers => (IReadOnlyCollection<RosServiceEndPoint>)_servers.Values;
+    public IReadOnlyCollection<RosServiceEndPoint> Servers => Volatile.Read(ref _serversSnapshot);
 
     /// <summary>
     /// Gets a list of <see cref="RosService"/> clients registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosServiceEndPoint> Clients => (IReadOnlyCollection<RosServiceEndPoint>)_clients.Values;
+    public IReadOnlyCollection<RosServiceEndPoint> Clients => Volatile.Read(ref _clientsSnapshot);
 
     /// <summary>
     /// Gets a list of <see cref="RosTopic"/> subscribers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosTopicEndPoint> Subscribers => (IReadOnlyCollection<RosTopicEndPoint>)_subscribers.Values;
+    public IReadOnlyCollection<RosTopicEndPoint> Subscribers => Volatile.Read(ref _subscribersSnapshot);
 
     /// <summary>
     /// Gets a list of <see cref="RosTopic"/> publishers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosTopicEndPoint> Publishers => (IReadOnlyCollection<RosTopicEndPoint>)_publishers.Values;
+    public IReadOnlyCollection<RosTopicEndPoint> Publishers => Volatile.Read(ref _publishersSnapshot);
 
     /// <summary>
     /// Gets a list of <see cref="RosAction"/> servers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosActionEndPoint> ActionServers => (IReadOnlyCollection<RosActionEndPoint>)_actionServers.Values;
+    public IReadOnlyCollection<RosActionEndPoint> ActionServers => Volatile.Read(ref _actionServersSnapshot);
 
     /// <summary>
     /// Gets a list of <see cref="RosAction"/> clients registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosActionEndPoint> ActionClients => (IReadOnlyCollection<RosActionEndPoint>)_actionClients.Values;
+    public IReadOnlyCollection<RosActionEndPoint> ActionClients => Volatile.Read(ref _actionClientsSnapshot);
 
     internal IEnumerator<KeyValuePair<RosTopicEndPoint, RosTopicEndPoint>> PublishersEnumerator => _publishersEnumerator;
 

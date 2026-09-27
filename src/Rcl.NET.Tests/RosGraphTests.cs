@@ -1,12 +1,158 @@
-﻿using Rcl.Actions;
+using Rcl.Actions;
 using Rcl.Graph;
 using Rosidl.Messages.Builtin;
 using Rosidl.Messages.Tf2;
+using Xunit.Abstractions;
 
 namespace Rcl.NET.Tests;
 
-public class RosGraphTests
+public class RosGraphTests(ITestOutputHelper output)
 {
+    [Fact]
+    public async Task CollectionsAreCachedReadOnlySnapshots()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        var topicName = NameGenerator.GenerateTopicName();
+        var serviceName = NameGenerator.GenerateServiceName();
+        var actionName = NameGenerator.GenerateActionName();
+        using var publisher = node.CreatePublisher<Time>(topicName);
+        using var subscriber = node.CreateSubscription<Time>(topicName);
+        using var server = node.CreateService<FrameGraphService, FrameGraphServiceRequest, FrameGraphServiceResponse>(
+            serviceName, static (request, state) => new());
+        using var client = node.CreateClient<FrameGraphService, FrameGraphServiceRequest, FrameGraphServiceResponse>(serviceName);
+        using var actionServer = node.CreateActionServer<LookupTransformAction>(actionName, new DummyActionServer());
+        var graph = new RosGraph((Rcl.Internal.RclNodeImpl)node, name => name.Name == node.Name);
+        RosNode graphNode;
+        RosTopic topic;
+        RosService service;
+        RosAction action;
+        IReadOnlyCollection<RosTopicEndPoint> oldPublishers;
+        IReadOnlyCollection<RosServiceEndPoint> oldServers;
+        IReadOnlyCollection<RosActionEndPoint> oldActionClients;
+        using (var actionClient = node.CreateActionClient<LookupTransformAction, LookupTransformActionGoal,
+            LookupTransformActionResult, LookupTransformActionFeedback>(actionName))
+        {
+            await context.Yield();
+            graph.Build();
+            graphNode = Assert.Single(graph.Nodes);
+            topic = graph.Topics.Single(x => x.Name == publisher.Name);
+            service = graph.Services.Single(x => x.Name == client.Name);
+            action = Assert.Single(graph.Actions);
+            Func<object>[] getters =
+            [
+                () => graph.Nodes, () => graph.Topics, () => graph.Services, () => graph.Actions,
+                () => graphNode.Publishers, () => graphNode.Subscribers,
+                () => graphNode.Servers, () => graphNode.Clients,
+                () => graphNode.ActionServers, () => graphNode.ActionClients,
+                () => topic.Publishers, () => topic.Subscribers,
+                () => service.Servers, () => service.Clients,
+                () => action.Servers, () => action.Clients,
+            ];
+            var meter = new AllocationMeter(output);
+            var snapshots = getters.Select(get => get()).ToArray();
+            graph.Build();
+
+            for (int i = 0; i < getters.Length; i++)
+            {
+                Assert.NotEmpty((System.Collections.IEnumerable)snapshots[i]);
+                Assert.Same(snapshots[i], getters[i]());
+                object? snapshot = null;
+
+                meter.Measure($"graph-collection-{i}-read", 1000, () => snapshot = getters[i](), zeroAllocation: true);
+                GC.KeepAlive(snapshot);
+            }
+
+            oldPublishers = topic.Publishers;
+            oldServers = service.Servers;
+            oldActionClients = action.Clients;
+            Assert.Single(oldPublishers);
+            Assert.Single(oldServers);
+            Assert.Single(oldActionClients);
+            Assert.Throws<NotSupportedException>(() => ((ICollection<RosTopicEndPoint>)oldPublishers).Clear());
+        }
+
+        publisher.Dispose();
+        subscriber.Dispose();
+        server.Dispose();
+        client.Dispose();
+        actionServer.Dispose();
+        await context.Yield();
+        Assert.Same(oldPublishers, topic.Publishers);
+        bool notified = false;
+        graph.GraphChanged += change =>
+        {
+            notified = true;
+            Assert.Empty(topic.Publishers);
+            Assert.Empty(topic.Subscribers);
+            Assert.Empty(service.Servers);
+            Assert.Empty(service.Clients);
+            Assert.Empty(action.Servers);
+            Assert.Empty(action.Clients);
+            Assert.Empty(graphNode.ActionServers);
+            Assert.Empty(graphNode.ActionClients);
+        };
+        graph.Build();
+
+        Assert.True(notified);
+        Assert.DoesNotContain(topic, graph.Topics);
+        Assert.DoesNotContain(service, graph.Services);
+        Assert.Empty(graph.Actions);
+        Assert.Single(oldPublishers);
+        Assert.Single(oldServers);
+        Assert.Single(oldActionClients);
+    }
+
+    [Fact]
+    public async Task FailedBuildKeepsPublishedCollectionsUntilRecovery()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        bool fail = false;
+        string? addedNodeName = null;
+        var includedNodes = new HashSet<string> { node.Name };
+        await context.Yield();
+        var graph = new RosGraph((Rcl.Internal.RclNodeImpl)node, name =>
+        {
+            if (!includedNodes.Contains(name.Name))
+            {
+                return false;
+            }
+
+            if (fail && addedNodeName is not null)
+            {
+                throw new InvalidOperationException("Simulated graph build failure.");
+            }
+
+            if (fail && name.Name != node.Name)
+            {
+                addedNodeName = name.Name;
+            }
+
+            return true;
+        });
+        graph.Build();
+        var published = graph.Nodes;
+        using var first = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var second = context.CreateNode(NameGenerator.GenerateNodeName());
+        includedNodes.Add(first.Name);
+        includedNodes.Add(second.Name);
+        fail = true;
+        Assert.Throws<InvalidOperationException>(graph.Build);
+        Assert.Same(published, graph.Nodes);
+
+        // Leave only the node already staged by the failed build, so recovery has no new node to add.
+        var stagedNode = addedNodeName == first.Name ? first : second;
+        var unstagedNode = addedNodeName == first.Name ? second : first;
+        unstagedNode.Dispose();
+        await context.Yield();
+        fail = false;
+        graph.Build();
+        Assert.Contains(graph.Nodes, x => x.Name.Name == stagedNode.Name);
+        Assert.DoesNotContain(graph.Nodes, x => x.Name.Name == unstagedNode.Name);
+        Assert.DoesNotContain(published, x => x.Name.Name == first.Name || x.Name.Name == second.Name);
+    }
+
     [Fact]
     public async Task ServiceChangesReachEveryNodeInTheSameContext()
     {
