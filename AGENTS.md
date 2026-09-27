@@ -18,6 +18,8 @@
 
 ## C# Code Style
 
+- Do not use `GetAwaiter().GetResult()` in production or test code. Await asynchronous operations instead of blocking on tasks; do not replace it with `.Wait()` or `.Result`. Use explicit thread synchronization when a test must coordinate synchronous callbacks.
+
 - Use braces for `if` and `else` bodies, including single-statement bodies, except for the repetitive short inline cases described below. Keep `else if` chains readable.
 - Put opening and closing braces on separate lines; do not use single-line blocks. Apply this to control flow, methods, constructors, custom accessor bodies, and block-bodied lambdas. Auto-properties without custom getter/setter/init bodies may remain inline, including accessor visibility modifiers and property initializers (for example, `public int Count { get; private set; }`).
 - A large, repetitive sequence of short `if ... else ...` cases may remain inline only when the logic is clear and readability is preserved; braces may be omitted for these single-statement branches (for example, `if (adding) _cTimers++; else _cTimers--;`). This is a narrow manual exception; ordinary branches still require braces.

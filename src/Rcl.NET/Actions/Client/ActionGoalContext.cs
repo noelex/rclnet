@@ -15,6 +15,7 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
     private IObserver<TFeedback>[] _observerSnapshot = Array.Empty<IObserver<TFeedback>>();
     private readonly Encoding _textEncoding;
 
+    private bool _completed;
     private int _channelReaders = 0, _subscriberId;
 
     public ActionGoalContext(Guid goalId, IActionClientImpl actionClient, Encoding textEncoding)
@@ -33,7 +34,7 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
             .CreateBounded<TFeedback>(opts);
     }
 
-    public override bool HasFeedbackListeners => _channelReaders > 0 || Volatile.Read(ref _observerSnapshot).Length > 0;
+    public override bool HasFeedbackListeners => Volatile.Read(ref _channelReaders) > 0 || Volatile.Read(ref _observerSnapshot).Length > 0;
 
     public override void OnFeedbackReceived(RosMessageBuffer feedback)
     {
@@ -72,11 +73,17 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
     {
         lock (_observersGate)
         {
-            var id = ++_subscriberId;
-            _observers[id] = observer;
-            Volatile.Write(ref _observerSnapshot, _observers.Values.ToArray());
-            return new Subscription(id, this);
+            if (!_completed)
+            {
+                var id = ++_subscriberId;
+                _observers[id] = observer;
+                Volatile.Write(ref _observerSnapshot, _observers.Values.ToArray());
+                return new Subscription(id, this);
+            }
         }
+
+        observer.OnCompleted();
+        return Subscription.Empty;
     }
 
     private void Unsubscribe(int id)
@@ -100,12 +107,27 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
 
     protected override void OnDispose()
     {
-        if (_feedbackChannel.Writer.TryComplete())
+        IObserver<TFeedback>[] observers;
+
+        lock (_observersGate)
         {
-            foreach (var obs in Volatile.Read(ref _observerSnapshot))
+            if (_completed)
             {
-                obs.OnCompleted();
+                return;
             }
+
+            _completed = true;
+            observers = _observerSnapshot;
+            _observers.Clear();
+            Volatile.Write(ref _observerSnapshot, Array.Empty<IObserver<TFeedback>>());
+        }
+
+        // Channel continuations and observer callbacks must run outside the subscription gate.
+        _feedbackChannel.Writer.TryComplete();
+
+        foreach (var observer in observers)
+        {
+            observer.OnCompleted();
         }
     }
 
@@ -157,10 +179,11 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
 
     private class Subscription : IDisposable
     {
+        internal static readonly Subscription Empty = new(0, null);
         private readonly int _id;
-        private readonly ActionGoalContext<TResult, TFeedback> _tracker;
+        private readonly ActionGoalContext<TResult, TFeedback>? _tracker;
 
-        public Subscription(int id, ActionGoalContext<TResult, TFeedback> tracker)
+        public Subscription(int id, ActionGoalContext<TResult, TFeedback>? tracker)
         {
             _id = id;
             _tracker = tracker;
@@ -168,7 +191,7 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
 
         public void Dispose()
         {
-            _tracker.Unsubscribe(_id);
+            _tracker?.Unsubscribe(_id);
         }
     }
 }

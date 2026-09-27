@@ -23,7 +23,7 @@ internal class NativeActionGoalContext : ActionGoalContextBase, INativeActionGoa
             .CreateBounded<RosMessageBuffer>(opts, x => x.Dispose());
     }
 
-    public override bool HasFeedbackListeners => _channelReaders > 0;
+    public override bool HasFeedbackListeners => Volatile.Read(ref _channelReaders) > 0;
 
     public override void OnFeedbackReceived(RosMessageBuffer feedback)
     {

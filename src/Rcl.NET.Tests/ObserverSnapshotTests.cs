@@ -60,6 +60,69 @@ public class ObserverSnapshotTests
         Assert.False(goal.HasFeedbackListeners);
     }
 
+    [Fact]
+    public async Task ActionFeedbackLateSubscribersCompleteOutsideGate()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = node.CreateActionClient<LookupTransformAction, LookupTransformActionGoal,
+            LookupTransformActionResult, LookupTransformActionFeedback>(NameGenerator.GenerateActionName());
+        var goal = new ActionGoalContext<LookupTransformActionResult, LookupTransformActionFeedback>(
+            Guid.NewGuid(), (IActionClientImpl)client, Encoding.UTF8);
+        var late = new Observer<LookupTransformActionFeedback>();
+        using var first = goal.Subscribe(new Observer<LookupTransformActionFeedback>(completed: () =>
+        {
+            // Completion must allow another thread to subscribe without waiting for this callback.
+            RunOnOtherThread(() =>
+            {
+                using var subscription = goal.Subscribe(late);
+                Assert.Equal(1, late.CompletedCount);
+            });
+        }));
+
+        goal.OnStatusChanged(ActionGoalStatus.Succeeded);
+        var after = new Observer<LookupTransformActionFeedback>(completed: () =>
+        {
+            RunOnOtherThread(first.Dispose);
+        });
+        using var completedSubscription = goal.Subscribe(after);
+        goal.OnStatusChanged(ActionGoalStatus.Aborted);
+        Assert.Equal(1, late.CompletedCount);
+        Assert.Equal(1, after.CompletedCount);
+        Assert.False(goal.HasFeedbackListeners);
+        goal.OnFeedbackReceived(RosMessageBuffer.Create<LookupTransformActionFeedback>());
+        Assert.Equal(0, late.NextCount);
+        Assert.Equal(0, after.NextCount);
+    }
+
+    [Fact]
+    public async Task ActionFeedbackSubscribeRacingCompletionNotifiesEveryObserverOnce()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = node.CreateActionClient<LookupTransformAction, LookupTransformActionGoal,
+            LookupTransformActionResult, LookupTransformActionFeedback>(NameGenerator.GenerateActionName());
+
+        for (var iteration = 0; iteration < 32; iteration++)
+        {
+            var goal = new ActionGoalContext<LookupTransformActionResult, LookupTransformActionFeedback>(
+                Guid.NewGuid(), (IActionClientImpl)client, Encoding.UTF8);
+            var observers = Enumerable.Range(0, 32).Select(_ => new Observer<LookupTransformActionFeedback>()).ToArray();
+            var subscriptions = new IDisposable[observers.Length];
+            Parallel.Invoke(
+                () => Parallel.For(0, observers.Length, i => subscriptions[i] = goal.Subscribe(observers[i])),
+                () => goal.OnStatusChanged(ActionGoalStatus.Succeeded));
+
+            foreach (var subscription in subscriptions)
+            {
+                subscription.Dispose();
+            }
+
+            Assert.All(observers, observer => Assert.Equal(1, observer.CompletedCount));
+            Assert.False(goal.HasFeedbackListeners);
+        }
+    }
+
     private static async Task VerifySnapshotsAsync<T>(IObservable<T> source,
         Func<ValueTask> dispatch, Func<ValueTask> complete)
     {
@@ -97,11 +160,11 @@ public class ObserverSnapshotTests
         self = source.Subscribe(new Observer<T>(() =>
         {
             // A callback can change subscriptions from another thread without waiting on a dispatch lock.
-            Task.Run(() =>
+            RunOnOtherThread(() =>
             {
                 self!.Dispose();
                 late = source.Subscribe(lateObserver);
-            }).WaitAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+            });
         }));
 
         using (self)
@@ -121,7 +184,34 @@ public class ObserverSnapshotTests
         }
     }
 
-    private sealed class Observer<T>(Action? next = null) : IObserver<T>
+    private static void RunOnOtherThread(Action action)
+    {
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception error)
+            {
+                failure = error;
+            }
+        })
+        {
+            IsBackground = true
+        };
+        thread.Start();
+        // The callback stays active while synchronous subscription work runs on another thread.
+        Assert.True(thread.Join(TimeSpan.FromSeconds(5)), "Subscription work was blocked by the callback.");
+
+        if (failure != null)
+        {
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw(failure);
+        }
+    }
+
+    private sealed class Observer<T>(Action? next = null, Action? completed = null) : IObserver<T>
     {
         public int NextCount;
         public int CompletedCount;
@@ -135,6 +225,7 @@ public class ObserverSnapshotTests
         public void OnCompleted()
         {
             Interlocked.Increment(ref CompletedCount);
+            completed?.Invoke();
         }
 
         public void OnError(Exception error)
