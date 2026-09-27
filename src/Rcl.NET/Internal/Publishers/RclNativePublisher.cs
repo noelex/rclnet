@@ -220,7 +220,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
         try
         {
-            ThreadPool.UnsafeQueueUserWorkItem(static args => args.Run(), args, true);
+            ThreadPool.UnsafeQueueUserWorkItem(args, preferLocal: true);
         }
         catch (Exception error)
         {
@@ -253,7 +253,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
         base.DisposeCore();
     }
 
-    private class PublishArgs
+    private class PublishArgs : IThreadPoolWorkItem
     {
         public RosMessageBuffer Buffer { get; private set; }
 
@@ -263,7 +263,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
         public bool ShouldDisposeBuffer { get; protected set; }
 
-        public void Run()
+        public void Execute()
         {
             var completion = Completion;
             Exception? failure = null;

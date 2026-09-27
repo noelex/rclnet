@@ -656,6 +656,64 @@ public class RegistrationLifecycleTests : IDisposable
         Assert.False(checkpoint.TimedOut);
     }
 
+    [Fact]
+    public async Task TimerWorkItemSupportsOverlappingCallbacksAndCapturedContext()
+    {
+        await using var context = NewContext();
+        using var provider = new RclTimeProvider(context, RclClock.SteadyClock);
+        using var first = new LifecycleCheckpoint();
+        using var second = new LifecycleCheckpoint();
+        var ambient = new AsyncLocal<string?> { Value = "creation" };
+        var observed = new string?[2];
+        int callbacks = 0;
+        var firstExited = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var timer = provider.CreateTimer(_ =>
+        {
+            int index = Interlocked.Increment(ref callbacks) - 1;
+            if (index < observed.Length)
+            {
+                observed[index] = ambient.Value;
+                ambient.Value = "callback";
+
+                if (index == 0)
+                {
+                    first.Pause();
+                    firstExited.TrySetResult();
+                }
+                else
+                {
+                    second.Pause();
+                }
+            }
+        }, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+        ambient.Value = "caller";
+        timer.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(10));
+        Task disposing;
+
+        try
+        {
+            await first.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await second.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            disposing = timer.DisposeAsync().AsTask();
+            await context.Yield();
+            Assert.False(disposing.IsCompleted);
+            first.Resume();
+            await firstExited.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.False(disposing.IsCompleted);
+            Assert.Equal(new[] { "creation", "creation" }, observed);
+            Assert.Equal("caller", ambient.Value);
+        }
+        finally
+        {
+            first.Resume();
+            second.Resume();
+        }
+
+        await disposing.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.False(first.TimedOut);
+        Assert.False(second.TimedOut);
+    }
+
     private static RclContext NewContext() => new(TestConfig.DefaultContextArguments);
 
     private static void ReadCompleted(ValueTask task) => task.GetAwaiter().GetResult();

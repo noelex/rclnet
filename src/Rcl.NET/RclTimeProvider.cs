@@ -102,7 +102,7 @@ public sealed class RclTimeProvider : TimeProvider, IDisposable
     }
 }
 
-internal sealed class RclTimeProviderTimer : ITimer
+internal sealed class RclTimeProviderTimer : ITimer, IThreadPoolWorkItem
 {
     private readonly RclTimeProvider _owner;
     private readonly RclContext _context;
@@ -238,10 +238,11 @@ internal sealed class RclTimeProviderTimer : ITimer
             _pendingCallbacks++;
         }
 
-        ThreadPool.UnsafeQueueUserWorkItem(static timer => timer.InvokeCallback(), this, preferLocal: false);
+        // Each queued occurrence owns one pending callback, even when executions overlap.
+        ThreadPool.UnsafeQueueUserWorkItem(this, preferLocal: false);
     }
 
-    private void InvokeCallback()
+    void IThreadPoolWorkItem.Execute()
     {
         try
         {

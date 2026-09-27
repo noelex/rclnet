@@ -41,6 +41,26 @@ public class HotPathAllocationTests(ITestOutputHelper output)
 
     [Fact]
     [Trait("Category", "PerformanceBaseline")]
+    public async Task TimeProviderTimerAllocationBaseline()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var provider = new RclTimeProvider(context, RclClock.SteadyClock);
+        using var tick = new SemaphoreSlim(0);
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        using var timer = provider.CreateTimer(static state => ((SemaphoreSlim)state!).Release(),
+            tick, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+
+        // Includes rearming, ThreadPool dispatch and the async acknowledgement of each callback.
+        await _meter.MeasureAsync("time-provider-timer-roundtrip", 1000, async () =>
+        {
+            Assert.True(timer.Change(TimeSpan.Zero, Timeout.InfiniteTimeSpan));
+            await tick.WaitAsync(cancellation.Token);
+        });
+        await timer.DisposeAsync();
+    }
+
+    [Fact]
+    [Trait("Category", "PerformanceBaseline")]
     public async Task SubscriptionAllocationBaselines()
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
