@@ -123,6 +123,93 @@ public class ObserverSnapshotTests
         }
     }
 
+    [Fact]
+    public async Task ActionCompletionWaitsForAdmittedFeedbackSnapshot()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = node.CreateActionClient<LookupTransformAction, LookupTransformActionGoal,
+            LookupTransformActionResult, LookupTransformActionFeedback>(NameGenerator.GenerateActionName());
+        var goal = new ActionGoalContext<LookupTransformActionResult, LookupTransformActionFeedback>(
+            Guid.NewGuid(), (IActionClientImpl)client, Encoding.UTF8);
+        using var checkpoint = new LifecycleCheckpoint();
+        var blocker = new Observer<LookupTransformActionFeedback>(checkpoint.Pause);
+        var events = new System.Collections.Concurrent.ConcurrentQueue<string>();
+        var observer = new Observer<LookupTransformActionFeedback>(
+            next: () => events.Enqueue("next"), completed: () => events.Enqueue("completed"));
+        using var first = goal.Subscribe(blocker);
+        using var second = goal.Subscribe(observer);
+        var dispatch = Task.Run(() => goal.OnFeedbackReceived(RosMessageBuffer.Create<LookupTransformActionFeedback>()));
+
+        try
+        {
+            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await Task.Run(() => goal.OnStatusChanged(ActionGoalStatus.Succeeded)).WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(0, blocker.CompletedCount);
+            Assert.Empty(events);
+            Assert.False(goal.HasFeedbackListeners);
+            // Resubscribing the same observer must not complete it ahead of the admitted snapshot.
+            using var late = goal.Subscribe(observer);
+            Assert.Empty(events);
+            goal.OnFeedbackReceived(RosMessageBuffer.Create<LookupTransformActionFeedback>());
+            Assert.Equal(1, blocker.NextCount);
+        }
+        finally
+        {
+            checkpoint.Resume();
+            await dispatch.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+
+        Assert.False(checkpoint.TimedOut);
+        Assert.Equal(new[] { "next", "completed", "completed" }, events.ToArray());
+        Assert.Equal(1, blocker.CompletedCount);
+        goal.OnStatusChanged(ActionGoalStatus.Aborted);
+        goal.OnFeedbackReceived(RosMessageBuffer.Create<LookupTransformActionFeedback>());
+        Assert.Equal(1, observer.NextCount);
+        Assert.Equal(2, observer.CompletedCount);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ActionCompletionFromFeedbackCallbackDrainsEvenWhenCallbackThrows(bool throwFromCallback)
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = node.CreateActionClient<LookupTransformAction, LookupTransformActionGoal,
+            LookupTransformActionResult, LookupTransformActionFeedback>(NameGenerator.GenerateActionName());
+        var goal = new ActionGoalContext<LookupTransformActionResult, LookupTransformActionFeedback>(
+            Guid.NewGuid(), (IActionClientImpl)client, Encoding.UTF8);
+        var events = new List<string>();
+        using var first = goal.Subscribe(new Observer<LookupTransformActionFeedback>(next: () =>
+        {
+            events.Add("first next");
+            goal.OnStatusChanged(ActionGoalStatus.Succeeded);
+            Assert.Equal(new[] { "first next" }, events);
+
+            if (throwFromCallback)
+            {
+                throw new InvalidOperationException("Observer failure.");
+            }
+        }, completed: () => events.Add("first completed")));
+        using var second = goal.Subscribe(new Observer<LookupTransformActionFeedback>(
+            next: () => events.Add("second next"), completed: () => events.Add("second completed")));
+        var dispatch = Task.Run(() => goal.OnFeedbackReceived(RosMessageBuffer.Create<LookupTransformActionFeedback>()));
+
+        if (throwFromCallback)
+        {
+            await Assert.ThrowsAsync<InvalidOperationException>(() => dispatch.WaitAsync(TimeSpan.FromSeconds(10)));
+            Assert.Equal(new[] { "first next", "first completed", "second completed" }, events);
+        }
+        else
+        {
+            await dispatch.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(new[] { "first next", "second next", "first completed", "second completed" }, events);
+        }
+
+        Assert.False(goal.HasFeedbackListeners);
+    }
+
     private static async Task VerifySnapshotsAsync<T>(IObservable<T> source,
         Func<ValueTask> dispatch, Func<ValueTask> complete)
     {

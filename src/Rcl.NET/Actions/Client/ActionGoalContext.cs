@@ -16,6 +16,8 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
     private readonly Encoding _textEncoding;
 
     private bool _completed;
+    private int _activeDispatches;
+    private List<IObserver<TFeedback>>? _completionObservers;
     private int _channelReaders = 0, _subscriberId;
 
     public ActionGoalContext(Guid goalId, IActionClientImpl actionClient, Encoding textEncoding)
@@ -44,11 +46,42 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
             msg = (TFeedback)TFeedback.CreateFrom(feedback.Data, _textEncoding);
         }
 
-        _feedbackChannel.Writer.TryWrite(msg);
-        // Subscription changes apply to the next snapshot, without locking around callbacks.
-        foreach (var obs in Volatile.Read(ref _observerSnapshot))
+        IObserver<TFeedback>[] observers;
+
+        lock (_observersGate)
         {
-            obs.OnNext(msg);
+            if (_completed)
+            {
+                return;
+            }
+
+            _activeDispatches++;
+            observers = _observerSnapshot;
+        }
+
+        try
+        {
+            _feedbackChannel.Writer.TryWrite(msg);
+            // An admitted snapshot finishes before completion, even if a callback closes the goal.
+            foreach (var observer in observers)
+            {
+                observer.OnNext(msg);
+            }
+        }
+        finally
+        {
+            List<IObserver<TFeedback>>? completed = null;
+
+            lock (_observersGate)
+            {
+                if (--_activeDispatches == 0)
+                {
+                    completed = _completionObservers;
+                    _completionObservers = null;
+                }
+            }
+
+            CompleteObservers(completed);
         }
     }
 
@@ -80,6 +113,13 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
                 Volatile.Write(ref _observerSnapshot, _observers.Values.ToArray());
                 return new Subscription(id, this);
             }
+
+            if (_activeDispatches != 0)
+            {
+                // This observer may also belong to an in-flight snapshot from an earlier subscription.
+                _completionObservers!.Add(observer);
+                return Subscription.Empty;
+            }
         }
 
         observer.OnCompleted();
@@ -107,7 +147,7 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
 
     protected override void OnDispose()
     {
-        IObserver<TFeedback>[] observers;
+        List<IObserver<TFeedback>>? observers;
 
         lock (_observersGate)
         {
@@ -117,13 +157,30 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
             }
 
             _completed = true;
-            observers = _observerSnapshot;
+            observers = new List<IObserver<TFeedback>>(_observerSnapshot);
+
+            if (_activeDispatches != 0)
+            {
+                _completionObservers = observers;
+                observers = null;
+            }
+
             _observers.Clear();
             Volatile.Write(ref _observerSnapshot, Array.Empty<IObserver<TFeedback>>());
         }
 
         // Channel continuations and observer callbacks must run outside the subscription gate.
         _feedbackChannel.Writer.TryComplete();
+
+        CompleteObservers(observers);
+    }
+
+    private static void CompleteObservers(List<IObserver<TFeedback>>? observers)
+    {
+        if (observers is null)
+        {
+            return;
+        }
 
         foreach (var observer in observers)
         {
