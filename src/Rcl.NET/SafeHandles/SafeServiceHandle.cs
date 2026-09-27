@@ -51,6 +51,10 @@ internal unsafe class SafeServiceHandle : RclObjectHandle<rcl_service_t>
 
     protected override bool ReleaseHandleCore(rcl_service_t* ptr)
     {
-        return CheckReleaseResult(rcl_service_fini(ptr, _node.DangerousObject), nameof(rcl_service_fini));
+        // Includes type-cache updates from the introspection publisher's cleanup.
+        lock (_node.Context.LifecycleGate)
+        {
+            return CheckReleaseResult(rcl_service_fini(ptr, _node.DangerousObject), nameof(rcl_service_fini));
+        }
     }
 }

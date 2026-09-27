@@ -96,6 +96,10 @@ unsafe class SafePublisherHandle : RclObjectHandle<rcl_publisher_t>
 
     protected override bool ReleaseHandleCore(rcl_publisher_t* ptr)
     {
-        return CheckReleaseResult(rcl_publisher_fini(ptr, _node.DangerousObject), nameof(rcl_publisher_fini));
+        // The last lease can release on any thread; fini mutates the node's type cache.
+        lock (_node.Context.LifecycleGate)
+        {
+            return CheckReleaseResult(rcl_publisher_fini(ptr, _node.DangerousObject), nameof(rcl_publisher_fini));
+        }
     }
 }

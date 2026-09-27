@@ -51,6 +51,10 @@ internal unsafe class SafeClientHandle : RclObjectHandle<rcl_client_t>
 
     protected override bool ReleaseHandleCore(rcl_client_t* ptr)
     {
-        return CheckReleaseResult(rcl_client_fini(ptr, _node.DangerousObject), nameof(rcl_client_fini));
+        // Includes type-cache updates from the introspection publisher's cleanup.
+        lock (_node.Context.LifecycleGate)
+        {
+            return CheckReleaseResult(rcl_client_fini(ptr, _node.DangerousObject), nameof(rcl_client_fini));
+        }
     }
 }

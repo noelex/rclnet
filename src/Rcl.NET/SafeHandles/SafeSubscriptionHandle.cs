@@ -221,6 +221,10 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
 
     protected override bool ReleaseHandleCore(rcl_subscription_t* ptr)
     {
-        return CheckReleaseResult(rcl_subscription_fini(ptr, _node.DangerousObject), nameof(rcl_subscription_fini));
+        // Serialize node type-cache updates with other entity init/fini calls.
+        lock (_node.Context.LifecycleGate)
+        {
+            return CheckReleaseResult(rcl_subscription_fini(ptr, _node.DangerousObject), nameof(rcl_subscription_fini));
+        }
     }
 }

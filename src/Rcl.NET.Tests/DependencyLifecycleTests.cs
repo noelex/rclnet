@@ -449,6 +449,87 @@ public class DependencyLifecycleTests : IDisposable
             && SafeContextHandle.LoggingReferences == before, TimeSpan.FromSeconds(10)));
     }
 
+    [Theory]
+    [InlineData("publisher")]
+    [InlineData("subscription")]
+    [InlineData("client")]
+    [InlineData("service")]
+    public async Task LastEntityLeasesSerializeWithNativeConstruction(string kind)
+    {
+        using var context = new SafeContextHandle(TestConfig.DefaultContextArguments);
+        using var node = NewNode(context);
+        using var clock = new SafeClockHandle(RclClockType.Steady);
+        const string name = "/lifecycle_concurrent_release";
+
+        switch (kind)
+        {
+            case "publisher":
+                await CheckLastLeases(context, () => new SafePublisherHandle(
+                    node, Time.GetTypeSupportHandle(), name, PublisherOptions.Default));
+                break;
+            case "subscription":
+                await CheckLastLeases(context, () => new SafeSubscriptionHandle(
+                    node, Time.GetTypeSupportHandle(), name, SubscriptionOptions.Default));
+                break;
+            case "client":
+                await CheckLastLeases(context, () => new SafeClientHandle(
+                    node, clock, ListParametersService.GetTypeSupportHandle(), name, QosProfile.ServicesDefault));
+                break;
+            case "service":
+                await CheckLastLeases(context, () => new SafeServiceHandle(
+                    node, clock, ListParametersService.GetTypeSupportHandle(), name, QosProfile.ServicesDefault));
+                break;
+        }
+    }
+
+    private static async Task CheckLastLeases<T>(SafeContextHandle context, Func<RclObjectHandle<T>> create)
+        where T : unmanaged
+    {
+        using var first = create();
+        using var second = create();
+        using var acquired = new CountdownEvent(2);
+        using var returning = new CountdownEvent(2);
+        using var release = new ManualResetEventSlim();
+
+        Task ReturnLastLease(RclObjectHandle<T> handle) => Task.Run(() =>
+        {
+            using var lease = handle.Acquire();
+            acquired.Signal();
+            Assert.True(release.Wait(TimeSpan.FromSeconds(10)));
+            returning.Signal();
+        });
+
+        var workers = new[] { ReturnLastLease(first), ReturnLastLease(second) };
+
+        try
+        {
+            Assert.True(acquired.Wait(TimeSpan.FromSeconds(10)));
+            // Model detached entities: only the in-flight operations retain references.
+            first.Dispose();
+            second.Dispose();
+
+            lock (context.LifecycleGate)
+            {
+                release.Set();
+                Assert.True(returning.Wait(TimeSpan.FromSeconds(10)));
+                Assert.Equal(-1, Task.WaitAny(workers, TimeSpan.FromMilliseconds(200)));
+
+                // Creation uses this same gate while both final lease returns are blocked.
+                using var replacement = create();
+                Assert.False(first.IsInvalid);
+                Assert.False(second.IsInvalid);
+            }
+        }
+        finally
+        {
+            release.Set();
+            await Task.WhenAll(workers).WaitAsync(TimeSpan.FromSeconds(10));
+        }
+
+        Assert.True(first.IsInvalid);
+        Assert.True(second.IsInvalid);
+    }
+
     private static SafeNodeHandle NewNode(SafeContextHandle context)
         => new(context, NameGenerator.GenerateNodeName(), "/", NodeOptions.Default);
 
