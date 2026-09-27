@@ -97,7 +97,7 @@ unsafe readonly struct MessageMember_Foxy
     /// <summary>
     /// bool (* resize_function)(void *, size_t size);
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, nint, bool> ResizeFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, nint, bool> ResizeFunction;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -132,18 +132,18 @@ unsafe readonly struct MessageMember_Humble
     /// void (* fetch_function)(const void *, size_t index, void *);
     /// Requires humble and above.
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, nint, void*, void> FetchFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, nint, void*, void> FetchFunction;
 
     /// <summary>
     /// void (* assign_function)(void *, size_t index, const void *);
     /// Requires humble and above.
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, nint, void*, void> AssignFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, nint, void*, void> AssignFunction;
 
     /// <summary>
     /// bool (* resize_function)(void *, size_t size);
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, nint, bool> ResizeFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, nint, bool> ResizeFunction;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -179,18 +179,18 @@ unsafe readonly struct MessageMember_Jazzy
     /// void (* fetch_function)(const void *, size_t index, void *);
     /// Requires humble and above.
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, nint, void*, void> FetchFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, nint, void*, void> FetchFunction;
 
     /// <summary>
     /// void (* assign_function)(void *, size_t index, const void *);
     /// Requires humble and above.
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, nint, void*, void> AssignFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, nint, void*, void> AssignFunction;
 
     /// <summary>
     /// bool (* resize_function)(void *, size_t size);
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, nint, bool> ResizeFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, nint, bool> ResizeFunction;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -225,17 +225,17 @@ unsafe readonly struct MessageMember_Lyrical
     /// <summary>
     /// void (* fetch_function)(const void *, size_t index, void *);
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, nint, void*, void> FetchFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, nint, void*, void> FetchFunction;
 
     /// <summary>
     /// void (* assign_function)(void *, size_t index, const void *);
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, nint, void*, void> AssignFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, nint, void*, void> AssignFunction;
 
     /// <summary>
     /// bool (* resize_function)(void *, size_t size);
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, nint, bool> ResizeFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, nint, bool> ResizeFunction;
 
     public readonly bool IsRosidlBuffer;
 }
@@ -252,12 +252,12 @@ unsafe readonly struct MessageMembers
     /// <summary>
     /// void (* init_function)(void *, enum rosidl_runtime_c__message_initialization);
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, MessageInitialization, void> InitFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, MessageInitialization, void> InitFunction;
 
     /// <summary>
     /// void (* fini_function)(void *);
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, void> FiniFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, void> FiniFunction;
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -273,12 +273,12 @@ unsafe readonly struct MessageMembers_Jazzy
     /// <summary>
     /// void (* init_function)(void *, enum rosidl_runtime_c__message_initialization);
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, MessageInitialization, void> InitFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, MessageInitialization, void> InitFunction;
 
     /// <summary>
     /// void (* fini_function)(void *);
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<void*, void> FiniFunction;
+    public readonly delegate* unmanaged[Cdecl]<void*, void> FiniFunction;
 }
 
 

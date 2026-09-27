@@ -572,7 +572,6 @@ public class MessageClassBuilder
             writer.WriteLine($$"""
                 return _PInvoke();
 
-                [{{Attributes.SuppressGCTransition}}]
                 [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.GeneratorLibraryName}}", EntryPoint = "{{_context.GetNativeMessageFunctionSymbol("create")}}")]
                 static extern nint _PInvoke();
                 """);
@@ -596,7 +595,6 @@ public class MessageClassBuilder
             writer.WriteLine($$"""
                 return _PInvoke(data);
 
-                [{{Attributes.SuppressGCTransition}}]
                 [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.GeneratorLibraryName}}", EntryPoint = "{{_context.GetNativeMessageFunctionSymbol("init")}}")]
                 static extern bool _PInvoke(nint data);
                 """);
@@ -620,7 +618,6 @@ public class MessageClassBuilder
             writer.WriteLine($$"""
                 _PInvoke(data);
 
-                [{{Attributes.SuppressGCTransition}}]
                 [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.GeneratorLibraryName}}", EntryPoint = "{{_context.GetNativeMessageFunctionSymbol("fini")}}")]
                 static extern void _PInvoke(nint data);
                 """);
@@ -645,7 +642,6 @@ public class MessageClassBuilder
             writer.WriteLine($$"""
                 return _PInvoke(data, (nuint)size);
 
-                [{{Attributes.SuppressGCTransition}}]
                 [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.GeneratorLibraryName}}", EntryPoint = "{{_context.GetNativeSequenceFunctionSymbol("init")}}")]
                 static extern bool _PInvoke(nint data, nuint size);
                 """);
@@ -669,7 +665,6 @@ public class MessageClassBuilder
             writer.WriteLine($$"""
                 _PInvoke(data);
 
-                [{{Attributes.SuppressGCTransition}}]
                 [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.GeneratorLibraryName}}", EntryPoint = "{{_context.GetNativeSequenceFunctionSymbol("fini")}}")]
                 static extern void _PInvoke(nint data);
                 """);
@@ -693,7 +688,6 @@ public class MessageClassBuilder
             writer.WriteLine($$"""
                 _PInvoke(data);
 
-                [{{Attributes.SuppressGCTransition}}]
                 [global::System.Runtime.InteropServices.DllImportAttribute("{{_context.GeneratorLibraryName}}", EntryPoint = "{{_context.GetNativeMessageFunctionSymbol("destroy")}}")]
                 static extern void _PInvoke(nint data);
                 """);

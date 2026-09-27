@@ -17,12 +17,12 @@ static class ObjectPool
 
 internal class ObjectPool<T> : IDisposable where T : class, new()
 {
-    private SpinLock _lock = new();
+    private readonly object _lock = new();
     private readonly Queue<T> _queue = new();
 
     public T Rent()
     {
-        using (ScopedLock.Lock(ref _lock))
+        lock (_lock)
         {
             var obj = _queue.TryDequeue(out var result) ? result : new();
             return obj;
@@ -31,7 +31,7 @@ internal class ObjectPool<T> : IDisposable where T : class, new()
 
     public void Return(T obj)
     {
-        using (ScopedLock.Lock(ref _lock))
+        lock (_lock)
         {
             _queue.Enqueue(obj);
         }
@@ -39,7 +39,7 @@ internal class ObjectPool<T> : IDisposable where T : class, new()
 
     public void Dispose()
     {
-        using (ScopedLock.Lock(ref _lock))
+        lock (_lock)
         {
             while (_queue.TryDequeue(out var obj))
             {

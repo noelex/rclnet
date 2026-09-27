@@ -231,7 +231,6 @@ public class PrivStructBuilder
                     return _PInvoke(pMsg);
                 }
 
-                [{{Attributes.SuppressGCTransition}}]
                 [global::System.Runtime.InteropServices.DllImportAttribute("{{context.MessageContext.GeneratorLibraryName}}", EntryPoint = "{{symbolResolver("init")}}")]
                 static extern {{method.ReturnType}} _PInvoke({{structType}}* msg);
                 """);

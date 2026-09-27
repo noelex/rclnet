@@ -8,7 +8,61 @@ namespace Rcl.NET.Tests;
 
 public class ServiceTests
 {
-    private const int RequestTimeout = 10_000, ServerOnlineTimeout = 1000;
+    private const int RequestTimeout = 10_000, ServerOnlineTimeout = 5000;
+
+    [Fact]
+    public async Task ClientTimeoutSurvivesNodeClose()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var clock = new RclClock(RclClockType.Steady);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName(), clockOverride: clock);
+        using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(
+            NameGenerator.GenerateServiceName());
+
+        var pending = client.InvokeAsync(new ListParametersServiceRequest(), 500);
+        Assert.False(pending.IsCompleted);
+        node.Dispose();
+
+        Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(10_000)));
+        await Assert.ThrowsAsync<TimeoutException>(() => pending);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ClientAfterNodeClosePreparesTimeoutBeforeSending(bool closeClock)
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var clock = new RclClock(RclClockType.Steady);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName(), clockOverride: clock);
+        using var serverNode = context.CreateNode(NameGenerator.GenerateNodeName());
+        var name = NameGenerator.GenerateServiceName();
+        var received = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var server = serverNode.CreateService<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(
+            name, (request, state) =>
+            {
+                received.TrySetResult();
+                return new ListParametersServiceResponse();
+            });
+        using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(name);
+        Assert.True(await client.TryWaitForServerAsync(ServerOnlineTimeout));
+        node.Dispose();
+
+        if (closeClock)
+        {
+            clock.Dispose();
+            await Assert.ThrowsAsync<ObjectDisposedException>(() =>
+                client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout));
+            await Task.Delay(500);
+            Assert.False(received.Task.IsCompleted);
+        }
+        else
+        {
+            await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout)
+                .WaitAsync(TimeSpan.FromSeconds(15));
+            Assert.True(received.Task.IsCompletedSuccessfully);
+        }
+    }
 
     [Fact]
     public async Task ClientRequestTimeout()
@@ -42,7 +96,8 @@ public class ServiceTests
                 return response;
             });
 
-        using var client = node.CreateClient<
+        using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = clientNode.CreateClient<
             ListParametersService,
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
@@ -75,7 +130,8 @@ public class ServiceTests
                     return response;
                 });
 
-            using var client = node.CreateClient<
+            using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
+            using var client = clientNode.CreateClient<
                 ListParametersService,
                 ListParametersServiceRequest,
                 ListParametersServiceResponse>(service);
@@ -119,13 +175,17 @@ public class ServiceTests
                 return Task.FromResult(response);
             }, null);
 
-        using var client = node.CreateClient<
+        using var clientNode = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = clientNode.CreateClient<
             ListParametersService,
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
 
         Assert.True(await client.TryWaitForServerAsync(ServerOnlineTimeout));
         var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
+
+        Assert.Equal(response.Result.Names, actualResponse.Result.Names);
+        Assert.Equal(response.Result.Prefixes, actualResponse.Result.Prefixes);
     }
 
     [Fact]
@@ -311,13 +371,28 @@ public class ServiceTests
         await introspectTask;
         Assert.Equal(4, events.Count);
 
-        Assert.Equal(ServiceEventInfo.REQUEST_SENT, events.ElementAt(0).Key);
-        Assert.Equal(ServiceEventInfo.REQUEST_RECEIVED, events.ElementAt(1).Key);
-        Assert.Equal(ServiceEventInfo.RESPONSE_SENT, events.ElementAt(2).Key);
-        Assert.Equal(ServiceEventInfo.RESPONSE_RECEIVED, events.ElementAt(3).Key);
+        // Client and server publish through separate DDS writers. Cross-writer arrival
+        // order is not guaranteed; RCL also emits REQUEST_SENT after sending the request.
+        var eventTypes = events.Keys.ToArray();
+        Assert.Equal(new[]
+        {
+            ServiceEventInfo.REQUEST_SENT, ServiceEventInfo.REQUEST_RECEIVED,
+            ServiceEventInfo.RESPONSE_SENT, ServiceEventInfo.RESPONSE_RECEIVED
+        }.OrderBy(type => type), eventTypes.OrderBy(type => type));
+        Assert.True(Array.IndexOf(eventTypes, ServiceEventInfo.REQUEST_SENT)
+            < Array.IndexOf(eventTypes, ServiceEventInfo.RESPONSE_RECEIVED));
+        Assert.True(Array.IndexOf(eventTypes, ServiceEventInfo.REQUEST_RECEIVED)
+            < Array.IndexOf(eventTypes, ServiceEventInfo.RESPONSE_SENT));
 
         Assert.Equal(client.Gid, new(MemoryMarshal.Cast<sbyte, byte>(events[ServiceEventInfo.REQUEST_SENT].Info.ClientGid)));
         Assert.Equal(client.Gid, new(MemoryMarshal.Cast<sbyte, byte>(events[ServiceEventInfo.RESPONSE_RECEIVED].Info.ClientGid)));
+        Assert.Equal(events[ServiceEventInfo.REQUEST_RECEIVED].Info.ClientGid,
+            events[ServiceEventInfo.RESPONSE_SENT].Info.ClientGid);
+
+        foreach (var item in events.Values)
+        {
+            Assert.Equal(events[ServiceEventInfo.REQUEST_SENT].Info.SequenceNumber, item.Info.SequenceNumber);
+        }
 
         if(state == ServiceIntrospectionState.Full)
         {

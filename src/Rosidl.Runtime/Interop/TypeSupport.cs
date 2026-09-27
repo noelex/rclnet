@@ -21,7 +21,7 @@ public unsafe readonly struct MessageTypeSupport
     /// <summary>
     /// Pointer to the message type support handler function
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<MessageTypeSupport*, sbyte*, MessageTypeSupport*> Handler;
+    public readonly delegate* unmanaged[Cdecl]<MessageTypeSupport*, sbyte*, MessageTypeSupport*> Handler;
 
 }
 
@@ -44,7 +44,7 @@ internal unsafe readonly struct MessageTypeSupport_Jazzy
     /// <summary>
     /// Pointer to the message type support handler function
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<MessageTypeSupport_Jazzy*, sbyte*, MessageTypeSupport_Jazzy*> Handler;
+    public readonly delegate* unmanaged[Cdecl]<MessageTypeSupport_Jazzy*, sbyte*, MessageTypeSupport_Jazzy*> Handler;
 
     // Keep memory layout consistent
     internal readonly IntPtr get_type_hash_func;
@@ -71,7 +71,7 @@ public unsafe readonly struct ServiceTypeSupport
     /// <summary>
     /// Pointer to the message type support handler function
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<ServiceTypeSupport*, sbyte*, ServiceTypeSupport*> Handler;
+    public readonly delegate* unmanaged[Cdecl]<ServiceTypeSupport*, sbyte*, ServiceTypeSupport*> Handler;
 }
 
 /// <summary>
@@ -93,7 +93,7 @@ internal unsafe readonly struct ServiceTypeSupport_Jazzy
     /// <summary>
     /// Pointer to the message type support handler function
     /// </summary>
-    public readonly delegate* unmanaged[Cdecl, SuppressGCTransition]<ServiceTypeSupport_Jazzy*, sbyte*, ServiceTypeSupport_Jazzy*> Handler;
+    public readonly delegate* unmanaged[Cdecl]<ServiceTypeSupport_Jazzy*, sbyte*, ServiceTypeSupport_Jazzy*> Handler;
 
 
     // Keep memory layout consistent

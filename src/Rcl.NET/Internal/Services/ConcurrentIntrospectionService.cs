@@ -1,70 +1,129 @@
 ﻿using Rcl.Interop;
+using Rcl.SafeHandles;
 using Rosidl.Runtime;
 
 namespace Rcl.Internal.Services;
 
-/// <summary>
-/// This class allows handling multiple concurrent service requests asynchronously.
-/// </summary>
+// Each asynchronous dispatch owns its buffers and one callback reference until it exits.
 internal class ConcurrentIntrospectionService : IntrospectionServiceBase
 {
-    private readonly RclNodeImpl _node;
     private readonly IConcurrentNativeServiceHandler _handler;
     private readonly CancellationTokenSource _shutdownSignal = new();
+    private readonly object _callbackGate = new();
+    private int _inFlight;
+    private bool _stopping, _cancelComplete, _detached;
 
     public unsafe ConcurrentIntrospectionService(
-        RclNodeImpl node,
-        string serviceName,
-        IConcurrentNativeServiceHandler handler,
-        TypeSupportHandle typesupport,
-        ServerOptions options)
+        RclNodeImpl node, string serviceName, IConcurrentNativeServiceHandler handler,
+        TypeSupportHandle typesupport, ServerOptions options)
         : base(node, serviceName, typesupport, options)
     {
-        _node = node;
         _handler = handler;
+        RegisterWaitHandle();
     }
 
-    protected override unsafe void DispatchRequest(
-        RosMessageBuffer request, RosMessageBuffer response, rmw_request_id_t id)
+    protected override unsafe void DispatchRequest(RosMessageBuffer request, RosMessageBuffer response, rmw_request_id_t id)
     {
-        _ = DispatchAsync(request, response, id);
-    }
+        CancellationToken token;
 
-    private async Task DispatchAsync(RosMessageBuffer request, RosMessageBuffer response, rmw_request_id_t requestId)
-    {
-        using (request)
-        using (response)
+        lock (_callbackGate)
         {
-            await _handler.ProcessRequestAsync(request, response, _shutdownSignal.Token).ConfigureAwait(false);
-
-            // We may resume execution on a background thread,
-            // but since calling rcl_send_response is thread-safe,
-            // there's no need to yield back to RclContext event loop here.
-
-            var ret = SendResponse(requestId, response.Data);
-
-            if (ret != rcl_ret_t.RCL_RET_OK)
+            if (_stopping)
             {
-                // Yield here since we want to propagate the error to the event loop.
-                await _node.Context.YieldIfNotCurrent();
-                RclException.ThrowIfNonSuccess(ret);
+                request.Dispose();
+                response.Dispose();
+                return;
+            }
+
+            token = _shutdownSignal.Token;
+            _inFlight++;
+        }
+
+        _ = DispatchAsync(request, response, id, token);
+    }
+
+    private async Task DispatchAsync(RosMessageBuffer request, RosMessageBuffer response,
+        rmw_request_id_t id, CancellationToken token)
+    {
+        try
+        {
+            using (request)
+            {
+                using (response)
+                {
+                    await _handler.ProcessRequestAsync(request, response, token).ConfigureAwait(false);
+                    token.ThrowIfCancellationRequested();
+                    RclException.ThrowIfNonSuccess(SendResponse(id, response.Data));
+                }
             }
         }
-
-        unsafe rcl_ret_t SendResponse(rmw_request_id_t requestId, IntPtr responseData)
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
         {
-            return rcl_send_response(Handle.Object, &requestId, responseData.ToPointer());
+        }
+        catch (ObjectDisposedException) when (Handle.IsClosing || Context.Handle.IsClosing)
+        {
+        }
+        catch (Exception error)
+        {
+            HandleReleaseDiagnostics.Record(new(GetType().Name, "asynchronous service callback", null, error.ToString()));
+        }
+        finally
+        {
+            bool release;
+
+            lock (_callbackGate)
+            {
+                release = --_inFlight == 0 && _cancelComplete && _detached;
+            }
+
+            if (release)
+            {
+                _shutdownSignal.Dispose();
+            }
         }
     }
 
-    public override void Dispose()
+    protected override void OnStopped()
     {
-        if (!_shutdownSignal.IsCancellationRequested)
+        lock (_callbackGate)
         {
-            _shutdownSignal.Cancel();
-            _shutdownSignal.Dispose();
+            _stopping = true;
         }
 
-        base.Dispose();
+        try
+        {
+            _shutdownSignal.Cancel();
+        }
+        finally
+        {
+            bool release;
+
+            lock (_callbackGate)
+            {
+                _cancelComplete = true;
+                release = _inFlight == 0 && _detached;
+            }
+
+            if (release)
+            {
+                _shutdownSignal.Dispose();
+            }
+        }
+    }
+
+    protected override void OnDetached()
+    {
+        bool release;
+
+        lock (_callbackGate)
+        {
+            _detached = true;
+            release = _cancelComplete && _inFlight == 0;
+        }
+
+        if (release)
+        {
+            _shutdownSignal.Dispose();
+        }
     }
 }

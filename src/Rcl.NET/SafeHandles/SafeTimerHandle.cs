@@ -10,25 +10,31 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
         SafeContextHandle context, SafeClockHandle clock, long period)
     {
         _clock = clock;
-        *Object = rcl_get_zero_initialized_timer();
 
         try
         {
-            using (ScopedLock.Lock(ref _clock.SyncRoot))
+            lock (context.LifecycleGate)
             {
-                if (RosEnvironment.IsSupported(RosEnvironment.Jazzy))
+                SetDependencies(context, clock);
+                *DangerousObject = rcl_get_zero_initialized_timer();
+
+                lock (_clock.SyncRoot)
                 {
-                    RclException.ThrowIfNonSuccess(
-                        RclJazzy.rcl_timer_init2(Object, clock.Object, context.Object,
-                          period, null, RclAllocator.Default.Object, true));
+                    if (RosEnvironment.IsSupported(RosEnvironment.Jazzy))
+                    {
+                        RclException.ThrowIfNonSuccess(
+                            RclJazzy.rcl_timer_init2(DangerousObject, clock.DangerousObject, context.DangerousObject,
+                              period, null, RclAllocator.Default.Object, true));
+                    }
+                    else
+                    {
+                        RclException.ThrowIfNonSuccess(
+                            rcl_timer_init(DangerousObject, clock.DangerousObject, context.DangerousObject,
+                              period, null, RclAllocator.Default.Object));
+                    }
                 }
-                else
-                {
-                    RclException.ThrowIfNonSuccess(
-                        rcl_timer_init(Object, clock.Object, context.Object,
-                          period, null, RclAllocator.Default.Object));
-                }
-                _clock.AddTimerRef();
+
+                MarkInitialized();
             }
         }
         catch
@@ -38,12 +44,11 @@ unsafe class SafeTimerHandle : RclObjectHandle<rcl_timer_t>
         }
     }
 
-    protected override void ReleaseHandleCore(rcl_timer_t* ptr)
+    protected override bool ReleaseHandleCore(rcl_timer_t* ptr)
     {
-        using (ScopedLock.Lock(ref _clock.SyncRoot))
+        lock (_clock.SyncRoot)
         {
-            rcl_timer_fini(ptr);
-            _clock.ReleaseTimerRef();
+            return CheckReleaseResult(rcl_timer_fini(ptr), nameof(rcl_timer_fini));
         }
     }
 }

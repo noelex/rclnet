@@ -339,7 +339,6 @@ namespace Rosidl.Messages.Rcl
             {
                 return _PInvoke();
                 
-                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
                 [global::System.Runtime.InteropServices.DllImportAttribute("rcl_interfaces__rosidl_generator_c", EntryPoint = "rcl_interfaces__msg__ParameterEventDescriptors__create")]
                 static extern Priv* _PInvoke();
             }
@@ -350,7 +349,6 @@ namespace Rosidl.Messages.Rcl
             {
                 _PInvoke(msg);
                 
-                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
                 [global::System.Runtime.InteropServices.DllImportAttribute("rcl_interfaces__rosidl_generator_c", EntryPoint = "rcl_interfaces__msg__ParameterEventDescriptors__destroy")]
                 static extern void _PInvoke(Priv* msg);
             }
@@ -364,7 +362,6 @@ namespace Rosidl.Messages.Rcl
                     return _PInvoke(pMsg);
                 }
                 
-                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
                 [global::System.Runtime.InteropServices.DllImportAttribute("rcl_interfaces__rosidl_generator_c", EntryPoint = "rcl_interfaces__msg__ParameterEventDescriptors__init")]
                 static extern bool _PInvoke(Priv* msg);
             }
@@ -378,7 +375,6 @@ namespace Rosidl.Messages.Rcl
                     _PInvoke(pMsg);
                 }
                 
-                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
                 [global::System.Runtime.InteropServices.DllImportAttribute("rcl_interfaces__rosidl_generator_c", EntryPoint = "rcl_interfaces__msg__ParameterEventDescriptors__fini")]
                 static extern void _PInvoke(Priv* msg);
             }
@@ -392,7 +388,6 @@ namespace Rosidl.Messages.Rcl
                     return _PInvoke(plhs, prhs);
                 }
                 
-                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
                 [global::System.Runtime.InteropServices.DllImportAttribute("rcl_interfaces__rosidl_generator_c", EntryPoint = "rcl_interfaces__msg__ParameterEventDescriptors__are_qual")]
                 static extern bool _PInvoke(Priv* lhs, Priv* rhs);
             }
@@ -403,7 +398,6 @@ namespace Rosidl.Messages.Rcl
             {
                 return _PInvoke(input, output);
                 
-                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
                 [global::System.Runtime.InteropServices.DllImportAttribute("rcl_interfaces__rosidl_generator_c", EntryPoint = "rcl_interfaces__msg__ParameterEventDescriptors__copy")]
                 static extern bool _PInvoke(Priv* input, Priv* output);
             }
@@ -581,7 +575,6 @@ namespace Rosidl.Messages.Rcl
             {
                 return _PInvoke();
                 
-                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
                 [global::System.Runtime.InteropServices.DllImportAttribute("rcl_interfaces__rosidl_generator_c", EntryPoint = "rcl_interfaces__msg__ParameterEventDescriptors__Sequence__create")]
                 static extern PrivSequence* _PInvoke();
             }
@@ -592,7 +585,6 @@ namespace Rosidl.Messages.Rcl
             {
                 _PInvoke(msg);
                 
-                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
                 [global::System.Runtime.InteropServices.DllImportAttribute("rcl_interfaces__rosidl_generator_c", EntryPoint = "rcl_interfaces__msg__ParameterEventDescriptors__Sequence__destroy")]
                 static extern void _PInvoke(PrivSequence* msg);
             }
@@ -606,7 +598,6 @@ namespace Rosidl.Messages.Rcl
                     return _PInvoke(pMsg, (uint)size);
                 }
                 
-                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
                 [global::System.Runtime.InteropServices.DllImportAttribute("rcl_interfaces__rosidl_generator_c", EntryPoint = "rcl_interfaces__msg__ParameterEventDescriptors__Sequence__init")]
                 static extern bool _PInvoke(PrivSequence* msg, nuint size);
             }
@@ -620,7 +611,6 @@ namespace Rosidl.Messages.Rcl
                     _PInvoke(pMsg);
                 }
                 
-                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
                 [global::System.Runtime.InteropServices.DllImportAttribute("rcl_interfaces__rosidl_generator_c", EntryPoint = "rcl_interfaces__msg__ParameterEventDescriptors__Sequence__fini")]
                 static extern void _PInvoke(PrivSequence* msg);
             }
@@ -634,7 +624,6 @@ namespace Rosidl.Messages.Rcl
                     return _PInvoke(plhs, prhs);
                 }
                 
-                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
                 [global::System.Runtime.InteropServices.DllImportAttribute("rcl_interfaces__rosidl_generator_c", EntryPoint = "rcl_interfaces__msg__ParameterEventDescriptors__Sequence__are_qual")]
                 static extern bool _PInvoke(PrivSequence* lhs, PrivSequence* rhs);
             }
@@ -645,7 +634,6 @@ namespace Rosidl.Messages.Rcl
             {
                 return _PInvoke(input, output);
                 
-                [global::System.Runtime.InteropServices.SuppressGCTransitionAttribute]
                 [global::System.Runtime.InteropServices.DllImportAttribute("rcl_interfaces__rosidl_generator_c", EntryPoint = "rcl_interfaces__msg__ParameterEventDescriptors__Sequence__copy")]
                 static extern bool _PInvoke(PrivSequence* input, PrivSequence* output);
             }

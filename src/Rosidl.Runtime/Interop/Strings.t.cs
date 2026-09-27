@@ -278,7 +278,6 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
             return _PInvoke(pStr);
         }
         
-        [SuppressGCTransition]
         [DllImport("rosidl_runtime_c", EntryPoint = "rosidl_runtime_c__@NativeStructName@__init")]
         static extern bool _PInvoke(@StructName@* str);
     }
@@ -290,7 +289,6 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
             _PInvoke(pStr);
         }
         
-        [SuppressGCTransition]
         [DllImport("rosidl_runtime_c", EntryPoint = "rosidl_runtime_c__@NativeStructName@__fini")]
         static extern void _PInvoke(@StructName@* str);
     }
@@ -307,7 +305,6 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     {
         return _PInvoke(input, output);
 
-        [SuppressGCTransition]
         [DllImport("rosidl_runtime_c", EntryPoint = "rosidl_runtime_c__@NativeStructName@__copy")]
         static extern bool _PInvoke(@StructName@* input, @StructName@* output);
     }
@@ -319,7 +316,6 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
             return _PInvoke(pLhs, pRhs);
         }
 
-        [SuppressGCTransition]
         [DllImport("rosidl_runtime_c", EntryPoint = "rosidl_runtime_c__@NativeStructName@__are_equal")]
         static extern bool _PInvoke(@StructName@* lhs, @StructName@* rhs);
     }
@@ -331,7 +327,6 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
             return _PInvoke(pStr, value, (uint)n);
         }
 
-        [SuppressGCTransition]
         [DllImport("rosidl_runtime_c", EntryPoint = "rosidl_runtime_c__@NativeStructName@__assignn")]
         static extern bool _PInvoke(@StructName@* str, @ElementType@* value, nuint n);
     }
@@ -343,7 +338,6 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
             return _PInvoke(pStr, value);
         }
         
-        [SuppressGCTransition]
         [DllImport("rosidl_runtime_c", EntryPoint = "rosidl_runtime_c__@NativeStructName@__assign")]
         static extern bool _PInvoke(@StructName@* str, @ElementType@* value);
     }
@@ -356,7 +350,6 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
             return _PInvoke(pStr, value, (uint)n);
         }
 
-        [SuppressGCTransition]
         [DllImport("rosidl_runtime_c", EntryPoint = "rosidl_runtime_c__@NativeStructName@__assignn_from_char")]
         static extern bool _PInvoke(@StructName@* str, sbyte* value, nuint n);
     }
@@ -368,7 +361,6 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
             return _PInvoke(pStr, (uint)n);
         }
 
-        [SuppressGCTransition]
         [DllImport("rosidl_runtime_c", EntryPoint = "rosidl_runtime_c__@NativeStructName@__resize")]
         static extern bool _PInvoke(@StructName@* str, nuint n);
     }
@@ -380,7 +372,6 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
     {
         return (int)_PInvoke(data);
 
-        [SuppressGCTransition]
         [DllImport("rosidl_runtime_c", EntryPoint = "rosidl_runtime_c__@NativeStructName@__len")]
         static extern nuint _PInvoke(@ElementType@* value);
     }

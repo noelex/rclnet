@@ -75,6 +75,9 @@ public interface IRclPublisher : IRclObject
     /// </para>
     /// <para>
     /// Also, the <see cref="RosMessageBuffer"/> MUST NOT be disposed before the returned <see cref="ValueTask"/> completes.
+    /// Disposing the publisher does not transfer or end this buffer ownership obligation.
+    /// If disposal wins before the background operation is admitted, the returned task fails
+    /// with <see cref="ObjectDisposedException"/>.
     /// </para>
     /// <para>
     /// This is a helper method which simply calls <see cref="Publish(RosMessageBuffer)"/> in a background thread.

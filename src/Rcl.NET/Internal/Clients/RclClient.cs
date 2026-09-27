@@ -17,6 +17,7 @@ internal class RclClient<TService, TRequest, TResponse> : RclClientBase, IRclCli
         : base(node, serviceName, TService.GetTypeSupportHandle(), options)
     {
         _textEncoding = options.TextEncoding;
+        RegisterWaitHandle();
     }
 
     protected override RosMessageBuffer CreateResponseBuffer()

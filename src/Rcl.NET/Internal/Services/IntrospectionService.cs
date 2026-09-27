@@ -15,6 +15,7 @@ internal class IntrospectionService : IntrospectionServiceBase
         : base(node, serviceName, typesupport, options)
     {
         _handler = handler;
+        RegisterWaitHandle();
     }
 
     protected unsafe override void DispatchRequest(
@@ -22,12 +23,14 @@ internal class IntrospectionService : IntrospectionServiceBase
     {
         // TODO: Reuse buffers by finializing rather than detroying after use.
         using (request)
-        using (response)
         {
-            _handler.ProcessRequest(request, response);
+            using (response)
+            {
+                _handler.ProcessRequest(request, response);
 
-            RclException.ThrowIfNonSuccess(
-                rcl_send_response(Handle.Object, &id, response.Data.ToPointer()));
+                RclException.ThrowIfNonSuccess(
+                    SendResponse(id, response.Data));
+            }
         }
     }
 }

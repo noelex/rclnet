@@ -10,7 +10,16 @@ internal class IntrospectionClient : RclClientBase
     public IntrospectionClient(RclNodeImpl node, string serviceName,
         TypeSupportHandle typeSupport, ClientOptions options) : base(node, serviceName, typeSupport, options)
     {
-        _typesupport = new ServiceIntrospection(typeSupport);
+        try
+        {
+            _typesupport = new ServiceIntrospection(typeSupport);
+            RegisterWaitHandle();
+        }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     protected override RosMessageBuffer CreateResponseBuffer()

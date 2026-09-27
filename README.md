@@ -2,13 +2,14 @@
 
 **🚀Modern ROS 2 for .NET.**
 
-rclnet is a high-performance, asynchronous .NET client library for ROS 2, designed to feel like a native part of the .NET ecosystem rather than a thin port of the C++ API.
+rclnet is a high-performance .NET client library for ROS 2, designed for modern .NET applications with idiomatic async APIs and low-overhead native interop.
 
-* **One assembly, multiple ROS 2 distributions** — run the same application binaries across supported ROS 2 releases.
+* **High-performance message interop** — generated bindings map ROSIDL native message layouts directly into C#, enabling efficient bulk access with `Span<T>` and low-overhead native interop.
+* **Native message buffers** — work directly with ROS message memory through `RosMessageBuffer` when allocation and conversion overhead matter, while keeping convenient managed message APIs for normal application code.
+* **Async by design** — topics, services, actions, timers, and graph operations integrate naturally with `async`/`await`, `Task`, `CancellationToken`, and `IAsyncEnumerable<T>`.
+* **Managed ROS primitives** — services and actions are designed around .NET abstractions, allowing asynchronous and concurrent workflows to compose naturally.
+* **Build once, run everywhere** — run the same application binaries across supported ROS 2 releases.
 * **NuGet and MSBuild first** — use ROS 2 from a normal .NET project with interface generation integrated into `dotnet build`.
-* **Async by design** — ROS communication integrates naturally with `async`/`await`, `Task`, and `IAsyncEnumerable<T>`.
-* **High-level and low-level APIs** — use managed messages or access native message buffers directly when performance matters.
-* **Cross-platform by default** — use the same managed APIs and assemblies across Linux and Windows.
 
 ## What's New in 3.0
 - ROS 2 Lyrical support

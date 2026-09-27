@@ -28,8 +28,10 @@ internal unsafe abstract class NativeSubscriptionBase :
         : base(node.Context, new(node.Handle, typeSupport, topicName, options))
     {
         var completelyInitialized = false;
+
         try
         {
+            using var lease = Handle.Acquire();
             _node = node;
             TypeSupport = typeSupport;
 
@@ -44,14 +46,14 @@ internal unsafe abstract class NativeSubscriptionBase :
             _messageChannel = Channel.CreateBounded<RosMessageBuffer>(opts, static x => x.Dispose());
 
             ref var actualQos = ref Unsafe.AsRef<rmw_qos_profile_t>(
-                rcl_subscription_get_actual_qos(Handle.Object));
+                rcl_subscription_get_actual_qos(lease.Object));
             _actualQos = QosProfile.Create(in actualQos);
 
-            Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(Handle.Object))!;
+            Name = StringMarshal.CreatePooledString(rcl_subscription_get_topic_name(lease.Object))!;
             Options = options;
             Endpoints = GetEndpoints();
 
-            if (options.ContentFilter != null && !RclHumble.rcl_subscription_is_cft_enabled(Handle.Object))
+            if (options.ContentFilter != null && !RclHumble.rcl_subscription_is_cft_enabled(lease.Object))
             {
                 throw new NotSupportedException($"Content filter is configured but the feature is " +
                     $"not supported by current RMW implementation '{RosEnvironment.RmwImplementationIdentifier}'.");
@@ -59,18 +61,24 @@ internal unsafe abstract class NativeSubscriptionBase :
 
             InitializeEvents(options,
                 ref _livelinessEvent, ref _deadlineMissedEvent, ref _qosEvent);
+            RclWaitObject<SafeSubscriptionEventHandle>.RegisterWaitHandles(Context, _livelinessEvent, _deadlineMissedEvent, _qosEvent);
             completelyInitialized = true;
         }
         finally
         {
-            if (!completelyInitialized) Dispose();
+            if (!completelyInitialized)
+            {
+                Dispose();
+            }
+
         }
 
-        RegisterWaitHandle();
     }
 
     private unsafe NetworkFlowEndpoint[] GetEndpoints()
     {
+        using var lease = Handle.Acquire();
+
         if (!RosEnvironment.IsSupported(RosEnvironment.Humble))
         {
             return Array.Empty<NetworkFlowEndpoint>();
@@ -82,7 +90,7 @@ internal unsafe abstract class NativeSubscriptionBase :
         try
         {
             RclException.ThrowIfNonSuccess(
-                RclHumble.rcl_subscription_get_network_flow_endpoints(Handle.Object, &allocator, &endpoints));
+                RclHumble.rcl_subscription_get_network_flow_endpoints(lease.Object, &allocator, &endpoints));
             return InteropHelpers.ConvertNetworkFlowEndpoints(ref endpoints);
         }
         catch (Exception e)
@@ -96,7 +104,9 @@ internal unsafe abstract class NativeSubscriptionBase :
             {
                 RclHumble.rmw_network_flow_endpoint_array_fini(&endpoints);
             }
+
         }
+
     }
 
     private void InitializeEvents(
@@ -117,6 +127,7 @@ internal unsafe abstract class NativeSubscriptionBase :
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register LivelinessChangedEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -133,6 +144,7 @@ internal unsafe abstract class NativeSubscriptionBase :
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register RequestedDeadlineMissedEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
@@ -149,9 +161,11 @@ internal unsafe abstract class NativeSubscriptionBase :
             {
                 throw;
             }
+
             _node.Context.DefaultLogger.LogDebug("Unable to register RequestedQosIncompatibleEvent:");
             _node.Context.DefaultLogger.LogDebug(ex.Message);
         }
+
     }
 
     private void OnLivelinessChanged(LivelinessChangedEvent info)
@@ -188,21 +202,31 @@ internal unsafe abstract class NativeSubscriptionBase :
     {
         get
         {
+            using var lease = Handle.Acquire();
             size_t count;
             RclException.ThrowIfNonSuccess(
-                rcl_subscription_get_publisher_count(Handle.Object, &count));
+                rcl_subscription_get_publisher_count(lease.Object, &count));
             return (int)count.Value;
         }
+
     }
 
     public bool IsValid
-         => rcl_subscription_is_valid(Handle.Object);
+    {
+        get
+        {
+            using var lease = Handle.Acquire();
+            return rcl_subscription_is_valid(lease.Object);
+        }
+
+    }
 
     public NetworkFlowEndpoint[] Endpoints { get; }
 
     protected override void OnWaitCompleted()
     {
         var msg = TakeMessage();
+
         if (!msg.IsEmpty)
         {
             // Just in case FullMode is set to Wait, simply drop the incoming message.
@@ -210,7 +234,9 @@ internal unsafe abstract class NativeSubscriptionBase :
             {
                 msg.Dispose();
             }
+
         }
+
     }
 
     protected abstract RosMessageBuffer TakeMessage();
@@ -220,20 +246,26 @@ internal unsafe abstract class NativeSubscriptionBase :
         return _messageChannel.Reader.ReadAllAsync(cancellationToken);
     }
 
-    public override void Dispose()
+    protected override void DisposeCore()
     {
-        _livelinessEvent?.Dispose();
-        _deadlineMissedEvent?.Dispose();
-        _qosEvent?.Dispose();
+        Cleanup.Dispose(_livelinessEvent);
+        Cleanup.Dispose(_deadlineMissedEvent);
+        Cleanup.Dispose(_qosEvent);
 
-        if (_messageChannel.Writer.TryComplete())
+        base.DisposeCore();
+    }
+
+    protected override void OnDetached()
+    {
+        if (_messageChannel?.Writer.TryComplete() == true)
         {
             while (_messageChannel.Reader.TryRead(out var buffer))
             {
                 buffer.Dispose();
             }
+
         }
 
-        base.Dispose();
     }
+
 }

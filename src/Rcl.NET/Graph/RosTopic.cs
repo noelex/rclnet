@@ -7,10 +7,26 @@ namespace Rcl.Graph;
 /// </summary>
 public class RosTopic
 {
+    private IReadOnlyCollection<RosTopicEndPoint> _publishersSnapshot = Array.Empty<RosTopicEndPoint>();
+    private IReadOnlyCollection<RosTopicEndPoint> _subscribersSnapshot = Array.Empty<RosTopicEndPoint>();
+
     private readonly ConcurrentDictionary<GraphId, RosTopicEndPoint>
         _publishers = new(), _subscribers = new();
     private readonly IEnumerator<KeyValuePair<GraphId, RosTopicEndPoint>>
         _publishersEnumerator, _subscribersEnumerator;
+
+    internal void PublishSnapshots(SnapshotChanges changes)
+    {
+        if ((changes & SnapshotChanges.Publishers) != 0)
+        {
+            Volatile.Write(ref _publishersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_publishers.Values);
+        }
+
+        if ((changes & SnapshotChanges.Subscribers) != 0)
+        {
+            Volatile.Write(ref _subscribersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_subscribers.Values);
+        }
+    }
 
     internal RosTopic(string name)
     {
@@ -33,12 +49,12 @@ public class RosTopic
     /// <summary>
     /// Gets a list of available ROS topic publishers registered with current <see cref="RosTopic"/>.
     /// </summary>
-    public IReadOnlyCollection<RosTopicEndPoint> Publishers => (IReadOnlyCollection<RosTopicEndPoint>)_publishers.Values;
+    public IReadOnlyCollection<RosTopicEndPoint> Publishers => Volatile.Read(ref _publishersSnapshot);
 
     /// <summary>
     /// Gets a list of available ROS topic subscribers registered with current <see cref="RosTopic"/>.
     /// </summary>
-    public IReadOnlyCollection<RosTopicEndPoint> Subscribers => (IReadOnlyCollection<RosTopicEndPoint>)_subscribers.Values;
+    public IReadOnlyCollection<RosTopicEndPoint> Subscribers => Volatile.Read(ref _subscribersSnapshot);
 
     internal void UpdatePublishers(
         IGraphBuilder builder,

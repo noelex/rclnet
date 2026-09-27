@@ -245,7 +245,6 @@ public unsafe partial struct @StructName@ : IDisposable, IEquatable<@StructName@
         RosidlRuntime.RequireNativeAbi(Abi);
         return _PInvoke(input, output);
 
-        [SuppressGCTransition]
         [DllImport("rosidl_runtime_c", EntryPoint = "rosidl_runtime_c__@NativeStructName@__Sequence__copy")]
         static extern bool _PInvoke(@StructName@* input, @StructName@* output);
     }
