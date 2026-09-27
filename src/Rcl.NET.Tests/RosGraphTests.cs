@@ -413,9 +413,62 @@ public class RosGraphTests(ITestOutputHelper output)
                 throw new InvalidOperationException("Observer failure.");
             }
         };
-        Assert.Throws<InvalidOperationException>(graph.Build);
+        Assert.Throws<GraphEventDispatchException>(graph.Build);
         graph.Build();
         Assert.Equal(1, calls);
+    }
+
+    [Fact]
+    public async Task GraphCallbackFailuresDoNotInterruptSubscribersOrBatch()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var owner = context.CreateNode(NameGenerator.GenerateNodeName());
+        var included = new HashSet<string> { owner.Name };
+        var graph = new RosGraph((Rcl.Internal.RclNodeImpl)owner, name => included.Contains(name.Name));
+        await context.Yield();
+        graph.Build();
+        using var added = context.CreateNode(NameGenerator.GenerateNodeName());
+        included.Add(added.Name);
+        Assert.True(await owner.Graph.TryWaitForNodeAsync(added.FullyQualifiedName, 5000));
+        await context.Yield();
+        var observed = new List<RosGraphEvent>();
+        var handled = new List<RosGraphEvent>();
+        using var bad = graph.Subscribe(new CallbackObserver(_ => throw new InvalidOperationException("observer")));
+        using var good = graph.Subscribe(new CallbackObserver(observed.Add));
+        graph.GraphChanged += _ => throw new InvalidOperationException("handler");
+        graph.GraphChanged += handled.Add;
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var watched = graph.TryWaitForNodeAsync(added.FullyQualifiedName, Timeout.Infinite, cancellation.Token);
+        var error = Assert.Throws<GraphEventDispatchException>(graph.Build);
+        Assert.True(handled.Count > 1);
+        Assert.Equal(observed, handled);
+        Assert.Equal(handled.Count * 2, error.InnerExceptions.Count);
+        Assert.Equal(handled.Count, error.InnerExceptions.Count(x => x.Message == "observer"));
+        Assert.Equal(handled.Count, error.InnerExceptions.Count(x => x.Message == "handler"));
+        Assert.True(await watched.WaitAsync(TimeSpan.FromSeconds(5)));
+        await context.Yield();
+        observed.Clear();
+        handled.Clear();
+        graph.Build();
+        Assert.Empty(observed);
+        Assert.Empty(handled);
+    }
+
+    private sealed class CallbackObserver(Action<RosGraphEvent> callback) : IObserver<RosGraphEvent>
+    {
+        public void OnNext(RosGraphEvent value)
+        {
+            callback(value);
+        }
+
+        public void OnCompleted()
+        {
+        }
+
+        public void OnError(Exception error)
+        {
+            throw error;
+        }
     }
 
     [Fact]

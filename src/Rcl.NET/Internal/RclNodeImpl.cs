@@ -146,6 +146,10 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
                     // Closing can race with a graph refresh already dispatched by the event loop.
                     return;
                 }
+                catch (GraphEventDispatchException e)
+                {
+                    Logger.LogWarning(e.ToString());
+                }
                 catch (Exception e)
                 {
                     Logger.LogWarning("Unable to build ROS graph: " + e.Message);

@@ -4,15 +4,35 @@ namespace Rcl.Graph;
 
 public partial class RosGraph
 {
-    private void PublishEvent(RosGraphEvent e)
+    private void PublishEvent(RosGraphEvent e, ref List<Exception>? errors)
     {
+        var handlers = Volatile.Read(ref _handlerSnapshot);
+
         try
         {
             while (_observersEnumerator.MoveNext())
             {
-                _observersEnumerator.Current.Value.OnNext(e);
+                try
+                {
+                    _observersEnumerator.Current.Value.OnNext(e);
+                }
+                catch (Exception error)
+                {
+                    (errors ??= new()).Add(error);
+                }
             }
-            GraphChanged?.Invoke(e);
+
+            foreach (GraphChangedEventHandler handler in handlers)
+            {
+                try
+                {
+                    handler(e);
+                }
+                catch (Exception error)
+                {
+                    (errors ??= new()).Add(error);
+                }
+            }
         }
         finally
         {
@@ -45,6 +65,7 @@ public partial class RosGraph
     private void FireEvents()
     {
         var events = new PoolingList<IndexedEvent>();
+        List<Exception>? errors = null;
         try
         {
             AddEvents(ref events, 0, _nodeUpdates, new NodeEventFactory());
@@ -62,12 +83,17 @@ public partial class RosGraph
             eventSpan.Sort();
             foreach (var e in eventSpan)
             {
-                PublishEvent(e.Event);
+                PublishEvent(e.Event, ref errors);
             }
         }
         finally
         {
             events.Dispose();
+        }
+
+        if (errors != null)
+        {
+            throw new GraphEventDispatchException(errors);
         }
     }
 
@@ -193,4 +219,8 @@ public partial class RosGraph
         public readonly RosGraphEvent CreateDisappeared(RosGraph sender, RosActionEndPoint arg)
             => _server ? new ActionServerDisappearedEvent(sender, arg) : new ActionClientDisappearedEvent(sender, arg);
     }
+}
+internal sealed class GraphEventDispatchException(IEnumerable<Exception> errors)
+    : AggregateException("ROS graph callbacks failed after the complete event batch was dispatched.", errors)
+{
 }
