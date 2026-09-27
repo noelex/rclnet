@@ -178,6 +178,9 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             ArgumentOutOfRangeException.ThrowIfGreaterThan(timeout.TotalMilliseconds, uint.MaxValue - 1, nameof(timeout));
         }
 
+        // Each invocation owns its provider so node disposal cannot stop its timeout.
+        using var timeoutProvider = timeout == Timeout.InfiniteTimeSpan
+            ? null : new RclTimeProvider(Context, _node.Clock);
         var pending = new PendingOperation<RosMessageBuffer>(true, _cancelPending);
         bool published = false;
 
@@ -185,8 +188,8 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         {
             // The response path removes entries under the same gate after native take.
             // Thus even an immediate response cannot overtake sequence publication.
+            pending.SetupCancellation(cancellationToken, timeout, timeoutProvider);
             SendAndPublish();
-            pending.SetupCancellation(cancellationToken, timeout, _node.TimeProvider);
         }
         catch (Exception error)
         {
@@ -214,6 +217,11 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             {
                 Handle.ThrowIfOperationClosed();
                 ObjectDisposedException.ThrowIf(_pendingClosed, this);
+                if (pending.IsCompleted)
+                {
+                    return;
+                }
+
                 long sequence;
 
                 lock (Handle.NativeGate)
@@ -232,15 +240,15 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     {
         lock (_pendingGate)
         {
-            if (!_pendingRequests.TryGetValue(pending.Key, out var current) || !ReferenceEquals(current, pending))
+            if (_pendingRequests.TryGetValue(pending.Key, out var current) && ReferenceEquals(current, pending))
             {
-                return;
+                _pendingRequests.Remove(pending.Key);
             }
 
-            _pendingRequests.Remove(pending.Key);
+            // Cancellation can win during setup, before a sequence has been published.
+            // Publish the terminal state under the send gate so it cannot be missed.
+            pending.Fail(error);
         }
-
-        pending.Fail(error);
     }
 
     public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, int timeoutMilliseconds, CancellationToken cancellationToken = default)

@@ -11,6 +11,60 @@ public class ServiceTests
     private const int RequestTimeout = 10_000, ServerOnlineTimeout = 5000;
 
     [Fact]
+    public async Task ClientTimeoutSurvivesNodeClose()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var clock = new RclClock(RclClockType.Steady);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName(), clockOverride: clock);
+        using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(
+            NameGenerator.GenerateServiceName());
+
+        var pending = client.InvokeAsync(new ListParametersServiceRequest(), 500);
+        Assert.False(pending.IsCompleted);
+        node.Dispose();
+
+        Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(10_000)));
+        await Assert.ThrowsAsync<TimeoutException>(() => pending);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ClientAfterNodeClosePreparesTimeoutBeforeSending(bool closeClock)
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var clock = new RclClock(RclClockType.Steady);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName(), clockOverride: clock);
+        using var serverNode = context.CreateNode(NameGenerator.GenerateNodeName());
+        var name = NameGenerator.GenerateServiceName();
+        var received = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var server = serverNode.CreateService<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(
+            name, (request, state) =>
+            {
+                received.TrySetResult();
+                return new ListParametersServiceResponse();
+            });
+        using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(name);
+        Assert.True(await client.TryWaitForServerAsync(ServerOnlineTimeout));
+        node.Dispose();
+
+        if (closeClock)
+        {
+            clock.Dispose();
+            await Assert.ThrowsAsync<ObjectDisposedException>(() =>
+                client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout));
+            await Task.Delay(500);
+            Assert.False(received.Task.IsCompleted);
+        }
+        else
+        {
+            await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout)
+                .WaitAsync(TimeSpan.FromSeconds(15));
+            Assert.True(received.Task.IsCompletedSuccessfully);
+        }
+    }
+
+    [Fact]
     public async Task ClientRequestTimeout()
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);

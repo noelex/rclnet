@@ -15,6 +15,8 @@ internal sealed class PendingOperation<T>
 
     internal long Key { get; set; }
 
+    internal bool IsCompleted => Volatile.Read(ref _terminal) != 0;
+
     internal ValueTask<T> Task { get; }
 
     internal ValueTask VoidTask { get; }
