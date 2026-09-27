@@ -81,7 +81,7 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
                 }
             }
 
-            CompleteObservers(completed);
+            CompleteFeedback(completed);
         }
     }
 
@@ -169,18 +169,19 @@ internal class ActionGoalContext<TResult, TFeedback> : ActionGoalContextBase, IA
             Volatile.Write(ref _observerSnapshot, Array.Empty<IObserver<TFeedback>>());
         }
 
-        // Channel continuations and observer callbacks must run outside the subscription gate.
-        _feedbackChannel.Writer.TryComplete();
-
-        CompleteObservers(observers);
+        CompleteFeedback(observers);
     }
 
-    private static void CompleteObservers(List<IObserver<TFeedback>>? observers)
+    private void CompleteFeedback(List<IObserver<TFeedback>>? observers)
     {
         if (observers is null)
         {
             return;
         }
+
+        // The final admitted dispatch owns channel completion as well as observer completion.
+        // Channel continuations and observer callbacks must run outside the subscription gate.
+        _feedbackChannel.Writer.TryComplete();
 
         foreach (var observer in observers)
         {

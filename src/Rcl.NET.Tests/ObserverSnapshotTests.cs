@@ -139,15 +139,19 @@ public class ObserverSnapshotTests
             next: () => events.Enqueue("next"), completed: () => events.Enqueue("completed"));
         using var first = goal.Subscribe(blocker);
         using var second = goal.Subscribe(observer);
+        await using var reader = goal.ReadFeedbacksAsync(default).GetAsyncEnumerator();
+        Task<bool>? channelCompletion = null;
         var dispatch = Task.Run(() => goal.OnFeedbackReceived(RosMessageBuffer.Create<LookupTransformActionFeedback>()));
 
         try
         {
             await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.True(await reader.MoveNextAsync());
+            channelCompletion = reader.MoveNextAsync().AsTask();
             await Task.Run(() => goal.OnStatusChanged(ActionGoalStatus.Succeeded)).WaitAsync(TimeSpan.FromSeconds(10));
             Assert.Equal(0, blocker.CompletedCount);
             Assert.Empty(events);
-            Assert.False(goal.HasFeedbackListeners);
+            Assert.False(channelCompletion.IsCompleted);
             // Resubscribing the same observer must not complete it ahead of the admitted snapshot.
             using var late = goal.Subscribe(observer);
             Assert.Empty(events);
@@ -160,6 +164,7 @@ public class ObserverSnapshotTests
             await dispatch.WaitAsync(TimeSpan.FromSeconds(10));
         }
 
+        Assert.False(await channelCompletion!.WaitAsync(TimeSpan.FromSeconds(10)));
         Assert.False(checkpoint.TimedOut);
         Assert.Equal(new[] { "next", "completed", "completed" }, events.ToArray());
         Assert.Equal(1, blocker.CompletedCount);
@@ -208,6 +213,82 @@ public class ObserverSnapshotTests
         }
 
         Assert.False(goal.HasFeedbackListeners);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task NativeFeedbackCompletionWaitsForAdmittedWrite(bool dispose)
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = node.CreateActionClient<LookupTransformAction, LookupTransformActionGoal,
+            LookupTransformActionResult, LookupTransformActionFeedback>(NameGenerator.GenerateActionName(),
+                new ActionClientOptions(queueSize: 1));
+        var goal = new TestNativeGoalContext((IActionClientImpl)client);
+        using var checkpoint = new LifecycleCheckpoint();
+        var dropped = 0;
+        var released = 0;
+        var rejected = 0;
+        goal.OnFeedbackReceived(new RosMessageBuffer(1, (_, _) =>
+        {
+            Interlocked.Increment(ref dropped);
+            checkpoint.Pause();
+        }));
+        // DropOldest's destruction callback pauses the second admitted TryWrite before it returns.
+        var dispatch = Task.Run(() => goal.OnFeedbackReceived(
+            new RosMessageBuffer(2, (_, _) => Interlocked.Increment(ref released))));
+        await using var reader = goal.ReadFeedbacksAsync(default).GetAsyncEnumerator();
+        Task<bool>? channelCompletion = null;
+
+        try
+        {
+            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await Task.Run(() =>
+            {
+                if (dispose)
+                {
+                    goal.Close();
+                }
+                else
+                {
+                    goal.OnStatusChanged(ActionGoalStatus.Succeeded);
+                }
+            }).WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.Equal(0, Volatile.Read(ref released));
+            goal.OnFeedbackReceived(new RosMessageBuffer(3, (_, _) => Interlocked.Increment(ref rejected)));
+            Assert.Equal(1, rejected);
+
+            if (!dispose)
+            {
+                Assert.True(await reader.MoveNextAsync());
+                Assert.Equal((nint)2, reader.Current.Data);
+                reader.Current.Dispose();
+                channelCompletion = reader.MoveNextAsync().AsTask();
+                Assert.False(channelCompletion.IsCompleted);
+            }
+        }
+        finally
+        {
+            checkpoint.Resume();
+            await dispatch.WaitAsync(TimeSpan.FromSeconds(10));
+            goal.Close();
+        }
+
+        channelCompletion ??= reader.MoveNextAsync().AsTask();
+        Assert.False(await channelCompletion.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.False(checkpoint.TimedOut);
+        Assert.Equal(1, dropped);
+        Assert.Equal(1, released);
+    }
+
+    private sealed class TestNativeGoalContext(IActionClientImpl client)
+        : NativeActionGoalContext(Guid.NewGuid(), client)
+    {
+        internal void Close()
+        {
+            OnDispose();
+        }
     }
 
     private static async Task VerifySnapshotsAsync<T>(IObservable<T> source,
