@@ -694,7 +694,7 @@ public sealed class RclContext : IRclContext
         var guardConditions = new Dictionary<nint, nint>();
         var nativeGuardConditions = new HashSet<nint>();
 
-        List<Exception>? errors = null;
+        List<Exception> errors = new();
         size_t idx;
 
         try
@@ -828,7 +828,10 @@ public sealed class RclContext : IRclContext
                 waitHandles.Clear();
                 guardConditions.Clear();
                 nativeGuardConditions.Clear();
-                DrainCleanup();
+                using (new Cleanup.ErrorScope(errors))
+                {
+                    DrainCleanup();
+                }
 
                 // Admission and close share the registration gate. Only callbacks that
                 // start before close run here; the rest retain thread-pool fallback semantics.
@@ -848,11 +851,12 @@ public sealed class RclContext : IRclContext
         }
         catch (Exception error)
         {
-            (errors ??= new()).Add(error);
+            errors.Add(error);
         }
         finally
         {
             // Every cleanup step is independent, and completion is published even after a fault.
+            using var cleanupErrors = new Cleanup.ErrorScope(errors);
             void Attempt(Action cleanup)
             {
                 try
@@ -861,7 +865,7 @@ public sealed class RclContext : IRclContext
                 }
                 catch (Exception error)
                 {
-                    (errors ??= new()).Add(error);
+                    errors.Add(error);
                 }
             }
 
@@ -908,7 +912,7 @@ public sealed class RclContext : IRclContext
             {
                 if (!_context.Shutdown())
                 {
-                    (errors ??= new()).Add(new InvalidOperationException(
+                    errors.Add(new InvalidOperationException(
                         "rcl_shutdown failed. See handle release diagnostics for the native error."));
                 }
             });
@@ -916,10 +920,10 @@ public sealed class RclContext : IRclContext
 
             if (_wakeupFailure != null)
             {
-                (errors ??= new()).Add(_wakeupFailure);
+                errors.Add(_wakeupFailure);
             }
 
-            if (errors == null)
+            if (errors.Count == 0)
             {
                 _shutdownComplete.TrySetResult();
             }

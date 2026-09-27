@@ -320,6 +320,109 @@ public class ShutdownLifecycleTests
         Assert.Equal(1, calls);
     }
 
+    [Fact]
+    public async Task WaitSetCleanupFailureFaultsAllClosersAndContinuesCleanup()
+    {
+        var handle = new SafeContextHandle(TestConfig.DefaultContextArguments);
+        FailingWaitSet? waitSet = null;
+        var context = new RclContext(handle, createWaitSet: owner => waitSet = new FailingWaitSet(owner));
+        int cleanup = 0;
+        context.GetOrAddFeature("queued-cleanup", _ => new Feature(() =>
+            context.ScheduleCleanup(_ => cleanup++, null)));
+
+        var first = context.DisposeAsync().AsTask();
+        var second = context.DisposeAsync().AsTask();
+        Assert.Same(first, second);
+        var synchronous = Task.Run(() => Assert.Throws<InvalidOperationException>(context.Dispose));
+        var failure = await Assert.ThrowsAsync<InvalidOperationException>(() => first.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.Contains(nameof(FailingWaitSet), failure.Message);
+        Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(() => second));
+        Assert.Same(failure, await synchronous.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.Single(first.Exception!.InnerExceptions);
+        Assert.Equal(1, cleanup);
+        Assert.True(waitSet!.IsInvalid);
+        Assert.True(handle.IsInvalid);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task QueuedCleanupFailureFaultsShutdownAndContinuesDraining(bool duringShutdown)
+    {
+        var context = NewContext();
+        var failure = new InvalidOperationException("Injected queued cleanup failure.");
+        int cleanup = 0;
+
+        void QueueCleanup()
+        {
+            context.ScheduleCleanup(_ => throw failure, null);
+            context.ScheduleCleanup(_ => cleanup++, null);
+        }
+
+        if (duringShutdown)
+        {
+            context.GetOrAddFeature("queued-cleanup", _ => new Feature(QueueCleanup));
+        }
+        else
+        {
+            QueueCleanup();
+            await context.Yield();
+        }
+
+        var shutdown = context.DisposeAsync().AsTask();
+        Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(
+            () => shutdown.WaitAsync(TimeSpan.FromSeconds(10))));
+        Assert.Same(failure, Assert.Throws<InvalidOperationException>(context.Dispose));
+        Assert.Equal(1, cleanup);
+        Assert.True(context.Handle.IsInvalid);
+    }
+
+    [Fact]
+    public async Task LateChildCleanupFailureDoesNotChangeShutdownOrFaultAnotherContext()
+    {
+        var context = NewContext();
+        using var child = new FailingGuardHandle(context.Handle);
+        var shutdown = context.DisposeAsync().AsTask();
+        await shutdown.WaitAsync(TimeSpan.FromSeconds(10));
+        Assert.False(context.Handle.IsClosed);
+
+        child.Dispose();
+        Assert.True(child.IsInvalid);
+        Assert.True(context.Handle.IsInvalid);
+        Assert.Same(shutdown, context.DisposeAsync().AsTask());
+        await shutdown;
+
+        var next = NewContext();
+        await next.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+    }
+
+    private sealed class FailingWaitSet : SafeWaitSetHandle
+    {
+        internal FailingWaitSet(SafeContextHandle context) : base(context)
+        {
+        }
+
+        protected override unsafe bool ReleaseHandleCore(rcl_wait_set_t* ptr)
+        {
+            // Free real native resources before injecting the fini failure result.
+            base.ReleaseHandleCore(ptr);
+            return CheckReleaseResult(rcl_ret_t.RCL_RET_ERROR, nameof(rcl_wait_set_fini));
+        }
+    }
+
+    private sealed class FailingGuardHandle : SafeGuardConditionHandle
+    {
+        internal FailingGuardHandle(SafeContextHandle context) : base(context)
+        {
+        }
+
+        protected override unsafe bool ReleaseHandleCore(rcl_guard_condition_t* ptr)
+        {
+            base.ReleaseHandleCore(ptr);
+            return CheckReleaseResult(rcl_ret_t.RCL_RET_ERROR, nameof(rcl_guard_condition_fini));
+        }
+    }
+
     private static RclContext NewContext() => new(TestConfig.DefaultContextArguments);
 
     private static ValueTask SendAsync(RclContext context, SendOrPostCallback callback)

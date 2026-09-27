@@ -276,13 +276,20 @@ internal unsafe abstract class RclObjectHandle<T> : RclObjectHandle where T : un
 
         try
         {
-            return ReleaseAdditionalResources() && success;
+            success = ReleaseAdditionalResources() && success;
         }
         catch (Exception error)
         {
             ReportReleaseException("additional resources", error);
-            return false;
+            success = false;
         }
+
+        if (!success)
+        {
+            Cleanup.RecordReleaseFailure(GetType().Name);
+        }
+
+        return success;
     }
 }
 

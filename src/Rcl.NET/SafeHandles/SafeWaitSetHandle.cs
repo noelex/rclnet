@@ -1,6 +1,6 @@
 namespace Rcl.SafeHandles;
 
-internal unsafe sealed class SafeWaitSetHandle : RclObjectHandle<rcl_wait_set_t>
+internal unsafe class SafeWaitSetHandle : RclObjectHandle<rcl_wait_set_t>
 {
     internal SafeWaitSetHandle(SafeContextHandle context)
     {
