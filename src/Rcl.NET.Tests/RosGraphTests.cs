@@ -35,8 +35,11 @@ public class RosGraphTests(ITestOutputHelper output)
         try
         {
             var graph = new RosGraph((Rcl.Internal.RclNodeImpl)node, name => name.Name == node.Name);
-            await context.Yield();
-            graph.Build();
+            await WaitForGraphAsync(context, graph, () =>
+                graph.Nodes.Count == 1 &&
+                graph.Topics.Any(x => x.Name == publisher.Name && x.Publishers.Count == 1 && x.Subscribers.Count == 1) &&
+                graph.Services.Any(x => x.Name == client.Name && x.Servers.Count == 1 && x.Clients.Count == 1) &&
+                graph.Actions.Count == 1 && graph.Actions.All(x => x.Servers.Count == 1 && x.Clients.Count == 1));
             var graphNode = Assert.Single(graph.Nodes);
             var topic = graph.Topics.Single(x => x.Name == publisher.Name);
             var service = graph.Services.Single(x => x.Name == client.Name);
@@ -58,8 +61,8 @@ public class RosGraphTests(ITestOutputHelper output)
             IDisposable[] endpoints = [publisher, subscriber, server, client, actionServer, actionClient];
             clientDisposed = removed == 5;
             endpoints[removed].Dispose();
-            await context.Yield();
-            graph.Build();
+            await WaitForGraphAsync(context, graph, () =>
+                !((System.Collections.IEnumerable)endpointGetters[removed]()).Cast<object>().Any());
 
             for (var i = 0; i < endpointGetters.Length; i++)
             {
@@ -106,8 +109,9 @@ public class RosGraphTests(ITestOutputHelper output)
         try
         {
             var graph = new RosGraph((Rcl.Internal.RclNodeImpl)owner, name => name.Name == node.Name);
-            await context.Yield();
-            graph.Build();
+            await WaitForGraphAsync(context, graph, () =>
+                graph.Nodes.Count == 1 && graph.Actions.Count == 1 &&
+                graph.Actions.All(x => x.Servers.Count == 1 && x.Clients.Count == 1));
             var graphNode = Assert.Single(graph.Nodes);
             var action = Assert.Single(graph.Actions);
             var oldServers = graphNode.ActionServers;
@@ -116,8 +120,7 @@ public class RosGraphTests(ITestOutputHelper output)
             clientDisposed = true;
             client.Dispose();
             node.Dispose();
-            await context.Yield();
-            graph.Build();
+            await WaitForGraphAsync(context, graph, () => graph.Nodes.Count == 0);
             Assert.Empty(graph.Nodes);
             Assert.Empty(graph.Actions);
             Assert.Empty(graphNode.ActionServers);
@@ -133,6 +136,27 @@ public class RosGraphTests(ITestOutputHelper output)
             {
                 client.Dispose();
             }
+        }
+    }
+
+    private static async Task WaitForGraphAsync(RclContext context, RosGraph graph, Func<bool> ready)
+    {
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
+
+        while (true)
+        {
+            // Yield alone does not guarantee DDS discovery has reached the native graph cache.
+            await context.Yield();
+            graph.Build();
+
+            if (ready())
+            {
+                return;
+            }
+
+            Assert.True(System.Diagnostics.Stopwatch.GetElapsedTime(started) < TimeSpan.FromSeconds(10),
+                "Timed out waiting for graph discovery.");
+            await Task.Delay(10);
         }
     }
 
