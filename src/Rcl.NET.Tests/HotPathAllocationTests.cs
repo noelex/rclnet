@@ -168,9 +168,11 @@ public class HotPathAllocationTests(ITestOutputHelper output)
         // A separate graph on the event loop lets us measure Build without the automatic builder racing it.
         await context.Yield();
         var graph = new Rcl.Graph.RosGraph((Rcl.Internal.RclNodeImpl)node, name => name.Name == node.Name);
+        var discoveryGraph = new Rcl.Graph.RosGraph((Rcl.Internal.RclNodeImpl)node, name => name.Name == node.Name);
+        await WaitForPublishersAsync(discoveryGraph, publisher.Name, 1);
+        await context.Yield();
         graph.Build();
         var graphNode = Assert.Single(graph.Nodes);
-        int initialPublishers = graphNode.Publishers.Count;
         object? snapshot = null;
         _meter.Measure("graph-nodes-read", 10_000, () => snapshot = graph.Nodes, zeroAllocation: true);
         _meter.Measure("node-publishers-read", 10_000, () => snapshot = graphNode.Publishers, zeroAllocation: true);
@@ -187,18 +189,23 @@ public class HotPathAllocationTests(ITestOutputHelper output)
             {
                 using (var endpoint = node.CreatePublisher<Time>(publisher.Name))
                 {
+                    // Probe a separate graph so discovery waits do not consume the measured change.
+                    await WaitForPublishersAsync(discoveryGraph, publisher.Name, 2);
+                    await context.Yield();
                     long allocated = GC.GetAllocatedBytesForCurrentThread();
                     long start = Stopwatch.GetTimestamp();
                     graph.Build();
                     ticks += Stopwatch.GetTimestamp() - start;
                     bytes += GC.GetAllocatedBytesForCurrentThread() - allocated;
-                    Assert.Equal(initialPublishers + 1, graphNode.Publishers.Count);
+                    Assert.Equal(2, graphNode.Publishers.Count(p => p.Topic.Name == publisher.Name));
                 }
 
                 // Drain deferred endpoint cleanup before preparing the next sample.
                 await context.Yield();
+                await WaitForPublishersAsync(discoveryGraph, publisher.Name, 1);
+                await context.Yield();
                 graph.Build();
-                Assert.Equal(initialPublishers, graphNode.Publishers.Count);
+                Assert.Single(graphNode.Publishers, p => p.Topic.Name == publisher.Name);
             }
 
             if (sample >= 0)
@@ -208,6 +215,26 @@ public class HotPathAllocationTests(ITestOutputHelper output)
         }
 
         GC.KeepAlive(snapshot);
+    }
+
+    private static async Task WaitForPublishersAsync(Rcl.Graph.RosGraph graph, string topicName, int expected)
+    {
+        var timeout = Stopwatch.StartNew();
+
+        while (true)
+        {
+            await graph.Owner.Context.Yield();
+            graph.Build();
+            int actual = graph.Topics.SingleOrDefault(t => t.Name == topicName)?.Publishers.Count ?? 0;
+            if (actual == expected)
+            {
+                return;
+            }
+
+            Assert.True(timeout.Elapsed < TimeSpan.FromSeconds(10),
+                $"Discovery for '{topicName}' timed out: expected {expected} publishers, actual {actual}.");
+            await Task.Delay(1);
+        }
     }
 
     private static async Task WaitForSubscriberAsync(IRclPublisher publisher)
