@@ -80,7 +80,7 @@ internal sealed class PendingOperation<T> : IValueTaskSource<T>, IValueTaskSourc
 
                 try
                 {
-                    self._cancel(self, new TimeoutException($"ROS service request timed out after {self._timeout}."));
+                    self._cancel(self, new TimeoutException($"ROS operation timed out after {self._timeout}."));
                 }
                 finally
                 {
