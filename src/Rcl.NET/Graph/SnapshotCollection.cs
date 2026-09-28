@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Rcl.Graph;
 
 internal sealed class SnapshotPublisher
@@ -68,7 +70,9 @@ internal sealed class SnapshotCollection<T>(SnapshotPublisher publisher) : ISnap
             }
             else
             {
-                membershipChanged = _members!.Remove(item);
+                Debug.Assert(_members != null,
+                    "A committed removal must follow a committed addition.");
+                membershipChanged = _members.Remove(item);
             }
 
             if (membershipChanged)
