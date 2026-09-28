@@ -64,10 +64,11 @@ public partial class RosGraph
             return true;
         }
 
-        var milliseconds = (long)timeout.TotalMilliseconds;
-        ArgumentOutOfRangeException.ThrowIfLessThan(milliseconds, -1, nameof(timeout));
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(milliseconds, uint.MaxValue - 1L, nameof(timeout));
-        timeout = TimeSpan.FromMilliseconds(milliseconds);
+        if (timeout != Timeout.InfiniteTimeSpan)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(timeout, TimeSpan.Zero, nameof(timeout));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(timeout.TotalMilliseconds, uint.MaxValue - 1, nameof(timeout));
+        }
 
         var pending = PendingOperation<bool>.Rent(true, static (operation, error) => operation.Fail(error));
         using var obs = new GraphWatcher(this, watcher, state, pending);

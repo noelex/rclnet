@@ -7,6 +7,46 @@ namespace Rcl.NET.Tests;
 public class GraphWatcherLifecycleTests
 {
     [Theory]
+    [InlineData(-0.5)]
+    [InlineData(-1.5)]
+    [InlineData(4294967294.5)]
+    public async Task InvalidTimeSpanTimeoutIsRejectedWithoutTruncation(double milliseconds)
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var cancellation = new CancellationTokenSource();
+        try
+        {
+            var waiting = node.Graph.TryWatchAsync(static (_, _) => false,
+                TimeSpan.FromMilliseconds(milliseconds), cancellation.Token);
+            var error = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+                waiting.WaitAsync(TimeSpan.FromSeconds(10)));
+            Assert.Equal("timeout", error.ParamName);
+        }
+        finally
+        {
+            cancellation.Cancel();
+        }
+    }
+
+    [Fact]
+    public async Task InfiniteAndZeroTimeSpanTimeoutsKeepTheirSemantics()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var cancellation = new CancellationTokenSource();
+        await context.Yield();
+        var waiting = node.Graph.TryWatchAsync(static (_, _) => false,
+            TimeSpan.FromMilliseconds(-1), cancellation.Token);
+        Assert.False(waiting.IsCompleted);
+        cancellation.Cancel();
+        var error = await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            waiting.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.Equal(cancellation.Token, error.CancellationToken);
+        Assert.False(await node.Graph.TryWatchAsync(static (_, _) => false, TimeSpan.Zero));
+    }
+
+    [Theory]
     [InlineData(Timeout.Infinite)]
     [InlineData(10_000)]
     public async Task GraphCompletionTerminatesPendingWatch(int timeout)
