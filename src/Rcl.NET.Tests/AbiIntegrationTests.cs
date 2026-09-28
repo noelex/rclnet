@@ -9,6 +9,67 @@ public class AbiIntegrationTests
 {
     private const int Timeout = 10_000;
 
+    public static TheoryData<int, bool> MultipleStringSequenceCases
+    {
+        get
+        {
+            var cases = new TheoryData<int, bool>();
+            for (var mask = 0; mask < 16; mask++)
+            {
+                cases.Add(mask, false);
+                cases.Add(mask, true);
+            }
+
+            return cases;
+        }
+    }
+
+    [SkippableTheory]
+    [MemberData(nameof(MultipleStringSequenceCases))]
+    public async Task NestedMultipleStringSequencesRoundTrip(int populatedFields, bool publishAsync)
+    {
+        RequireTestInterfaces();
+
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+
+        // Issue #55: multiple populated string sequences inside a sequence of messages.
+        // Distinct values and lengths also detect crossed fields and incorrect element strides.
+        var expected = new NestedStringSequences(
+            leadingValue: 101,
+            values: [CreateElement(1, [short.MinValue, -42, -1]), CreateElement(2, [1, 42, short.MaxValue])],
+            trailingValue: 202);
+        var actual = await RoundTripAsync(node, expected, publishAsync);
+
+        Assert.Equal(expected.LeadingValue, actual.LeadingValue);
+        Assert.Equal(expected.TrailingValue, actual.TrailingValue);
+        Assert.Equal(expected.Values.Length, actual.Values.Length);
+        for (var i = 0; i < expected.Values.Length; i++)
+        {
+            var source = expected.Values[i];
+            var received = actual.Values[i];
+            Assert.Equal(source.LeadingValue, received.LeadingValue);
+            Assert.Equal(source.Numbers, received.Numbers);
+            Assert.Equal(source.FirstStrings, received.FirstStrings);
+            Assert.Equal(source.SecondStrings, received.SecondStrings);
+            Assert.Equal(source.FirstWstrings, received.FirstWstrings);
+            Assert.Equal(source.SecondWstrings, received.SecondWstrings);
+            Assert.Equal(source.TrailingValue, received.TrailingValue);
+        }
+
+        MultipleStringSequences CreateElement(int index, short[] numbers)
+        {
+            return new MultipleStringSequences(
+                leadingValue: index,
+                numbers: numbers,
+                firstStrings: (populatedFields & 1) != 0 ? [$"first-{index}", "测试"] : [],
+                secondStrings: (populatedFields & 2) != 0 ? [$"second-{index}", "", "omega"] : [],
+                firstWstrings: (populatedFields & 4) != 0 ? [$"wide-first-{index}", "宽字符"] : [],
+                secondWstrings: (populatedFields & 8) != 0 ? [$"wide-second-{index}"] : [],
+                trailingValue: -index);
+        }
+    }
+
     [SkippableFact]
     public void NativeMessageAndSequenceEqualityUsesRosidlSymbols()
     {
@@ -180,7 +241,7 @@ public class AbiIntegrationTests
         }
     }
 
-    private static async Task<T> RoundTripAsync<T>(IRclNode node, T message)
+    private static async Task<T> RoundTripAsync<T>(IRclNode node, T message, bool publishAsync = false)
         where T : IMessage
     {
         var topic = NameGenerator.GenerateTopicName();
@@ -189,7 +250,15 @@ public class AbiIntegrationTests
 
         var readTask = ReadOneAsync(subscription.ReadAllAsync());
         await WaitForSubscribersAsync(publisher);
-        publisher.Publish(message);
+        if (publishAsync)
+        {
+            await publisher.PublishAsync(message);
+        }
+        else
+        {
+            publisher.Publish(message);
+        }
+
         return await readTask.WaitAsync(TimeSpan.FromMilliseconds(Timeout));
     }
 
