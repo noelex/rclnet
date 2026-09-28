@@ -255,22 +255,26 @@ public class RegistrationLifecycleTests : IDisposable
         await next.WaitAsync(TimeSpan.FromSeconds(10));
     }
 
-    [Fact]
-    public async Task ContextCloseTerminatesRetainedWaitersAndRequests()
+    [Theory]
+    [InlineData(Timeout.Infinite)]
+    [InlineData(10_000)]
+    public async Task ContextCloseTerminatesRetainedWaitersAndRequests(int timeout)
     {
         await using var context = NewContext();
         using var guard = context.CreateGuardCondition();
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
         using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(NameGenerator.GenerateServiceName());
         var wait = guard.WaitOneAsync().AsTask();
-        var request = client.InvokeAsync(new ListParametersServiceRequest(), Timeout.Infinite);
+        var request = client.InvokeAsync(new ListParametersServiceRequest(), timeout);
         await context.DisposeAsync();
         await Assert.ThrowsAsync<ObjectDisposedException>(() => wait.WaitAsync(TimeSpan.FromSeconds(10)));
         await Assert.ThrowsAsync<ObjectDisposedException>(() => request.WaitAsync(TimeSpan.FromSeconds(10)));
     }
 
-    [Fact]
-    public async Task ContextCloseWaitsForConcurrentClientStopToPublishPendingFailure()
+    [Theory]
+    [InlineData(Timeout.Infinite)]
+    [InlineData(10_000)]
+    public async Task ContextCloseWaitsForConcurrentClientStopToPublishPendingFailure(int timeout)
     {
         await using var context = NewContext();
         using var node = (RclNodeImpl)context.CreateNode(NameGenerator.GenerateNodeName());
@@ -278,7 +282,7 @@ public class RegistrationLifecycleTests : IDisposable
         using var stopped = new LifecycleCheckpoint();
         using var client = new PausedClient(node, stopping, stopped);
         using var requestBuffer = RosMessageBuffer.Create<ListParametersServiceRequest>();
-        var request = client.InvokeAsync(requestBuffer, Timeout.Infinite);
+        var request = client.InvokeAsync(requestBuffer, timeout);
         var disposing = Task.Run(client.Dispose);
 
         try
@@ -793,7 +797,11 @@ public class RegistrationLifecycleTests : IDisposable
             base.StopPendingOperations();
         }
 
-        protected override void OnStopped() => _stopped.Pause();
+        protected override void OnStopped()
+        {
+            _stopped.Pause();
+            base.OnStopped();
+        }
     }
 
     private sealed class Observer<T>(Action<T> next, Action completed) : IObserver<T>

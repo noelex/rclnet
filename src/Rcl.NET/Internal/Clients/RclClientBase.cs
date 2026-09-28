@@ -13,6 +13,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     private readonly object _pendingGate = new();
     private readonly Action<PendingOperation<RosMessageBuffer>, Exception> _cancelPending;
     private readonly Dictionary<long, PendingOperation<RosMessageBuffer>> _pendingRequests = new();
+    private RclTimeProvider? _timeoutProvider;
     private bool _pendingClosed;
 
     public unsafe RclClientBase(
@@ -178,9 +179,6 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             ArgumentOutOfRangeException.ThrowIfGreaterThan(timeout.TotalMilliseconds, uint.MaxValue - 1, nameof(timeout));
         }
 
-        // Each invocation owns its provider so node disposal cannot stop its timeout.
-        using var timeoutProvider = timeout == Timeout.InfiniteTimeSpan
-            ? null : new RclTimeProvider(Context, _node.Clock);
         var pending = new PendingOperation<RosMessageBuffer>(true, _cancelPending);
         bool published = false;
 
@@ -188,7 +186,8 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         {
             // The response path removes entries under the same gate after native take.
             // Thus even an immediate response cannot overtake sequence publication.
-            pending.SetupCancellation(cancellationToken, timeout, timeoutProvider);
+            pending.SetupCancellation(cancellationToken, timeout,
+                timeout == Timeout.InfiniteTimeSpan ? null : GetTimeoutProvider());
             SendAndPublish();
         }
         catch (Exception error)
@@ -236,6 +235,16 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         }
     }
 
+    private RclTimeProvider GetTimeoutProvider()
+    {
+        lock (_pendingGate)
+        {
+            ObjectDisposedException.ThrowIf(_pendingClosed, this);
+            // The client owns this provider so node disposal cannot stop request timeouts.
+            return _timeoutProvider ??= new RclTimeProvider(Context, _node.Clock);
+        }
+    }
+
     private void Cancel(PendingOperation<RosMessageBuffer> pending, Exception error)
     {
         lock (_pendingGate)
@@ -272,5 +281,10 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
         {
             pending.Fail(new ObjectDisposedException(GetType().Name), asynchronous: true);
         }
+    }
+
+    protected override void OnStopped()
+    {
+        _timeoutProvider?.Dispose();
     }
 }

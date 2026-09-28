@@ -6,8 +6,8 @@ internal sealed class PendingOperation<T>
 {
     private readonly ManualResetValueTaskSource<T> _source = ObjectPool.Rent<ManualResetValueTaskSource<T>>();
     private readonly Action<PendingOperation<T>, Exception> _cancel;
-    private CancellationTokenRegistration _cancellation, _timeoutRegistration;
-    private CancellationTokenSource? _timeoutSource;
+    private CancellationTokenRegistration _cancellation;
+    private ITimer? _timeoutTimer;
     private CancellationToken _token;
     private TimeSpan _timeout;
     private int _references = 2; // setup + consumer
@@ -48,12 +48,11 @@ internal sealed class PendingOperation<T>
 
         if (timeout != Timeout.InfiniteTimeSpan && Volatile.Read(ref _terminal) == 0)
         {
-            _timeoutSource = new CancellationTokenSource(timeout, provider ?? TimeProvider.System);
-            _timeoutRegistration = _timeoutSource.Token.UnsafeRegister(static state =>
+            _timeoutTimer = (provider ?? TimeProvider.System).CreateTimer(static state =>
             {
                 var self = (PendingOperation<T>)state!;
                 self._cancel(self, new TimeoutException($"ROS service request timed out after {self._timeout}."));
-            }, this);
+            }, this, timeout, Timeout.InfiniteTimeSpan);
         }
     }
 
@@ -104,8 +103,7 @@ internal sealed class PendingOperation<T>
         }
 
         _cancellation.Dispose();
-        _timeoutRegistration.Dispose();
-        _timeoutSource?.Dispose();
+        _timeoutTimer?.Dispose();
         _source.Reset();
         ObjectPool.Return(_source);
     }

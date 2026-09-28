@@ -11,6 +11,29 @@ public class ServiceTests
     private const int RequestTimeout = 10_000, ServerOnlineTimeout = 5000;
 
     [Fact]
+    public async Task ClientTimeoutAndCancellationDoNotStopOtherRequestTimers()
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(
+            NameGenerator.GenerateServiceName());
+        using var cancellation = new CancellationTokenSource();
+        var canceled = client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout, cancellation.Token);
+        var timedOut = client.InvokeAsync(new ListParametersServiceRequest(), 500);
+        cancellation.Cancel();
+
+        var error = await Assert.ThrowsAsync<OperationCanceledException>(() => canceled.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.Equal(cancellation.Token, error.CancellationToken);
+        Assert.Same(timedOut, await Task.WhenAny(timedOut, Task.Delay(10_000)));
+        await Assert.ThrowsAsync<TimeoutException>(() => timedOut);
+
+        // Completing either request must leave the shared provider usable for the next one.
+        var next = client.InvokeAsync(new ListParametersServiceRequest(), 0);
+        Assert.Same(next, await Task.WhenAny(next, Task.Delay(10_000)));
+        await Assert.ThrowsAsync<TimeoutException>(() => next);
+    }
+
+    [Fact]
     public async Task ClientTimeoutSurvivesNodeClose()
     {
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
