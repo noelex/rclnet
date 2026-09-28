@@ -168,7 +168,23 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
     protected abstract RosMessageBuffer CreateResponseBuffer();
 
-    public async Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken = default)
+    public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return InvokeCore(request, timeout, cancellationToken).AsTask();
+        }
+        catch (OperationCanceledException error)
+        {
+            return Task.FromCanceled<RosMessageBuffer>(error.CancellationToken);
+        }
+        catch (Exception error)
+        {
+            return Task.FromException<RosMessageBuffer>(error);
+        }
+    }
+
+    protected ValueTask<RosMessageBuffer> InvokeCore(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken)
     {
         Handle.ThrowIfOperationClosed();
         cancellationToken.ThrowIfCancellationRequested();
@@ -206,7 +222,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             pending.FinishSetup();
         }
 
-        return await pending.Task.ConfigureAwait(false);
+        return pending.Task;
 
         unsafe void SendAndPublish()
         {

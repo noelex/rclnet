@@ -1,6 +1,7 @@
 ﻿using Rosidl.Messages.Rcl;
 using Rosidl.Messages.Service;
 using Rosidl.Messages.Tf2;
+using Rosidl.Runtime;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -9,6 +10,52 @@ namespace Rcl.NET.Tests;
 public class ServiceTests
 {
     private const int RequestTimeout = 10_000, ServerOnlineTimeout = 5000;
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ClientFailuresAreReportedThroughReturnedTasks(bool native)
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = context.CreateNode(NameGenerator.GenerateNodeName());
+        using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(
+            NameGenerator.GenerateServiceName());
+        using var buffer = RosMessageBuffer.Create<ListParametersServiceRequest>();
+        using var cancellation = new CancellationTokenSource();
+
+        // Invoke outside ThrowsAsync so a synchronous throw fails the test.
+        var invalid = Invoke(-2);
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => invalid);
+        Assert.True(invalid.IsFaulted);
+
+        var canceled = Invoke(RequestTimeout, cancellation.Token);
+        cancellation.Cancel();
+        var error = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => canceled.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.Equal(cancellation.Token, error.CancellationToken);
+        Assert.True(canceled.IsCanceled);
+
+        var preCanceled = Invoke(RequestTimeout, cancellation.Token);
+        error = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => preCanceled);
+        Assert.Equal(cancellation.Token, error.CancellationToken);
+        Assert.True(preCanceled.IsCanceled);
+
+        var timedOut = Invoke(0);
+        Assert.Same(timedOut, await Task.WhenAny(timedOut, Task.Delay(10_000)));
+        await Assert.ThrowsAsync<TimeoutException>(() => timedOut);
+        Assert.True(timedOut.IsFaulted);
+
+        client.Dispose();
+        var closed = Invoke(RequestTimeout);
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => closed);
+        Assert.True(closed.IsFaulted);
+
+        Task Invoke(int timeout, CancellationToken token = default)
+        {
+            return native
+                ? client.InvokeAsync(buffer, timeout, token)
+                : client.InvokeAsync(new ListParametersServiceRequest(), timeout, token);
+        }
+    }
 
     [Fact]
     public async Task ClientTimeoutAndCancellationDoNotStopOtherRequestTimers()
