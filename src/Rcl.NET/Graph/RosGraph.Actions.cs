@@ -113,7 +113,7 @@ public partial class RosGraph : IGraphBuilder
     {
         if (!_actions.TryGetValue(name, out var s))
         {
-            _actions[name] = s = new(name);
+            _actions[name] = s = new(name, _snapshotPublisher);
             OnAdd(_actionUpdates, s);
         }
         return s;

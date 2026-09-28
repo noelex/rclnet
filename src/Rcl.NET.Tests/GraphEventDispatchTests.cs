@@ -67,10 +67,10 @@ public class GraphEventDispatchTests
         // Stage a mixed batch directly so DDS discovery cannot split or reorder the test changes.
         for (int operation = 2; operation >= 1; operation--)
         {
-            var node = new RosNode(new NodeName($"node{operation}", "/"), "/");
-            var topic = new RosTopic($"/topic{operation}");
-            var service = new RosService($"/service{operation}");
-            var action = new RosAction($"/action{operation}");
+            var node = new RosNode(new NodeName($"node{operation}", "/"), "/", new SnapshotPublisher());
+            var topic = new RosTopic($"/topic{operation}", new SnapshotPublisher());
+            var service = new RosService($"/service{operation}", new SnapshotPublisher());
+            var action = new RosAction($"/action{operation}", new SnapshotPublisher());
             Stage("_nodeUpdates", node, operation);
             Stage("_topicUpdates", topic, operation);
             Stage("_publisherUpdates", new RosTopicEndPoint(default, topic, node,

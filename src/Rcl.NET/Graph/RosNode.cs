@@ -7,12 +7,12 @@ namespace Rcl.Graph;
 /// </summary>
 public class RosNode
 {
-    private IReadOnlyCollection<RosServiceEndPoint> _serversSnapshot = Array.Empty<RosServiceEndPoint>();
-    private IReadOnlyCollection<RosServiceEndPoint> _clientsSnapshot = Array.Empty<RosServiceEndPoint>();
-    private IReadOnlyCollection<RosTopicEndPoint> _publishersSnapshot = Array.Empty<RosTopicEndPoint>();
-    private IReadOnlyCollection<RosTopicEndPoint> _subscribersSnapshot = Array.Empty<RosTopicEndPoint>();
-    private IReadOnlyCollection<RosActionEndPoint> _actionServersSnapshot = Array.Empty<RosActionEndPoint>();
-    private IReadOnlyCollection<RosActionEndPoint> _actionClientsSnapshot = Array.Empty<RosActionEndPoint>();
+    internal readonly SnapshotCollection<RosServiceEndPoint> ServersSnapshot;
+    internal readonly SnapshotCollection<RosServiceEndPoint> ClientsSnapshot;
+    internal readonly SnapshotCollection<RosTopicEndPoint> PublishersSnapshot;
+    internal readonly SnapshotCollection<RosTopicEndPoint> SubscribersSnapshot;
+    internal readonly SnapshotCollection<RosActionEndPoint> ActionServersSnapshot;
+    internal readonly SnapshotCollection<RosActionEndPoint> ActionClientsSnapshot;
 
     private readonly ConcurrentDictionary<NameWithType, RosServiceEndPoint>
         _servers = new(), _clients = new();
@@ -32,41 +32,15 @@ public class RosNode
     private readonly IEnumerator<KeyValuePair<RosTopicEndPoint, RosTopicEndPoint>>
         _subscribersEnumerator, _publishersEnumerator;
 
-    internal void PublishSnapshots(SnapshotChanges changes)
+    internal RosNode(NodeName name, string enclave, SnapshotPublisher publisher)
     {
-        if ((changes & SnapshotChanges.Servers) != 0)
-        {
-            Volatile.Write(ref _serversSnapshot, (IReadOnlyCollection<RosServiceEndPoint>)_servers.Values);
-        }
+        ServersSnapshot = new(publisher);
+        ClientsSnapshot = new(publisher);
+        PublishersSnapshot = new(publisher);
+        SubscribersSnapshot = new(publisher);
+        ActionServersSnapshot = new(publisher);
+        ActionClientsSnapshot = new(publisher);
 
-        if ((changes & SnapshotChanges.Clients) != 0)
-        {
-            Volatile.Write(ref _clientsSnapshot, (IReadOnlyCollection<RosServiceEndPoint>)_clients.Values);
-        }
-
-        if ((changes & SnapshotChanges.Publishers) != 0)
-        {
-            Volatile.Write(ref _publishersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_publishers.Values);
-        }
-
-        if ((changes & SnapshotChanges.Subscribers) != 0)
-        {
-            Volatile.Write(ref _subscribersSnapshot, (IReadOnlyCollection<RosTopicEndPoint>)_subscribers.Values);
-        }
-
-        if ((changes & SnapshotChanges.ActionServers) != 0)
-        {
-            Volatile.Write(ref _actionServersSnapshot, (IReadOnlyCollection<RosActionEndPoint>)_actionServers.Values);
-        }
-
-        if ((changes & SnapshotChanges.ActionClients) != 0)
-        {
-            Volatile.Write(ref _actionClientsSnapshot, (IReadOnlyCollection<RosActionEndPoint>)_actionClients.Values);
-        }
-    }
-
-    internal RosNode(NodeName name, string enclave)
-    {
         Name = name;
         Enclave = enclave;
 
@@ -97,32 +71,32 @@ public class RosNode
     /// <summary>
     /// Gets a list of <see cref="RosService"/> servers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosServiceEndPoint> Servers => Volatile.Read(ref _serversSnapshot);
+    public IReadOnlyCollection<RosServiceEndPoint> Servers => ServersSnapshot.GetSnapshot();
 
     /// <summary>
     /// Gets a list of <see cref="RosService"/> clients registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosServiceEndPoint> Clients => Volatile.Read(ref _clientsSnapshot);
+    public IReadOnlyCollection<RosServiceEndPoint> Clients => ClientsSnapshot.GetSnapshot();
 
     /// <summary>
     /// Gets a list of <see cref="RosTopic"/> subscribers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosTopicEndPoint> Subscribers => Volatile.Read(ref _subscribersSnapshot);
+    public IReadOnlyCollection<RosTopicEndPoint> Subscribers => SubscribersSnapshot.GetSnapshot();
 
     /// <summary>
     /// Gets a list of <see cref="RosTopic"/> publishers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosTopicEndPoint> Publishers => Volatile.Read(ref _publishersSnapshot);
+    public IReadOnlyCollection<RosTopicEndPoint> Publishers => PublishersSnapshot.GetSnapshot();
 
     /// <summary>
     /// Gets a list of <see cref="RosAction"/> servers registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosActionEndPoint> ActionServers => Volatile.Read(ref _actionServersSnapshot);
+    public IReadOnlyCollection<RosActionEndPoint> ActionServers => ActionServersSnapshot.GetSnapshot();
 
     /// <summary>
     /// Gets a list of <see cref="RosAction"/> clients registered by current <see cref="RosNode"/>.
     /// </summary>
-    public IReadOnlyCollection<RosActionEndPoint> ActionClients => Volatile.Read(ref _actionClientsSnapshot);
+    public IReadOnlyCollection<RosActionEndPoint> ActionClients => ActionClientsSnapshot.GetSnapshot();
 
     internal IEnumerator<KeyValuePair<RosTopicEndPoint, RosTopicEndPoint>> PublishersEnumerator => _publishersEnumerator;
 

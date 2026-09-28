@@ -80,7 +80,7 @@ public class GraphWatcherLifecycleTests
         var observer = (IObserver<RosGraphEvent>)Activator.CreateInstance(watcherType, graph, predicate, null, pending)!;
         using var watcher = (IDisposable)observer;
         pending.FinishSetup();
-        var change = new NodeAppearedEvent(graph, new RosNode(new NodeName("test", "/"), "/"));
+        var change = new NodeAppearedEvent(graph, new RosNode(new NodeName("test", "/"), "/", new SnapshotPublisher()));
         var dispatch = Task.Run(() => observer.OnNext(change));
 
         try

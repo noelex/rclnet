@@ -6,7 +6,7 @@ public partial class RosGraph
     {
         if (!_services.TryGetValue(name, out var s))
         {
-            _services[name] = s = new(name);
+            _services[name] = s = new(name, _snapshotPublisher);
             OnAdd(_serviceUpdates, s);
         }
         return s;

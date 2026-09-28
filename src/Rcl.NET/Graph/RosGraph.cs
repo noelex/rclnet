@@ -20,8 +20,8 @@ namespace Rcl.Graph;
 /// are allowed.
 /// </para>
 /// <para>
-/// Collection properties return cached read-only snapshots, published after a successful build
-/// and before change events. A retained collection keeps its membership, but its objects may
+/// Collection membership is committed after a successful build and before change events.
+/// Read-only snapshots are cached on first access. A retained collection keeps its membership, but its objects may
 /// publish newer collections. Publication across different objects is not atomic.
 /// </para>
 /// <para>
@@ -32,10 +32,10 @@ namespace Rcl.Graph;
 /// </remarks>
 public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 {
-    private IReadOnlyCollection<RosNode> _nodesSnapshot = Array.Empty<RosNode>();
-    private IReadOnlyCollection<RosTopic> _topicsSnapshot = Array.Empty<RosTopic>();
-    private IReadOnlyCollection<RosService> _servicesSnapshot = Array.Empty<RosService>();
-    private IReadOnlyCollection<RosAction> _actionsSnapshot = Array.Empty<RosAction>();
+    private readonly SnapshotCollection<RosNode> _nodesSnapshot;
+    private readonly SnapshotCollection<RosTopic> _topicsSnapshot;
+    private readonly SnapshotCollection<RosService> _servicesSnapshot;
+    private readonly SnapshotCollection<RosAction> _actionsSnapshot;
 
     enum UpdateOp
     {
@@ -67,6 +67,10 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
 
     internal RosGraph(RclNodeImpl node, Func<NodeName, bool> nodeFilter)
     {
+        _nodesSnapshot = new(_snapshotPublisher);
+        _topicsSnapshot = new(_snapshotPublisher);
+        _servicesSnapshot = new(_snapshotPublisher);
+        _actionsSnapshot = new(_snapshotPublisher);
         _node = node;
         _nodesEnumerator = _nodes.GetEnumerator();
         _actionsEnumerator = _actions.GetEnumerator();
@@ -93,22 +97,22 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
     /// <summary>
     /// Returns nodes currently available in the ROS graph.
     /// </summary>
-    public IReadOnlyCollection<RosNode> Nodes => Volatile.Read(ref _nodesSnapshot);
+    public IReadOnlyCollection<RosNode> Nodes => _nodesSnapshot.GetSnapshot();
 
     /// <summary>
     /// Returns topics currently available in the ROS graph.
     /// </summary>
-    public IReadOnlyCollection<RosTopic> Topics => Volatile.Read(ref _topicsSnapshot);
+    public IReadOnlyCollection<RosTopic> Topics => _topicsSnapshot.GetSnapshot();
 
     /// <summary>
     /// Returns services currently available in the ROS graph.
     /// </summary>
-    public IReadOnlyCollection<RosService> Services => Volatile.Read(ref _servicesSnapshot);
+    public IReadOnlyCollection<RosService> Services => _servicesSnapshot.GetSnapshot();
 
     /// <summary>
     /// Returns actions currently available in the ROS graph.
     /// </summary>
-    public IReadOnlyCollection<RosAction> Actions => Volatile.Read(ref _actionsSnapshot);
+    public IReadOnlyCollection<RosAction> Actions => _actionsSnapshot.GetSnapshot();
 
     internal void Build()
     {
@@ -116,7 +120,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         BuildNodes();
         BuildTopics(disableTopicNameDemangling: false);
         BuildActions();
-        PublishSnapshots();
+        _snapshotPublisher.Commit();
 
         try
         {
@@ -150,7 +154,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
             target[item] = operation;
         }
 
-        TrackSnapshotChange(item);
+        TrackSnapshotChange(item, operation);
     }
 
     private void Cleanup()
@@ -187,7 +191,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
                 if (_nodeFilter(name) && !_nodes.TryGetValue(fqn, out var node))
                 {
                     var enclave = StringMarshal.CreatePooledString((byte*)enclaves.data[i])!;
-                    _nodes[fqn] = node = new RosNode(name, enclave);
+                    _nodes[fqn] = node = new RosNode(name, enclave, _snapshotPublisher);
                     OnAdd(_nodeUpdates, node);
                 }
 
@@ -287,7 +291,7 @@ public partial class RosGraph : IGraphBuilder, IObservable<RosGraphEvent>
         {
             if (!_topics.TryGetValue(item.Name, out var topic))
             {
-                _topics[item.Name] = topic = new(item.Name);
+                _topics[item.Name] = topic = new(item.Name, _snapshotPublisher);
                 OnAdd(_topicUpdates, topic);
             }
         }
