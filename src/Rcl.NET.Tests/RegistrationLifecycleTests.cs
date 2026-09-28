@@ -406,16 +406,14 @@ public class RegistrationLifecycleTests : IDisposable
     {
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
-        var pending = new PendingOperation<int>(false, (p, error) => p.Fail(error));
-        var source = Source(pending);
-        var version = source.Version;
+        var pending = PendingOperation<int>.Rent(false, (p, error) => p.Fail(error));
+        var version = Source(pending).Version;
         var task = pending.Task.AsTask();
         pending.SetupCancellation(cancellation.Token, Timeout.InfiniteTimeSpan);
         await Assert.ThrowsAsync<OperationCanceledException>(() => task);
-        Assert.Equal(version, source.Version);
+        Assert.Equal(version, Source(pending).Version);
         pending.FinishSetup();
-        Assert.NotEqual(version, source.Version);
-        Assert.False(pending.Fail(new Exception("Late callback")));
+        Assert.NotEqual(version, Source(pending).Version);
     }
 
     [Fact]
@@ -462,14 +460,13 @@ public class RegistrationLifecycleTests : IDisposable
     public async Task CompletionSourceIsNotRecycledBeforeWinningProducerReturns()
     {
         using var checkpoint = new LifecycleCheckpoint();
-        var pending = new PendingOperation<int>(false, (p, error) => p.Fail(error));
-        var source = Source(pending);
-        var version = source.Version;
+        var pending = PendingOperation<int>.Rent(false, (p, error) => p.Fail(error));
+        var version = Source(pending).Version;
         int value = 0;
         // Register without the test runner's synchronization context so completion is inline.
-        await Task.Run(() => pending.Task.GetAwaiter().UnsafeOnCompleted(() =>
+        await Task.Run(() => pending.Task.GetAwaiter().UnsafeOnCompleted(async () =>
         {
-            value = ReadCompleted(pending);
+            value = await pending.Task;
             checkpoint.Pause();
         }));
         pending.FinishSetup();
@@ -478,7 +475,7 @@ public class RegistrationLifecycleTests : IDisposable
         try
         {
             await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
-            Assert.Equal(version, source.Version);
+            Assert.Equal(version, Source(pending).Version);
             Assert.False(pending.Fail(new OperationCanceledException()));
         }
         finally
@@ -488,21 +485,25 @@ public class RegistrationLifecycleTests : IDisposable
 
         Assert.True(await completing.WaitAsync(TimeSpan.FromSeconds(10)));
         Assert.Equal(42, value);
-        Assert.NotEqual(version, source.Version);
+        Assert.NotEqual(version, Source(pending).Version);
     }
 
     [Fact]
-    public async Task LateCallbacksCannotCompleteAReusedSource()
+    public async Task RetainedProducerPreventsOperationReuse()
     {
-        var old = new PendingOperation<Guid>(false, (p, error) => p.Fail(error));
-        var source = Source(old);
+        var old = PendingOperation<Guid>.Rent(false, (p, error) => p.Fail(error));
+        var version = Source(old).Version;
+        old.AddReference();
         old.FinishSetup();
         old.Succeed(Guid.NewGuid());
         await old.Task;
-        var current = new PendingOperation<Guid>(false, (p, error) => p.Fail(error));
-        Assert.Same(source, Source(current));
+        var current = PendingOperation<Guid>.Rent(false, (p, error) => p.Fail(error));
+        Assert.NotSame(old, current);
+        Assert.Equal(version, Source(old).Version);
         current.FinishSetup();
         Assert.False(old.Fail(new OperationCanceledException()));
+        old.Release();
+        Assert.NotEqual(version, Source(old).Version);
         Assert.False(current.Task.IsCompleted);
         var expected = Guid.NewGuid();
         current.Succeed(expected);
@@ -722,10 +723,8 @@ public class RegistrationLifecycleTests : IDisposable
 
     private static void ReadCompleted(ValueTask task) => task.GetAwaiter().GetResult();
 
-    private static T ReadCompleted<T>(PendingOperation<T> pending) => pending.Task.GetAwaiter().GetResult();
-
-    private static ManualResetValueTaskSource<T> Source<T>(PendingOperation<T> pending)
-        => (ManualResetValueTaskSource<T>)typeof(PendingOperation<T>).GetField("_source", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(pending)!;
+    private static System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore<T> Source<T>(PendingOperation<T> pending)
+        => (System.Threading.Tasks.Sources.ManualResetValueTaskSourceCore<T>)typeof(PendingOperation<T>).GetField("_source", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(pending)!;
 
     private static unsafe void Trigger(SafeGuardConditionHandle handle)
     {

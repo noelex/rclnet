@@ -394,6 +394,7 @@ public sealed class RclContext : IRclContext
         {
             ThrowIfDisposed();
             _callbacks.Enqueue(new(callback, state, completion));
+            completion?.AddReference();
         }
 
         Interrupt();
@@ -959,6 +960,10 @@ public sealed class RclContext : IRclContext
 
             callback.CompletionSource.Fail(error);
         }
+        finally
+        {
+            callback.CompletionSource?.Release();
+        }
     }
 
     private void CallIfCompleted(Dictionary<nint, WaitSetRegistration> registry, nint completedHandle)
@@ -1055,7 +1060,7 @@ public sealed class RclContext : IRclContext
                 return ValueTask.CompletedTask;
             }
 
-            var pending = new PendingOperation<bool>(true, static (operation, error) => operation.Fail(error));
+            var pending = PendingOperation<bool>.Rent(true, static (operation, error) => operation.Fail(error));
 
             try
             {
@@ -1064,6 +1069,7 @@ public sealed class RclContext : IRclContext
             catch (ObjectDisposedException)
             {
                 // Close won publication. Preserve Send's fallback without leaking a pooled source.
+                pending.AddReference();
                 InvokeCallback(new(callback, state, pending));
             }
             catch (Exception error)

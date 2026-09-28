@@ -8,7 +8,7 @@ public class PendingOperationTimeoutTests
     public async Task TimeoutDuringSetupDisposesTimerAfterSetupFinishes()
     {
         var provider = new TestTimeProvider(fireDuringCreation: true);
-        var pending = new PendingOperation<int>(false, static (operation, error) => operation.Fail(error));
+        var pending = PendingOperation<int>.Rent(false, static (operation, error) => operation.Fail(error));
         var task = pending.Task.AsTask();
         pending.SetupCancellation(default, TimeSpan.Zero, provider);
         await Assert.ThrowsAsync<TimeoutException>(() => task);
@@ -20,31 +20,34 @@ public class PendingOperationTimeoutTests
     [Fact]
     public async Task LateTimeoutCannotCompleteAnotherOperation()
     {
-        var provider = new TestTimeProvider(fireDuringCreation: false);
-        var pending = new PendingOperation<int>(false, static (operation, error) => operation.Fail(error));
+        var drained = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var provider = new TestTimeProvider(fireDuringCreation: false, drained.Task);
+        var pending = PendingOperation<int>.Rent(false, static (operation, error) => operation.Fail(error));
         pending.SetupCancellation(default, TimeSpan.FromSeconds(1), provider);
         pending.FinishSetup();
         pending.Succeed(42);
         Assert.Equal(42, await pending.Task);
         Assert.True(provider.Timer.Disposed);
 
-        var next = new PendingOperation<int>(false, static (operation, error) => operation.Fail(error));
+        var next = PendingOperation<int>.Rent(false, static (operation, error) => operation.Fail(error));
+        Assert.NotSame(pending, next);
         next.FinishSetup();
         // A timer callback already in flight may still arrive after Dispose.
         provider.Timer.Fire();
+        drained.SetResult();
         Assert.False(next.Task.IsCompleted);
         next.Succeed(43);
         Assert.Equal(43, await next.Task);
     }
 
-    private sealed class TestTimeProvider(bool fireDuringCreation) : TimeProvider
+    private sealed class TestTimeProvider(bool fireDuringCreation, Task? callbacksDrained = null) : TimeProvider
     {
         public TestTimer Timer { get; private set; } = null!;
 
         public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
         {
             Assert.Equal(Timeout.InfiniteTimeSpan, period);
-            Timer = new TestTimer(callback, state);
+            Timer = new TestTimer(callback, state, callbacksDrained);
 
             if (fireDuringCreation)
             {
@@ -55,7 +58,7 @@ public class PendingOperationTimeoutTests
         }
     }
 
-    private sealed class TestTimer(TimerCallback callback, object? state) : ITimer
+    private sealed class TestTimer(TimerCallback callback, object? state, Task? callbacksDrained) : ITimer
     {
         public bool Disposed { get; private set; }
 
@@ -77,7 +80,7 @@ public class PendingOperationTimeoutTests
         public ValueTask DisposeAsync()
         {
             Dispose();
-            return ValueTask.CompletedTask;
+            return callbacksDrained == null ? ValueTask.CompletedTask : new ValueTask(callbacksDrained);
         }
     }
 }

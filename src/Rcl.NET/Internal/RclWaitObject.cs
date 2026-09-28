@@ -150,7 +150,14 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
         {
             foreach (var pending in self._awaiterSnapshot)
             {
-                pending.Succeed(true);
+                try
+                {
+                    pending.Succeed(true);
+                }
+                finally
+                {
+                    pending.Release();
+                }
             }
         }
         finally
@@ -171,16 +178,21 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
             _awaiters.Remove(pending.Key);
         }
 
-        pending.Fail(error);
+        try
+        {
+            pending.Fail(error);
+        }
+        finally
+        {
+            pending.Release();
+        }
     }
 
     public ValueTask WaitOneAsync(bool runContinuationAsynchronously, CancellationToken cancellationToken = default)
     {
         Handle.ThrowIfOperationClosed();
-        var pending = new PendingOperation<bool>(runContinuationAsynchronously, _cancelPending)
-        {
-            Key = Interlocked.Increment(ref _id)
-        };
+        var pending = PendingOperation<bool>.Rent(runContinuationAsynchronously, _cancelPending);
+        pending.Key = Interlocked.Increment(ref _id);
         bool published = false;
 
         try
@@ -190,6 +202,7 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
                 Handle.ThrowIfOperationClosed();
                 ObjectDisposedException.ThrowIf(IsDisposed, this);
                 _awaiters.Add(pending.Key, pending);
+                pending.AddReference();
                 published = true;
             }
 
@@ -242,7 +255,14 @@ internal abstract class RclWaitObject<T> : RclContextualObject<T>, IRclWaitObjec
         {
             foreach (var pending in snapshot)
             {
-                pending.Fail(new ObjectDisposedException(GetType().Name), asynchronous: true);
+                try
+                {
+                    pending.Fail(new ObjectDisposedException(GetType().Name), asynchronous: true);
+                }
+                finally
+                {
+                    pending.Release();
+                }
             }
         }
         finally

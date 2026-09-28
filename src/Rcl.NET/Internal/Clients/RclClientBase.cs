@@ -153,7 +153,14 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
                 if (pending != null)
                 {
-                    keepBuffer = pending.Succeed(responseBuffer);
+                    try
+                    {
+                        keepBuffer = pending.Succeed(responseBuffer);
+                    }
+                    finally
+                    {
+                        pending.Release();
+                    }
                 }
             }
         }
@@ -195,7 +202,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             ArgumentOutOfRangeException.ThrowIfGreaterThan(timeout.TotalMilliseconds, uint.MaxValue - 1, nameof(timeout));
         }
 
-        var pending = new PendingOperation<RosMessageBuffer>(true, _cancelPending);
+        var pending = PendingOperation<RosMessageBuffer>.Rent(true, _cancelPending);
         bool published = false;
 
         try
@@ -246,6 +253,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
                 pending.Key = sequence;
                 _pendingRequests.Add(sequence, pending);
+                pending.AddReference();
                 published = true;
             }
         }
@@ -265,14 +273,26 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     {
         lock (_pendingGate)
         {
+            bool removed = false;
             if (_pendingRequests.TryGetValue(pending.Key, out var current) && ReferenceEquals(current, pending))
             {
                 _pendingRequests.Remove(pending.Key);
+                removed = true;
             }
 
             // Cancellation can win during setup, before a sequence has been published.
             // Publish the terminal state under the send gate so it cannot be missed.
-            pending.Fail(error);
+            try
+            {
+                pending.Fail(error);
+            }
+            finally
+            {
+                if (removed)
+                {
+                    pending.Release();
+                }
+            }
         }
     }
 
@@ -295,7 +315,14 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         foreach (var pending in snapshot)
         {
-            pending.Fail(new ObjectDisposedException(GetType().Name), asynchronous: true);
+            try
+            {
+                pending.Fail(new ObjectDisposedException(GetType().Name), asynchronous: true);
+            }
+            finally
+            {
+                pending.Release();
+            }
         }
     }
 
