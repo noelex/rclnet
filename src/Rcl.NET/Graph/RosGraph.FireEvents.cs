@@ -1,5 +1,3 @@
-using System.Buffers;
-
 namespace Rcl.Graph;
 
 public partial class RosGraph
@@ -40,101 +38,59 @@ public partial class RosGraph
         }
     }
 
-    private void AddEvents<T, TFactory>(
-        ref PoolingList<IndexedEvent> events,
-        int precedence,
+    private void PublishEvents<T, TFactory>(
         Dictionary<T, UpdateOp> updates,
-        TFactory factory
-       )
+        UpdateOp operation,
+        TFactory factory,
+        ref List<Exception>? errors)
         where T : notnull
         where TFactory : IEventFactory<T>
     {
         foreach (var (k, v) in updates)
         {
-            if (v == UpdateOp.Add)
+            if (v == operation)
             {
-                events.Add(new(events.Count, precedence, factory.CreateAppeared(this, k)));
-            }
-            else
-            {
-                events.Add(new(events.Count, 10000 - precedence, factory.CreateDisappeared(this, k)));
+                PublishEvent(operation == UpdateOp.Add
+                    ? factory.CreateAppeared(this, k)
+                    : factory.CreateDisappeared(this, k), ref errors);
             }
         }
     }
 
     private void FireEvents()
     {
-        var events = new PoolingList<IndexedEvent>();
-        List<Exception>? errors = null;
-        try
+        if (_observers.IsEmpty && Volatile.Read(ref _handlerSnapshot).Length == 0)
         {
-            AddEvents(ref events, 0, _nodeUpdates, new NodeEventFactory());
-            AddEvents(ref events, 1, _topicUpdates, new TopicEventFactory());
-            AddEvents(ref events, 2, _publisherUpdates, new TopicEndPointEventFactory(isPublisher: true));
-            AddEvents(ref events, 2, _subscriberUpdates, new TopicEndPointEventFactory(isPublisher: false));
-            AddEvents(ref events, 3, _serviceUpdates, new ServiceEventFactory());
-            AddEvents(ref events, 4, _serverUpdates, new ServiceEndPointEventFactory(isServer: true));
-            AddEvents(ref events, 4, _clientUpdates, new ServiceEndPointEventFactory(isServer: false));
-            AddEvents(ref events, 5, _actionUpdates, new ActionEventFactory());
-            AddEvents(ref events, 6, _actionServerUpdates, new ActionEndPointEventFactory(isServer: true));
-            AddEvents(ref events, 6, _actionClientUpdates, new ActionEndPointEventFactory(isServer: false));
+            return;
+        }
 
-            var eventSpan = events.AsSpan();
-            eventSpan.Sort();
-            foreach (var e in eventSpan)
-            {
-                PublishEvent(e.Event, ref errors);
-            }
-        }
-        finally
-        {
-            events.Dispose();
-        }
+        List<Exception>? errors = null;
+        PublishEvents(_nodeUpdates, UpdateOp.Add, new NodeEventFactory(), ref errors);
+        PublishEvents(_topicUpdates, UpdateOp.Add, new TopicEventFactory(), ref errors);
+        PublishEvents(_publisherUpdates, UpdateOp.Add, new TopicEndPointEventFactory(isPublisher: true), ref errors);
+        PublishEvents(_subscriberUpdates, UpdateOp.Add, new TopicEndPointEventFactory(isPublisher: false), ref errors);
+        PublishEvents(_serviceUpdates, UpdateOp.Add, new ServiceEventFactory(), ref errors);
+        PublishEvents(_serverUpdates, UpdateOp.Add, new ServiceEndPointEventFactory(isServer: true), ref errors);
+        PublishEvents(_clientUpdates, UpdateOp.Add, new ServiceEndPointEventFactory(isServer: false), ref errors);
+        PublishEvents(_actionUpdates, UpdateOp.Add, new ActionEventFactory(), ref errors);
+        PublishEvents(_actionServerUpdates, UpdateOp.Add, new ActionEndPointEventFactory(isServer: true), ref errors);
+        PublishEvents(_actionClientUpdates, UpdateOp.Add, new ActionEndPointEventFactory(isServer: false), ref errors);
+
+        // Removals reverse the precedence levels, preserving endpoint order within each level.
+        PublishEvents(_actionServerUpdates, UpdateOp.Remove, new ActionEndPointEventFactory(isServer: true), ref errors);
+        PublishEvents(_actionClientUpdates, UpdateOp.Remove, new ActionEndPointEventFactory(isServer: false), ref errors);
+        PublishEvents(_actionUpdates, UpdateOp.Remove, new ActionEventFactory(), ref errors);
+        PublishEvents(_serverUpdates, UpdateOp.Remove, new ServiceEndPointEventFactory(isServer: true), ref errors);
+        PublishEvents(_clientUpdates, UpdateOp.Remove, new ServiceEndPointEventFactory(isServer: false), ref errors);
+        PublishEvents(_serviceUpdates, UpdateOp.Remove, new ServiceEventFactory(), ref errors);
+        PublishEvents(_publisherUpdates, UpdateOp.Remove, new TopicEndPointEventFactory(isPublisher: true), ref errors);
+        PublishEvents(_subscriberUpdates, UpdateOp.Remove, new TopicEndPointEventFactory(isPublisher: false), ref errors);
+        PublishEvents(_topicUpdates, UpdateOp.Remove, new TopicEventFactory(), ref errors);
+        PublishEvents(_nodeUpdates, UpdateOp.Remove, new NodeEventFactory(), ref errors);
 
         if (errors != null)
         {
             throw new GraphEventDispatchException(errors);
-        }
-    }
-
-    record struct IndexedEvent(int Index, int Class, RosGraphEvent Event) : IComparable<IndexedEvent>
-    {
-        public readonly int CompareTo(IndexedEvent other)
-        {
-            var classCompare = Class.CompareTo(other.Class);
-            return classCompare == 0 ? Index.CompareTo(other.Index) : classCompare;
-        }
-    }
-
-    private struct PoolingList<T> : IDisposable
-    {
-        private T[] _data;
-        private int _count = 0;
-
-        public PoolingList()
-        {
-            _data = ArrayPool<T>.Shared.Rent(8);
-        }
-
-        public readonly int Count => _count;
-
-        public void Add(T item)
-        {
-            if (_count >= _data.Length)
-            {
-                var newData = ArrayPool<T>.Shared.Rent(_data.Length * 2);
-                Array.Copy(_data, newData, _data.Length);
-                ArrayPool<T>.Shared.Return(_data);
-                _data = newData;
-            }
-            _data[_count++] = item;
-        }
-
-        public Span<T> AsSpan() => _data.AsSpan(0, _count);
-
-        public void Dispose()
-        {
-            ArrayPool<T>.Shared.Return(_data);
         }
     }
 

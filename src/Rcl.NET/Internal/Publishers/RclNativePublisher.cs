@@ -215,8 +215,9 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
     protected ValueTask PublishAsync(RosMessageBuffer message, bool disposeBuffer)
     {
-        var pending = new PendingOperation<bool>(false, static (operation, error) => operation.Fail(error));
+        var pending = PendingOperation<bool>.Rent(false, static (operation, error) => operation.Fail(error));
         var args = ObjectPool.Rent<PublishArgs>().Init(this, message, pending, disposeBuffer);
+        pending.AddReference();
 
         try
         {
@@ -226,6 +227,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
         {
             Cleanup.Run(static state => ((PublishArgs)state!).Release(), args);
             pending.Fail(error);
+            pending.Release();
         }
         finally
         {
@@ -286,13 +288,20 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 
             // No access to pooled arguments after publication: a synchronous consumer
             // may start another publish before this producer returns.
-            if (failure == null)
+            try
             {
-                completion.Succeed(true);
+                if (failure == null)
+                {
+                    completion.Succeed(true);
+                }
+                else
+                {
+                    completion.Fail(failure);
+                }
             }
-            else
+            finally
             {
-                completion.Fail(failure);
+                completion.Release();
             }
         }
 

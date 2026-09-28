@@ -1,33 +1,43 @@
+using Rcl.SafeHandles;
+using System.Threading.Tasks.Sources;
+
 namespace Rcl.Utils;
 
-// Callback state is never pooled. Reuse the completion source only after setup,
-// the winning producer and the consumer have all stopped accessing it.
-internal sealed class PendingOperation<T>
+// Tables and queues own references which transfer to the producer when removed.
+// Reuse waits for setup, consumption, all producers, and registered callbacks.
+internal sealed class PendingOperation<T> : IValueTaskSource<T>, IValueTaskSource
 {
-    private readonly ManualResetValueTaskSource<T> _source = ObjectPool.Rent<ManualResetValueTaskSource<T>>();
-    private readonly Action<PendingOperation<T>, Exception> _cancel;
-    private CancellationTokenRegistration _cancellation, _timeoutRegistration;
-    private CancellationTokenSource? _timeoutSource;
+    private ManualResetValueTaskSourceCore<T> _source;
+    private Action<PendingOperation<T>, Exception> _cancel = null!;
+    private CancellationTokenRegistration _cancellation;
+    private ITimer? _timeoutTimer;
     private CancellationToken _token;
     private TimeSpan _timeout;
-    private int _references = 2; // setup + consumer
+    private int _references;
     private int _terminal;
+    private int _consumed;
 
     internal long Key { get; set; }
 
     internal bool IsCompleted => Volatile.Read(ref _terminal) != 0;
 
-    internal ValueTask<T> Task { get; }
+    internal ValueTask<T> Task => new(this, _source.Version);
 
-    internal ValueTask VoidTask { get; }
+    internal ValueTask VoidTask => new(this, _source.Version);
 
-    internal PendingOperation(bool asynchronous, Action<PendingOperation<T>, Exception> cancel)
+    public PendingOperation()
     {
-        _cancel = cancel;
-        _source.RunContinuationsAsynchronously = asynchronous;
-        _source.OnFinally(static state => ((PendingOperation<T>)state!).Release(), this);
-        Task = new(_source, _source.Version);
-        VoidTask = new(_source, _source.Version);
+    }
+
+    internal static PendingOperation<T> Rent(bool asynchronous, Action<PendingOperation<T>, Exception> cancel)
+    {
+        var operation = ObjectPool.Rent<PendingOperation<T>>();
+        operation._cancel = cancel;
+        operation._source.RunContinuationsAsynchronously = asynchronous;
+        operation._references = 2; // setup + consumer
+        operation._terminal = 0;
+        operation._consumed = 0;
+        return operation;
     }
 
     internal void SetupCancellation(CancellationToken token, TimeSpan timeout, TimeProvider? provider = null)
@@ -43,17 +53,40 @@ internal sealed class PendingOperation<T>
         _cancellation = token.UnsafeRegister(static state =>
         {
             var self = (PendingOperation<T>)state!;
-            self._cancel(self, new OperationCanceledException(self._token));
+            if (!self.TryAddReference())
+            {
+                return;
+            }
+
+            try
+            {
+                self._cancel(self, new OperationCanceledException(self._token));
+            }
+            finally
+            {
+                self.Release();
+            }
         }, this);
 
         if (timeout != Timeout.InfiniteTimeSpan && Volatile.Read(ref _terminal) == 0)
         {
-            _timeoutSource = new CancellationTokenSource(timeout, provider ?? TimeProvider.System);
-            _timeoutRegistration = _timeoutSource.Token.UnsafeRegister(static state =>
+            _timeoutTimer = (provider ?? TimeProvider.System).CreateTimer(static state =>
             {
                 var self = (PendingOperation<T>)state!;
-                self._cancel(self, new TimeoutException($"ROS service request timed out after {self._timeout}."));
-            }, this);
+                if (!self.TryAddReference())
+                {
+                    return;
+                }
+
+                try
+                {
+                    self._cancel(self, new TimeoutException($"ROS operation timed out after {self._timeout}."));
+                }
+                finally
+                {
+                    self.Release();
+                }
+            }, this, timeout, Timeout.InfiniteTimeSpan);
         }
     }
 
@@ -96,17 +129,96 @@ internal sealed class PendingOperation<T>
         }
     }
 
-    private void Release()
+    internal void AddReference() => Interlocked.Increment(ref _references);
+
+    private bool TryAddReference()
+    {
+        var references = Volatile.Read(ref _references);
+
+        while (references != 0)
+        {
+            var previous = Interlocked.CompareExchange(ref _references, references + 1, references);
+            if (previous == references)
+            {
+                return true;
+            }
+
+            references = previous;
+        }
+
+        // Cleanup already owns the operation and will drain this callback before reuse.
+        return false;
+    }
+
+    internal void Release()
     {
         if (Interlocked.Decrement(ref _references) != 0)
         {
             return;
         }
 
-        _cancellation.Dispose();
-        _timeoutRegistration.Dispose();
-        _timeoutSource?.Dispose();
-        _source.Reset();
-        ObjectPool.Return(_source);
+        _ = RecycleAsync();
     }
+
+    private async System.Threading.Tasks.Task RecycleAsync()
+    {
+        try
+        {
+            // Awaiting also handles cleanup initiated from inside a cancellation callback.
+            await _cancellation.DisposeAsync().ConfigureAwait(false);
+
+            if (_timeoutTimer is RclTimeProviderTimer timer)
+            {
+                await timer.DisposeCallbacksAsync().ConfigureAwait(false);
+            }
+            else if (_timeoutTimer != null)
+            {
+                await _timeoutTimer.DisposeAsync().ConfigureAwait(false);
+            }
+
+            _cancellation = default;
+            _timeoutTimer = null;
+            _cancel = null!;
+            _token = default;
+            _timeout = default;
+            Key = 0;
+            _source.Reset();
+            ObjectPool.Return(this);
+        }
+        catch (Exception error)
+        {
+            // A failed cleanup cannot safely return callback state to the pool.
+            HandleReleaseDiagnostics.Record(new(GetType().Name, "pending operation cleanup", null, error.ToString()));
+        }
+    }
+
+    T IValueTaskSource<T>.GetResult(short token) => GetResult(token);
+
+    void IValueTaskSource.GetResult(short token) => GetResult(token);
+
+    private T GetResult(short token)
+    {
+        // Validate before releasing the consumer reference, including faulted operations.
+        if (_source.GetStatus(token) == ValueTaskSourceStatus.Pending)
+        {
+            throw new InvalidOperationException("The operation has not completed.");
+        }
+
+        try
+        {
+            return _source.GetResult(token);
+        }
+        finally
+        {
+            if (Interlocked.Exchange(ref _consumed, 1) == 0)
+            {
+                Release();
+            }
+        }
+    }
+
+    public ValueTaskSourceStatus GetStatus(short token) => _source.GetStatus(token);
+
+    public void OnCompleted(Action<object?> continuation, object? state, short token, ValueTaskSourceOnCompletedFlags flags)
+        => _source.OnCompleted(continuation, state, token, flags);
 }

@@ -314,6 +314,22 @@ internal sealed class RclTimeProviderTimer : ITimer, IThreadPoolWorkItem
         }
     }
 
+    internal ValueTask DisposeCallbacksAsync()
+    {
+        Dispose();
+
+        lock (_gate)
+        {
+            // Native detach does not access callback state; only queued callbacks prevent reuse.
+            if (_pendingCallbacks == 0)
+            {
+                return ValueTask.CompletedTask;
+            }
+        }
+
+        return DisposeAsync();
+    }
+
     public ValueTask DisposeAsync()
     {
         Dispose();

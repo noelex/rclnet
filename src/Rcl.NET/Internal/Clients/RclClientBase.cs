@@ -13,6 +13,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     private readonly object _pendingGate = new();
     private readonly Action<PendingOperation<RosMessageBuffer>, Exception> _cancelPending;
     private readonly Dictionary<long, PendingOperation<RosMessageBuffer>> _pendingRequests = new();
+    private RclTimeProvider? _timeoutProvider;
     private bool _pendingClosed;
 
     public unsafe RclClientBase(
@@ -152,7 +153,14 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
                 if (pending != null)
                 {
-                    keepBuffer = pending.Succeed(responseBuffer);
+                    try
+                    {
+                        keepBuffer = pending.Succeed(responseBuffer);
+                    }
+                    finally
+                    {
+                        pending.Release();
+                    }
                 }
             }
         }
@@ -167,7 +175,23 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
     protected abstract RosMessageBuffer CreateResponseBuffer();
 
-    public async Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken = default)
+    public Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return InvokeCore(request, timeout, cancellationToken).AsTask();
+        }
+        catch (OperationCanceledException error)
+        {
+            return Task.FromCanceled<RosMessageBuffer>(error.CancellationToken);
+        }
+        catch (Exception error)
+        {
+            return Task.FromException<RosMessageBuffer>(error);
+        }
+    }
+
+    protected ValueTask<RosMessageBuffer> InvokeCore(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken)
     {
         Handle.ThrowIfOperationClosed();
         cancellationToken.ThrowIfCancellationRequested();
@@ -178,17 +202,15 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             ArgumentOutOfRangeException.ThrowIfGreaterThan(timeout.TotalMilliseconds, uint.MaxValue - 1, nameof(timeout));
         }
 
-        // Each invocation owns its provider so node disposal cannot stop its timeout.
-        using var timeoutProvider = timeout == Timeout.InfiniteTimeSpan
-            ? null : new RclTimeProvider(Context, _node.Clock);
-        var pending = new PendingOperation<RosMessageBuffer>(true, _cancelPending);
+        var pending = PendingOperation<RosMessageBuffer>.Rent(true, _cancelPending);
         bool published = false;
 
         try
         {
             // The response path removes entries under the same gate after native take.
             // Thus even an immediate response cannot overtake sequence publication.
-            pending.SetupCancellation(cancellationToken, timeout, timeoutProvider);
+            pending.SetupCancellation(cancellationToken, timeout,
+                timeout == Timeout.InfiniteTimeSpan ? null : GetTimeoutProvider());
             SendAndPublish();
         }
         catch (Exception error)
@@ -207,7 +229,7 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
             pending.FinishSetup();
         }
 
-        return await pending.Task.ConfigureAwait(false);
+        return pending.Task;
 
         unsafe void SendAndPublish()
         {
@@ -231,8 +253,19 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
                 pending.Key = sequence;
                 _pendingRequests.Add(sequence, pending);
+                pending.AddReference();
                 published = true;
             }
+        }
+    }
+
+    private RclTimeProvider GetTimeoutProvider()
+    {
+        lock (_pendingGate)
+        {
+            ObjectDisposedException.ThrowIf(_pendingClosed, this);
+            // The client owns this provider so node disposal cannot stop request timeouts.
+            return _timeoutProvider ??= new RclTimeProvider(Context, _node.Clock);
         }
     }
 
@@ -240,14 +273,26 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
     {
         lock (_pendingGate)
         {
+            bool removed = false;
             if (_pendingRequests.TryGetValue(pending.Key, out var current) && ReferenceEquals(current, pending))
             {
                 _pendingRequests.Remove(pending.Key);
+                removed = true;
             }
 
             // Cancellation can win during setup, before a sequence has been published.
             // Publish the terminal state under the send gate so it cannot be missed.
-            pending.Fail(error);
+            try
+            {
+                pending.Fail(error);
+            }
+            finally
+            {
+                if (removed)
+                {
+                    pending.Release();
+                }
+            }
         }
     }
 
@@ -270,7 +315,19 @@ internal abstract class RclClientBase : RclWaitObject<SafeClientHandle>
 
         foreach (var pending in snapshot)
         {
-            pending.Fail(new ObjectDisposedException(GetType().Name), asynchronous: true);
+            try
+            {
+                pending.Fail(new ObjectDisposedException(GetType().Name), asynchronous: true);
+            }
+            finally
+            {
+                pending.Release();
+            }
         }
+    }
+
+    protected override void OnStopped()
+    {
+        _timeoutProvider?.Dispose();
     }
 }

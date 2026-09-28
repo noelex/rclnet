@@ -64,17 +64,47 @@ public partial class RosGraph
             return true;
         }
 
-        var obs = new GraphWatcher(this, watcher, state);
-        using var sub = Subscribe(obs);
+        if (timeout != Timeout.InfiniteTimeSpan)
+        {
+            ArgumentOutOfRangeException.ThrowIfLessThan(timeout, TimeSpan.Zero, nameof(timeout));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(timeout.TotalMilliseconds, uint.MaxValue - 1, nameof(timeout));
+        }
+
+        var pending = PendingOperation<bool>.Rent(true, static (operation, error) => operation.Fail(error));
+        using var obs = new GraphWatcher(this, watcher, state, pending);
+        IDisposable? subscription = null;
         try
         {
-            await obs.Completion.WaitAsync(timeout, _node.TimeProvider, cancellationToken).ConfigureAwait(false);
-            return true;
+            try
+            {
+                subscription = Subscribe(obs);
+                pending.SetupCancellation(cancellationToken,
+                    timeout == TimeSpan.Zero ? Timeout.InfiniteTimeSpan : timeout, _node.TimeProvider);
+
+                if (timeout == TimeSpan.Zero)
+                {
+                    pending.Fail(new TimeoutException());
+                }
+            }
+            catch (Exception error)
+            {
+                pending.Fail(error);
+            }
+            finally
+            {
+                pending.FinishSetup();
+            }
+
+            return await pending.Task.ConfigureAwait(false);
         }
         catch (TimeoutException)
         {
             cancellationToken.ThrowIfCancellationRequested();
             return false;
+        }
+        finally
+        {
+            subscription?.Dispose();
         }
     }
 
@@ -504,25 +534,58 @@ public partial class RosGraph
 
     #endregion
 
-    private class GraphWatcher : IObserver<RosGraphEvent>
+    private class GraphWatcher : IObserver<RosGraphEvent>, IDisposable
     {
         private readonly RosGraph _graph;
-        private readonly TaskCompletionSource _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly object _gate = new();
+        private PendingOperation<bool>? _pending;
         private readonly Func<RosGraph, RosGraphEvent?, object?, bool> _predicate;
         private readonly object? _state;
 
-        public GraphWatcher(RosGraph graph, Func<RosGraph, RosGraphEvent?, object?, bool> predicate, object? state)
+        public GraphWatcher(RosGraph graph, Func<RosGraph, RosGraphEvent?, object?, bool> predicate,
+            object? state, PendingOperation<bool> pending)
         {
             _predicate = predicate;
             _state = state;
             _graph = graph;
+            _pending = pending;
+            pending.AddReference();
         }
 
-        public Task Completion => _tcs.Task;
+        private PendingOperation<bool>? AcquireOperation()
+        {
+            lock (_gate)
+            {
+                _pending?.AddReference();
+                return _pending;
+            }
+        }
+
+        public void Dispose()
+        {
+            PendingOperation<bool>? pending;
+
+            lock (_gate)
+            {
+                // Unsubscription does not drain observers already captured by dispatch.
+                pending = _pending;
+                _pending = null;
+            }
+
+            pending?.Release();
+        }
 
         public void OnCompleted()
         {
-            _tcs.TrySetException(new ObjectDisposedException(typeof(RosGraph).Name));
+            var pending = AcquireOperation();
+            try
+            {
+                pending?.Fail(new ObjectDisposedException(typeof(RosGraph).Name));
+            }
+            finally
+            {
+                pending?.Release();
+            }
         }
 
         public void OnError(Exception error)
@@ -532,9 +595,22 @@ public partial class RosGraph
 
         public void OnNext(RosGraphEvent value)
         {
-            if (_predicate(_graph, value, _state))
+            var pending = AcquireOperation();
+            if (pending == null)
             {
-                _tcs.TrySetResult();
+                return;
+            }
+
+            try
+            {
+                if (_predicate(_graph, value, _state))
+                {
+                    pending.Succeed(true);
+                }
+            }
+            finally
+            {
+                pending.Release();
             }
         }
     }
