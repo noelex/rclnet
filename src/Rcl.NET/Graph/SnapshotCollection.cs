@@ -35,6 +35,8 @@ internal sealed class SnapshotCollection<T>(SnapshotPublisher publisher) : ISnap
 {
     private HashSet<T>? _members;
     private Dictionary<T, bool>? _pending;
+    private HashSet<T>? _changesSinceSnapshot;
+    private IReadOnlyCollection<T> _materializedSnapshot = Array.Empty<T>();
     private IReadOnlyCollection<T>? _snapshot = Array.Empty<T>();
 
     internal void Stage(T item, bool adding)
@@ -58,20 +60,32 @@ internal sealed class SnapshotCollection<T>(SnapshotPublisher publisher) : ISnap
         var changed = false;
         foreach (var (item, adding) in _pending!)
         {
+            bool membershipChanged;
             if (adding)
             {
                 _members ??= new(ReferenceEqualityComparer.Instance);
-                changed |= _members.Add(item);
+                membershipChanged = _members.Add(item);
             }
             else
             {
-                changed |= _members!.Remove(item);
+                membershipChanged = _members!.Remove(item);
+            }
+
+            if (membershipChanged)
+            {
+                changed = true;
+                // Toggle reference differences across commits until the next materialization.
+                _changesSinceSnapshot ??= new(ReferenceEqualityComparer.Instance);
+                if (!_changesSinceSnapshot.Add(item))
+                {
+                    _changesSinceSnapshot.Remove(item);
+                }
             }
         }
 
         if (changed)
         {
-            Volatile.Write(ref _snapshot, null);
+            Volatile.Write(ref _snapshot, _changesSinceSnapshot!.Count == 0 ? _materializedSnapshot : null);
         }
 
         _pending.Clear();
@@ -94,6 +108,8 @@ internal sealed class SnapshotCollection<T>(SnapshotPublisher publisher) : ISnap
                 snapshot = _members!.Count == 0
                     ? Array.Empty<T>()
                     : Array.AsReadOnly(_members.ToArray());
+                _materializedSnapshot = snapshot;
+                _changesSinceSnapshot!.Clear();
                 Volatile.Write(ref _snapshot, snapshot);
             }
 

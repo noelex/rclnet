@@ -28,8 +28,10 @@ public class SnapshotCollectionTests(ITestOutputHelper output)
         Assert.Same(committed, Assert.Single(snapshot));
     }
 
-    [Fact]
-    public void EqualReplacementPublishesTheNewReference()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void EqualReplacementPublishesTheNewReference(bool separateCommits)
     {
         var publisher = new SnapshotPublisher();
         var collection = new SnapshotCollection<Item>(publisher);
@@ -40,12 +42,77 @@ public class SnapshotCollectionTests(ITestOutputHelper output)
         var snapshot = collection.GetSnapshot();
 
         collection.Stage(original, false);
+        if (separateCommits)
+        {
+            publisher.Commit();
+        }
+
         collection.Stage(replacement, true);
         publisher.Commit();
 
         Assert.Equal(original, replacement);
         Assert.Same(replacement, Assert.Single(collection.GetSnapshot()));
         Assert.Same(original, Assert.Single(snapshot));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ChangesAcrossCommitsRestoreTheCachedSnapshot(bool initiallyPresent)
+    {
+        var publisher = new SnapshotPublisher();
+        var collection = new SnapshotCollection<object>(publisher);
+        var member = new object();
+        if (initiallyPresent)
+        {
+            collection.Stage(member, true);
+            publisher.Commit();
+        }
+
+        var snapshot = collection.GetSnapshot();
+        var meter = new AllocationMeter(output);
+        meter.Measure("snapshot-coalesced-commits", 1000, () =>
+        {
+            collection.Stage(member, !initiallyPresent);
+            publisher.Commit();
+            collection.Stage(member, initiallyPresent);
+            publisher.Commit();
+            collection.GetSnapshot();
+        }, zeroAllocation: true);
+
+        Assert.Same(snapshot, collection.GetSnapshot());
+        Assert.Equal(initiallyPresent ? 1 : 0, snapshot.Count);
+    }
+
+    [Fact]
+    public void MaterializationResetsTheCommittedChangeBaseline()
+    {
+        var publisher = new SnapshotPublisher();
+        var collection = new SnapshotCollection<object>(publisher);
+        var first = new object();
+        var second = new object();
+        collection.Stage(first, true);
+        publisher.Commit();
+        var original = collection.GetSnapshot();
+
+        collection.Stage(second, true);
+        publisher.Commit();
+        var expanded = collection.GetSnapshot();
+        Assert.Equal(2, expanded.Count);
+
+        collection.Stage(first, false);
+        publisher.Commit();
+        collection.Stage(first, true);
+        publisher.Commit();
+        Assert.Same(expanded, collection.GetSnapshot());
+
+        collection.Stage(second, false);
+        publisher.Commit();
+        var restored = collection.GetSnapshot();
+        Assert.NotSame(expanded, restored);
+        Assert.Same(first, Assert.Single(restored));
+        Assert.Single(original);
+        Assert.Equal(2, expanded.Count);
     }
 
     [Fact]
