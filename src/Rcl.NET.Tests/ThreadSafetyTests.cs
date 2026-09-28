@@ -134,8 +134,11 @@ public class ThreadSafetyTests
     {
         using var cts = new CancellationTokenSource(1000);
         using var gc = context.CreateGuardCondition();
-        _ = Task.Delay(timeout).ContinueWith(x => gc.Trigger());
-        await gc.WaitOneAsync(cts.Token);
+        // Register before triggering: the event loop can consume a signal without any waiters.
+        var wait = gc.WaitOneAsync(cts.Token);
+        await Task.Delay(timeout);
+        gc.Trigger();
+        await wait;
     }
 }
 
