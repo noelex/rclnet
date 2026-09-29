@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
@@ -9,12 +9,13 @@
     <IsTestProject>true</IsTestProject>
     <ParallelizeTestCollections>false</ParallelizeTestCollections>
     <Ros2csOutputDir>Interfaces</Ros2csOutputDir>
+    <UseRosTestVariants Condition="'$(UseRosTestVariants)' == ''">true</UseRosTestVariants>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="xunit" Version="2.6.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.4">
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.4" Condition="'$(UseRosTestVariants)' != 'true'">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -38,4 +39,8 @@
     <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <Import Project="../../tools/Rcl.NET.Testing/Rcl.NET.Testing.targets" Condition="'$(UseRosTestVariants)' == 'true'" />
+  <Target Name="RemoveRosVariantAdapter" AfterTargets="Build" Condition="'$(UseRosTestVariants)' != 'true' and '$(TargetFramework)' != ''">
+    <Delete Files="$(TargetDir)Rcl.NET.TestAdapter.dll;$(TargetDir)$(AssemblyName).ros-variants" />
+  </Target>
 </Project>

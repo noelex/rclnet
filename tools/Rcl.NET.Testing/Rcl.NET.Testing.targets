@@ -1,0 +1,29 @@
+<Project>
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)Adapter/Rcl.NET.TestAdapter.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)Worker/Rcl.NET.TestWorker.csproj" ReferenceOutputAssembly="false" />
+    <None Update="ros-test-profiles.json;ros-test-profiles.local.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(MSBuildThisFileDirectory)variant-mode.marker" Link="$(AssemblyName).ros-variants" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <PropertyGroup>
+    <TestTfmsInParallel>false</TestTfmsInParallel>
+    <DefineConstants>$(DefineConstants);ROS_TEST_VARIANTS</DefineConstants>
+  </PropertyGroup>
+  <Target Name="IncludeRosWorkerDeployment" BeforeTargets="GetCopyToOutputDirectoryItems" DependsOnTargets="ResolveProjectReferences" Condition="'$(TargetFramework)' != ''">
+    <ItemGroup>
+      <ContentWithTargetPath Include="$(MSBuildThisFileDirectory)Worker/bin/$(Configuration)/$(TargetFramework)/**/*">
+        <TargetPath>ros-worker/%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ContentWithTargetPath>
+    </ItemGroup>
+  </Target>
+  <Target Name="CopyRosTestWorker" AfterTargets="Build" Condition="'$(TargetFramework)' != ''">
+    <ItemGroup>
+      <RosWorkerFile Include="$(MSBuildThisFileDirectory)Worker/bin/$(Configuration)/$(TargetFramework)/**/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(RosWorkerFile)" DestinationFiles="@(RosWorkerFile->'$(TargetDir)ros-worker/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Delete Files="$(TargetDir)xunit.runner.visualstudio.dotnetcore.testadapter.dll" />
+    <Delete Files="$(TargetDir)ros-test-profiles.local.json" Condition="!Exists('$(MSBuildProjectDirectory)/ros-test-profiles.local.json')" />
+  </Target>
+</Project>

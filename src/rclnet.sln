@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -12,6 +12,16 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rcl.NET.Tests", "Rcl.NET.Tests\Rcl.NET.Tests.csproj", "{24383CC9-942E-44C8-B774-D48FF690873E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rosidl.Runtime.Tests", "Rosidl.Runtime.Tests\Rosidl.Runtime.Tests.csproj", "{823FEC42-A4BE-4FB5-B82E-CED5209BFEE6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test Infrastructure", "Test Infrastructure", "{C9E26D3D-1553-6CE3-4607-89E633418B39}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rcl.NET.TestAdapter", "..\tools\Rcl.NET.Testing\Adapter\Rcl.NET.TestAdapter.csproj", "{130CDCB7-E95D-4D1B-9583-FDD099DC287D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rcl.NET.TestWorker", "..\tools\Rcl.NET.Testing\Worker\Rcl.NET.TestWorker.csproj", "{2B38EBFD-F96E-4F7D-8465-2C8367D35F54}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rcl.NET.Testing.Tests", "..\tools\Rcl.NET.Testing\Tests\Rcl.NET.Testing.Tests.csproj", "{1C66068F-5CC8-4865-A9E8-E9E7065238D0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fixture", "..\tools\Rcl.NET.Testing\Fixture\Fixture.csproj", "{F9A9417A-45E3-4D8E-9980-D9C6E9E03A28}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,9 +49,31 @@ Global
 		{823FEC42-A4BE-4FB5-B82E-CED5209BFEE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{823FEC42-A4BE-4FB5-B82E-CED5209BFEE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{823FEC42-A4BE-4FB5-B82E-CED5209BFEE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{130CDCB7-E95D-4D1B-9583-FDD099DC287D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{130CDCB7-E95D-4D1B-9583-FDD099DC287D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{130CDCB7-E95D-4D1B-9583-FDD099DC287D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{130CDCB7-E95D-4D1B-9583-FDD099DC287D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B38EBFD-F96E-4F7D-8465-2C8367D35F54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B38EBFD-F96E-4F7D-8465-2C8367D35F54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B38EBFD-F96E-4F7D-8465-2C8367D35F54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B38EBFD-F96E-4F7D-8465-2C8367D35F54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C66068F-5CC8-4865-A9E8-E9E7065238D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C66068F-5CC8-4865-A9E8-E9E7065238D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C66068F-5CC8-4865-A9E8-E9E7065238D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C66068F-5CC8-4865-A9E8-E9E7065238D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9A9417A-45E3-4D8E-9980-D9C6E9E03A28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9A9417A-45E3-4D8E-9980-D9C6E9E03A28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9A9417A-45E3-4D8E-9980-D9C6E9E03A28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9A9417A-45E3-4D8E-9980-D9C6E9E03A28}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{130CDCB7-E95D-4D1B-9583-FDD099DC287D} = {C9E26D3D-1553-6CE3-4607-89E633418B39}
+		{2B38EBFD-F96E-4F7D-8465-2C8367D35F54} = {C9E26D3D-1553-6CE3-4607-89E633418B39}
+		{1C66068F-5CC8-4865-A9E8-E9E7065238D0} = {C9E26D3D-1553-6CE3-4607-89E633418B39}
+		{F9A9417A-45E3-4D8E-9980-D9C6E9E03A28} = {C9E26D3D-1553-6CE3-4607-89E633418B39}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D6CE0170-57F7-4DC6-85AE-E59F6317C869}

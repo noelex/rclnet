@@ -62,7 +62,11 @@ public class PendingOperationPoolTests
         Assert.False(checkpoint.TimedOut);
     }
 
+#if DEBUG
+    [Fact(Skip = "Allocation assertions require a Release build.")]
+#else
     [Fact]
+#endif
     public async Task WarmOperationsDoNotAllocate()
     {
         for (int i = 0; i < 100; i++)

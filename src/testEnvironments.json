@@ -2,21 +2,6 @@
   "version": "1",
   "environments": [
     {
-      "name": "WSL - Jazzy",
-      "type": "wsl",
-      "wslDistribution": "Ubuntu-24.04"
-    },
-    {
-      "name": "WSL - Humble",
-      "type": "wsl",
-      "wslDistribution": "Ubuntu-22.04"
-    },
-    {
-      "name": "WSL - Foxy",
-      "type": "wsl",
-      "wslDistribution": "Ubuntu-20.04"
-    },
-    {
       "name": "Container - Foxy",
       "type": "docker",
       "dockerFile": "Rcl.NET.Tests/foxy.Dockerfile"

@@ -14,6 +14,31 @@ public class RclTestFramework : XunitTestFramework
     protected override ITestFrameworkExecutor CreateExecutor(AssemblyName assemblyName)
         => new CustomExecutor(assemblyName, SourceInformationProvider, DiagnosticMessageSink);
 
+#if ROS_TEST_VARIANTS
+    protected override ITestFrameworkDiscoverer CreateDiscoverer(IAssemblyInfo assemblyInfo)
+    {
+        if (AppContext.TryGetSwitch("Rcl.NET.Testing.Worker", out var worker) && worker)
+        {
+            return base.CreateDiscoverer(assemblyInfo);
+        }
+
+        // VS may load another project's stock xUnit adapter into the same discovery host.
+        // Only the ROS worker should expose this assembly's tests in variant mode.
+        return new WorkerOnlyDiscoverer(assemblyInfo, SourceInformationProvider, DiagnosticMessageSink);
+    }
+
+    private sealed class WorkerOnlyDiscoverer(
+        IAssemblyInfo assembly, ISourceInformationProvider source, IMessageSink diagnostics)
+        : XunitTestFrameworkDiscoverer(assembly, source, diagnostics)
+    {
+        protected override bool FindTestsForType(ITestClass testClass, bool includeSourceInformation,
+            IMessageBus messageBus, ITestFrameworkDiscoveryOptions discoveryOptions)
+        {
+            return true;
+        }
+    }
+#endif
+
     private class CustomExecutor : XunitTestFrameworkExecutor
     {
         public CustomExecutor(AssemblyName assemblyName, ISourceInformationProvider sourceInformationProvider, IMessageSink diagnosticMessageSink)

@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "profiles": [
+    {
+      "autoDetect": true,
+      "timeoutSeconds": 600,
+      "os": "linux",
+      "distro": "foxy",
+      "setup": "/opt/ros/foxy/setup.bash",
+      "rmw": [
+        "rmw_fastrtps_cpp",
+        "rmw_cyclonedds_cpp"
+      ],
+      "id": "linux-foxy",
+      "overlays": [
+        "/opt/rclnet-test-ws/install/local_setup.bash"
+      ]
+    },
+    {
+      "autoDetect": true,
+      "timeoutSeconds": 600,
+      "os": "linux",
+      "distro": "humble",
+      "setup": "/opt/ros/humble/setup.bash",
+      "rmw": [
+        "rmw_fastrtps_cpp",
+        "rmw_cyclonedds_cpp"
+      ],
+      "id": "linux-humble",
+      "overlays": [
+        "/opt/rclnet-test-ws/install/local_setup.bash"
+      ]
+    },
+    {
+      "autoDetect": true,
+      "timeoutSeconds": 600,
+      "os": "linux",
+      "distro": "iron",
+      "setup": "/opt/ros/iron/setup.bash",
+      "rmw": [
+        "rmw_fastrtps_cpp",
+        "rmw_cyclonedds_cpp"
+      ],
+      "id": "linux-iron",
+      "overlays": [
+        "/opt/rclnet-test-ws/install/local_setup.bash"
+      ]
+    },
+    {
+      "autoDetect": true,
+      "timeoutSeconds": 600,
+      "os": "linux",
+      "distro": "jazzy",
+      "setup": "/opt/ros/jazzy/setup.bash",
+      "rmw": [
+        "rmw_fastrtps_cpp",
+        "rmw_cyclonedds_cpp"
+      ],
+      "id": "linux-jazzy",
+      "overlays": [
+        "/opt/rclnet-test-ws/install/local_setup.bash"
+      ]
+    },
+    {
+      "autoDetect": true,
+      "timeoutSeconds": 600,
+      "os": "linux",
+      "distro": "kilted",
+      "setup": "/opt/ros/kilted/setup.bash",
+      "rmw": [
+        "rmw_fastrtps_cpp",
+        "rmw_cyclonedds_cpp"
+      ],
+      "id": "linux-kilted",
+      "overlays": [
+        "/opt/rclnet-test-ws/install/local_setup.bash"
+      ]
+    },
+    {
+      "autoDetect": true,
+      "timeoutSeconds": 600,
+      "os": "linux",
+      "distro": "lyrical",
+      "setup": "/opt/ros/lyrical/setup.bash",
+      "rmw": [
+        "rmw_fastrtps_cpp",
+        "rmw_cyclonedds_cpp"
+      ],
+      "id": "linux-lyrical",
+      "overlays": [
+        "/opt/rclnet-test-ws/install/local_setup.bash"
+      ]
+    }
+  ]
+}

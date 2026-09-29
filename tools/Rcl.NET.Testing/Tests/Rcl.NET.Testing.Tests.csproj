@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.6.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.4" PrivateAssets="all" />
+    <ProjectReference Include="../Adapter/Rcl.NET.TestAdapter.csproj" />
+    <ProjectReference Include="../Worker/Rcl.NET.TestWorker.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../Fixture/Fixture.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <Target Name="CopyFixture" AfterTargets="Build">
+    <ItemGroup>
+      <FixtureFiles Include="../Fixture/bin/$(Configuration)/net8.0/*" />
+      <WorkerFiles Include="../Worker/bin/$(Configuration)/net8.0/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FixtureFiles)" DestinationFolder="$(TargetDir)fixture" />
+    <Copy SourceFiles="@(WorkerFiles)" DestinationFolder="$(TargetDir)fixture/ros-worker" />
+  </Target>
+</Project>
