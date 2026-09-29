@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 
 namespace Rcl.Graph;
 
@@ -7,26 +7,16 @@ namespace Rcl.Graph;
 /// </summary>
 public class RosAction
 {
-    private IReadOnlyCollection<RosActionEndPoint> _serversSnapshot = Array.Empty<RosActionEndPoint>();
-    private IReadOnlyCollection<RosActionEndPoint> _clientsSnapshot = Array.Empty<RosActionEndPoint>();
+    internal readonly SnapshotCollection<RosActionEndPoint> ServersSnapshot;
+    internal readonly SnapshotCollection<RosActionEndPoint> ClientsSnapshot;
 
     private readonly ConcurrentDictionary<RosActionEndPoint, RosActionEndPoint> _servers = new(), _clients = new();
 
-    internal void PublishSnapshots(SnapshotChanges changes)
+    internal RosAction(string name, SnapshotPublisher publisher)
     {
-        if ((changes & SnapshotChanges.Servers) != 0)
-        {
-            Volatile.Write(ref _serversSnapshot, (IReadOnlyCollection<RosActionEndPoint>)_servers.Values);
-        }
+        ServersSnapshot = new(publisher);
+        ClientsSnapshot = new(publisher);
 
-        if ((changes & SnapshotChanges.Clients) != 0)
-        {
-            Volatile.Write(ref _clientsSnapshot, (IReadOnlyCollection<RosActionEndPoint>)_clients.Values);
-        }
-    }
-
-    internal RosAction(string name)
-    {
         Name = name;
     }
 
@@ -44,12 +34,12 @@ public class RosAction
     /// <summary>
     /// Gets a list of available ROS action servers registered with current <see cref="RosAction"/>.
     /// </summary>
-    public IReadOnlyCollection<RosActionEndPoint> Servers => Volatile.Read(ref _serversSnapshot);
+    public IReadOnlyCollection<RosActionEndPoint> Servers => ServersSnapshot.GetSnapshot();
 
     /// <summary>
     /// Gets a list of available ROS action clients registered with current <see cref="RosAction"/>.
     /// </summary>
-    public IReadOnlyCollection<RosActionEndPoint> Clients => Volatile.Read(ref _clientsSnapshot);
+    public IReadOnlyCollection<RosActionEndPoint> Clients => ClientsSnapshot.GetSnapshot();
 
     internal int ServerCount => _servers.Count;
 
