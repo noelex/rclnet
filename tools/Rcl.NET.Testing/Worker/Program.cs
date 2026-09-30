@@ -19,6 +19,25 @@ void Emit(Event value)
 try
 {
     var request = JsonSerializer.Deserialize<Request>(File.ReadAllText(args[0]), Wire.Json)!;
+    if (request.AutoDetectRmw)
+    {
+        var rmw = Environment.GetEnvironmentVariable("RMW_IMPLEMENTATION") ?? "";
+        var prefixes = (Environment.GetEnvironmentVariable("AMENT_PREFIX_PATH") ?? "")
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
+        if (!prefixes.Any(prefix => File.Exists(Path.Combine(prefix, "share", "ament_index", "resource_index", "packages", rmw))))
+        {
+            var message = $"RMW package {rmw} was not found in AMENT_PREFIX_PATH after setup and overlays.";
+            if (request.Mode != "discover")
+            {
+                throw new InvalidOperationException(message + " Rebuild and rediscover tests.");
+            }
+
+            Emit(new Event { Kind = "log", Message = "Skipping variant: " + message });
+            Emit(new Event { Kind = "complete" });
+            return 0;
+        }
+    }
+
     AppContext.SetSwitch("Rcl.NET.Testing.Worker", true);
     var directory = Path.GetDirectoryName(request.Source)!;
     var resolver = new AssemblyDependencyResolver(request.Source);

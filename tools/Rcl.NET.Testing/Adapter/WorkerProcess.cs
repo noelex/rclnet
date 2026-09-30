@@ -15,6 +15,7 @@ internal static class WorkerProcess
             var windows = OperatingSystem.IsWindows();
             var workerDirectory = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(source))!, "ros-worker");
             var requestPath = Path.Combine(temp, "request.json");
+            request.AutoDetectRmw = variant.Profile.AutoDetect;
             File.WriteAllText(requestPath, JsonSerializer.Serialize(request, Wire.Json));
             var overlaysPath = Path.Combine(temp, "overlays.txt");
             File.WriteAllLines(overlaysPath, variant.Profile.Overlays, new UTF8Encoding(false));

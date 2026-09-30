@@ -20,7 +20,7 @@ internal static class TestCases
         var marker = Path.ChangeExtension(source, ".ros-variants");
         return Path.GetFileName(source) == "Rcl.NET.Tests.dll"
             && File.Exists(marker) && File.ReadAllText(marker).Trim() == "1"
-            && File.Exists(Path.Combine(Path.GetDirectoryName(source)!, "ros-test-profiles.json"));
+            && File.Exists(Path.Combine(Path.GetDirectoryName(source)!, "ros-environments.json"));
     }
 
     private static string Framework(string source)

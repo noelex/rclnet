@@ -13,6 +13,7 @@ internal sealed class Request
     public string Source { get; set; } = "";
     public string Mode { get; set; } = "discover";
     public bool Debug { get; set; }
+    public bool AutoDetectRmw { get; set; }
     public string[] TestIds { get; set; } = [];
 }
 

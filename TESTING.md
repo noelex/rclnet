@@ -54,7 +54,7 @@ colcon build --merge-install --packages-select ros2cs_abi_test_msgs --base-paths
 
 ### 3. Configure this machine's profiles
 
-Copy `src/Rcl.NET.Tests/ros-test-profiles.example.json` to `src/Rcl.NET.Tests/ros-test-profiles.local.json`. For each Windows profile, set:
+Copy `src/Rcl.NET.Tests/ros-environments.example.json` to `src/Rcl.NET.Tests/ros-environments.local.json`. For each Windows profile, set:
 
 - `setup`: the distribution's `setup.bat`.
 - `overlays`: the `install/local_setup.bat` produced by step 2.
@@ -74,7 +74,7 @@ The worker activates Pixi when configured, calls ROS setup and the overlays, the
 
 ### 1. Use the standard ROS installation
 
-For ROS installed under `/opt/ros/<distro>`, **no local JSON configuration, Pixi configuration or Python path is required for the base ROS environment**. The shared `ros-test-profiles.json` automatically detects installed setup scripts and supplies the Fast DDS / Cyclone DDS variants. Ensure both RMW implementations and the ROS build dependencies are installed, or override the profile to list only the RMW implementations you use.
+For ROS installed under `/opt/ros/<distro>`, **no local JSON configuration, Pixi configuration or Python path is required for the base ROS environment**. The shared `ros-environments.json` automatically detects installed setup scripts and supplies the Fast DDS / Cyclone DDS variants. Ensure both RMW implementations and the ROS build dependencies are installed, or override the profile to list only the RMW implementations you use.
 
 ### 2. Compile the native test interfaces at the default location
 
@@ -90,7 +90,7 @@ colcon build --merge-install --packages-select ros2cs_abi_test_msgs \
 
 After a successful build, `/opt/rclnet-test-ws/install/local_setup.bash` matches the default profile, so no local profile configuration is needed.
 
-If you prefer a workspace in your home directory, or test multiple ROS distributions in the same Linux installation, use a separate workspace per distribution. Only in that case, create `ros-test-profiles.local.json` to override each corresponding `linux-<distro>` profile's overlay location. An override replaces the entire profile, so retain its other fields. For example:
+If you prefer a workspace in your home directory, or test multiple ROS distributions in the same Linux installation, use a separate workspace per distribution. Only in that case, create `ros-environments.local.json` to override each corresponding `linux-<distro>` profile's overlay location. An override replaces the entire profile, so retain its other fields. For example:
 
 ```json
 {
@@ -183,7 +183,7 @@ In this mode, prepare the ROS environment and native interface overlay in the ca
 
 ## Profile reference
 
-Shared profiles live in `ros-test-profiles.json`; optional machine-local overrides live in `ros-test-profiles.local.json`. Local profiles replace shared profiles with the same ID. Rebuild and rediscover tests after changing or removing local configuration. Configuration version is 1.
+Shared profiles live in `ros-environments.json`; optional machine-local overrides live in `ros-environments.local.json`. Local profiles replace shared profiles with the same ID. Rebuild and rediscover tests after changing or removing local configuration. Configuration version is 1.
 
 | Field | Meaning |
 | --- | --- |

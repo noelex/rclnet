@@ -2,7 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="$(MSBuildThisFileDirectory)Adapter/Rcl.NET.TestAdapter.csproj" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)Worker/Rcl.NET.TestWorker.csproj" ReferenceOutputAssembly="false" />
-    <None Update="ros-test-profiles.json;ros-test-profiles.local.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="ros-environments.json;ros-environments.local.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(MSBuildThisFileDirectory)variant-mode.marker" Link="$(AssemblyName).ros-variants" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <PropertyGroup>
@@ -24,6 +24,6 @@
     </ItemGroup>
     <Copy SourceFiles="@(RosWorkerFile)" DestinationFiles="@(RosWorkerFile->'$(TargetDir)ros-worker/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
     <Delete Files="$(TargetDir)xunit.runner.visualstudio.dotnetcore.testadapter.dll" />
-    <Delete Files="$(TargetDir)ros-test-profiles.local.json" Condition="!Exists('$(MSBuildProjectDirectory)/ros-test-profiles.local.json')" />
+    <Delete Files="$(TargetDir)ros-environments.local.json" Condition="!Exists('$(MSBuildProjectDirectory)/ros-environments.local.json')" />
   </Target>
 </Project>

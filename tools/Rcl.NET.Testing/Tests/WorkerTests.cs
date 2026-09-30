@@ -43,7 +43,7 @@ public sealed class WorkerTests : IDisposable
     {
         var assembly = Path.Combine(temp, "Rcl.NET.Tests.dll");
         File.WriteAllText(assembly, "unused");
-        File.WriteAllText(Path.Combine(temp, "ros-test-profiles.json"), "{}");
+        File.WriteAllText(Path.Combine(temp, "ros-environments.json"), "{}");
         var marker = Path.ChangeExtension(assembly, ".ros-variants");
 
         Assert.Empty(TestCases.Discover([assembly], null!, default));
@@ -74,6 +74,45 @@ public sealed class WorkerTests : IDisposable
         Assert.Single(results, e => e.Outcome == "Skipped" && e.Output.Contains("intentional skip"));
         Assert.Single(results, e => e.Outcome == "Failed" && e.Message.Contains("intentional failure") && e.Stack.Length > 0);
         Assert.Contains(results, e => e.Output.Contains("worker output captured"));
+    }
+
+    [Theory]
+    [InlineData(true, false, false)]
+    [InlineData(true, true, false)]
+    [InlineData(true, true, true)]
+    [InlineData(false, false, false)]
+    public void RmwAutoDetectionUsesSourcedAmentPrefixes(bool autoDetect, bool installed, bool inOverlay)
+    {
+        var setupPrefix = Path.Combine(temp, "setup prefix");
+        var overlayPrefix = Path.Combine(temp, "overlay prefix");
+        var packages = Path.Combine(inOverlay ? overlayPrefix : setupPrefix, "share", "ament_index", "resource_index", "packages");
+        Directory.CreateDirectory(packages);
+        File.WriteAllText(Path.Combine(packages, installed ? variant.Rmw : "rmw_other"), "");
+        var windows = OperatingSystem.IsWindows();
+        File.AppendAllText(variant.Profile.Setup, windows
+            ? $"@set \"AMENT_PREFIX_PATH={setupPrefix}\"\r\n"
+            : $"export AMENT_PREFIX_PATH='{setupPrefix}'\n");
+        File.AppendAllText(variant.Profile.Overlays[0], windows
+            ? $"@set \"AMENT_PREFIX_PATH={overlayPrefix};%AMENT_PREFIX_PATH%\"\r\n"
+            : $"export AMENT_PREFIX_PATH='{overlayPrefix}':\"$AMENT_PREFIX_PATH\"\n");
+        variant.Profile.AutoDetect = autoDetect;
+
+        var events = Run(new Request { Source = source });
+        Assert.Equal(autoDetect && !installed ? 0 : 7, events.Count(e => e.Kind == "case"));
+        Assert.Single(events, e => e.Kind == "complete");
+        Assert.Equal(autoDetect && !installed, events.Any(e => e.Kind == "log" && e.Message.Contains("Skipping variant")));
+    }
+
+    [Fact]
+    public void AutoDetectedRmwMissingAtExecutionFailsExplicitly()
+    {
+        var request = Select("Pass");
+        variant.Profile.AutoDetect = true;
+
+        var events = new List<Event>();
+        Assert.Throws<InvalidOperationException>(() => WorkerProcess.Run(source, variant, request, default, events.Add));
+        Assert.Contains(events, e => e.Kind == "fatal" && e.Message.Contains("RMW package rmw_probe was not found"));
+        Assert.DoesNotContain(events, e => e.Kind == "complete");
     }
 
     [Fact]
@@ -142,10 +181,10 @@ public sealed class WorkerTests : IDisposable
         var profile = variant.Profile;
         profile.Os = os;
         var path = Path.Combine(temp, "Fixture.dll");
-        File.WriteAllText(Path.Combine(temp, "ros-test-profiles.json"), JsonSerializer.Serialize(new Configuration { Profiles = [profile] }));
+        File.WriteAllText(Path.Combine(temp, "ros-environments.json"), JsonSerializer.Serialize(new Configuration { Profiles = [profile] }));
         Assert.Equal(2, Profiles.Load(path).Length);
         profile.Rmw = ["rmw_custom"];
-        File.WriteAllText(Path.Combine(temp, "ros-test-profiles.local.json"), JsonSerializer.Serialize(new Configuration { Profiles = [profile] }));
+        File.WriteAllText(Path.Combine(temp, "ros-environments.local.json"), JsonSerializer.Serialize(new Configuration { Profiles = [profile] }));
         Assert.Equal("rmw_custom", Assert.Single(Profiles.Load(path)).Rmw);
     }
 
@@ -165,7 +204,7 @@ public sealed class WorkerTests : IDisposable
             Setup = setupExists ? available.Setup : Path.Combine(temp, "missing-setup"),
             Overlays = [available.Overlays[0], overlayExists ? available.Overlays[0] : Path.Combine(temp, "missing-overlay")]
         };
-        File.WriteAllText(Path.Combine(temp, "ros-test-profiles.json"),
+        File.WriteAllText(Path.Combine(temp, "ros-environments.json"),
             JsonSerializer.Serialize(new Configuration { Profiles = [incomplete, available] }));
         var path = Path.Combine(temp, "Fixture.dll");
 
@@ -174,7 +213,7 @@ public sealed class WorkerTests : IDisposable
         Assert.All(variants, item => Assert.Equal(available.Id, item.Profile.Id));
 
         incomplete.AutoDetect = false;
-        File.WriteAllText(Path.Combine(temp, "ros-test-profiles.json"),
+        File.WriteAllText(Path.Combine(temp, "ros-environments.json"),
             JsonSerializer.Serialize(new Configuration { Profiles = [incomplete, available] }));
         Assert.Contains("does not exist", Assert.Throws<InvalidDataException>(() => Profiles.Load(path)).Message);
     }
@@ -189,7 +228,7 @@ public sealed class WorkerTests : IDisposable
         profile.AutoDetect = true;
         profile.Setup = relativeSetup ? "relative-setup" : Path.Combine(temp, "missing-setup");
         profile.Overlays = [relativeSetup ? Path.Combine(temp, "missing-overlay") : "relative-overlay"];
-        File.WriteAllText(Path.Combine(temp, "ros-test-profiles.json"),
+        File.WriteAllText(Path.Combine(temp, "ros-environments.json"),
             JsonSerializer.Serialize(new Configuration { Profiles = [profile] }));
 
         var exception = Assert.Throws<InvalidDataException>(() => Profiles.Load(Path.Combine(temp, "Fixture.dll")));

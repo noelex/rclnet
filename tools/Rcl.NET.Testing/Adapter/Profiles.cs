@@ -13,7 +13,7 @@ internal static class Profiles
     {
         var directory = Path.GetDirectoryName(Path.GetFullPath(source))!;
         var profiles = new Dictionary<string, Profile>(StringComparer.Ordinal);
-        foreach (var name in new[] { "ros-test-profiles.json", "ros-test-profiles.local.json" })
+        foreach (var name in new[] { "ros-environments.json", "ros-environments.local.json" })
         {
             var path = Path.Combine(directory, name);
             if (!File.Exists(path))
@@ -93,7 +93,7 @@ internal static class Profiles
 
         if (variants.Count == 0)
         {
-            throw new InvalidDataException($"No enabled ROS profiles for {os}. Configure ros-test-profiles.local.json and rebuild.");
+            throw new InvalidDataException($"No enabled ROS profiles for {os}. Configure ros-environments.local.json and rebuild.");
         }
 
         return variants.ToArray();
