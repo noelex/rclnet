@@ -112,6 +112,14 @@ Run `dotnet test` as shown below, or select the WSL test environment in Visual S
 
 The environments in `src/testEnvironments.json` include ROS, .NET and the native test interfaces. No host ROS installation or local profile configuration is needed.
 
+### Clean up Visual Studio test containers and images
+
+Switching container environments in Visual Studio can leave behind unused containers and images. Use this command to quickly clean them up when needed:
+
+```bash
+dotnet tools/clean_vsut.cs
+```
+
 ## Run and select tests
 
 ```powershell
