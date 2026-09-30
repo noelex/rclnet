@@ -149,6 +149,53 @@ public sealed class WorkerTests : IDisposable
         Assert.Equal("rmw_custom", Assert.Single(Profiles.Load(path)).Rmw);
     }
 
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public void AutoDetectSkipsProfilesWithMissingPrerequisites(bool setupExists, bool overlayExists)
+    {
+        var available = variant.Profile;
+        available.Os = OperatingSystem.IsWindows() ? "windows" : "linux";
+        var incomplete = new Profile
+        {
+            Id = "incomplete",
+            Os = available.Os,
+            AutoDetect = true,
+            Setup = setupExists ? available.Setup : Path.Combine(temp, "missing-setup"),
+            Overlays = [available.Overlays[0], overlayExists ? available.Overlays[0] : Path.Combine(temp, "missing-overlay")]
+        };
+        File.WriteAllText(Path.Combine(temp, "ros-test-profiles.json"),
+            JsonSerializer.Serialize(new Configuration { Profiles = [incomplete, available] }));
+        var path = Path.Combine(temp, "Fixture.dll");
+
+        var variants = Profiles.Load(path);
+        Assert.Equal(available.Rmw.Length, variants.Length);
+        Assert.All(variants, item => Assert.Equal(available.Id, item.Profile.Id));
+
+        incomplete.AutoDetect = false;
+        File.WriteAllText(Path.Combine(temp, "ros-test-profiles.json"),
+            JsonSerializer.Serialize(new Configuration { Profiles = [incomplete, available] }));
+        Assert.Contains("does not exist", Assert.Throws<InvalidDataException>(() => Profiles.Load(path)).Message);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void AutoDetectRejectsRelativePathsBeforeCheckingExistence(bool relativeSetup)
+    {
+        var profile = variant.Profile;
+        profile.Os = OperatingSystem.IsWindows() ? "windows" : "linux";
+        profile.AutoDetect = true;
+        profile.Setup = relativeSetup ? "relative-setup" : Path.Combine(temp, "missing-setup");
+        profile.Overlays = [relativeSetup ? Path.Combine(temp, "missing-overlay") : "relative-overlay"];
+        File.WriteAllText(Path.Combine(temp, "ros-test-profiles.json"),
+            JsonSerializer.Serialize(new Configuration { Profiles = [profile] }));
+
+        var exception = Assert.Throws<InvalidDataException>(() => Profiles.Load(Path.Combine(temp, "Fixture.dll")));
+        Assert.Contains("must be an absolute path", exception.Message);
+    }
+
     public void Dispose()
     {
         Directory.Delete(temp, recursive: true);

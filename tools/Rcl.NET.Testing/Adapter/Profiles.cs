@@ -49,14 +49,23 @@ internal static class Profiles
         var variants = new List<Variant>();
         foreach (var profile in profiles.Values.Where(p => p.Enabled && p.Os == os))
         {
-            if (profile.AutoDetect && !File.Exists(profile.Setup))
+            var paths = new[] { profile.Setup }.Concat(profile.Overlays).ToArray();
+            foreach (var path in paths)
+            {
+                if (!Path.IsPathFullyQualified(path))
+                {
+                    throw new InvalidDataException($"Profile {profile.Id}: setup/overlay must be an absolute path: {path}");
+                }
+            }
+
+            if (profile.AutoDetect && paths.Any(path => !File.Exists(path)))
             {
                 continue;
             }
 
-            foreach (var path in new[] { profile.Setup }.Concat(profile.Overlays))
+            foreach (var path in paths)
             {
-                if (!Path.IsPathFullyQualified(path) || !File.Exists(path))
+                if (!File.Exists(path))
                 {
                     throw new InvalidDataException($"Profile {profile.Id}: setup/overlay does not exist: {path}");
                 }
