@@ -188,6 +188,74 @@ public sealed class WorkerTests : IDisposable
         Assert.Equal("rmw_custom", Assert.Single(Profiles.Load(path)).Rmw);
     }
 
+    [Fact]
+    public void LocalOverrideEnablesDisabledSharedProfileWithMachinePaths()
+    {
+        var available = variant.Profile;
+        available.Os = OperatingSystem.IsWindows() ? "windows" : "linux";
+        var disabled = new Profile
+        {
+            Id = "disabled", Os = available.Os, Distro = "humble", Enabled = false,
+            Setup = "", Rmw = ["rmw_custom"]
+        };
+        File.WriteAllText(Path.Combine(temp, "ros-environments.json"),
+            JsonSerializer.Serialize(new Configuration { Profiles = [available, disabled] }));
+        var sourcePath = Path.Combine(temp, "Fixture.dll");
+        Assert.All(Profiles.Load(sourcePath), item => Assert.Equal(available.Id, item.Profile.Id));
+
+        File.WriteAllText(Path.Combine(temp, "ros-environments.local.json"), JsonSerializer.Serialize(new
+        {
+            profiles = new[] { new { id = "disabled", enabled = true, setup = available.Setup, overlays = available.Overlays } }
+        }));
+        var enabled = Assert.Single(Profiles.Load(sourcePath), item => item.Profile.Id == "disabled");
+        Assert.Equal("humble", enabled.Profile.Distro);
+        Assert.Equal("rmw_custom", enabled.Rmw);
+        Assert.Equal(available.Overlays, enabled.Profile.Overlays);
+    }
+
+    [Fact]
+    public void LocalFieldsInheritAndReplaceCollectionsWithoutMerging()
+    {
+        var profile = variant.Profile;
+        profile.Os = OperatingSystem.IsWindows() ? "windows" : "linux";
+        profile.Distro = "humble";
+        profile.AutoDetect = true;
+        profile.Environment = new() { ["OLD"] = "value" };
+        File.WriteAllText(Path.Combine(temp, "ros-environments.json"),
+            JsonSerializer.Serialize(new Configuration { Profiles = [profile] }));
+        File.WriteAllText(Path.Combine(temp, "ros-environments.local.json"), """
+            { "profiles": [{ "ID": "fixture", "overlays": [], "rmw": ["rmw_custom"],
+              "autoDetect": false, "environment": { "NEW": "value" } }] }
+            """);
+
+        var loaded = Assert.Single(Profiles.Load(Path.Combine(temp, "Fixture.dll")));
+        Assert.Equal("rmw_custom", loaded.Rmw);
+        Assert.Equal(profile.Setup, loaded.Profile.Setup);
+        Assert.Equal(profile.Os, loaded.Profile.Os);
+        Assert.Equal("humble", loaded.Profile.Distro);
+        Assert.Equal(profile.TimeoutSeconds, loaded.Profile.TimeoutSeconds);
+        Assert.False(loaded.Profile.AutoDetect);
+        Assert.Empty(loaded.Profile.Overlays);
+        Assert.Equal("NEW", Assert.Single(loaded.Profile.Environment).Key);
+    }
+
+    [Theory]
+    [InlineData("{\"id\":\"fixture\",\"enabled\":false}", "No enabled ROS profiles")]
+    [InlineData("{\"id\":\"fixture\",\"timeoutSeconds\":0}", "invalid timeout")]
+    [InlineData("{\"id\":\"fixture\",\"overlays\":null}", "must not be null")]
+    [InlineData("{\"id\":\"new-profile\"}", "os must be")]
+    [InlineData("{\"id\":\"fixture\"},{\"id\":\"fixture\"}", "duplicate profile ID")]
+    public void LocalOverridesPreserveValidation(string entries, string error)
+    {
+        var profile = variant.Profile;
+        profile.Os = OperatingSystem.IsWindows() ? "windows" : "linux";
+        File.WriteAllText(Path.Combine(temp, "ros-environments.json"),
+            JsonSerializer.Serialize(new Configuration { Profiles = [profile] }));
+        File.WriteAllText(Path.Combine(temp, "ros-environments.local.json"), "{\"profiles\":[" + entries + "]}");
+
+        Assert.Contains(error, Assert.Throws<InvalidDataException>(() => Profiles.Load(Path.Combine(temp, "Fixture.dll"))).Message);
+    }
+
     [Theory]
     [InlineData(true, false)]
     [InlineData(false, true)]

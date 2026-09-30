@@ -9,6 +9,12 @@ internal sealed record Variant(Profile Profile, string Rmw)
 
 internal static class Profiles
 {
+    private sealed class ProfileConfiguration
+    {
+        public int Version { get; set; } = 1;
+        public JsonElement[] Profiles { get; set; } = [];
+    }
+
     internal static Variant[] Load(string source)
     {
         var directory = Path.GetDirectoryName(Path.GetFullPath(source))!;
@@ -21,7 +27,7 @@ internal static class Profiles
                 continue;
             }
 
-            var config = JsonSerializer.Deserialize<Configuration>(File.ReadAllText(path), Wire.Json)
+            var config = JsonSerializer.Deserialize<ProfileConfiguration>(File.ReadAllText(path), Wire.Json)
                 ?? throw new InvalidDataException($"Empty profile configuration: {path}");
             if (config.Version != 1)
             {
@@ -29,13 +35,34 @@ internal static class Profiles
             }
 
             var ids = new HashSet<string>();
-            foreach (var profile in config.Profiles)
+            foreach (var entry in config.Profiles)
             {
-                if (string.IsNullOrWhiteSpace(profile.Id) || !ids.Add(profile.Id))
+                var fields = new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
+                foreach (var field in entry.EnumerateObject())
                 {
-                    throw new InvalidDataException($"Empty or duplicate profile ID in {path}: {profile.Id}");
+                    if (field.Value.ValueKind == JsonValueKind.Null)
+                    {
+                        throw new InvalidDataException($"Profile field {field.Name} in {path} must not be null.");
+                    }
+
+                    fields[field.Name] = field.Value;
                 }
 
+                var id = fields.TryGetValue("id", out var idValue) ? idValue.GetString() : null;
+                if (string.IsNullOrWhiteSpace(id) || !ids.Add(id))
+                {
+                    throw new InvalidDataException($"Empty or duplicate profile ID in {path}: {id}");
+                }
+
+                if (profiles.TryGetValue(id, out var inherited))
+                {
+                    foreach (var field in JsonSerializer.SerializeToElement(inherited, Wire.Json).EnumerateObject())
+                    {
+                        fields.TryAdd(field.Name, field.Value);
+                    }
+                }
+
+                var profile = JsonSerializer.Deserialize<Profile>(JsonSerializer.Serialize(fields, Wire.Json), Wire.Json)!;
                 if (profile.Os is not ("windows" or "linux"))
                 {
                     throw new InvalidDataException($"Profile {profile.Id}: os must be windows or linux.");

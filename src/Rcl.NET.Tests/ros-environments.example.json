@@ -3,25 +3,17 @@
   "profiles": [
     {
       "id": "windows-lyrical",
-      "os": "windows",
-      "distro": "lyrical",
+      "enabled": true,
       "setup": "C:\\ros\\lyrical\\setup.bat",
-      "overlays": ["C:\\ros\\test-workspaces\\lyrical\\install\\local_setup.bat"],
+      "overlays": [ "C:\\ros\\test-workspaces\\lyrical\\install\\local_setup.bat" ],
       "pixiManifest": "C:\\ros\\dependencies\\lyrical\\pixi.toml",
-      "pixiExecutable": "C:\\ros\\tools\\pixi.exe",
-      "rmw": ["rmw_fastrtps_cpp", "rmw_cyclonedds_cpp"],
-      "timeoutSeconds": 600
+      "pixiExecutable": "C:\\ros\\tools\\pixi.exe"
     },
     {
       "id": "windows-humble",
-      "os": "windows",
-      "distro": "humble",
-      "enabled": false,
+      "enabled": true,
       "setup": "C:\\ros\\humble\\setup.bat",
-      "overlays": ["C:\\ros\\test-workspaces\\humble\\install\\local_setup.bat"],
-      "python": "C:\\Python38\\python.exe",
-      "pathPrepend": ["C:\\Program Files\\OpenSSL-Win64\\bin", "C:\\ProgramData\\chocolatey\\lib\\tinyxml2\\lib"],
-      "rmw": ["rmw_fastrtps_cpp", "rmw_cyclonedds_cpp"]
+      "overlays": [ "C:\\ros\\test-workspaces\\humble\\install\\local_setup.bat" ]
     }
   ]
 }
