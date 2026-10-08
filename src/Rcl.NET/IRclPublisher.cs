@@ -20,6 +20,15 @@ public interface IRclPublisher : IRclObject
     bool IsValid { get; }
 
     /// <summary>
+    /// Gets whether the middleware can loan messages for this publisher's message type.
+    /// </summary>
+    /// <remarks>
+    /// This also respects the RCL configuration that disables publisher loans.
+    /// Loan support does not guarantee zero-copy transport.
+    /// </remarks>
+    bool CanLoanMessages { get; }
+
+    /// <summary>
     /// Gets the count of subscribers subscribing to this topic.
     /// </summary>
     int Subscribers { get; }
@@ -102,6 +111,34 @@ public interface IRclPublisher : IRclObject
     /// </para>
     /// </returns>
     RosMessageBuffer CreateBuffer();
+
+    /// <summary>
+    /// Borrows a message buffer owned by the middleware.
+    /// </summary>
+    /// <returns>A loaned buffer of this publisher's message type.</returns>
+    /// <remarks>
+    /// Dispose the buffer exactly once to return an unpublished loan, or transfer it with
+    /// <see cref="PublishLoaned(ref RosMessageBuffer)"/>. All loans must be returned or published
+    /// before disposing this publisher or its context. Copies share the same loan;
+    /// disposing or publishing one invalidates every copy and any native references.
+    /// </remarks>
+    /// <exception cref="NotSupportedException">Publisher loans are unavailable or disabled.</exception>
+    RosMessageBuffer BorrowLoanedMessage();
+
+    /// <summary>
+    /// Publishes a loaned message and transfers its ownership to the middleware.
+    /// </summary>
+    /// <param name="message">A live loan borrowed from this publisher.</param>
+    /// <remarks>
+    /// The caller must provide a buffer obtained from this publisher's
+    /// <see cref="BorrowLoanedMessage"/>. Its origin and type are not checked.
+    /// Once the native publish is invoked, the argument is set to <see cref="RosMessageBuffer.Empty"/>.
+    /// Do not dispose or access any copies or native references afterward, even if the native
+    /// publish reports an error: the middleware may already have consumed the loan.
+    /// If the operation is rejected before native publication, the caller retains ownership.
+    /// Like ordinary publication, this method may block depending on the middleware and QoS.
+    /// </remarks>
+    void PublishLoaned(ref RosMessageBuffer message);
 
     /// <summary>
     /// Manually assert that this publisher is alive (for publishers created with <see cref="QosProfile.Liveliness"/> set to <see cref="LivelinessPolicy.ManualByTopic"/>).

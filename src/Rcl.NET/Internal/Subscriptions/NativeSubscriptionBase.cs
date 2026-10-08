@@ -32,6 +32,12 @@ internal unsafe abstract class NativeSubscriptionBase :
         try
         {
             using var lease = Handle.Acquire();
+
+            if (options.UseLoanedMessages && !rcl_subscription_can_loan_messages(lease.Object))
+            {
+                throw new NotSupportedException("Loaned messages are unavailable for this subscription.");
+            }
+
             _node = node;
             TypeSupport = typeSupport;
 
@@ -223,9 +229,18 @@ internal unsafe abstract class NativeSubscriptionBase :
 
     public NetworkFlowEndpoint[] Endpoints { get; }
 
+    public bool CanLoanMessages
+    {
+        get
+        {
+            using var lease = Handle.Acquire();
+            return rcl_subscription_can_loan_messages(lease.Object);
+        }
+    }
+
     protected override void OnWaitCompleted()
     {
-        var msg = TakeMessage();
+        var msg = Options.UseLoanedMessages ? TakeLoanedMessage() : TakeMessage();
 
         if (!msg.IsEmpty)
         {
@@ -240,6 +255,27 @@ internal unsafe abstract class NativeSubscriptionBase :
     }
 
     protected abstract RosMessageBuffer TakeMessage();
+
+    private RosMessageBuffer TakeLoanedMessage()
+    {
+        using var lease = Handle.Acquire();
+        void* message = null;
+        var result = rcl_take_loaned_message(lease.Object, &message, null, null);
+
+        if (result == rcl_ret_t.RCL_RET_SUBSCRIPTION_TAKE_FAILED)
+        {
+            return RosMessageBuffer.Empty;
+        }
+
+        RclException.ThrowIfNonSuccess(result);
+        return new RosMessageBuffer((nint)message, static (data, state) =>
+        {
+            var subscription = (NativeSubscriptionBase)state!;
+            // Detachment drains queued loans after admission closes, while the registration pins the handle.
+            RclException.ThrowIfNonSuccess(rcl_return_loaned_message_from_subscription(
+                subscription.Handle.DangerousObject, data.ToPointer()));
+        }, this);
+    }
 
     public IAsyncEnumerable<RosMessageBuffer> ReadAllAsync(CancellationToken cancellationToken)
     {

@@ -71,6 +71,15 @@ public interface IRclSubscription<T> : IRclSubscription, IObservable<T>
 public interface IRclNativeSubscription : IRclSubscription
 {
     /// <summary>
+    /// Gets whether the middleware and RCL configuration allow this subscription to loan messages.
+    /// </summary>
+    /// <remarks>
+    /// Receiving loaned buffers also requires <see cref="SubscriptionOptions.UseLoanedMessages"/>.
+    /// Loan support does not guarantee zero-copy transport.
+    /// </remarks>
+    bool CanLoanMessages { get; }
+
+    /// <summary>
     /// Reads all messages from the subscription.
     /// </summary>
     /// <remarks>
@@ -80,6 +89,12 @@ public interface IRclNativeSubscription : IRclSubscription
     /// <para>
     /// Additionally, ownership of the <see cref="RosMessageBuffer"/>s returned by this method are
     /// transferred to the caller. It's the caller's responsibility to dispose the buffer when no more needed.
+    /// </para>
+    /// <para>
+    /// When <see cref="SubscriptionOptions.UseLoanedMessages"/> is enabled, buffers belong to the middleware.
+    /// Treat them as read-only and dispose each exactly once before disposing this subscription or its context.
+    /// Copies share the same loan and must not be accessed or disposed after the loan is returned.
+    /// Holding many loans can exhaust middleware resources.
     /// </para>
     /// </remarks>
     /// <param name="cancellationToken"></param>

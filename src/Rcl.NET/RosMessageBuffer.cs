@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 namespace Rcl;
 
 /// <summary>
-/// Represents an ROS message structure allocated in unmanaged memory.
+/// Represents an ROS message structure in unmanaged memory, including middleware-owned loans.
 /// </summary>
 /// <remarks>
 /// <see cref="Dispose"/> must be called before discarding references to the <see cref="RosMessageBuffer"/>, otherwise the message buffer will leak.
@@ -14,6 +14,11 @@ namespace Rcl;
 /// <para>
 /// All public APIs involing <see cref="RosMessageBuffer"/> defines the contract of the ownership transfer of <see cref="RosMessageBuffer"/> instances.
 /// Review their documentation carefully before use.
+/// </para>
+/// <para>
+/// For a loaned buffer, <see cref="Dispose"/> returns the message to the middleware.
+/// The originating publisher or subscription and its context must remain alive until the loan is returned
+/// or transferred. Returning or transferring a loan invalidates every buffer copy and native reference.
 /// </para>
 /// </remarks>
 public readonly struct RosMessageBuffer : IDisposable

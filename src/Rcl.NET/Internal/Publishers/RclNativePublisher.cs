@@ -14,6 +14,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
 {
     private readonly QosProfile _actualQos;
     private readonly IMessageIntrospection _introspection;
+    private readonly TypeSupportHandle _typeSupport;
     private readonly RclNodeImpl _node;
 
     private readonly RclPubisherEvent? _livelinessEvent, _deadlineMissedEvent, _qosEvent;
@@ -36,6 +37,7 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
             _actualQos = QosProfile.Create(in actualQos);
 
             _introspection = MessageIntrospection.Create(typesupport);
+            _typeSupport = typesupport;
             Name = StringMarshal.CreatePooledString(rcl_publisher_get_topic_name(lease.Object))!;
             Options = options;
 
@@ -203,6 +205,48 @@ internal unsafe class RclNativePublisher : RclContextualObject<SafePublisherHand
     public NetworkFlowEndpoint[] Endpoints { get; }
 
     public GraphId Gid { get; }
+
+    public bool CanLoanMessages
+    {
+        get
+        {
+            using var lease = Handle.Acquire();
+            return rcl_publisher_can_loan_messages(lease.Object);
+        }
+    }
+
+    public RosMessageBuffer BorrowLoanedMessage()
+    {
+        using var lease = Handle.Acquire();
+
+        if (!rcl_publisher_can_loan_messages(lease.Object))
+        {
+            throw new NotSupportedException("Loaned messages are unavailable or disabled for this publisher.");
+        }
+
+        void* message = null;
+        RclException.ThrowIfNonSuccess(
+            rcl_borrow_loaned_message(lease.Object, _typeSupport.GetMessageTypeSupport(), &message));
+
+        return new RosMessageBuffer((nint)message, static (data, state) =>
+        {
+            var publisher = (RclNativePublisher)state!;
+            using var lease = publisher.Handle.Acquire();
+            RclException.ThrowIfNonSuccess(
+                rcl_return_loaned_message_from_publisher(lease.Object, data.ToPointer()));
+        }, this);
+    }
+
+    public void PublishLoaned(ref RosMessageBuffer message)
+    {
+        using var lease = Handle.Acquire();
+        var data = message.Data;
+
+        // Native publication can consume the loan even when it reports an error.
+        message = RosMessageBuffer.Empty;
+        RclException.ThrowIfNonSuccess(
+            rcl_publish_loaned_message(lease.Object, data.ToPointer(), null));
+    }
 
     public void Publish(RosMessageBuffer message)
     {
