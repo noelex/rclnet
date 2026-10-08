@@ -74,7 +74,7 @@ public class LifecycleAuditTests : IDisposable
 
         try
         {
-            await releasing.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await releasing.Entered;
             Assert.False(publish.IsCompleted);
             Assert.Equal(0, released);
         }
@@ -83,7 +83,7 @@ public class LifecycleAuditTests : IDisposable
             releasing.Resume();
         }
 
-        Assert.True(SpinWait.SpinUntil(() => publish.IsCompleted, TimeSpan.FromSeconds(10)));
+        SpinWait.SpinUntil(() => publish.IsCompleted);
         Assert.Equal(1, released);
         await publish;
     }

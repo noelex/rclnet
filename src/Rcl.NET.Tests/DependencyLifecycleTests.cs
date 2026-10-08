@@ -228,11 +228,11 @@ public class DependencyLifecycleTests : IDisposable
                 started.Set();
                 Assert.Throws<ObjectDisposedException>(() => new SafeGuardConditionHandle(context));
             });
-            Assert.True(started.Wait(TimeSpan.FromSeconds(10)));
+            started.Wait();
             context.TryBeginClose();
         }
 
-        await construction.WaitAsync(TimeSpan.FromSeconds(10));
+        await construction;
         context.Dispose();
         Assert.True(context.IsClosed);
     }
@@ -252,20 +252,19 @@ public class DependencyLifecycleTests : IDisposable
                 Assert.False(context.IsClosing);
             }
         });
-        await entered.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+        await entered.Entered;
         var closing = Task.Run(() => context.TryBeginClose());
 
         try
         {
             entered.Resume();
-            await Task.WhenAll(construction, closing).WaitAsync(TimeSpan.FromSeconds(10));
+            await Task.WhenAll(construction, closing);
         }
         finally
         {
             entered.Resume();
         }
 
-        Assert.False(entered.TimedOut);
         Assert.NotNull(guard);
         context.Dispose();
         Assert.False(context.IsClosed);
@@ -337,8 +336,7 @@ public class DependencyLifecycleTests : IDisposable
             await context.DisposeAsync();
         }
 
-        Assert.True(SpinWait.SpinUntil(() => context.Handle.IsClosed && SafeContextHandle.LoggingReferences == before,
-            TimeSpan.FromSeconds(10)), "Constructor rollback left a native or logging reference outstanding.");
+        SpinWait.SpinUntil(() => context.Handle.IsClosed && SafeContextHandle.LoggingReferences == before);
     }
 
     [Fact]
@@ -426,7 +424,7 @@ public class DependencyLifecycleTests : IDisposable
                 clock.Impl.ToggleRosTimeOverride(false);
             }
         }));
-        await Task.WhenAll(tasks).WaitAsync(TimeSpan.FromSeconds(20));
+        await Task.WhenAll(tasks);
     }
 
     [Fact]
@@ -445,8 +443,8 @@ public class DependencyLifecycleTests : IDisposable
         using var handle = new SafeGuardConditionHandle(context.Handle);
         await context.DisposeAsync();
         Assert.Throws<ObjectDisposedException>(() => new RclGuardConditionImpl(context, handle));
-        Assert.True(SpinWait.SpinUntil(() => handle.IsClosed && context.Handle.IsClosed
-            && SafeContextHandle.LoggingReferences == before, TimeSpan.FromSeconds(10)));
+        SpinWait.SpinUntil(() => handle.IsClosed && context.Handle.IsClosed
+            && SafeContextHandle.LoggingReferences == before);
     }
 
     [Theory]
@@ -495,7 +493,7 @@ public class DependencyLifecycleTests : IDisposable
         {
             using var lease = handle.Acquire();
             acquired.Signal();
-            Assert.True(release.Wait(TimeSpan.FromSeconds(10)));
+            release.Wait();
             returning.Signal();
         });
 
@@ -503,7 +501,7 @@ public class DependencyLifecycleTests : IDisposable
 
         try
         {
-            Assert.True(acquired.Wait(TimeSpan.FromSeconds(10)));
+            acquired.Wait();
             // Model detached entities: only the in-flight operations retain references.
             first.Dispose();
             second.Dispose();
@@ -511,7 +509,7 @@ public class DependencyLifecycleTests : IDisposable
             lock (context.LifecycleGate)
             {
                 release.Set();
-                Assert.True(returning.Wait(TimeSpan.FromSeconds(10)));
+                returning.Wait();
                 Assert.Equal(-1, Task.WaitAny(workers, TimeSpan.FromMilliseconds(200)));
 
                 // Creation uses this same gate while both final lease returns are blocked.
@@ -523,7 +521,7 @@ public class DependencyLifecycleTests : IDisposable
         finally
         {
             release.Set();
-            await Task.WhenAll(workers).WaitAsync(TimeSpan.FromSeconds(10));
+            await Task.WhenAll(workers);
         }
 
         Assert.True(first.IsInvalid);

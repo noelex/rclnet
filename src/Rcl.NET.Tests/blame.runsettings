@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="blame" enabled="true">
+        <Configuration>
+          <CollectDump DumpType="Mini" />
+          <!-- Preserve a hung test's threads before terminating the test host. -->
+          <CollectDumpOnTestSessionHang TestTimeout="1m" HangDumpType="Mini" />
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

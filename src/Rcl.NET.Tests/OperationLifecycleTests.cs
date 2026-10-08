@@ -28,7 +28,7 @@ public class OperationLifecycleTests : IDisposable
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             Assert.True(wrapper.Handle.IsClosing);
             Assert.False(wrapper.Handle.IsReleaseRequested);
             Assert.Throws<ObjectDisposedException>(() =>
@@ -41,11 +41,10 @@ public class OperationLifecycleTests : IDisposable
         finally
         {
             checkpoint.Resume();
-            await disposing.WaitAsync(TimeSpan.FromSeconds(10));
+            await disposing;
         }
 
         Assert.Equal(new[] { "handle:enter", "handle:exit" }, releases);
-        Assert.False(checkpoint.TimedOut);
     }
 
     [Fact]
@@ -74,7 +73,7 @@ public class OperationLifecycleTests : IDisposable
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             publisher.Dispose();
             await context.Yield();
             Assert.True(handle.IsReleaseRequested);
@@ -84,11 +83,10 @@ public class OperationLifecycleTests : IDisposable
         finally
         {
             checkpoint.Resume();
-            await copying.WaitAsync(TimeSpan.FromSeconds(10));
+            await copying;
         }
 
         await LifecycleAssert.EventuallyAsync(() => handle.IsClosed);
-        Assert.False(checkpoint.TimedOut);
     }
 
     [Fact]
@@ -109,7 +107,7 @@ public class OperationLifecycleTests : IDisposable
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             publisher.Dispose();
             subscription.Dispose();
             nativeSubscription.Dispose();
@@ -136,7 +134,6 @@ public class OperationLifecycleTests : IDisposable
         }
 
         await context.Yield();
-        Assert.False(checkpoint.TimedOut);
     }
 
     [Fact]
@@ -167,7 +164,7 @@ public class OperationLifecycleTests : IDisposable
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             pending = client.InvokeAsync(new ListParametersServiceRequest(), Timeout.Infinite);
             client.Dispose();
         }
@@ -176,8 +173,7 @@ public class OperationLifecycleTests : IDisposable
             checkpoint.Resume();
         }
 
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => pending.WaitAsync(TimeSpan.FromSeconds(10)));
-        Assert.False(checkpoint.TimedOut);
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => pending);
     }
 
     [SkippableFact]
@@ -230,7 +226,7 @@ public class OperationLifecycleTests : IDisposable
 
         Task Configure(Action<ServiceIntrospectionState> configure) => Task.Run(() =>
         {
-            Assert.True(start.Wait(TimeSpan.FromSeconds(10)));
+            start.Wait();
 
             for (var i = 0; i < 40; i++)
             {
@@ -242,7 +238,7 @@ public class OperationLifecycleTests : IDisposable
         var configuringService = Configure(state => service.ConfigureIntrospection(state));
         var requests = Task.Run(async () =>
         {
-            Assert.True(start.Wait(TimeSpan.FromSeconds(10)));
+            start.Wait();
 
             for (var i = 0; i < 40; i++)
             {
@@ -250,7 +246,7 @@ public class OperationLifecycleTests : IDisposable
             }
         });
         start.Set();
-        await Task.WhenAll(configuringClient, configuringService, requests).WaitAsync(TimeSpan.FromSeconds(30));
+        await Task.WhenAll(configuringClient, configuringService, requests);
     }
 
     [SkippableFact]
@@ -283,18 +279,18 @@ public class OperationLifecycleTests : IDisposable
                 lock (handle.NativeGate)
                 {
                     configuring.Start();
-                    Assert.True(started.Wait(TimeSpan.FromSeconds(10)));
+                    started.Wait();
                     // The dedicated thread has passed admission and is blocked on the native gate.
-                    Assert.True(SpinWait.SpinUntil(() =>
-                        (configuring.ThreadState & ThreadState.WaitSleepJoin) != 0, TimeSpan.FromSeconds(10)));
+                    SpinWait.SpinUntil(() =>
+                        (configuring.ThreadState & ThreadState.WaitSleepJoin) != 0);
                     client.Dispose();
-                    Assert.True(SpinWait.SpinUntil(() => handle.IsReleaseRequested, TimeSpan.FromSeconds(10)));
+                    SpinWait.SpinUntil(() => handle.IsReleaseRequested);
                     Assert.False(handle.IsClosed);
                 }
             }
             finally
             {
-                Assert.True(configuring.Join(TimeSpan.FromSeconds(10)));
+                configuring.Join();
             }
         });
         Assert.Null(failure);

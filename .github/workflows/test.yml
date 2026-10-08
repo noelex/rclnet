@@ -101,7 +101,7 @@ jobs:
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh && \
           . "$GITHUB_WORKSPACE/install/setup.sh" && \
-          dotnet test -c Release -p:UseRosTestVariants=false -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          dotnet test -c Release -p:UseRosTestVariants=false -p:TestTfmsInParallel=false --no-build --verbosity normal --logger trx --settings blame.runsettings
 
       - name: Test (cyclonedds)
         working-directory: src/Rcl.NET.Tests
@@ -111,7 +111,16 @@ jobs:
         run: |
           . /opt/ros/${{ matrix.ros_distribution }}/setup.sh && \
           . "$GITHUB_WORKSPACE/install/setup.sh" && \
-          dotnet test -c Release -p:UseRosTestVariants=false -p:TestTfmsInParallel=false --no-build --verbosity normal --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          dotnet test -c Release -p:UseRosTestVariants=false -p:TestTfmsInParallel=false --no-build --verbosity normal --logger trx --settings blame.runsettings
+
+      - name: Upload Ubuntu test diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-${{ matrix.ros_distribution }}-test-diagnostics
+          path: src/Rcl.NET.Tests/TestResults/
+          if-no-files-found: warn
+          retention-days: 7
 
   windows:
     runs-on: windows-2022
@@ -313,7 +322,7 @@ jobs:
           refreshenv && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           call ${{ github.workspace }}/install/setup.bat && ^
-          dotnet test -c Release -p:UseRosTestVariants=false -p:TestTfmsInParallel=false --no-build --verbosity normal --logger trx --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          dotnet test -c Release -p:UseRosTestVariants=false -p:TestTfmsInParallel=false --no-build --verbosity normal --logger trx --settings blame.runsettings
 
       - name: Test (cyclonedds) (Legacy)
         if: ${{ matrix.is_legacy_distro }}
@@ -326,7 +335,7 @@ jobs:
           refreshenv && ^
           call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && ^
           call ${{ github.workspace }}/install/setup.bat && ^
-          dotnet test -c Release -p:UseRosTestVariants=false -p:TestTfmsInParallel=false --no-build --verbosity normal --logger trx --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m
+          dotnet test -c Release -p:UseRosTestVariants=false -p:TestTfmsInParallel=false --no-build --verbosity normal --logger trx --settings blame.runsettings
 
       - name: Test (fastrtps)
         if: ${{ !matrix.is_legacy_distro }}
@@ -338,7 +347,7 @@ jobs:
         run: |
           refreshenv && ^
           pixi run --manifest-path "c:/dev/pixi/" ^
-          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call ${{ github.workspace }}/install/setup.bat && dotnet test -c Release -p:UseRosTestVariants=false -p:TestTfmsInParallel=false --no-build --verbosity normal --logger trx --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call ${{ github.workspace }}/install/setup.bat && dotnet test -c Release -p:UseRosTestVariants=false -p:TestTfmsInParallel=false --no-build --verbosity normal --logger trx --settings blame.runsettings"
 
       - name: Test (cyclonedds)
         if: ${{ !matrix.is_legacy_distro }}
@@ -350,7 +359,7 @@ jobs:
         run: |
           refreshenv && ^
           pixi run --manifest-path "c:/dev/pixi/" ^
-          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call ${{ github.workspace }}/install/setup.bat && dotnet test -c Release -p:UseRosTestVariants=false -p:TestTfmsInParallel=false --no-build --verbosity normal --logger trx --blame-crash-dump-type mini --blame-hang-dump-type none --blame-hang-timeout 1m"
+          cmd /c "call c:/dev/${{ matrix.ros_distribution }}/ros2-windows/setup.bat && call ${{ github.workspace }}/install/setup.bat && dotnet test -c Release -p:UseRosTestVariants=false -p:TestTfmsInParallel=false --no-build --verbosity normal --logger trx --settings blame.runsettings"
 
       - name: Upload Windows test diagnostics
         if: ${{ failure() }}

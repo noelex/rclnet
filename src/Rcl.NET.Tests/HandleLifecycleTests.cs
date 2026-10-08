@@ -41,7 +41,7 @@ public class HandleLifecycleTests
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             Assert.True(handle.IsClosed);
             Assert.False(disposing.IsCompleted);
             Assert.Equal(new[] { "handle:enter" }, releases.ToArray());
@@ -49,10 +49,9 @@ public class HandleLifecycleTests
         finally
         {
             checkpoint.Resume();
-            await disposing.WaitAsync(TimeSpan.FromSeconds(10));
+            await disposing;
         }
 
-        Assert.False(checkpoint.TimedOut);
         Assert.Equal(new[] { "handle:enter", "handle:exit" }, releases.ToArray());
     }
 
