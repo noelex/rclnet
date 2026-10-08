@@ -104,13 +104,9 @@ public interface IRclClient<TRequest, TResponse> : IRclObject
     /// <param name="cancellationToken">A <paramref name="cancellationToken"/> to cancel the request.</param>
     /// <returns>A <see cref="RosMessageBuffer"/> containing the response message.</returns>
     /// <remarks>
-    /// This method does not take the ownership of the <paramref name="request"/> and response <see cref="RosMessageBuffer"/>.
-    /// It's the caller's responsibility to make sure these buffers are disposed appropiately.
-    /// <para>
-    /// In contrast to overloads taking <typeparamref name="TRequest"/> and returning <typeparamref name="TResponse"/>,
-    /// this method performs neither managed heap allocation nor buffer copying to send or receive messages, thus can achieve
-    /// higher throughput, especially when the service call is frequently performed or the message contains complex fields.
-    /// </para>
+    /// The request is borrowed only until this method returns its task; it must remain valid and unmodified during that call.
+    /// The request's existing ownership is unchanged; an owner may reuse or dispose it while awaiting the response.
+    /// On successful task completion, the caller owns the returned response buffer and must dispose it exactly once.
     /// </remarks>
     Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, CancellationToken cancellationToken = default);
 
@@ -122,13 +118,9 @@ public interface IRclClient<TRequest, TResponse> : IRclObject
     /// <param name="cancellationToken">A <paramref name="cancellationToken"/> to cancel the request.</param>
     /// <returns>A <see cref="RosMessageBuffer"/> containing the response message.</returns>
     /// <remarks>
-    /// This method does not take the ownership of the <paramref name="request"/> and response <see cref="RosMessageBuffer"/>.
-    /// It's the caller's responsibility to make sure these buffers are disposed appropiately.
-    /// <para>
-    /// In contrast to overloads taking <typeparamref name="TRequest"/> and returning <typeparamref name="TResponse"/>,
-    /// this method performs neither managed heap allocation nor buffer copying to send or receive messages, thus can achieve
-    /// higher throughput, especially when the service call is frequently performed or the message contains complex fields.
-    /// </para>
+    /// The request is borrowed only until this method returns its task; it must remain valid and unmodified during that call.
+    /// The request's existing ownership is unchanged; an owner may reuse or dispose it while awaiting the response.
+    /// On successful task completion, the caller owns the returned response buffer and must dispose it exactly once.
     /// </remarks>
     Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, int timeoutMilliseconds, CancellationToken cancellationToken = default);
 
@@ -140,13 +132,9 @@ public interface IRclClient<TRequest, TResponse> : IRclObject
     /// <param name="cancellationToken">A <paramref name="cancellationToken"/> to cancel the request.</param>
     /// <returns>A <see cref="RosMessageBuffer"/> containing the response message.</returns>
     /// <remarks>
-    /// This method does not take the ownership of the <paramref name="request"/> and response <see cref="RosMessageBuffer"/>.
-    /// It's the caller's responsibility to make sure these buffers are disposed appropiately.
-    /// <para>
-    /// In contrast to overloads taking <typeparamref name="TRequest"/> and returning <typeparamref name="TResponse"/>,
-    /// this method performs neither managed heap allocation nor buffer copying to send or receive messages, thus can achieve
-    /// higher throughput, especially when the service call is frequently performed or the message contains complex fields.
-    /// </para>
+    /// The request is borrowed only until this method returns its task; it must remain valid and unmodified during that call.
+    /// The request's existing ownership is unchanged; an owner may reuse or dispose it while awaiting the response.
+    /// On successful task completion, the caller owns the returned response buffer and must dispose it exactly once.
     /// </remarks>
     Task<RosMessageBuffer> InvokeAsync(RosMessageBuffer request, TimeSpan timeout, CancellationToken cancellationToken = default);
 

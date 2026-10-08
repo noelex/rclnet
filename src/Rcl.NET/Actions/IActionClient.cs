@@ -69,6 +69,8 @@ public interface IActionClient<TGoal, TResult, TFeedback> : IRclObject
     /// </summary>
     /// <remarks>
     /// This method does not take the ownership of <paramref name="goalBuffer"/>.
+    /// Keep the buffer valid and unmodified until this method returns its task.
+    /// Afterward the caller may reuse it or release an owned buffer without awaiting acceptance.
     /// </remarks>
     /// <param name="goalBuffer">A <see cref="RosMessageBuffer"/> which contains the goal message.</param>
     /// <param name="cancellationToken"></param>
@@ -80,6 +82,8 @@ public interface IActionClient<TGoal, TResult, TFeedback> : IRclObject
     /// </summary>
     /// <remarks>
     /// This method does not take the ownership of <paramref name="goalBuffer"/>.
+    /// Keep the buffer valid and unmodified until this method returns its task.
+    /// Afterward the caller may reuse it or release an owned buffer without awaiting acceptance.
     /// </remarks>
     /// <param name="goalBuffer">A <see cref="RosMessageBuffer"/> which contains the goal message.</param>
     /// <param name="timeoutMilliseconds">Request timeout in milliseconds.</param>
@@ -92,6 +96,8 @@ public interface IActionClient<TGoal, TResult, TFeedback> : IRclObject
     /// </summary>
     /// <remarks>
     /// This method does not take the ownership of <paramref name="goalBuffer"/>.
+    /// Keep the buffer valid and unmodified until this method returns its task.
+    /// Afterward the caller may reuse it or release an owned buffer without awaiting acceptance.
     /// </remarks>
     /// <param name="goalBuffer">A <see cref="RosMessageBuffer"/> which contains the goal message.</param>
     /// <param name="timeout">Timeout of the request.</param>

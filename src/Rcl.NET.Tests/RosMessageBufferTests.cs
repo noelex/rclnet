@@ -6,6 +6,14 @@ namespace Rcl.NET.Tests;
 public class RosMessageBufferTests
 {
     [Fact]
+    public void EmptyAndDefaultBuffersCanBeDisposedRepeatedly()
+    {
+        RosMessageBuffer.Empty.Dispose();
+        RosMessageBuffer.Empty.Dispose();
+        default(RosMessageBuffer).Dispose();
+    }
+
+    [Fact]
     public unsafe void AsRefAcceptsTheNativeAbi()
     {
         var buffer = new RosMessageBuffer(1, static (_, _) => { });

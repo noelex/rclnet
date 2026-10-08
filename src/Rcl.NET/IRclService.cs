@@ -83,11 +83,11 @@ public interface INativeServiceHandler
     /// <remarks>
     /// <para>
     /// The <paramref name="request"/> and <paramref name="response"/> buffers are only valid during the call to <see cref="ProcessRequest"/>. 
-    /// Do not store reference or try to access these buffers from outside of the method scope.
+    /// Do not retain buffer copies or native references for use after the method returns.
     /// </para>
     /// <para>
     /// Additionally, the ownership of the buffers is <i><b>NOT</b></i> transferred to this method.
-    /// Disposing these buffers may cause unexpected behavior.
+    /// The service owns and releases both buffers. The handler must not dispose them.
     /// </para>
     /// </remarks>
     /// <param name="request"></param>
@@ -138,12 +138,13 @@ public interface IConcurrentNativeServiceHandler
     /// <param name="cancellationToken">A <see cref="CancellationToken"/> which will be canceled when the corresponding <see cref="IRclService"/> is being disposed.</param>
     /// <remarks>
     /// <para>
-    /// The <paramref name="request"/> and <paramref name="response"/> buffers are only valid during the call to <see cref="ProcessRequestAsync"/>. 
-    /// Do not store reference or try to access these buffers from outside of the method scope.
+    /// The <paramref name="request"/> and <paramref name="response"/> buffers are borrowed until the returned
+    /// <see cref="Task"/> completes, including across awaits and during cancellation cleanup.
+    /// Do not retain buffer copies or native references for use after that task completes.
     /// </para>
     /// <para>
     /// Additionally, the ownership of the buffers is <i><b>NOT</b></i> transferred to this method.
-    /// Disposing these buffers may cause unexpected behavior.
+    /// The service owns and releases both buffers. The handler must not dispose them.
     /// </para>
     /// </remarks>
     Task ProcessRequestAsync(RosMessageBuffer request, RosMessageBuffer response, CancellationToken cancellationToken = default);

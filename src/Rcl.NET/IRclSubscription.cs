@@ -87,11 +87,13 @@ public interface IRclNativeSubscription : IRclSubscription
     /// But note that each message will be delivered exactly once, regardless of how many ongoing calls
     /// to this method.
     /// <para>
-    /// Additionally, ownership of the <see cref="RosMessageBuffer"/>s returned by this method are
-    /// transferred to the caller. It's the caller's responsibility to dispose the buffer when no more needed.
+    /// Each yielded buffer transfers responsibility for releasing it to the consumer, who must dispose it
+    /// exactly once when no longer needed. Ending enumeration or disposing the subscription does not release
+    /// buffers already yielded to a consumer.
     /// </para>
     /// <para>
-    /// When <see cref="SubscriptionOptions.UseLoanedMessages"/> is enabled, buffers belong to the middleware.
+    /// Without <see cref="SubscriptionOptions.UseLoanedMessages"/>, the consumer owns the allocated message memory.
+    /// When it is enabled, the middleware retains ownership of the memory and the consumer is responsible for returning the loan.
     /// Treat them as read-only and dispose each exactly once before disposing this subscription or its context.
     /// Copies share the same loan and must not be accessed or disposed after the loan is returned.
     /// Holding many loans can exhaust middleware resources.

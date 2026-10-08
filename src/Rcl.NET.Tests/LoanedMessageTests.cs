@@ -63,10 +63,7 @@ public class LoanedMessageTests
         }
         finally
         {
-            if (!message.IsEmpty)
-            {
-                message.Dispose();
-            }
+            message.Dispose();
         }
 
         Assert.True(await received);
@@ -116,10 +113,7 @@ public class LoanedMessageTests
                 }
                 finally
                 {
-                    if (!message.IsEmpty)
-                    {
-                        message.Dispose();
-                    }
+                    message.Dispose();
                 }
             }
             else

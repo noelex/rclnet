@@ -6,8 +6,9 @@ namespace Rcl.Actions;
 /// Represents the result of an action goal.
 /// </summary>
 /// <remarks>
-/// The ownership of the <see cref="RosMessageBuffer"/> is transfered to the caller. It's the caller's
-/// responsibility to make sure that the buffer is disposed when no longer needed, if the result is successful.
+/// For a successful result, ownership of <see cref="Result"/> transfers to the caller, who must dispose it exactly once
+/// when no longer needed. Unsuccessful results contain an empty buffer, which can be disposed safely.
+/// Copies of this result share the same buffer and do not create additional owners.
 /// </remarks>
 /// <param name="Status">Status of the action goal.</param>
 /// <param name="Result">

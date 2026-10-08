@@ -220,7 +220,11 @@ public interface IRclNode : IRclObject
     /// </summary>
     /// <typeparam name="TService">Type of the service.</typeparam>
     /// <param name="serviceName"></param>
-    /// <param name="handler"></param>
+    /// <param name="handler">
+    /// A callback that borrows the request and response buffers until it returns.
+    /// The service owns and releases both buffers; the callback must not dispose them or retain their copies
+    /// or native references for later use. See <see cref="INativeServiceHandler.ProcessRequest"/>.
+    /// </param>
     /// <param name="options">
     /// <see cref="ServerOptions"/> to be used for the server.
     /// Defaults to <see cref="ServerOptions.Default"/>.
@@ -258,7 +262,12 @@ public interface IRclNode : IRclObject
     /// </summary>
     /// <typeparam name="TService">Type of the service.</typeparam>
     /// <param name="serviceName">The name of the service.</param>
-    /// <param name="handler">A callback for processing service requests.</param>
+    /// <param name="handler">
+    /// A callback that borrows the request and response buffers until its returned task completes,
+    /// including across awaits and during cancellation cleanup. The service owns and releases both buffers;
+    /// the callback must not dispose them or retain their copies or native references after completion.
+    /// See <see cref="IConcurrentNativeServiceHandler.ProcessRequestAsync"/>.
+    /// </param>
     /// <param name="options">
     /// <see cref="ServerOptions"/> to be used for the server.
     /// Defaults to <see cref="ServerOptions.Default"/>.
