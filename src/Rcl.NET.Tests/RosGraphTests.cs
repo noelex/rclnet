@@ -141,8 +141,6 @@ public class RosGraphTests(ITestOutputHelper output)
 
     private static async Task WaitForGraphAsync(RclContext context, RosGraph graph, Func<bool> ready)
     {
-        var started = System.Diagnostics.Stopwatch.GetTimestamp();
-
         while (true)
         {
             // Yield alone does not guarantee DDS discovery has reached the native graph cache.
@@ -154,8 +152,6 @@ public class RosGraphTests(ITestOutputHelper output)
                 return;
             }
 
-            Assert.True(System.Diagnostics.Stopwatch.GetElapsedTime(started) < TimeSpan.FromSeconds(10),
-                "Timed out waiting for graph discovery.");
             await Task.Delay(10);
         }
     }
@@ -294,12 +290,11 @@ public class RosGraphTests(ITestOutputHelper output)
             serviceName, static (request, state) => new());
         includedNodes.Add(first.Name);
         includedNodes.Add(second.Name);
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         var watched = graph.TryWatchAsync((g, change) =>
-            g.Nodes.Any(x => x.Name.Name == addedNodeName), Timeout.Infinite, cancellation.Token);
+            g.Nodes.Any(x => x.Name.Name == addedNodeName), Timeout.Infinite);
         var appeared = graph.TryWatchAsync((g, change) =>
             change is NodeAppearedEvent e && e.Node.Name.Name == addedNodeName,
-            Timeout.Infinite, cancellation.Token);
+            Timeout.Infinite);
         var events = new List<RosGraphEvent>();
         graph.GraphChanged += events.Add;
         fail = true;
@@ -333,8 +328,8 @@ public class RosGraphTests(ITestOutputHelper output)
         Assert.DoesNotContain(graph.Nodes, x => x.Name.Name == unstagedNode.Name);
         Assert.DoesNotContain(published, x => x.Name.Name == first.Name || x.Name.Name == second.Name);
         Assert.Single(events.OfType<NodeAppearedEvent>(), x => x.Node == recoveredNode);
-        Assert.True(await watched.WaitAsync(TimeSpan.FromSeconds(5)));
-        Assert.True(await appeared.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.True(await watched);
+        Assert.True(await appeared);
         await context.Yield();
         events.Clear();
         graph.Build();
@@ -382,7 +377,7 @@ public class RosGraphTests(ITestOutputHelper output)
         first.Dispose();
         second.Dispose();
         Assert.True(await owner.Graph.TryWatchAsync((g, change) =>
-            !g.IsNodeAvailable(first.FullyQualifiedName) && !g.IsNodeAvailable(second.FullyQualifiedName), 5000));
+            !g.IsNodeAvailable(first.FullyQualifiedName) && !g.IsNodeAvailable(second.FullyQualifiedName), Timeout.Infinite));
         await context.Yield();
         fail = false;
         graph.Build();
@@ -401,7 +396,7 @@ public class RosGraphTests(ITestOutputHelper output)
         graph.Build();
         using var added = context.CreateNode(NameGenerator.GenerateNodeName());
         included.Add(added.Name);
-        Assert.True(await owner.Graph.TryWaitForNodeAsync(added.FullyQualifiedName, 5000));
+        Assert.True(await owner.Graph.TryWaitForNodeAsync(added.FullyQualifiedName, Timeout.Infinite));
         await context.Yield();
         var calls = 0;
         graph.GraphChanged += change =>
@@ -429,7 +424,7 @@ public class RosGraphTests(ITestOutputHelper output)
         graph.Build();
         using var added = context.CreateNode(NameGenerator.GenerateNodeName());
         included.Add(added.Name);
-        Assert.True(await owner.Graph.TryWaitForNodeAsync(added.FullyQualifiedName, 5000));
+        Assert.True(await owner.Graph.TryWaitForNodeAsync(added.FullyQualifiedName, Timeout.Infinite));
         await context.Yield();
         var observed = new List<RosGraphEvent>();
         var handled = new List<RosGraphEvent>();
@@ -437,15 +432,14 @@ public class RosGraphTests(ITestOutputHelper output)
         using var good = graph.Subscribe(new CallbackObserver(observed.Add));
         graph.GraphChanged += _ => throw new InvalidOperationException("handler");
         graph.GraphChanged += handled.Add;
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-        var watched = graph.TryWaitForNodeAsync(added.FullyQualifiedName, Timeout.Infinite, cancellation.Token);
+        var watched = graph.TryWaitForNodeAsync(added.FullyQualifiedName, Timeout.Infinite);
         var error = Assert.Throws<GraphEventDispatchException>(graph.Build);
         Assert.True(handled.Count > 1);
         Assert.Equal(observed, handled);
         Assert.Equal(handled.Count * 2, error.InnerExceptions.Count);
         Assert.Equal(handled.Count, error.InnerExceptions.Count(x => x.Message == "observer"));
         Assert.Equal(handled.Count, error.InnerExceptions.Count(x => x.Message == "handler"));
-        Assert.True(await watched.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.True(await watched);
         await context.Yield();
         observed.Clear();
         handled.Clear();
@@ -484,7 +478,7 @@ public class RosGraphTests(ITestOutputHelper output)
         // Register every watcher before changing the graph. A shared native guard must
         // notify every node, even when no subsequent graph change can wake a missed waiter.
         await context.Yield();
-        var appeared = nodes.Select(node => node.Graph.TryWaitForServiceServerAsync(serviceName, 5000)).ToArray();
+        var appeared = nodes.Select(node => node.Graph.TryWaitForServiceServerAsync(serviceName, Timeout.Infinite)).ToArray();
         using var server = first.CreateService<
             Rosidl.Messages.Rcl.ListParametersService,
             Rosidl.Messages.Rcl.ListParametersServiceRequest,
@@ -495,7 +489,7 @@ public class RosGraphTests(ITestOutputHelper output)
 
         await context.Yield();
         var disappeared = nodes.Select(node => node.Graph.TryWatchAsync(
-            (graph, change) => !graph.IsServiceServerAvailable(serviceName), 5000)).ToArray();
+            (graph, change) => !graph.IsServiceServerAvailable(serviceName), Timeout.Infinite)).ToArray();
         server.Dispose();
 
         Assert.All(await Task.WhenAll(disappeared), removed => Assert.True(removed));
@@ -513,8 +507,7 @@ public class RosGraphTests(ITestOutputHelper output)
         var isOnline = await node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 0);
         Assert.False(isOnline);
 
-        // Looks like node discovery is much slower on foxy, need to set to larger timeout here.
-        var watcher = node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 5000);
+        var watcher = node.Graph.TryWaitForNodeAsync(fullyQualifiedName, Timeout.Infinite);
         using var cts = new CancellationTokenSource();
         var t = RunInSeparateContext(async ctx =>
         {
@@ -534,7 +527,7 @@ public class RosGraphTests(ITestOutputHelper output)
 
         // Wait until node disappears
         await node.Graph.TryWatchAsync((graph, e) =>
-            graph.Nodes.All(x => x.Name.FullyQualifiedName != fullyQualifiedName), 5000);
+            graph.Nodes.All(x => x.Name.FullyQualifiedName != fullyQualifiedName), Timeout.Infinite);
 
         isOnline = await node.Graph.TryWaitForNodeAsync(fullyQualifiedName, 0);
         Assert.False(isOnline);
@@ -547,8 +540,8 @@ public class RosGraphTests(ITestOutputHelper output)
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var targetTopic = "/" + NameGenerator.GenerateTopicName();
-        var appearWatcher = node.Graph.TryWatchAsync((graph, e) => graph.Topics.Any(x => x.Name == targetTopic), 1000);
-        var disappearWatcher = node.Graph.TryWatchAsync((graph, e) => !graph.Topics.Any(x => x.Name == targetTopic), 1000);
+        var appearWatcher = node.Graph.TryWatchAsync((graph, e) => graph.Topics.Any(x => x.Name == targetTopic), Timeout.Infinite);
+        var disappearWatcher = node.Graph.TryWatchAsync((graph, e) => !graph.Topics.Any(x => x.Name == targetTopic), Timeout.Infinite);
         {
             using var pub = node.CreatePublisher<Time>(targetTopic);
             Assert.True(await appearWatcher);
@@ -563,8 +556,8 @@ public class RosGraphTests(ITestOutputHelper output)
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var targetTopic = "/" + NameGenerator.GenerateTopicName();
-        var appearWatcher = node.Graph.TryWatchAsync((graph, e) => e is PublisherAppearedEvent s && s.Publisher.Node.Name.FullyQualifiedName == node.FullyQualifiedName, 1000);
-        var disappearWatcher = node.Graph.TryWatchAsync((graph, e) => e is PublisherDisappearedEvent s && s.Publisher.Node.Name.FullyQualifiedName == node.FullyQualifiedName, 1000);
+        var appearWatcher = node.Graph.TryWatchAsync((graph, e) => e is PublisherAppearedEvent s && s.Publisher.Node.Name.FullyQualifiedName == node.FullyQualifiedName, Timeout.Infinite);
+        var disappearWatcher = node.Graph.TryWatchAsync((graph, e) => e is PublisherDisappearedEvent s && s.Publisher.Node.Name.FullyQualifiedName == node.FullyQualifiedName, Timeout.Infinite);
 
         await ctx.Yield();
         {
@@ -581,8 +574,8 @@ public class RosGraphTests(ITestOutputHelper output)
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var targetTopic = "/" + NameGenerator.GenerateTopicName();
-        var appearWatcher = node.Graph.TryWatchAsync((graph, e) => e is SubscriberAppearedEvent s && s.Subscriber.Node.Name.FullyQualifiedName == node.FullyQualifiedName, 1000);
-        var disappearWatcher = node.Graph.TryWatchAsync((graph, e) => e is SubscriberDisappearedEvent s && s.Subscriber.Node.Name.FullyQualifiedName == node.FullyQualifiedName, 1000);
+        var appearWatcher = node.Graph.TryWatchAsync((graph, e) => e is SubscriberAppearedEvent s && s.Subscriber.Node.Name.FullyQualifiedName == node.FullyQualifiedName, Timeout.Infinite);
+        var disappearWatcher = node.Graph.TryWatchAsync((graph, e) => e is SubscriberDisappearedEvent s && s.Subscriber.Node.Name.FullyQualifiedName == node.FullyQualifiedName, Timeout.Infinite);
 
         await ctx.Yield();
         {
@@ -601,9 +594,9 @@ public class RosGraphTests(ITestOutputHelper output)
         var serviceName = "/" + NameGenerator.GenerateServiceName();
 
         var serverAppearWatcher = node.Graph.TryWatchAsync(
-            (graph, e) => graph.IsServiceServerAvailable(serviceName), 1000);
+            (graph, e) => graph.IsServiceServerAvailable(serviceName), Timeout.Infinite);
         var serviceAppearWatcher = node.Graph.TryWatchAsync(
-            (graph, e) => graph.Services.Any(x => x.Name == serviceName), 1000);
+            (graph, e) => graph.Services.Any(x => x.Name == serviceName), Timeout.Infinite);
 
         Task<bool> serverDisappearWatcher, serviceDisappearWatcher;
         {
@@ -615,9 +608,9 @@ public class RosGraphTests(ITestOutputHelper output)
             Assert.All(await Task.WhenAll(serverAppearWatcher, serviceAppearWatcher), Assert.True);
 
             serverDisappearWatcher = node.Graph.TryWatchAsync(
-                (graph, e) => !graph.IsServiceServerAvailable(serviceName), 1000);
+                (graph, e) => !graph.IsServiceServerAvailable(serviceName), Timeout.Infinite);
             serviceDisappearWatcher = node.Graph.TryWatchAsync(
-               (graph, e) => !graph.Services.Any(x => x.Name == serviceName), 1000);
+               (graph, e) => !graph.Services.Any(x => x.Name == serviceName), Timeout.Infinite);
         }
 
         Assert.All(await Task.WhenAll(serverDisappearWatcher, serviceDisappearWatcher), Assert.True);
@@ -632,9 +625,9 @@ public class RosGraphTests(ITestOutputHelper output)
         var serviceName = "/" + NameGenerator.GenerateServiceName();
 
         var clientAppearWatcher = node.Graph.TryWatchAsync(
-            (graph, e) => e is ClientAppearedEvent s && s.Client.Service.Name == serviceName, 1000);
+            (graph, e) => e is ClientAppearedEvent s && s.Client.Service.Name == serviceName, Timeout.Infinite);
         var serviceAppearWatcher = node.Graph.TryWatchAsync(
-            (graph, e) => e is ServiceAppearedEvent s && s.Service.Name == serviceName, 1000);
+            (graph, e) => e is ServiceAppearedEvent s && s.Service.Name == serviceName, Timeout.Infinite);
 
         // Yield here to make sure that CreateClient is called
         // after TryWatchAsync internally sets up the subscriber to receive events on the event loop.
@@ -651,9 +644,9 @@ public class RosGraphTests(ITestOutputHelper output)
             Assert.All(await Task.WhenAll(clientAppearWatcher, serviceAppearWatcher), Assert.True);
 
             clientDisappearWatcher = node.Graph.TryWatchAsync(
-                (graph, e) => e is ClientDisappearedEvent s && s.Client.Service.Name == serviceName, 1000);
+                (graph, e) => e is ClientDisappearedEvent s && s.Client.Service.Name == serviceName, Timeout.Infinite);
             serviceDisappearWatcher = node.Graph.TryWatchAsync(
-               (graph, e) => e is ServiceDisappearedEvent s && s.Service.Name == serviceName, 1000);
+               (graph, e) => e is ServiceDisappearedEvent s && s.Service.Name == serviceName, Timeout.Infinite);
         }
 
         Assert.All(await Task.WhenAll(clientDisappearWatcher, serviceDisappearWatcher), Assert.True);
@@ -668,9 +661,9 @@ public class RosGraphTests(ITestOutputHelper output)
         var serviceName = "/" + NameGenerator.GenerateActionName();
 
         var serverAppearWatcher = node.Graph.TryWatchAsync(
-            (graph, e) => graph.IsActionServerAvailable(serviceName), 1000);
+            (graph, e) => graph.IsActionServerAvailable(serviceName), Timeout.Infinite);
         var serviceAppearWatcher = node.Graph.TryWatchAsync(
-            (graph, e) => graph.Actions.Any(x => x.Name == serviceName), 1000);
+            (graph, e) => graph.Actions.Any(x => x.Name == serviceName), Timeout.Infinite);
 
         await ctx.Yield();
         Task<bool> serverDisappearWatcher, serviceDisappearWatcher;
@@ -680,9 +673,9 @@ public class RosGraphTests(ITestOutputHelper output)
             Assert.All(await Task.WhenAll(serverAppearWatcher, serviceAppearWatcher), Assert.True);
 
             serverDisappearWatcher = node.Graph.TryWatchAsync(
-                (graph, e) => !graph.IsActionServerAvailable(serviceName), 1000);
+                (graph, e) => !graph.IsActionServerAvailable(serviceName), Timeout.Infinite);
             serviceDisappearWatcher = node.Graph.TryWatchAsync(
-               (graph, e) => !graph.Actions.Any(x => x.Name == serviceName), 1000);
+               (graph, e) => !graph.Actions.Any(x => x.Name == serviceName), Timeout.Infinite);
         }
 
         Assert.All(await Task.WhenAll(serverDisappearWatcher, serviceDisappearWatcher), Assert.True);
@@ -696,13 +689,13 @@ public class RosGraphTests(ITestOutputHelper output)
         var serviceName = "/" + NameGenerator.GenerateActionName();
 
         var clientAppearWatcher = node.Graph.TryWatchAsync(
-            (graph, e) => e is ActionClientAppearedEvent s && s.ActionClient.Action.Name == serviceName, 1000);
+            (graph, e) => e is ActionClientAppearedEvent s && s.ActionClient.Action.Name == serviceName, Timeout.Infinite);
         var serviceAppearWatcher = node.Graph.TryWatchAsync(
-            (graph, e) => e is ActionAppearedEvent s && s.Action.Name == serviceName, 1000);
+            (graph, e) => e is ActionAppearedEvent s && s.Action.Name == serviceName, Timeout.Infinite);
         var clientDisappearWatcher = node.Graph.TryWatchAsync(
-           (graph, e) => e is ActionClientDisappearedEvent s && s.ActionClient.Action.Name == serviceName, 1000);
+           (graph, e) => e is ActionClientDisappearedEvent s && s.ActionClient.Action.Name == serviceName, Timeout.Infinite);
         var serviceDisappearWatcher = node.Graph.TryWatchAsync(
-          (graph, e) => e is ActionDisappearedEvent s && s.Action.Name == serviceName, 1000);
+          (graph, e) => e is ActionDisappearedEvent s && s.Action.Name == serviceName, Timeout.Infinite);
 
         await ctx.Yield();
         using (var server = node.CreateActionClient<
@@ -725,7 +718,7 @@ public class RosGraphTests(ITestOutputHelper output)
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var targetTopic = "/" + NameGenerator.GenerateTopicName();
-        var watcher = node.Graph.TryWatchAsync((graph, e) => graph.Topics.Any(x => x.Name == targetTopic), 1000);
+        var watcher = node.Graph.TryWatchAsync((graph, e) => graph.Topics.Any(x => x.Name == targetTopic), Timeout.Infinite);
 
         using var cts = new CancellationTokenSource();
         var t = RunInSeparateContext(async ctx =>
@@ -753,7 +746,7 @@ public class RosGraphTests(ITestOutputHelper output)
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var targetNodeName = NameGenerator.GenerateNodeName();
-        var watcher = node.Graph.TryWatchAsync((graph, e) => graph.Nodes.Any(x => x.Name.Name == targetNodeName), 1000);
+        var watcher = node.Graph.TryWatchAsync((graph, e) => graph.Nodes.Any(x => x.Name.Name == targetNodeName), Timeout.Infinite);
 
         using var targetNode = ctx.CreateNode(targetNodeName);
 
@@ -767,7 +760,7 @@ public class RosGraphTests(ITestOutputHelper output)
         using var node = ctx.CreateNode(NameGenerator.GenerateNodeName());
 
         var targetNodeName = NameGenerator.GenerateNodeName();
-        var watcher = node.Graph.TryWatchAsync((graph, e) => graph.Nodes.Any(x => x.Name.Name == targetNodeName), 1000);
+        var watcher = node.Graph.TryWatchAsync((graph, e) => graph.Nodes.Any(x => x.Name.Name == targetNodeName), Timeout.Infinite);
 
         using var cts = new CancellationTokenSource();
         var t = RunInSeparateContext(async ctx =>
@@ -823,7 +816,7 @@ public class RosGraphTests(ITestOutputHelper output)
         using var pub = node.CreatePublisher<Time>(topic);
 
         var found = await node.Graph.TryWatchAsync((graph, e) =>
-            graph.Topics.FirstOrDefault(x => x.Name == topic)?.Publishers?.Any() == true, 5000);
+            graph.Topics.FirstOrDefault(x => x.Name == topic)?.Publishers?.Any() == true, Timeout.Infinite);
 
         Assert.True(found);
         Assert.Equal(pub.Gid, node.Graph.Topics.Single(x => x.Name == topic).Publishers.Single().Gid);

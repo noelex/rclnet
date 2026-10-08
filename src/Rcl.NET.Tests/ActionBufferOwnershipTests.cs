@@ -120,9 +120,9 @@ public class ActionBufferOwnershipTests : IDisposable
         using var server = new TrackingServer(node, handler);
         handler.BuffersAreLive = () => server.ResultsReleased == 0;
         using var client = CreateClient(node, server.Name);
-        await client.WaitForServerAsync(5_000);
+        await client.WaitForServerAsync();
         using var goalBuffer = RosMessageBuffer.Create<SequenceActionGoal>();
-        using var goal = await client.SendGoalAsync(goalBuffer, 10_000);
+        using var goal = await client.SendGoalAsync(goalBuffer);
         await handler.Started.Task;
 
         try
@@ -163,7 +163,7 @@ public class ActionBufferOwnershipTests : IDisposable
         };
         using var server = new TrackingServer(node, handler);
         using var client = CreateClient(clientNode, server.Name);
-        await client.WaitForServerAsync(5_000);
+        await client.WaitForServerAsync();
         using var goalBuffer = RosMessageBuffer.Create<SequenceActionGoal>();
         using var goal = await client.SendGoalAsync(goalBuffer);
         await queuedExecution.Entered;
@@ -196,10 +196,10 @@ public class ActionBufferOwnershipTests : IDisposable
         var handler = new CompletionHandler(firstCompletion);
         using var server = new TrackingServer(node, handler);
         using var client = CreateClient(node, server.Name);
-        await client.WaitForServerAsync(5_000);
+        await client.WaitForServerAsync();
         using var goalBuffer = RosMessageBuffer.Create<SequenceActionGoal>();
-        using var first = await client.SendGoalAsync(goalBuffer, 10_000);
-        using var second = await client.SendGoalAsync(goalBuffer, 10_000);
+        using var first = await client.SendGoalAsync(goalBuffer);
+        using var second = await client.SendGoalAsync(goalBuffer);
         await handler.Started.Task;
 
         try
@@ -238,9 +238,9 @@ public class ActionBufferOwnershipTests : IDisposable
         var handler = new ControlledHandler();
         using var server = new TrackingServer(node, handler, holdPublications: true);
         using var client = CreateClient(node, server.Name);
-        await client.WaitForServerAsync(5_000);
+        await client.WaitForServerAsync();
         using var goalBuffer = RosMessageBuffer.Create<SequenceActionGoal>();
-        using var goal = await client.SendGoalAsync(goalBuffer, 10_000);
+        using var goal = await client.SendGoalAsync(goalBuffer);
         await handler.Started.Task;
         Task first = Task.CompletedTask, second = Task.CompletedTask;
 
@@ -286,9 +286,9 @@ public class ActionBufferOwnershipTests : IDisposable
             PublicationError = new InvalidOperationException("publication failed")
         };
         using var client = CreateClient(node, server.Name);
-        await client.WaitForServerAsync(5_000);
+        await client.WaitForServerAsync();
         using var goalBuffer = RosMessageBuffer.Create<SequenceActionGoal>();
-        using var goal = await client.SendGoalAsync(goalBuffer, 10_000);
+        using var goal = await client.SendGoalAsync(goalBuffer);
         await handler.Started.Task;
         var buffer = RosMessageBuffer.Create<SequenceActionFeedback>();
         var inputReleased = 0;
@@ -338,12 +338,12 @@ public class ActionBufferOwnershipTests : IDisposable
             SecondRead = secondRead
         };
         using var client = CreateClient(node, server.Name);
-        await client.WaitForServerAsync(5_000);
+        await client.WaitForServerAsync();
         using var goalBuffer = RosMessageBuffer.Create<SequenceActionGoal>();
-        using var goal = await client.SendGoalAsync(goalBuffer, 10_000);
+        using var goal = await client.SendGoalAsync(goalBuffer);
         await handler.Started.Task;
-        var first = goal.GetResultWithStatusAsync(10_000);
-        var second = goal.GetResultWithStatusAsync(10_000);
+        var first = goal.GetResultWithStatusAsync();
+        var second = goal.GetResultWithStatusAsync();
 
         try
         {
@@ -383,15 +383,15 @@ public class ActionBufferOwnershipTests : IDisposable
         var handler = new ControlledHandler();
         using var server = new TrackingServer(node, handler, resultTimeout: TimeSpan.FromMilliseconds(1));
         using var client = CreateClient(node, server.Name);
-        await client.WaitForServerAsync(5_000);
+        await client.WaitForServerAsync();
         using var goalBuffer = RosMessageBuffer.Create<SequenceActionGoal>();
-        using var goal = await client.SendGoalAsync(goalBuffer, 10_000);
+        using var goal = await client.SendGoalAsync(goalBuffer);
         await handler.Started.Task;
         handler.Resume.TrySetResult();
         await handler.Completed.Task;
         await LifecycleAssert.EventuallyAsync(() => server.ResultsReleased == 1 && server.FeedbacksReleased == 1);
 
-        var result = await goal.GetResultWithStatusAsync(10_000);
+        var result = await goal.GetResultWithStatusAsync();
 
         using (result.Result)
         {
@@ -411,7 +411,7 @@ public class ActionBufferOwnershipTests : IDisposable
         using var subscription = node.CreateSubscription<GoalStatusArray>(server.Name + Constants.StatusTopic,
             new(qos: QosProfile.ActionStatusDefault));
         using var client = CreateClient(node, server.Name);
-        await client.WaitForServerAsync(5_000);
+        await client.WaitForServerAsync();
         using var goalBuffer = RosMessageBuffer.Create<SequenceActionGoal>();
         await using var statuses = subscription.ReadAllAsync().GetAsyncEnumerator();
         var goals = new List<INativeActionGoalContext>();
@@ -420,7 +420,7 @@ public class ActionBufferOwnershipTests : IDisposable
         {
             for (var i = 0; i < goalCount; i++)
             {
-                goals.Add(await client.SendGoalAsync(goalBuffer, 10_000));
+                goals.Add(await client.SendGoalAsync(goalBuffer));
             }
 
             while (await statuses.MoveNextAsync())

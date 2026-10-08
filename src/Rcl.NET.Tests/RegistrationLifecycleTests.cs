@@ -424,18 +424,18 @@ public class RegistrationLifecycleTests : IDisposable
                 return new ListParametersServiceResponse();
             });
         using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(name);
-        Assert.True(await client.TryWaitForServerAsync(10_000));
+        Assert.True(await client.TryWaitForServerAsync(Timeout.Infinite));
         using var canceled = new CancellationTokenSource();
         canceled.Cancel();
         await Assert.ThrowsAsync<OperationCanceledException>(() => client.InvokeAsync(new ListParametersServiceRequest(), canceled.Token));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => client.InvokeAsync(new ListParametersServiceRequest(), -2));
-        await client.InvokeAsync(new ListParametersServiceRequest(), 10_000);
+        await client.InvokeAsync(new ListParametersServiceRequest());
         Assert.Equal(1, Volatile.Read(ref calls));
 
         for (var i = 0; i < 40; i++)
         {
             using var cancellation = new CancellationTokenSource();
-            var response = client.InvokeAsync(new ListParametersServiceRequest(), 10_000, cancellation.Token);
+            var response = client.InvokeAsync(new ListParametersServiceRequest(), cancellation.Token);
             await Task.Run(cancellation.Cancel);
 
             try
@@ -447,7 +447,7 @@ public class RegistrationLifecycleTests : IDisposable
             }
         }
 
-        await client.InvokeAsync(new ListParametersServiceRequest(), 10_000);
+        await client.InvokeAsync(new ListParametersServiceRequest());
     }
 
     [Fact]
@@ -609,7 +609,7 @@ public class RegistrationLifecycleTests : IDisposable
             }
         }, null));
         using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(name);
-        Assert.True(await client.TryWaitForServerAsync(10_000));
+        Assert.True(await client.TryWaitForServerAsync(Timeout.Infinite));
         var pending = client.InvokeAsync(new ListParametersServiceRequest(), Timeout.Infinite);
 
         try

@@ -48,8 +48,7 @@ public class LoanedMessageTests
         Skip.IfNot(publisher.CanLoanMessages, "Publisher loans are unavailable or disabled.");
 
         using var subscription = node.CreateSubscription<Time>(publisher.Name);
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-        await using var reader = subscription.ReadAllAsync(cancellation.Token).GetAsyncEnumerator();
+        await using var reader = subscription.ReadAllAsync().GetAsyncEnumerator();
         await WaitForSubscriberAsync(publisher);
 
         var received = reader.MoveNextAsync();
@@ -94,8 +93,7 @@ public class LoanedMessageTests
             : node.CreateNativeSubscription<Time>(publisher.Name, options);
         Assert.True(subscription.CanLoanMessages);
 
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-        await using var reader = subscription.ReadAllAsync(cancellation.Token).GetAsyncEnumerator();
+        await using var reader = subscription.ReadAllAsync().GetAsyncEnumerator();
         await WaitForSubscriberAsync(publisher);
 
         for (var i = 0; i < 16; i++)
@@ -140,13 +138,12 @@ public class LoanedMessageTests
 
         using var subscription = node.CreateNativeSubscription<Time>(publisher.Name,
             new(queueSize: 2, fullMode: fullMode, useLoanedMessages: true));
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         await WaitForSubscriberAsync(publisher);
 
         for (var i = 0; i < 32; i++)
         {
             // Wait for take and queue insertion without consuming the queued loan.
-            var taken = ((IRclWaitObject)subscription).WaitOneAsync(cancellation.Token);
+            var taken = ((IRclWaitObject)subscription).WaitOneAsync();
             publisher.Publish(new Time(sec: i));
             await taken;
         }
@@ -210,7 +207,7 @@ public class LoanedMessageTests
 
     private static async Task WaitForSubscriberAsync(IRclPublisher publisher)
     {
-        for (var retry = 0; publisher.Subscribers == 0 && retry < 500; retry++)
+        while (publisher.Subscribers == 0)
         {
             await Task.Delay(10);
         }

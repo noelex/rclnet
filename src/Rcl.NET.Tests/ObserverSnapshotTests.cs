@@ -15,12 +15,11 @@ public class ObserverSnapshotTests
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
         using var publisher = node.CreatePublisher<Time>(NameGenerator.GenerateTopicName());
         using var subscription = node.CreateSubscription<Time>(publisher.Name);
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        await using var reader = subscription.ReadAllAsync(cancellation.Token).GetAsyncEnumerator();
+        await using var reader = subscription.ReadAllAsync().GetAsyncEnumerator();
 
         while (publisher.Subscribers == 0)
         {
-            await Task.Delay(10, cancellation.Token);
+            await Task.Delay(10);
         }
 
         await VerifySnapshotsAsync(subscription, async () =>

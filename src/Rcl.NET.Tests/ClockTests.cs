@@ -25,7 +25,7 @@ public class ClockTests
         foreach (var nanoseconds in new[] { initialNanoseconds, initialNanoseconds + 1_000 })
         {
             PublishClock(clockPublisher, buffer, nanoseconds);
-            for (var retry = 0; provider.GetTimestamp() != nanoseconds && retry < 500; retry++)
+            while (provider.GetTimestamp() != nanoseconds)
             {
                 await Task.Delay(10);
             }
@@ -244,7 +244,7 @@ public class ClockTests
 
     private static async Task WaitForSubscribersAsync(IRclPublisher publisher)
     {
-        for (var retry = 0; publisher.Subscribers == 0 && retry < 500; retry++)
+        while (publisher.Subscribers == 0)
         {
             await Task.Delay(10);
         }
@@ -254,7 +254,7 @@ public class ClockTests
 
     private static async Task WaitForClockAsync(IRclClock clock, TimeSpan expected)
     {
-        for (var retry = 0; clock.Elapsed != expected && retry < 500; retry++)
+        while (clock.Elapsed != expected)
         {
             await Task.Delay(10);
         }

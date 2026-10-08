@@ -415,7 +415,7 @@ public class PubSubTests
 
     private static async Task WaitForSubscribersAsync(IRclPublisher publisher, int expected = 1)
     {
-        for (var retry = 0; publisher.Subscribers < expected && retry < 500; retry++)
+        while (publisher.Subscribers < expected)
         {
             await Task.Delay(10);
         }

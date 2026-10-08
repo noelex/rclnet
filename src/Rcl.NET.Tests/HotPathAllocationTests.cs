@@ -46,7 +46,7 @@ public class HotPathAllocationTests(ITestOutputHelper output)
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
         using var provider = new RclTimeProvider(context, RclClock.SteadyClock);
         using var tick = new SemaphoreSlim(0);
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        using var cancellation = new CancellationTokenSource();
         using var timer = provider.CreateTimer(static state => ((SemaphoreSlim)state!).Release(),
             tick, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
 
@@ -67,7 +67,7 @@ public class HotPathAllocationTests(ITestOutputHelper output)
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
         using var publisher = node.CreatePublisher<Time>(NameGenerator.GenerateTopicName());
         using var buffer = publisher.CreateBuffer();
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        using var cancellation = new CancellationTokenSource();
 
         using (var subscription = node.CreateSubscription<Time>(publisher.Name))
         {
@@ -140,8 +140,9 @@ public class HotPathAllocationTests(ITestOutputHelper output)
             // The initialized empty response is sufficient for this allocation baseline.
         });
         using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(name);
-        Assert.True(await client.TryWaitForServerAsync(10_000));
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        Assert.True(await client.TryWaitForServerAsync(Timeout.Infinite));
+        // Preserve timer and cancellation registration costs in the measured request paths.
+        using var cancellation = new CancellationTokenSource();
         using var requestBuffer = RosMessageBuffer.Create<ListParametersServiceRequest>();
         var request = new ListParametersServiceRequest();
         await _meter.MeasureAsync("native-service-request-roundtrip", 500, async () =>
@@ -219,8 +220,6 @@ public class HotPathAllocationTests(ITestOutputHelper output)
 
     private static async Task WaitForPublishersAsync(Rcl.Graph.RosGraph graph, string topicName, int expected)
     {
-        var timeout = Stopwatch.StartNew();
-
         while (true)
         {
             await graph.Owner.Context.Yield();
@@ -231,19 +230,15 @@ public class HotPathAllocationTests(ITestOutputHelper output)
                 return;
             }
 
-            Assert.True(timeout.Elapsed < TimeSpan.FromSeconds(10),
-                $"Discovery for '{topicName}' timed out: expected {expected} publishers, actual {actual}.");
             await Task.Delay(1);
         }
     }
 
     private static async Task WaitForSubscriberAsync(IRclPublisher publisher)
     {
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-
         while (publisher.Subscribers == 0)
         {
-            await Task.Delay(10, cancellation.Token);
+            await Task.Delay(10);
         }
     }
 

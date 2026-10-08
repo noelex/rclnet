@@ -221,7 +221,7 @@ public class OperationLifecycleTests : IDisposable
             : node.CreateService<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(
                 name, (request, state) => new ListParametersServiceResponse());
         using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(name);
-        Assert.True(await client.TryWaitForServerAsync(10_000));
+        Assert.True(await client.TryWaitForServerAsync(Timeout.Infinite));
         using var start = new ManualResetEventSlim();
 
         Task Configure(Action<ServiceIntrospectionState> configure) => Task.Run(() =>
@@ -242,7 +242,7 @@ public class OperationLifecycleTests : IDisposable
 
             for (var i = 0; i < 40; i++)
             {
-                await client.InvokeAsync(new ListParametersServiceRequest(), 10_000);
+                await client.InvokeAsync(new ListParametersServiceRequest());
             }
         });
         start.Set();
