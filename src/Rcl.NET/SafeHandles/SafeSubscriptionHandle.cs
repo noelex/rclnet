@@ -121,6 +121,11 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
     {
         var opts = RclIron.rcl_subscription_get_default_options();
 
+        if (options.UseLoanedMessages)
+        {
+            opts.disable_loaned_message = false;
+        }
+
         opts.qos = options.Qos.ToRmwQosProfile();
         opts.rmw_subscription_options.ignore_local_publications = options.IgnoreLocalPublications;
         opts.rmw_subscription_options.require_unique_network_flow_endpoints =
@@ -171,6 +176,11 @@ unsafe class SafeSubscriptionHandle : RclObjectHandle<rcl_subscription_t>
     private void InitLyrical(byte* name, TypeSupportHandle typeSupport, SubscriptionOptions options)
     {
         var opts = RclLyrical.rcl_subscription_get_default_options();
+
+        if (options.UseLoanedMessages)
+        {
+            opts.disable_loaned_message = false;
+        }
 
         opts.qos = options.Qos.ToRmwQosProfile();
         opts.rmw_subscription_options.ignore_local_publications = options.IgnoreLocalPublications;

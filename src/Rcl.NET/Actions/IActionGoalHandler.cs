@@ -82,17 +82,16 @@ public interface IActionGoalController
 /// <remarks>
 /// The controller will NOT take the ownership of feedback message buffers passed to
 /// <see cref="IProgress{RosMessageBuffer}.Report(RosMessageBuffer)"/> and <see cref="ReportAsync(RosMessageBuffer, CancellationToken)"/>.
+/// Keep the buffer valid and unmodified until the call returns. Afterward the caller may reuse it
+/// or release an owned buffer without awaiting publication. Reporting does not transfer a middleware loan.
 /// </remarks>
 public interface INativeActionGoalController : IActionGoalController, IProgress<RosMessageBuffer>
 {
     /// <summary>
     /// Report action goal feedback asynchronously.
     /// </summary>
-    /// <remarks>
-    /// This method will publish the feedback message using <see cref="IRclPublisher.PublishAsync(RosMessageBuffer)"/> asynchronously.
-    /// </remarks>
     /// <param name="buffer">An <see cref="RosMessageBuffer"/> containing the feedback message to be published.</param>
-    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the operation.</param>
+    /// <param name="cancellationToken">Cancellation is observed only during this call; it does not cancel a pending publication.</param>
     /// <returns>A <see cref="ValueTask"/> representing the completion of the asynchronous operation.</returns>
     ValueTask ReportAsync(RosMessageBuffer buffer, CancellationToken cancellationToken = default);
 }
@@ -107,10 +106,11 @@ public interface IActionGoalController<T> : IActionGoalController, IProgress<T>
     /// Report action goal feedback asynchronously.
     /// </summary>
     /// <remarks>
-    /// This method will publish the feedback message using <see cref="IRclPublisher{T}.PublishAsync(T)"/> asynchronously.
+    /// Keep the feedback object unmodified until the call returns.
+    /// Afterward the caller may modify it without awaiting publication.
     /// </remarks>
     /// <param name="feedback">Feedback message to be published.</param>
-    /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the operation.</param>
+    /// <param name="cancellationToken">Cancellation is observed only during this call; it does not cancel a pending publication.</param>
     /// <returns>A <see cref="ValueTask"/> representing the completion of the asynchronous operation.</returns>
     ValueTask ReportAsync(T feedback, CancellationToken cancellationToken = default);
 }
@@ -126,6 +126,8 @@ public interface INativeActionGoalHandler
     /// </summary>
     /// <remarks>
     /// This method is non-reentrant.
+    /// The goal is borrowed, read-only, and valid only until this call returns.
+    /// Do not dispose it or retain buffer copies or native references for later use.
     /// </remarks>
     /// <param name="id">Id of the goal.</param>
     /// <param name="goal">A <see cref="RosMessageBuffer"/> containing the goal message to be verified.</param>
@@ -160,10 +162,13 @@ public interface INativeActionGoalHandler
     /// </para>
     /// <list type="bullet">
     /// <item>
-    /// The action server allocates and owns the <paramref name="goal"/> and <paramref name="result"/> buffer.
+    /// The action server owns the <paramref name="goal"/> and <paramref name="result"/> buffers.
+    /// The handler borrows them until its returned task completes, including during cancellation or server shutdown.
+    /// Do not dispose them or retain copies or native references for use after completion.
     /// </item>
     /// <item>
-    /// The implementation is responsibile for allocating and disposing the <see cref="RosMessageBuffer"/> for reporting feedback.
+    /// The implementation is responsible for obtaining and releasing feedback buffers according to their ownership contracts.
+    /// Reporting does not transfer ownership or return loans.
     /// </item>
     /// </list>
     /// </remarks>

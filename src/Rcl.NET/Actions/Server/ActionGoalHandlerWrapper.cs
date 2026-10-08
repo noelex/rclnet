@@ -1,4 +1,5 @@
 ﻿using Rosidl.Runtime;
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace Rcl.Actions.Server;
@@ -11,7 +12,7 @@ internal class ActionGoalHandlerWrapper<TGoal, TResult, TFeedback> : INativeActi
     private readonly IActionGoalHandler<TGoal, TResult, TFeedback> _innerHandler;
     private readonly Encoding _textEncoding;
 
-    private readonly Dictionary<Guid, ActionGoalControllerWrapper> _wrappers = new();
+    private readonly ConcurrentDictionary<Guid, ActionGoalControllerWrapper> _wrappers = new();
 
     public ActionGoalHandlerWrapper(IActionGoalHandler<TGoal, TResult, TFeedback> innerHandler, Encoding textEncoding)
     {
@@ -38,10 +39,12 @@ internal class ActionGoalHandlerWrapper<TGoal, TResult, TFeedback> : INativeActi
 
     public void OnCompleted(INativeActionGoalController controller)
     {
-        if (_wrappers.Remove(controller.GoalId, out var wrapper))
+        if (_wrappers.TryRemove(controller.GoalId, out var wrapper))
         {
-            _innerHandler.OnCompleted(wrapper);
-            wrapper.Dispose();
+            using (wrapper)
+            {
+                _innerHandler.OnCompleted(wrapper);
+            }
         }
     }
 
@@ -51,6 +54,8 @@ internal class ActionGoalHandlerWrapper<TGoal, TResult, TFeedback> : INativeActi
         private readonly Encoding _textEncoding;
 
         private readonly RosMessageBuffer _feedbackBuffer = RosMessageBuffer.Create<TFeedback>();
+        private readonly object _feedbackGate = new();
+        private bool _disposed;
 
         public ActionGoalControllerWrapper(INativeActionGoalController nativeController, Encoding textEncoding)
         {
@@ -66,19 +71,36 @@ internal class ActionGoalHandlerWrapper<TGoal, TResult, TFeedback> : INativeActi
 
         public void Dispose()
         {
-            _feedbackBuffer.Dispose();
+            lock (_feedbackGate)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed = true;
+                _feedbackBuffer.Dispose();
+            }
         }
 
         public void Report(TFeedback value)
         {
-            value.WriteTo(_feedbackBuffer.Data, _textEncoding);
-            _nativeController.Report(_feedbackBuffer);
+            lock (_feedbackGate)
+            {
+                ObjectDisposedException.ThrowIf(_disposed, this);
+                value.WriteTo(_feedbackBuffer.Data, _textEncoding);
+                _nativeController.Report(_feedbackBuffer);
+            }
         }
 
         public ValueTask ReportAsync(TFeedback feedback, CancellationToken cancellationToken = default)
         {
-            feedback.WriteTo(_feedbackBuffer.Data, _textEncoding);
-            return _nativeController.ReportAsync(_feedbackBuffer, cancellationToken);
+            lock (_feedbackGate)
+            {
+                ObjectDisposedException.ThrowIf(_disposed, this);
+                feedback.WriteTo(_feedbackBuffer.Data, _textEncoding);
+                return _nativeController.ReportAsync(_feedbackBuffer, cancellationToken);
+            }
         }
     }
 }

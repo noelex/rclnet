@@ -22,7 +22,7 @@ public class PubSubTests
         var task = ReadOneAsync(sub.ReadAllAsync());
         await WaitForSubscribersAsync(pub);
         pub.Publish(new(sec: 1, nanosec: 2));
-        var result = await task.WaitAsync(TimeSpan.FromSeconds(5));
+        var result = await task;
 
         Assert.Equal(1, result.Sec);
         Assert.Equal(2u, result.Nanosec);
@@ -56,7 +56,7 @@ public class PubSubTests
         var task = ReadOneAsync(sub.ReadAllAsync());
         await WaitForSubscribersAsync(pub);
         pub.Publish(buffer);
-        var result = await task.WaitAsync(TimeSpan.FromSeconds(5));
+        var result = await task;
 
         Assert.Equal(1, result.Sec);
         Assert.Equal(2u, result.Nanosec);
@@ -139,7 +139,7 @@ public class PubSubTests
             }
         }
 
-        var results = await aggregateTask.WaitAsync(TimeSpan.FromSeconds(5));
+        var results = await aggregateTask;
 
         Assert.Equal(100, results.Sum());
 
@@ -176,11 +176,10 @@ public class PubSubTests
         using var first = publisherFirst ? CreatePublisher() : CreateSubscription();
         using var second = publisherFirst ? CreateSubscription() : CreatePublisher();
 
-        await Task.WhenAll(offeredQosIncompatible.Task, requestQosIncompatible.Task)
-            .WaitAsync(TimeSpan.FromSeconds(5));
+        var policies = await Task.WhenAll(offeredQosIncompatible.Task, requestQosIncompatible.Task);
 
-        Assert.Equal(QosPolicyKind.Reliability, offeredQosIncompatible.Task.Result);
-        Assert.Equal(QosPolicyKind.Reliability, requestQosIncompatible.Task.Result);
+        Assert.Equal(QosPolicyKind.Reliability, policies[0]);
+        Assert.Equal(QosPolicyKind.Reliability, policies[1]);
 
         IDisposable CreatePublisher()
         {
@@ -232,11 +231,11 @@ public class PubSubTests
             await WaitForSubscribersAsync(pub);
             pub.Publish(new Time());
 
-            Assert.True(await controlTask.WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.True(await controlTask);
             await Task.Delay(100);
         }
 
-        var result = await t.WaitAsync(TimeSpan.FromSeconds(5));
+        var result = await t;
         Assert.False(result);
 
         static async Task<bool> ReadOneAsync<T>(IAsyncEnumerable<T> subscription)
@@ -416,7 +415,7 @@ public class PubSubTests
 
     private static async Task WaitForSubscribersAsync(IRclPublisher publisher, int expected = 1)
     {
-        for (var retry = 0; publisher.Subscribers < expected && retry < 500; retry++)
+        while (publisher.Subscribers < expected)
         {
             await Task.Delay(10);
         }

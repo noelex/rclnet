@@ -9,7 +9,8 @@ namespace Rcl.NET.Tests;
 
 public class ServiceTests
 {
-    private const int RequestTimeout = 10_000, ServerOnlineTimeout = 5000;
+    // These finite deadlines exercise request timer setup and cleanup.
+    private const int RequestTimeout = 10_000;
 
     [Theory]
     [InlineData(false)]
@@ -30,7 +31,7 @@ public class ServiceTests
 
         var canceled = Invoke(RequestTimeout, cancellation.Token);
         cancellation.Cancel();
-        var error = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => canceled.WaitAsync(TimeSpan.FromSeconds(10)));
+        var error = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => canceled);
         Assert.Equal(cancellation.Token, error.CancellationToken);
         Assert.True(canceled.IsCanceled);
 
@@ -40,7 +41,6 @@ public class ServiceTests
         Assert.True(preCanceled.IsCanceled);
 
         var timedOut = Invoke(0);
-        Assert.Same(timedOut, await Task.WhenAny(timedOut, Task.Delay(10_000)));
         await Assert.ThrowsAsync<TimeoutException>(() => timedOut);
         Assert.True(timedOut.IsFaulted);
 
@@ -69,14 +69,12 @@ public class ServiceTests
         var timedOut = client.InvokeAsync(new ListParametersServiceRequest(), 500);
         cancellation.Cancel();
 
-        var error = await Assert.ThrowsAsync<OperationCanceledException>(() => canceled.WaitAsync(TimeSpan.FromSeconds(10)));
+        var error = await Assert.ThrowsAsync<OperationCanceledException>(() => canceled);
         Assert.Equal(cancellation.Token, error.CancellationToken);
-        Assert.Same(timedOut, await Task.WhenAny(timedOut, Task.Delay(10_000)));
         await Assert.ThrowsAsync<TimeoutException>(() => timedOut);
 
         // Completing either request must leave the shared provider usable for the next one.
         var next = client.InvokeAsync(new ListParametersServiceRequest(), 0);
-        Assert.Same(next, await Task.WhenAny(next, Task.Delay(10_000)));
         await Assert.ThrowsAsync<TimeoutException>(() => next);
     }
 
@@ -93,7 +91,6 @@ public class ServiceTests
         Assert.False(pending.IsCompleted);
         node.Dispose();
 
-        Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(10_000)));
         await Assert.ThrowsAsync<TimeoutException>(() => pending);
     }
 
@@ -115,7 +112,7 @@ public class ServiceTests
                 return new ListParametersServiceResponse();
             });
         using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(name);
-        Assert.True(await client.TryWaitForServerAsync(ServerOnlineTimeout));
+        Assert.True(await client.TryWaitForServerAsync(Timeout.Infinite));
         node.Dispose();
 
         if (closeClock)
@@ -128,8 +125,7 @@ public class ServiceTests
         }
         else
         {
-            await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout)
-                .WaitAsync(TimeSpan.FromSeconds(15));
+            await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
             Assert.True(received.Task.IsCompletedSuccessfully);
         }
     }
@@ -172,8 +168,8 @@ public class ServiceTests
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
 
-        Assert.True(await client.TryWaitForServerAsync(ServerOnlineTimeout));
-        var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
+        Assert.True(await client.TryWaitForServerAsync(Timeout.Infinite));
+        var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest());
 
         Assert.True(response.Result.Names.SequenceEqual(actualResponse.Result.Names));
         Assert.True(response.Result.Prefixes.SequenceEqual(actualResponse.Result.Prefixes));
@@ -206,23 +202,23 @@ public class ServiceTests
                 ListParametersServiceRequest,
                 ListParametersServiceResponse>(service);
 
-            var result = await client.TryWaitForServerAsync(ServerOnlineTimeout);
+            var result = await client.TryWaitForServerAsync(Timeout.Infinite);
             Assert.True(result);
             await anotherContext.Yield();
             // Now we are on the event loop of anotherContext.
 
             // Captured the sync context of the anotherContext, we should be on the event loop of anotherContext.
-            await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
+            await client.InvokeAsync(new ListParametersServiceRequest());
             Assert.True(anotherContext.IsCurrent);
 
             // Suppressing the sync context.
-            await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout).ConfigureAwait(false);
+            await client.InvokeAsync(new ListParametersServiceRequest()).ConfigureAwait(false);
 
             // No captured sync context, we should be on thread pool thread.
-            await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
+            await client.InvokeAsync(new ListParametersServiceRequest());
             Assert.False(context.IsCurrent);
 
-            await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout).ConfigureAwait(false);
+            await client.InvokeAsync(new ListParametersServiceRequest()).ConfigureAwait(false);
             Assert.False(context.IsCurrent);
         });
     }
@@ -251,8 +247,8 @@ public class ServiceTests
             ListParametersServiceRequest,
             ListParametersServiceResponse>(service);
 
-        Assert.True(await client.TryWaitForServerAsync(ServerOnlineTimeout));
-        var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest(), RequestTimeout);
+        Assert.True(await client.TryWaitForServerAsync(Timeout.Infinite));
+        var actualResponse = await client.InvokeAsync(new ListParametersServiceRequest());
 
         Assert.Equal(response.Result.Names, actualResponse.Result.Names);
         Assert.Equal(response.Result.Prefixes, actualResponse.Result.Prefixes);
@@ -283,7 +279,7 @@ public class ServiceTests
             ListParametersServiceResponse>(NameGenerator.GenerateServiceName());
 
         var assertTask = Assert.ThrowsAsync<ObjectDisposedException>(() =>
-            client.InvokeAsync(new ListParametersServiceRequest(), 1000));
+            client.InvokeAsync(new ListParametersServiceRequest()));
         await Task.Delay(100).ContinueWith(x => client.Dispose());
 
         await assertTask;
@@ -301,7 +297,7 @@ public class ServiceTests
         using var cts = new CancellationTokenSource(100);
 
         var ex = await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            client.InvokeAsync(new ListParametersServiceRequest(), 1000, cts.Token));
+            client.InvokeAsync(new ListParametersServiceRequest(), cts.Token));
 
         Assert.Equal(cts.Token, ex.CancellationToken);
     }
@@ -340,26 +336,26 @@ public class ServiceTests
 
         client.ConfigureIntrospection(ServiceIntrospectionState.Disabled);
         var success = await node.Graph.TryWatchAsync((g, e) =>
-            !g.Topics.Any(x => x.Name == introspectionTopic), 1000);
+            !g.Topics.Any(x => x.Name == introspectionTopic), Timeout.Infinite);
         Assert.True(success);
 
         client.ConfigureIntrospection(ServiceIntrospectionState.MetadataOnly);
         success = await node.Graph.TryWatchAsync((g, e) =>
             g.Topics.Any(x => x.Name == introspectionTopic &&
             x.Publishers.Count == 1 &&
-            x.Publishers.First().Type == eventType), 1000);
+            x.Publishers.First().Type == eventType), Timeout.Infinite);
         Assert.True(success);
 
         client.ConfigureIntrospection(ServiceIntrospectionState.Disabled);
         success = await node.Graph.TryWatchAsync((g, e) =>
-            !g.Topics.Any(x => x.Name == introspectionTopic), 1000);
+            !g.Topics.Any(x => x.Name == introspectionTopic), Timeout.Infinite);
         Assert.True(success);
 
         client.ConfigureIntrospection(ServiceIntrospectionState.Full);
         success = await node.Graph.TryWatchAsync((g, e) =>
             g.Topics.Any(x => x.Name == introspectionTopic &&
             x.Publishers.Count == 1 &&
-            x.Publishers.First().Type == eventType), 1000);
+            x.Publishers.First().Type == eventType), Timeout.Infinite);
         Assert.True(success);
     }
 
@@ -382,26 +378,26 @@ public class ServiceTests
 
         server.ConfigureIntrospection(ServiceIntrospectionState.Disabled);
         var success = await node.Graph.TryWatchAsync((g, e) =>
-            !g.Topics.Any(x => x.Name == introspectionTopic), 1000);
+            !g.Topics.Any(x => x.Name == introspectionTopic), Timeout.Infinite);
         Assert.True(success);
 
         server.ConfigureIntrospection(ServiceIntrospectionState.MetadataOnly);
         success = await node.Graph.TryWatchAsync((g, e) =>
             g.Topics.Any(x => x.Name == introspectionTopic &&
             x.Publishers.Count == 1 &&
-            x.Publishers.First().Type == eventType), 1000);
+            x.Publishers.First().Type == eventType), Timeout.Infinite);
         Assert.True(success);
 
         server.ConfigureIntrospection(ServiceIntrospectionState.Disabled);
         success = await node.Graph.TryWatchAsync((g, e) =>
-            !g.Topics.Any(x => x.Name == introspectionTopic), 1000);
+            !g.Topics.Any(x => x.Name == introspectionTopic), Timeout.Infinite);
         Assert.True(success);
 
         server.ConfigureIntrospection(ServiceIntrospectionState.Full);
         success = await node.Graph.TryWatchAsync((g, e) =>
             g.Topics.Any(x => x.Name == introspectionTopic &&
             x.Publishers.Count == 1 &&
-            x.Publishers.First().Type == eventType), 1000);
+            x.Publishers.First().Type == eventType), Timeout.Infinite);
         Assert.True(success);
     }
 
@@ -433,10 +429,9 @@ public class ServiceTests
 
         var events = new Dictionary<byte, FrameGraphServiceEvent>();
 
-        using var cts = new CancellationTokenSource(5000);
-        var introspectTask = IntrospectService(4, cts.Token);
-        Assert.True(await client.TryWaitForServerAsync(ServerOnlineTimeout));
-        await client.InvokeAsync(new FrameGraphServiceRequest(), RequestTimeout);
+        var introspectTask = IntrospectService(4);
+        Assert.True(await client.TryWaitForServerAsync(Timeout.Infinite));
+        await client.InvokeAsync(new FrameGraphServiceRequest());
 
         await introspectTask;
         Assert.Equal(4, events.Count);
@@ -487,17 +482,17 @@ public class ServiceTests
             Assert.Empty(events[ServiceEventInfo.RESPONSE_RECEIVED].Response);
         }
 
-        async Task IntrospectService(int expectedEvents, CancellationToken cancellationToken)
+        async Task IntrospectService(int expectedEvents)
         {
             using var sub = node.CreateSubscription<FrameGraphServiceEvent>(introspectionTopic, new(queueSize: 10));
-            for (var retry = 0; sub.Publishers < 2 && retry < 500; retry++)
+            while (sub.Publishers < 2)
             {
-                await Task.Delay(10, cancellationToken);
+                await Task.Delay(10);
             }
             Assert.True(sub.Publishers >= 2,
                 $"Expected both service introspection publishers, but found {sub.Publishers}.");
 
-            await foreach (var item in sub.ReadAllAsync(cancellationToken))
+            await foreach (var item in sub.ReadAllAsync())
             {
                 events[item.Info.EventType] = item;
                 if (events.Count == expectedEvents)

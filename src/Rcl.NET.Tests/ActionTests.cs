@@ -5,9 +5,6 @@ namespace Rcl.NET.Tests;
 
 public class ActionTests
 {
-    private const int RequestTimeout = 10_000;
-    private const int ServerOnlineTimeout = 5_000;
-
     [Theory]
     [InlineData(0)]
     [InlineData(50)]
@@ -47,9 +44,9 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        await client.WaitForServerAsync(ServerOnlineTimeout);
-        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout);
-        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
+        await client.WaitForServerAsync();
+        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal());
+        var result = await goal.GetResultWithStatusAsync();
         Assert.True(result.IsSuccessful);
     }
 
@@ -73,11 +70,11 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        await client.WaitForServerAsync(ServerOnlineTimeout);
+        await client.WaitForServerAsync();
         using var goalBuffer = RosMessageBuffer.Create<LookupTransformActionGoal>();
-        using var cts = new CancellationTokenSource(RequestTimeout);
+        using var cts = new CancellationTokenSource();
         using var goal = await client.SendGoalAsync(goalBuffer, cts.Token);
-        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
+        var result = await goal.GetResultWithStatusAsync();
         Assert.True(result.IsSuccessful);
         using var resultBuffer = result.Result;
     }
@@ -102,9 +99,9 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        await client.WaitForServerAsync(ServerOnlineTimeout);
+        await client.WaitForServerAsync();
         await Assert.ThrowsAsync<RclException>(() =>
-            client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout));
+            client.SendGoalAsync(new LookupTransformActionGoal()));
     }
 
     [Fact]
@@ -127,9 +124,9 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        await client.WaitForServerAsync(ServerOnlineTimeout);
-        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout);
-        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
+        await client.WaitForServerAsync();
+        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal());
+        var result = await goal.GetResultWithStatusAsync();
         Assert.Equal(ActionGoalStatus.Aborted, result.Status);
     }
 
@@ -154,11 +151,11 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        await client.WaitForServerAsync(ServerOnlineTimeout);
-        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout);
-        await handler.ExecutionStarted.WaitAsync(TimeSpan.FromMilliseconds(RequestTimeout));
-        await goal.CancelAsync(RequestTimeout);
-        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
+        await client.WaitForServerAsync();
+        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal());
+        await handler.ExecutionStarted;
+        await goal.CancelAsync();
+        var result = await goal.GetResultWithStatusAsync();
 
         Assert.Equal(ActionGoalStatus.Canceled, result.Status);
     }
@@ -183,14 +180,14 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        await client.WaitForServerAsync(ServerOnlineTimeout);
-        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout);
-        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
+        await client.WaitForServerAsync();
+        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal());
+        var result = await goal.GetResultWithStatusAsync();
         Assert.True(result.IsSuccessful);
 
         // Goal results are cached on action server by default,
         // we can call GetResult as many times as we want.
-        result = await goal.GetResultWithStatusAsync(RequestTimeout);
+        result = await goal.GetResultWithStatusAsync();
         Assert.True(result.IsSuccessful);
     }
 
@@ -214,16 +211,16 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        await client.WaitForServerAsync(ServerOnlineTimeout);
-        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout);
-        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
+        await client.WaitForServerAsync();
+        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal());
+        var result = await goal.GetResultWithStatusAsync();
         Assert.True(result.IsSuccessful);
 
         // Goal result is removed after the first call to GetResultWithStatusAsync,
         // now we should get a result with unknown status.
         //
         // TODO: Does this conform to the design of ROS 2 actions?
-        result = await goal.GetResultWithStatusAsync(RequestTimeout);
+        result = await goal.GetResultWithStatusAsync();
         Assert.Equal(ActionGoalStatus.Unknown, result.Status);
     }
 
@@ -255,15 +252,15 @@ public class ActionTests
             LookupTransformActionResult,
             LookupTransformActionFeedback>(actionName);
 
-        await client.WaitForServerAsync(ServerOnlineTimeout);
-        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal(), RequestTimeout);
+        await client.WaitForServerAsync();
+        using var goal = await client.SendGoalAsync(new LookupTransformActionGoal());
         var feedbackTask = CountFeedbacks(goal.ReadFeedbacksAsync(), 5);
 
-        var count = await feedbackTask.WaitAsync(TimeSpan.FromMilliseconds(RequestTimeout));
+        var count = await feedbackTask;
         Assert.Equal(5, count);
         handler.Complete();
 
-        var result = await goal.GetResultWithStatusAsync(RequestTimeout);
+        var result = await goal.GetResultWithStatusAsync();
         Assert.True(result.IsSuccessful);
 
         static async Task<int> CountFeedbacks(

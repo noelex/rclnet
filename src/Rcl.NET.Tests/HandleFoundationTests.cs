@@ -111,7 +111,7 @@ public class HandleFoundationTests
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             handle.Dispose();
             Assert.Empty(events);
             Assert.Throws<ObjectDisposedException>(() =>
@@ -122,10 +122,9 @@ public class HandleFoundationTests
         finally
         {
             checkpoint.Resume();
-            await operation.WaitAsync(TimeSpan.FromSeconds(10));
+            await operation;
         }
 
-        Assert.False(checkpoint.TimedOut);
         Assert.Single(events);
     }
 

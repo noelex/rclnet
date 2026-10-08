@@ -20,7 +20,7 @@ public class GraphWatcherLifecycleTests
             var waiting = node.Graph.TryWatchAsync(static (_, _) => false,
                 TimeSpan.FromMilliseconds(milliseconds), cancellation.Token);
             var error = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
-                waiting.WaitAsync(TimeSpan.FromSeconds(10)));
+                waiting);
             Assert.Equal("timeout", error.ParamName);
         }
         finally
@@ -41,7 +41,7 @@ public class GraphWatcherLifecycleTests
         Assert.False(waiting.IsCompleted);
         cancellation.Cancel();
         var error = await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            waiting.WaitAsync(TimeSpan.FromSeconds(10)));
+            waiting);
         Assert.Equal(cancellation.Token, error.CancellationToken);
         Assert.False(await node.Graph.TryWatchAsync(static (_, _) => false, TimeSpan.Zero));
     }
@@ -57,7 +57,7 @@ public class GraphWatcherLifecycleTests
         await context.Yield();
         var waiting = graph.TryWatchAsync(static (_, _) => false, timeout);
         graph.Complete();
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => waiting.WaitAsync(TimeSpan.FromSeconds(10)));
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => waiting);
     }
 
     [Fact]
@@ -85,14 +85,14 @@ public class GraphWatcherLifecycleTests
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             pending.Fail(new OperationCanceledException());
             await Assert.ThrowsAsync<OperationCanceledException>(async () => await pending.Task);
             watcher.Dispose();
             var next = PendingOperation<bool>.Rent(true, static (p, error) => p.Fail(error));
             Assert.NotSame(pending, next);
             checkpoint.Resume();
-            await dispatch.WaitAsync(TimeSpan.FromSeconds(10));
+            await dispatch;
             observer.OnNext(change);
             observer.OnCompleted();
             Assert.Equal(1, calls);
@@ -104,10 +104,8 @@ public class GraphWatcherLifecycleTests
         finally
         {
             checkpoint.Resume();
-            await dispatch.WaitAsync(TimeSpan.FromSeconds(10));
+            await dispatch;
         }
-
-        Assert.False(checkpoint.TimedOut);
     }
 
     [Fact]

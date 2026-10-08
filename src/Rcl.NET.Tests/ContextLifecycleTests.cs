@@ -11,7 +11,7 @@ public class ContextLifecycleTests
 
         context.Dispose();
 
-        await executed.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        await executed.Task;
         Assert.True(context.DisposeAsync().IsCompletedSuccessfully);
         context.Dispose();
     }
@@ -25,19 +25,18 @@ public class ContextLifecycleTests
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             var first = context.DisposeAsync().AsTask();
             var second = context.DisposeAsync().AsTask();
             Assert.False(first.IsCompleted);
             Assert.False(second.IsCompleted);
             checkpoint.Resume();
-            await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(10));
-            Assert.False(checkpoint.TimedOut);
+            await Task.WhenAll(first, second);
         }
         finally
         {
             checkpoint.Resume();
-            await context.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+            await context.DisposeAsync().AsTask();
         }
     }
 
@@ -54,11 +53,11 @@ public class ContextLifecycleTests
 
         try
         {
-            Assert.True(await returned.Task.WaitAsync(TimeSpan.FromSeconds(10)));
+            Assert.True(await returned.Task);
         }
         finally
         {
-            await context.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+            await context.DisposeAsync().AsTask();
         }
     }
 }

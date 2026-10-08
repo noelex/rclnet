@@ -14,7 +14,7 @@ public class ShutdownLifecycleTests
         var context = NewContext();
         using var active = new LifecycleCheckpoint();
         context.SynchronizationContext.Post(_ => active.Pause(), null);
-        await active.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+        await active.Entered;
         var closing = context.DisposeAsync().AsTask();
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var synchronous = Task.Run(() =>
@@ -34,7 +34,7 @@ public class ShutdownLifecycleTests
             active.Resume();
         }
 
-        await Task.WhenAll(closing, synchronous).WaitAsync(TimeSpan.FromSeconds(10));
+        await Task.WhenAll(closing, synchronous);
         Assert.True(context.Handle.IsClosed);
     }
 
@@ -47,7 +47,7 @@ public class ShutdownLifecycleTests
         var finished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         bool ranOnLoop = true;
         context.SynchronizationContext.Post(_ => active.Pause(), null);
-        await active.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+        await active.Entered;
         context.SynchronizationContext.Post(_ =>
         {
             ranOnLoop = context.IsCurrent;
@@ -59,8 +59,8 @@ public class ShutdownLifecycleTests
         {
             var closing = context.DisposeAsync().AsTask();
             active.Resume();
-            await closing.WaitAsync(TimeSpan.FromSeconds(10));
-            await fallback.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await closing;
+            await fallback.Entered;
             Assert.False(ranOnLoop);
             Assert.False(finished.Task.IsCompleted);
         }
@@ -68,7 +68,7 @@ public class ShutdownLifecycleTests
         {
             active.Resume();
             fallback.Resume();
-            await finished.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            await finished.Task;
             await context.DisposeAsync();
         }
     }
@@ -86,14 +86,14 @@ public class ShutdownLifecycleTests
             active.Pause();
             throw fault;
         }, null);
-        await active.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+        await active.Entered;
         bool ranOnLoop = true;
         var send = SendAsync(context, _ => ranOnLoop = context.IsCurrent);
         active.Resume();
 
         Assert.Same(fault, await Assert.ThrowsAsync<InvalidOperationException>(
-            () => context.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10))));
-        await send.AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+            () => context.DisposeAsync().AsTask()));
+        await send.AsTask();
         await Assert.ThrowsAsync<ObjectDisposedException>(() => waiting);
         Assert.False(ranOnLoop);
         Assert.False(context.Handle.IsClosed);
@@ -124,7 +124,7 @@ public class ShutdownLifecycleTests
         var second = context.DisposeAsync().AsTask();
         Assert.Same(first, second);
         Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(
-            () => first.WaitAsync(TimeSpan.FromSeconds(10))));
+            () => first));
         Assert.Equal(3, calls);
         Assert.True(context.Handle.IsClosed);
         Assert.Same(failure, Assert.Throws<InvalidOperationException>(context.Dispose));
@@ -169,7 +169,7 @@ public class ShutdownLifecycleTests
         var context = new RclContext(handle);
         using var guard = new SafeGuardConditionHandle(handle);
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => context.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10)));
+            () => context.DisposeAsync().AsTask());
         Assert.Equal(1, handle.Attempts);
         Assert.False(handle.IsClosed);
         Assert.Equal(before + 1, SafeContextHandle.LoggingReferences);
@@ -189,10 +189,10 @@ public class ShutdownLifecycleTests
         using var checkpoint = new LifecycleCheckpoint();
         using var probe = new FaultingGuard(context, checkpoint);
         probe.Trigger();
-        await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+        await checkpoint.Entered;
         checkpoint.Resume();
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => context.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10)));
+            () => context.DisposeAsync().AsTask());
         Assert.True(probe.Detached);
         probe.Dispose();
         Assert.True(probe.Handle.IsClosed);
@@ -223,14 +223,14 @@ public class ShutdownLifecycleTests
 
         try
         {
-            await context.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
-            await continuation.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await context.DisposeAsync().AsTask();
+            await continuation.Entered;
             Assert.False(finished.Task.IsCompleted);
         }
         finally
         {
             continuation.Resume();
-            await finished.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            await finished.Task;
         }
     }
 
@@ -254,15 +254,17 @@ public class ShutdownLifecycleTests
                 context.ScheduleCleanup(_ => Interlocked.Increment(ref cleanup), null);
                 await Task.Yield();
             }
-        }), Task.Run(async () => await context.DisposeAsync())).WaitAsync(TimeSpan.FromSeconds(10));
-        await allPosts.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        }), Task.Run(async () => await context.DisposeAsync()));
+        await allPosts.Task;
         Assert.Equal(100, cleanup);
         Assert.True(context.Handle.IsClosed);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RetainedChildrenKeepEachPhysicalContextsLoggingReference()
     {
+        TestConfig.SkipIfMultiContextEndpointTeardownCanCrash();
+
         int before = SafeContextHandle.LoggingReferences;
         var first = NewContext();
         var second = NewContext();
@@ -301,8 +303,8 @@ public class ShutdownLifecycleTests
             started.SetResult();
         });
         await started.Task;
-        Assert.True(SpinWait.SpinUntil(() => handle.IsClosing, TimeSpan.FromSeconds(10)));
-        await Assert.ThrowsAsync<RclException>(() => context.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10)));
+        SpinWait.SpinUntil(() => handle.IsClosing);
+        await Assert.ThrowsAsync<RclException>(() => context.DisposeAsync().AsTask());
         Assert.True(handle.IsClosed);
     }
 
@@ -334,10 +336,10 @@ public class ShutdownLifecycleTests
         var second = context.DisposeAsync().AsTask();
         Assert.Same(first, second);
         var synchronous = Task.Run(() => Assert.Throws<InvalidOperationException>(context.Dispose));
-        var failure = await Assert.ThrowsAsync<InvalidOperationException>(() => first.WaitAsync(TimeSpan.FromSeconds(10)));
+        var failure = await Assert.ThrowsAsync<InvalidOperationException>(() => first);
         Assert.Contains(nameof(FailingWaitSet), failure.Message);
         Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(() => second));
-        Assert.Same(failure, await synchronous.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.Same(failure, await synchronous);
         Assert.Single(first.Exception!.InnerExceptions);
         Assert.Equal(1, cleanup);
         Assert.True(waitSet!.IsInvalid);
@@ -371,7 +373,7 @@ public class ShutdownLifecycleTests
 
         var shutdown = context.DisposeAsync().AsTask();
         Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(
-            () => shutdown.WaitAsync(TimeSpan.FromSeconds(10))));
+            () => shutdown));
         Assert.Same(failure, Assert.Throws<InvalidOperationException>(context.Dispose));
         Assert.Equal(1, cleanup);
         Assert.True(context.Handle.IsInvalid);
@@ -383,7 +385,7 @@ public class ShutdownLifecycleTests
         var context = NewContext();
         using var child = new FailingGuardHandle(context.Handle);
         var shutdown = context.DisposeAsync().AsTask();
-        await shutdown.WaitAsync(TimeSpan.FromSeconds(10));
+        await shutdown;
         Assert.False(context.Handle.IsClosed);
 
         child.Dispose();
@@ -393,7 +395,7 @@ public class ShutdownLifecycleTests
         await shutdown;
 
         var next = NewContext();
-        await next.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
+        await next.DisposeAsync().AsTask();
     }
 
     private sealed class FailingWaitSet : SafeWaitSetHandle

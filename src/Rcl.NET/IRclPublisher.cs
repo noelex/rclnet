@@ -20,6 +20,15 @@ public interface IRclPublisher : IRclObject
     bool IsValid { get; }
 
     /// <summary>
+    /// Gets whether the middleware can loan messages for this publisher's message type.
+    /// </summary>
+    /// <remarks>
+    /// This also respects the RCL configuration that disables publisher loans.
+    /// Loan support does not guarantee zero-copy transport.
+    /// </remarks>
+    bool CanLoanMessages { get; }
+
+    /// <summary>
     /// Gets the count of subscribers subscribing to this topic.
     /// </summary>
     int Subscribers { get; }
@@ -52,6 +61,7 @@ public interface IRclPublisher : IRclObject
     /// with the same type when creating the publisher. Publishing a different type of message is undefined behavior.
     /// <para>
     /// This method does not take the ownership of the <see cref="RosMessageBuffer"/>.
+    /// The message must remain valid and unmodified until the call returns.
     /// </para>
     /// <para>
     /// If the QoS setting may cause blocking in current RMW implementation, use <see cref="PublishAsync(RosMessageBuffer)"/> instead.
@@ -62,7 +72,7 @@ public interface IRclPublisher : IRclObject
     void Publish(RosMessageBuffer message);
 
     /// <summary>
-    /// Publish the message in a background thread, and asynchronously wait for the operation to complete.
+    /// Publish a message asynchronously.
     /// </summary>
     /// <param name="message">An <see cref="RosMessageBuffer"/> containing the message to be published.</param>
     /// <returns>A <see cref="ValueTask"/> object represent the asynchronous wait.</returns>
@@ -74,17 +84,13 @@ public interface IRclPublisher : IRclObject
     /// This method does not take the ownership of the <see cref="RosMessageBuffer"/>.
     /// </para>
     /// <para>
-    /// Also, the <see cref="RosMessageBuffer"/> MUST NOT be disposed before the returned <see cref="ValueTask"/> completes.
+    /// The buffer must remain valid and unmodified until the returned <see cref="ValueTask"/> completes,
+    /// including when publication fails. Do not dispose it, return its loan, or transfer its release responsibility during this time.
     /// Disposing the publisher does not transfer or end this buffer ownership obligation.
-    /// If disposal wins before the background operation is admitted, the returned task fails
-    /// with <see cref="ObjectDisposedException"/>.
+    /// The operation may fail with <see cref="ObjectDisposedException"/> if the publisher is disposed.
     /// </para>
     /// <para>
-    /// This is a helper method which simply calls <see cref="Publish(RosMessageBuffer)"/> in a background thread.
-    /// Calling this method will incur asynchronous scheduling overhead,
-    /// which is slightly imperformant compared to the synchronous counterpart.
-    /// You should always use <see cref="Publish(RosMessageBuffer)"/>
-    /// instead, if the QoS setting does not cause blocking in current RMW implementation.
+    /// Prefer <see cref="Publish(RosMessageBuffer)"/> if the QoS setting does not cause blocking.
     /// </para>
     /// <para>
     /// See <a href="https://github.com/ros2/ros2/issues/255"/> for more information.
@@ -96,12 +102,40 @@ public interface IRclPublisher : IRclObject
     /// Create an <see cref="RosMessageBuffer"/> containing the message with the same type when creating the publisher.
     /// </summary>
     /// <returns>
-    /// A newly allocated <see cref="RosMessageBuffer"/>.
+    /// A buffer of this publisher's message type.
     /// <para>
-    /// The ownership of the returned buffer is transferred to the caller.
+    /// The caller owns the returned buffer and must dispose it exactly once when no longer needed.
     /// </para>
     /// </returns>
     RosMessageBuffer CreateBuffer();
+
+    /// <summary>
+    /// Borrows a message buffer owned by the middleware.
+    /// </summary>
+    /// <returns>A loaned buffer of this publisher's message type.</returns>
+    /// <remarks>
+    /// Dispose the buffer exactly once to return an unpublished loan, or transfer it with
+    /// <see cref="PublishLoaned(ref RosMessageBuffer)"/>. All loans must be returned or published
+    /// before disposing this publisher or its context. Copies share the same loan;
+    /// disposing or publishing one invalidates every copy and any native references.
+    /// </remarks>
+    /// <exception cref="NotSupportedException">Publisher loans are unavailable or disabled.</exception>
+    RosMessageBuffer BorrowLoanedMessage();
+
+    /// <summary>
+    /// Publishes a loaned message and returns responsibility for the loan to the middleware.
+    /// </summary>
+    /// <param name="message">A live loan borrowed from this publisher.</param>
+    /// <remarks>
+    /// The caller must provide a buffer obtained from this publisher's
+    /// <see cref="BorrowLoanedMessage"/>.
+    /// If the argument is empty after the call, responsibility for the loan has been transferred,
+    /// even if publication failed. Do not access or dispose any copies or native references in that case.
+    /// If the argument remains non-empty, the caller must return the loan.
+    /// Dispose only the argument's current value; an empty buffer is safe to dispose.
+    /// Like ordinary publication, this method may block depending on the middleware and QoS.
+    /// </remarks>
+    void PublishLoaned(ref RosMessageBuffer message);
 
     /// <summary>
     /// Manually assert that this publisher is alive (for publishers created with <see cref="QosProfile.Liveliness"/> set to <see cref="LivelinessPolicy.ManualByTopic"/>).
@@ -135,16 +169,12 @@ public interface IRclPublisher<T> : IRclPublisher
     void Publish(T message);
 
     /// <summary>
-    /// Publish the message in a background thread, and asynchronously wait for the operation to complete.
+    /// Publish a message asynchronously.
     /// </summary>
     /// <param name="message">The message to be published.</param>
     /// <returns>A <see cref="ValueTask"/> object represent the asynchronous wait.</returns>
     /// <remarks>
-    /// This is a helper method which simply calls <see cref="Publish(T)"/> in a background thread.
-    /// Calling this method will incur asynchronous scheduling overhead,
-    /// which is slightly imperformant compared to the synchronous counterpart.
-    /// You should always use <see cref="Publish(T)"/>
-    /// instead, if the QoS setting does not cause blocking in current RMW implementation.
+    /// Prefer <see cref="Publish(T)"/> if the QoS setting does not cause blocking.
     /// <para>
     /// See <a href="https://github.com/ros2/ros2/issues/255"/> for more information.
     /// </para>

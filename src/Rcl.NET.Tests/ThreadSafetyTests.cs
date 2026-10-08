@@ -16,13 +16,7 @@ public class ThreadSafetyTests
     [InlineData(RclClockType.Ros, true)]
     public async Task ConcurrentTimerCreationAndDisposal_MultipleContexts(RclClockType clockType, bool synchronousDispose)
     {
-        // A standalone C++ RCL program with independent contexts and endpoints also crashes on
-        // Humble and Iron / Fast DDS, without .NET or SafeHandle. Humble's native stack identifies
-        // a null call in StatefulWriter::deliver_sample_to_intraprocesses during endpoint teardown.
-        // Restrict the exclusion to this overlapping multi-context endpoint scenario.
-        Skip.If((RosEnvironment.IsHumble || RosEnvironment.IsIron)
-            && RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp",
-            "Humble/Iron / Fast DDS: native concurrent endpoint teardown crashes.");
+        TestConfig.SkipIfMultiContextEndpointTeardownCanCrash();
 
         // Both managed tests and a standalone C++ RCL reproduction abort in Lyrical / Cyclone
         // at ddsi_fini's ddsrt_avl_is_empty(&gv->typelib) assertion when contexts close concurrently.
@@ -112,7 +106,7 @@ public class ThreadSafetyTests
         })).ToArray();
 
         start.SetResult();
-        await Task.WhenAll(workers).WaitAsync(TimeSpan.FromSeconds(30));
+        await Task.WhenAll(workers);
     }
 
     private static async Task CreateTimerWaitAndDisposeAsync(IRclNode node, RclClockType type, int timeout)
@@ -125,17 +119,15 @@ public class ThreadSafetyTests
             _ => throw new NotSupportedException()
         };
 
-        using var cts = new CancellationTokenSource(1000);
         using var timer = node.Context.CreateTimer(clock, TimeSpan.FromMilliseconds(timeout));
-        await timer.WaitOneAsync(cts.Token);
+        await timer.WaitOneAsync();
     }
 
     private static async Task CreateGuardConditionWaitAndDisposeAsync(IRclContext context, int timeout)
     {
-        using var cts = new CancellationTokenSource(1000);
         using var gc = context.CreateGuardCondition();
         // Register before triggering: the event loop can consume a signal without any waiters.
-        var wait = gc.WaitOneAsync(cts.Token);
+        var wait = gc.WaitOneAsync();
         await Task.Delay(timeout);
         gc.Trigger();
         await wait;

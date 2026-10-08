@@ -15,12 +15,11 @@ public class ObserverSnapshotTests
         using var node = context.CreateNode(NameGenerator.GenerateNodeName());
         using var publisher = node.CreatePublisher<Time>(NameGenerator.GenerateTopicName());
         using var subscription = node.CreateSubscription<Time>(publisher.Name);
-        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        await using var reader = subscription.ReadAllAsync(cancellation.Token).GetAsyncEnumerator();
+        await using var reader = subscription.ReadAllAsync().GetAsyncEnumerator();
 
         while (publisher.Subscribers == 0)
         {
-            await Task.Delay(10, cancellation.Token);
+            await Task.Delay(10);
         }
 
         await VerifySnapshotsAsync(subscription, async () =>
@@ -145,10 +144,10 @@ public class ObserverSnapshotTests
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             Assert.True(await reader.MoveNextAsync());
             channelCompletion = reader.MoveNextAsync().AsTask();
-            await Task.Run(() => goal.OnStatusChanged(ActionGoalStatus.Succeeded)).WaitAsync(TimeSpan.FromSeconds(10));
+            await Task.Run(() => goal.OnStatusChanged(ActionGoalStatus.Succeeded));
             Assert.Equal(0, blocker.CompletedCount);
             Assert.Empty(events);
             Assert.False(channelCompletion.IsCompleted);
@@ -161,11 +160,10 @@ public class ObserverSnapshotTests
         finally
         {
             checkpoint.Resume();
-            await dispatch.WaitAsync(TimeSpan.FromSeconds(10));
+            await dispatch;
         }
 
-        Assert.False(await channelCompletion!.WaitAsync(TimeSpan.FromSeconds(10)));
-        Assert.False(checkpoint.TimedOut);
+        Assert.False(await channelCompletion!);
         Assert.Equal(new[] { "next", "completed", "completed" }, events.ToArray());
         Assert.Equal(1, blocker.CompletedCount);
         goal.OnStatusChanged(ActionGoalStatus.Aborted);
@@ -203,12 +201,12 @@ public class ObserverSnapshotTests
 
         if (throwFromCallback)
         {
-            await Assert.ThrowsAsync<InvalidOperationException>(() => dispatch.WaitAsync(TimeSpan.FromSeconds(10)));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => dispatch);
             Assert.Equal(new[] { "first next", "first completed", "second completed" }, events);
         }
         else
         {
-            await dispatch.WaitAsync(TimeSpan.FromSeconds(10));
+            await dispatch;
             Assert.Equal(new[] { "first next", "second next", "first completed", "second completed" }, events);
         }
 
@@ -243,7 +241,7 @@ public class ObserverSnapshotTests
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             await Task.Run(() =>
             {
                 if (dispose)
@@ -254,7 +252,7 @@ public class ObserverSnapshotTests
                 {
                     goal.OnStatusChanged(ActionGoalStatus.Succeeded);
                 }
-            }).WaitAsync(TimeSpan.FromSeconds(10));
+            });
             Assert.Equal(0, Volatile.Read(ref released));
             goal.OnFeedbackReceived(new RosMessageBuffer(3, (_, _) => Interlocked.Increment(ref rejected)));
             Assert.Equal(1, rejected);
@@ -271,13 +269,12 @@ public class ObserverSnapshotTests
         finally
         {
             checkpoint.Resume();
-            await dispatch.WaitAsync(TimeSpan.FromSeconds(10));
+            await dispatch;
             goal.Close();
         }
 
         channelCompletion ??= reader.MoveNextAsync().AsTask();
-        Assert.False(await channelCompletion.WaitAsync(TimeSpan.FromSeconds(10)));
-        Assert.False(checkpoint.TimedOut);
+        Assert.False(await channelCompletion);
         Assert.Equal(1, dropped);
         Assert.Equal(1, released);
     }
@@ -371,7 +368,7 @@ public class ObserverSnapshotTests
         };
         thread.Start();
         // The callback stays active while synchronous subscription work runs on another thread.
-        Assert.True(thread.Join(TimeSpan.FromSeconds(5)), "Subscription work was blocked by the callback.");
+        thread.Join();
 
         if (failure != null)
         {

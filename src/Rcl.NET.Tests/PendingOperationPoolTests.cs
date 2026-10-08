@@ -45,7 +45,7 @@ public class PendingOperationPoolTests
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             await Assert.ThrowsAsync<OperationCanceledException>(() => task);
             var next = PendingOperation<long>.Rent(false, static (p, error) => p.Fail(error));
             Assert.NotSame(pending, next);
@@ -56,10 +56,8 @@ public class PendingOperationPoolTests
         finally
         {
             checkpoint.Resume();
-            await canceling.WaitAsync(TimeSpan.FromSeconds(10));
+            await canceling;
         }
-
-        Assert.False(checkpoint.TimedOut);
     }
 
 #if DEBUG

@@ -159,6 +159,16 @@ dotnet test tools/Rcl.NET.Testing/Tests/Rcl.NET.Testing.Tests.csproj -c Release
 
 Build and test with `-p:UseRosTestVariants=false` to use the standard xUnit adapter. Prepare ROS and the native test overlay in the calling shell first. Use the same property for build and test, and rebuild when switching modes.
 
+Ordinary requests, discovery and synchronization waits have no test-side watchdog timeout. Keep finite timeouts only when they are part of the behavior under test, including cancellation, result retention and allocation measurements of timer setup. CI uses `blame.runsettings` to collect a mini dump after one minute of test inactivity before terminating the test host.
+
+On Humble and Iron with Fast DDS, tests that keep nodes or endpoints alive in multiple contexts skip because native endpoint teardown can crash in `StatefulWriter::deliver_sample_to_intraprocesses`. This includes queued action shutdown, retained native node lifetime, and concurrent timer creation/disposal across contexts. Context-only tests and tests whose endpoints all belong to one context remain enabled.
+
+Local runs do not enable dump collection by default. Debug a hanging test, or opt in when rerunning it:
+
+```powershell
+dotnet test src/Rcl.NET.Tests/Rcl.NET.Tests.csproj -c Release -f net9.0 -p:UseRosTestVariants=false --settings src/Rcl.NET.Tests/blame.runsettings
+```
+
 ## Configuration reference
 
 `ros-environments.local.json` overrides supplied fields of matching IDs in `ros-environments.json`; omitted fields inherit. Arrays and dictionaries replace the whole field. Use `[]`, `{}` or `""` to clear values; `null` is invalid. Rebuild after configuration changes.

@@ -74,7 +74,7 @@ public interface INativeActionGoalContext : IActionGoalContext
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
     /// <para>
-    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
+    /// The caller owns the returned buffer and must dispose it exactly once when no longer needed.
     /// </para>
     /// </remarks>
     /// <param name="cancellationToken"></param>
@@ -92,7 +92,7 @@ public interface INativeActionGoalContext : IActionGoalContext
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
     /// <para>
-    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
+    /// The caller owns the returned buffer and must dispose it exactly once when no longer needed.
     /// </para>
     /// </remarks>
     /// <param name="cancellationToken"></param>
@@ -111,7 +111,7 @@ public interface INativeActionGoalContext : IActionGoalContext
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
     /// <para>
-    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
+    /// The caller owns the returned buffer and must dispose it exactly once when no longer needed.
     /// </para>
     /// </remarks>
     /// <param name="cancellationToken"></param>
@@ -128,7 +128,8 @@ public interface INativeActionGoalContext : IActionGoalContext
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
     /// <para>
-    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
+    /// On success, the caller owns <see cref="ActionResult.Result"/> and must dispose it exactly once when no longer needed.
+    /// Other statuses contain <see cref="RosMessageBuffer.Empty"/>, which can be disposed safely.
     /// </para>
     /// </remarks>
     /// <param name="cancellationToken"></param>
@@ -144,7 +145,8 @@ public interface INativeActionGoalContext : IActionGoalContext
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
     /// <para>
-    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
+    /// On success, the caller owns <see cref="ActionResult.Result"/> and must dispose it exactly once when no longer needed.
+    /// Other statuses contain <see cref="RosMessageBuffer.Empty"/>, which can be disposed safely.
     /// </para>
     /// </remarks>
     /// <param name="cancellationToken"></param>
@@ -161,7 +163,8 @@ public interface INativeActionGoalContext : IActionGoalContext
     /// Action servers may or may not return result according to their configured result caching policy.
     /// </para>
     /// <para>
-    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
+    /// On success, the caller owns <see cref="ActionResult.Result"/> and must dispose it exactly once when no longer needed.
+    /// Other statuses contain <see cref="RosMessageBuffer.Empty"/>, which can be disposed safely.
     /// </para>
     /// </remarks>
     /// <param name="cancellationToken"></param>
@@ -174,16 +177,17 @@ public interface INativeActionGoalContext : IActionGoalContext
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <remarks>
-    /// The returned <see cref="IAsyncEnumerable{TFeedback}"/> will complete either when the goal
+    /// The returned <see cref="IAsyncEnumerable{RosMessageBuffer}"/> will complete either when the goal
     /// transitioned to terminal state (<see cref="ActionGoalStatus.Aborted"/>, 
     /// <see cref="ActionGoalStatus.Canceled"/> or <see cref="ActionGoalStatus.Succeeded"/>),
     /// or when current <see cref="INativeActionGoalContext"/> instance is disposed.
     /// <para>
-    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
+    /// The consumer owns each yielded buffer and must dispose it exactly once when no longer needed.
+    /// Ending enumeration or disposing the goal context does not release buffers already yielded.
     /// </para>
     /// </remarks>
     /// <returns>
-    /// An <see cref="IAsyncEnumerable{TFeedback}"/> for receiving feedbacks asynchronously.
+    /// An <see cref="IAsyncEnumerable{RosMessageBuffer}"/> for receiving feedbacks asynchronously.
     /// </returns>
     IAsyncEnumerable<RosMessageBuffer> ReadFeedbacksAsync(CancellationToken cancellationToken = default);
 }
@@ -238,9 +242,6 @@ public interface IActionGoalContext<TResult, TFeedback> : IActionGoalContext, IO
     /// <para>
     /// Calling this method after completion is allowed.
     /// Action servers may or may not return result according to their configured result caching policy.
-    /// </para>
-    /// <para>
-    /// Additionally, caller takes the ownership of the returned <see cref="RosMessageBuffer"/>.
     /// </para>
     /// </remarks>
     /// <param name="cancellationToken"></param>

@@ -53,7 +53,7 @@ public class RegistrationLifecycleTests : IDisposable
             RclWaitObject<SafeGuardConditionHandle>.RegisterWaitHandles(context, first, null, second);
             var shutdown = context.DisposeAsync().AsTask();
 
-            await shutdown.WaitAsync(TimeSpan.FromSeconds(10));
+            await shutdown;
             Assert.Equal(1, first.DetachCount);
             Assert.Equal(1, second.DetachCount);
         }
@@ -70,8 +70,8 @@ public class RegistrationLifecycleTests : IDisposable
         using var probe = new Probe(context);
         probe.Dispose();
         Assert.IsType<ObjectDisposedException>(Record.Exception(probe.Publish));
-        await probe.Detached.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        await probe.NativeReleased.WaitAsync(TimeSpan.FromSeconds(10));
+        await probe.Detached.Task;
+        await probe.NativeReleased;
         Assert.True(probe.Handle.IsClosed);
         Assert.Equal(1, probe.DetachCount);
         Assert.Equal(1, probe.NativeReleases);
@@ -87,8 +87,8 @@ public class RegistrationLifecycleTests : IDisposable
         probe.Dispose();
         probe.Handle.Dispose();
 
-        await probe.Detached.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        await probe.NativeReleased.WaitAsync(TimeSpan.FromSeconds(10));
+        await probe.Detached.Task;
+        await probe.NativeReleased;
         Assert.True(probe.Handle.IsClosed);
         Assert.Equal(1, probe.NativeReleases);
         Assert.Equal(1, probe.DetachCount);
@@ -114,7 +114,7 @@ public class RegistrationLifecycleTests : IDisposable
         registration.Dispose();
         registration.Dispose();
         // This continuation is on the event loop. Await release instead of blocking its cleanup.
-        await handle.Released.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        await handle.Released.Task;
         Assert.True(handle.IsClosed);
         Assert.Equal(1, handle.Releases);
     }
@@ -135,7 +135,7 @@ public class RegistrationLifecycleTests : IDisposable
         handle.Dispose();
         Assert.False(handle.IsClosed);
         first.Dispose();
-        await handle.Released.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        await handle.Released.Task;
         Assert.True(handle.IsClosed);
         Assert.Equal(1, handle.Releases);
     }
@@ -153,7 +153,7 @@ public class RegistrationLifecycleTests : IDisposable
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             oldRegistration.Dispose();
             context.Register(handle, (_, _) => received.TrySetResult(), null, ref newRegistration);
             Assert.NotEqual(oldRegistration.Entry!.Token, newRegistration.Entry!.Token);
@@ -167,11 +167,10 @@ public class RegistrationLifecycleTests : IDisposable
             checkpoint.Resume();
         }
 
-        await received.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        await received.Task;
         newRegistration.Dispose();
         await LifecycleAssert.EventuallyAsync(() =>
             Volatile.Read(ref oldRegistration.Entry!.Detached) && Volatile.Read(ref newRegistration.Entry!.Detached));
-        Assert.False(checkpoint.TimedOut);
     }
 
     [Fact]
@@ -206,7 +205,7 @@ public class RegistrationLifecycleTests : IDisposable
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             Assert.True(probe.Handle.IsClosing);
             Assert.False(probe.Handle.IsClosed);
             Assert.Equal(0, probe.DetachCount);
@@ -217,8 +216,8 @@ public class RegistrationLifecycleTests : IDisposable
             checkpoint.Resume();
         }
 
-        await probe.Detached.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        await probe.NativeReleased.WaitAsync(TimeSpan.FromSeconds(10));
+        await probe.Detached.Task;
+        await probe.NativeReleased;
         Assert.True(probe.Handle.IsClosed);
         Assert.Equal(1, probe.NativeReleases);
         Assert.Equal(1, probe.DetachCount);
@@ -232,7 +231,7 @@ public class RegistrationLifecycleTests : IDisposable
         var first = guard.WaitOneAsync().AsTask();
         var second = guard.WaitOneAsync().AsTask();
         guard.Trigger();
-        await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(10));
+        await Task.WhenAll(first, second);
     }
 
     [Fact]
@@ -246,13 +245,13 @@ public class RegistrationLifecycleTests : IDisposable
         for (var i = 0; i < 100; i++)
         {
             var wait = guard.WaitOneAsync(canceled.Token).AsTask();
-            var error = await Assert.ThrowsAsync<OperationCanceledException>(() => wait.WaitAsync(TimeSpan.FromSeconds(10)));
+            var error = await Assert.ThrowsAsync<OperationCanceledException>(() => wait);
             Assert.Equal(canceled.Token, error.CancellationToken);
         }
 
         var next = guard.WaitOneAsync().AsTask();
         guard.Trigger();
-        await next.WaitAsync(TimeSpan.FromSeconds(10));
+        await next;
     }
 
     [Theory]
@@ -267,8 +266,8 @@ public class RegistrationLifecycleTests : IDisposable
         var wait = guard.WaitOneAsync().AsTask();
         var request = client.InvokeAsync(new ListParametersServiceRequest(), timeout);
         await context.DisposeAsync();
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => wait.WaitAsync(TimeSpan.FromSeconds(10)));
-        await Assert.ThrowsAsync<ObjectDisposedException>(() => request.WaitAsync(TimeSpan.FromSeconds(10)));
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => wait);
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => request);
     }
 
     [Theory]
@@ -287,7 +286,7 @@ public class RegistrationLifecycleTests : IDisposable
 
         try
         {
-            await stopping.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await stopping.Entered;
             Assert.False(request.IsCompleted);
             var shutdown = context.DisposeAsync().AsTask();
             Assert.Same(shutdown, context.DisposeAsync().AsTask());
@@ -299,23 +298,20 @@ public class RegistrationLifecycleTests : IDisposable
                 lock (context.RegistrationGate)
                 {
                 }
-            }).WaitAsync(TimeSpan.FromSeconds(10));
+            });
 
             stopping.Resume();
-            await stopped.Entered.WaitAsync(TimeSpan.FromSeconds(10));
-            await shutdown.WaitAsync(TimeSpan.FromSeconds(10));
-            await Assert.ThrowsAsync<ObjectDisposedException>(() => request.WaitAsync(TimeSpan.FromSeconds(10)));
+            await stopped.Entered;
+            await shutdown;
+            await Assert.ThrowsAsync<ObjectDisposedException>(() => request);
             Assert.False(disposing.IsCompleted);
         }
         finally
         {
             stopping.Resume();
             stopped.Resume();
-            await disposing.WaitAsync(TimeSpan.FromSeconds(10));
+            await disposing;
         }
-
-        Assert.False(stopping.TimedOut);
-        Assert.False(stopped.TimedOut);
     }
 
     [Fact]
@@ -342,17 +338,15 @@ public class RegistrationLifecycleTests : IDisposable
 
         try
         {
-            await context.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
-            await continuation.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await context.DisposeAsync().AsTask();
+            await continuation.Entered;
             Assert.False(completed.Task.IsCompleted);
         }
         finally
         {
             continuation.Resume();
-            await completed.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            await completed.Task;
         }
-
-        Assert.False(continuation.TimedOut);
     }
 
     [Fact]
@@ -389,11 +383,11 @@ public class RegistrationLifecycleTests : IDisposable
                 guard.Dispose();
             });
             start.SetResult();
-            await Task.WhenAll(signal, cancel, close).WaitAsync(TimeSpan.FromSeconds(10));
+            await Task.WhenAll(signal, cancel, close);
 
             try
             {
-                await wait.WaitAsync(TimeSpan.FromSeconds(10));
+                await wait;
             }
             catch (Exception error) when (error is OperationCanceledException or ObjectDisposedException)
             {
@@ -430,30 +424,30 @@ public class RegistrationLifecycleTests : IDisposable
                 return new ListParametersServiceResponse();
             });
         using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(name);
-        Assert.True(await client.TryWaitForServerAsync(10_000));
+        Assert.True(await client.TryWaitForServerAsync(Timeout.Infinite));
         using var canceled = new CancellationTokenSource();
         canceled.Cancel();
         await Assert.ThrowsAsync<OperationCanceledException>(() => client.InvokeAsync(new ListParametersServiceRequest(), canceled.Token));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => client.InvokeAsync(new ListParametersServiceRequest(), -2));
-        await client.InvokeAsync(new ListParametersServiceRequest(), 10_000);
+        await client.InvokeAsync(new ListParametersServiceRequest());
         Assert.Equal(1, Volatile.Read(ref calls));
 
         for (var i = 0; i < 40; i++)
         {
             using var cancellation = new CancellationTokenSource();
-            var response = client.InvokeAsync(new ListParametersServiceRequest(), 10_000, cancellation.Token);
+            var response = client.InvokeAsync(new ListParametersServiceRequest(), cancellation.Token);
             await Task.Run(cancellation.Cancel);
 
             try
             {
-                await response.WaitAsync(TimeSpan.FromSeconds(10));
+                await response;
             }
             catch (OperationCanceledException)
             {
             }
         }
 
-        await client.InvokeAsync(new ListParametersServiceRequest(), 10_000);
+        await client.InvokeAsync(new ListParametersServiceRequest());
     }
 
     [Fact]
@@ -474,7 +468,7 @@ public class RegistrationLifecycleTests : IDisposable
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             Assert.Equal(version, Source(pending).Version);
             Assert.False(pending.Fail(new OperationCanceledException()));
         }
@@ -483,7 +477,7 @@ public class RegistrationLifecycleTests : IDisposable
             checkpoint.Resume();
         }
 
-        Assert.True(await completing.WaitAsync(TimeSpan.FromSeconds(10)));
+        Assert.True(await completing);
         Assert.Equal(42, value);
         Assert.NotEqual(version, Source(pending).Version);
     }
@@ -541,12 +535,12 @@ public class RegistrationLifecycleTests : IDisposable
             subscription.Dispose();
             checkpoint.Pause();
         }, () => completed.TrySetResult()));
-        Assert.True(SpinWait.SpinUntil(() => publisher.Subscribers > 0, TimeSpan.FromSeconds(10)));
+        SpinWait.SpinUntil(() => publisher.Subscribers > 0);
         publisher.Publish(new Time(1, 2));
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             Assert.False(completed.Task.IsCompleted);
             Assert.False(((RclSubscription<Time>)subscription).Handle.IsClosed);
         }
@@ -555,8 +549,7 @@ public class RegistrationLifecycleTests : IDisposable
             checkpoint.Resume();
         }
 
-        await completed.Task.WaitAsync(TimeSpan.FromSeconds(10));
-        Assert.False(checkpoint.TimedOut);
+        await completed.Task;
     }
 
     [Fact]
@@ -568,13 +561,13 @@ public class RegistrationLifecycleTests : IDisposable
         using var checkpoint = new LifecycleCheckpoint();
         using var subscription = new PausedSubscription(node, topic, checkpoint);
         using var publisher = node.CreatePublisher<Time>(topic);
-        Assert.True(SpinWait.SpinUntil(() => publisher.Subscribers > 0, TimeSpan.FromSeconds(10)));
+        SpinWait.SpinUntil(() => publisher.Subscribers > 0);
         publisher.Publish(new Time(3, 4));
         Task shutdown;
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             subscription.Dispose();
             shutdown = context.DisposeAsync().AsTask();
             Assert.False(shutdown.IsCompleted);
@@ -585,9 +578,8 @@ public class RegistrationLifecycleTests : IDisposable
             checkpoint.Resume();
         }
 
-        await shutdown.WaitAsync(TimeSpan.FromSeconds(10));
+        await shutdown;
         Assert.Equal(1, subscription.Destroyed);
-        Assert.False(checkpoint.TimedOut);
     }
 
     [Fact]
@@ -617,12 +609,12 @@ public class RegistrationLifecycleTests : IDisposable
             }
         }, null));
         using var client = node.CreateClient<ListParametersService, ListParametersServiceRequest, ListParametersServiceResponse>(name);
-        Assert.True(await client.TryWaitForServerAsync(10_000));
+        Assert.True(await client.TryWaitForServerAsync(Timeout.Infinite));
         var pending = client.InvokeAsync(new ListParametersServiceRequest(), Timeout.Infinite);
 
         try
         {
-            await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            await entered.Task;
             await context.DisposeAsync();
             await Assert.ThrowsAsync<ObjectDisposedException>(() => pending);
             Assert.Equal(0, service.Destroyed);
@@ -632,7 +624,7 @@ public class RegistrationLifecycleTests : IDisposable
             resume.TrySetResult();
         }
 
-        await checkedBuffers.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        await checkedBuffers.Task;
         await LifecycleAssert.EventuallyAsync(() => Volatile.Read(ref service.Destroyed) == 2);
     }
 
@@ -647,7 +639,7 @@ public class RegistrationLifecycleTests : IDisposable
 
         try
         {
-            await checkpoint.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await checkpoint.Entered;
             disposing = timer.DisposeAsync().AsTask();
             await context.Yield();
             Assert.False(disposing.IsCompleted);
@@ -657,8 +649,7 @@ public class RegistrationLifecycleTests : IDisposable
             checkpoint.Resume();
         }
 
-        await disposing.WaitAsync(TimeSpan.FromSeconds(10));
-        Assert.False(checkpoint.TimedOut);
+        await disposing;
     }
 
     [Fact]
@@ -697,13 +688,13 @@ public class RegistrationLifecycleTests : IDisposable
 
         try
         {
-            await first.Entered.WaitAsync(TimeSpan.FromSeconds(10));
-            await second.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+            await first.Entered;
+            await second.Entered;
             disposing = timer.DisposeAsync().AsTask();
             await context.Yield();
             Assert.False(disposing.IsCompleted);
             first.Resume();
-            await firstExited.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            await firstExited.Task;
             Assert.False(disposing.IsCompleted);
             Assert.Equal(new[] { "creation", "creation" }, observed);
             Assert.Equal("caller", ambient.Value);
@@ -714,9 +705,7 @@ public class RegistrationLifecycleTests : IDisposable
             second.Resume();
         }
 
-        await disposing.WaitAsync(TimeSpan.FromSeconds(10));
-        Assert.False(first.TimedOut);
-        Assert.False(second.TimedOut);
+        await disposing;
     }
 
     private static RclContext NewContext() => new(TestConfig.DefaultContextArguments);

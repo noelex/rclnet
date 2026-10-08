@@ -6,8 +6,6 @@ namespace Rcl.NET.Tests;
 
 public class ClockTests
 {
-    private const int Timeout = 5_000;
-
     [Fact]
     public async Task TimeProviderPreservesNanosecondTimestamps()
     {
@@ -27,7 +25,7 @@ public class ClockTests
         foreach (var nanoseconds in new[] { initialNanoseconds, initialNanoseconds + 1_000 })
         {
             PublishClock(clockPublisher, buffer, nanoseconds);
-            for (var retry = 0; provider.GetTimestamp() != nanoseconds && retry < 500; retry++)
+            while (provider.GetTimestamp() != nanoseconds)
             {
                 await Task.Delay(10);
             }
@@ -102,11 +100,11 @@ public class ClockTests
         Assert.False(callback.Task.IsCompleted);
 
         PublishClock(clockPublisher, buffer, initialTime + timeout);
-        await delay.WaitAsync(TimeSpan.FromMilliseconds(Timeout));
+        await delay;
         await Assert.ThrowsAsync<TimeoutException>(() => wait);
-        Assert.True(await nextTick.WaitAsync(TimeSpan.FromMilliseconds(Timeout)));
-        await canceled.Task.WaitAsync(TimeSpan.FromMilliseconds(Timeout));
-        Assert.False(await callback.Task.WaitAsync(TimeSpan.FromMilliseconds(Timeout)));
+        Assert.True(await nextTick);
+        await canceled.Task;
+        Assert.False(await callback.Task);
     }
 
     [Fact]
@@ -136,10 +134,10 @@ public class ClockTests
 
         Assert.True(timer.Change(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(50)));
         PublishClock(clockPublisher, buffer, initialTime + TimeSpan.FromMilliseconds(100));
-        await first.Task.WaitAsync(TimeSpan.FromMilliseconds(Timeout));
+        await first.Task;
 
         PublishClock(clockPublisher, buffer, initialTime + TimeSpan.FromMilliseconds(150));
-        await second.Task.WaitAsync(TimeSpan.FromMilliseconds(Timeout));
+        await second.Task;
         Assert.True(timer.Change(System.Threading.Timeout.InfiniteTimeSpan, System.Threading.Timeout.InfiniteTimeSpan));
         PublishClock(clockPublisher, buffer, initialTime + TimeSpan.FromSeconds(1));
         await WaitForClockAsync(node.Clock, initialTime + TimeSpan.FromSeconds(1));
@@ -182,8 +180,8 @@ public class ClockTests
             });
 
             start.SetResult();
-            await Task.WhenAll(disposeTimer, disposeNode).WaitAsync(TimeSpan.FromMilliseconds(Timeout));
-            await timer.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromMilliseconds(Timeout));
+            await Task.WhenAll(disposeTimer, disposeNode);
+            await timer.DisposeAsync().AsTask();
             Assert.False(timer.Change(TimeSpan.FromSeconds(1), System.Threading.Timeout.InfiniteTimeSpan));
             await context.Yield();
         }
@@ -217,7 +215,7 @@ public class ClockTests
         Assert.False(cts.IsCancellationRequested);
 
         PublishClock(clockPublisher, buffer, initialTime + timeout);
-        await cancellation.Task.WaitAsync(TimeSpan.FromMilliseconds(Timeout));
+        await cancellation.Task;
     }
 
     private static void PublishClock(IRclPublisher publisher, RosMessageBuffer buffer, TimeSpan time)
@@ -246,7 +244,7 @@ public class ClockTests
 
     private static async Task WaitForSubscribersAsync(IRclPublisher publisher)
     {
-        for (var retry = 0; publisher.Subscribers == 0 && retry < 500; retry++)
+        while (publisher.Subscribers == 0)
         {
             await Task.Delay(10);
         }
@@ -256,7 +254,7 @@ public class ClockTests
 
     private static async Task WaitForClockAsync(IRclClock clock, TimeSpan expected)
     {
-        for (var retry = 0; clock.Elapsed != expected && retry < 500; retry++)
+        while (clock.Elapsed != expected)
         {
             await Task.Delay(10);
         }

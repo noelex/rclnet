@@ -14,6 +14,7 @@ rclnet is a high-performance .NET client library for ROS 2, designed for modern 
 ## What's New in 3.0
 - ROS 2 Lyrical support
 - Portable ROSIDL ABI support
+- Loaned message support for publishers and native subscriptions on supported middleware
 - Incremental MSBuild support for generated interfaces
 - .NET `TimeProvider` integration, including ROS-time-aware delays and timers
 

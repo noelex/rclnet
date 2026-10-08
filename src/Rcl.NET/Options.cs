@@ -382,6 +382,12 @@ public record SubscriptionOptions
     /// Supported by: >= humble
     /// </para>
     /// </param>
+    /// <param name="useLoanedMessages">
+    /// Receive middleware-owned buffers through <see cref="IRclNativeSubscription"/>.
+    /// Defaults to <see langword="false"/> and does not affect managed subscriptions.
+    /// Enabling this overrides RCL's default subscription-loan disable flag and requires
+    /// middleware support; otherwise native subscription creation throws <see cref="NotSupportedException"/>.
+    /// </param>
     public SubscriptionOptions(
         QosProfile? qos = null,
         Encoding? textEncoding = null,
@@ -395,7 +401,8 @@ public record SubscriptionOptions
         [SupportedSinceDistribution(RosEnvironment.Humble)]
         ContentFilterOptions? contentFilter = null,
         [SupportedSinceDistribution(RosEnvironment.Humble)]
-        UniquenessRequirement uniqueNetworkFlowEndpoints = UniquenessRequirement.NotRequired)
+        UniquenessRequirement uniqueNetworkFlowEndpoints = UniquenessRequirement.NotRequired,
+        bool useLoanedMessages = false)
     {
         if (fullMode == BoundedChannelFullMode.Wait)
         {
@@ -426,12 +433,25 @@ public record SubscriptionOptions
         IgnoreLocalPublications = ignoreLocalPublications;
         ContentFilter = contentFilter;
         UniqueNetworkFlowEndpoints = uniqueNetworkFlowEndpoints;
+        UseLoanedMessages = useLoanedMessages;
     }
 
     /// <summary>
     /// Gets a <see cref="SubscriptionOptions"/> instance with with all options set to default values.
     /// </summary>
     public static SubscriptionOptions Default { get; } = new();
+
+    /// <summary>
+    /// Gets whether native subscriptions receive middleware-owned loaned buffers.
+    /// </summary>
+    /// <remarks>
+    /// Defaults to <see langword="false"/>. This option does not affect managed subscriptions.
+    /// Enabling it overrides RCL's default subscription-loan disable flag and requires middleware support.
+    /// Treat received messages as read-only and dispose each buffer exactly once before disposing
+    /// the subscription or its context. Do not use any copies or native references after disposal.
+    /// Loan support does not guarantee zero-copy transport.
+    /// </remarks>
+    public bool UseLoanedMessages { get; }
 
     /// <summary>
     /// The QoS settings to be used for the subscribing the topic.
