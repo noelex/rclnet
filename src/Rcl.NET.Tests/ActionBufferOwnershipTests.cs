@@ -165,7 +165,7 @@ public class ActionBufferOwnershipTests : IDisposable
         using var client = CreateClient(clientNode, server.Name);
         await client.WaitForServerAsync(5_000);
         using var goalBuffer = RosMessageBuffer.Create<SequenceActionGoal>();
-        using var goal = await client.SendGoalAsync(goalBuffer, 10_000);
+        using var goal = await client.SendGoalAsync(goalBuffer);
         await queuedExecution.Entered;
 
         try
