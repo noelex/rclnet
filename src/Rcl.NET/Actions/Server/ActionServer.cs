@@ -5,6 +5,7 @@ using Rcl.Logging;
 using Rosidl.Messages.Action;
 using Rosidl.Messages.UniqueIdentifier;
 using Rosidl.Runtime;
+using System.Buffers;
 using System.Diagnostics;
 using System.Text;
 
@@ -23,7 +24,11 @@ internal class ActionServer : IActionServer
     private readonly MessageBufferHelper _functions;
 
     private readonly Dictionary<Guid, GoalContext> _goals = new();
+    private readonly object _goalsGate = new();
+    private readonly object _completionGate = new();
     private readonly CancellationTokenSource _shutdownSignal = new();
+    private readonly CancellationToken _shutdownToken;
+    private int _disposed;
 
     private readonly RclClock _clock;
     private readonly TimeSpan _resultTimeout;
@@ -39,6 +44,7 @@ internal class ActionServer : IActionServer
         _textEncoding = options.TextEncoding;
         _resultTimeout = options.ResultTimeout;
         _logger = _node.Context.DefaultLogger;
+        _shutdownToken = _shutdownSignal.Token;
 
         var statusTopicName = actionName + Constants.StatusTopic;
         var feedbackTopicName = actionName + Constants.FeedbackTopic;
@@ -81,7 +87,7 @@ internal class ActionServer : IActionServer
 
             if (_resultTimeout > TimeSpan.Zero)
             {
-                _ = ExpireResultsAsync(_shutdownSignal.Token);
+                _ = ExpireResultsAsync(_shutdownToken);
             }
             else
             {
@@ -109,30 +115,76 @@ internal class ActionServer : IActionServer
         var candidates = new List<GoalContext>();
         using var timer = _node.Context.CreateTimer(_clock, TimeSpan.FromSeconds(1));
 
-        while (!cancellationToken.IsCancellationRequested)
+        try
         {
-            // Ensure we wake up on the event loop.
-            await timer.WaitOneAsync(false, cancellationToken).ConfigureAwait(false);
-
-            foreach (var goal in _goals.Values)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                if (goal.Completion.IsCompleted && (_clock.Elapsed - goal.CompletionTime) >= _resultTimeout)
+                // Ensure we wake up on the event loop.
+                await timer.WaitOneAsync(false, cancellationToken).ConfigureAwait(false);
+
+                var now = _clock.Elapsed;
+
+                lock (_goalsGate)
                 {
-                    candidates.Add(goal);
+                    foreach (var goal in _goals.Values)
+                    {
+                        if (goal.Completion.IsCompleted && (now - goal.CompletionTime) >= _resultTimeout)
+                        {
+                            candidates.Add(goal);
+                        }
+                    }
                 }
-            }
 
-            foreach (var goal in candidates)
-            {
-                _goals.Remove(goal.GoalId);
-                goal.Dispose();
-            }
+                foreach (var goal in candidates)
+                {
+                    RemoveGoal(goal);
+                }
 
-            candidates.Clear();
+                candidates.Clear();
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (ObjectDisposedException) when (_node.Context.Handle.IsClosing)
+        {
         }
     }
 
     public string Name { get; }
+
+    protected virtual RosMessageBuffer CreateResultBuffer() => _functions.CreateResultBuffer();
+
+    protected virtual RosMessageBuffer CreateFeedbackBuffer() => _typesupport.FeedbackMessage.CreateBuffer();
+
+    protected virtual ValueTask PublishFeedbackAsync(RosMessageBuffer buffer) => _feedbackPublisher.PublishAsync(buffer);
+
+    protected virtual Task WaitForResultAsync(Task completion, CancellationToken cancellationToken)
+        => completion.WaitAsync(cancellationToken);
+
+    protected virtual void CopyResult(RosMessageBuffer source, RosMessageBuffer response)
+    {
+        if (!_functions.CopyResult(source.Data, _typesupport.ResultService.Response.GetMemberPointer(response.Data, 1)))
+        {
+            throw new RclException("Unable to copy result buffer.");
+        }
+    }
+
+    private void RemoveGoal(GoalContext goal)
+    {
+        bool removed;
+
+        lock (_goalsGate)
+        {
+            removed = _goals.TryGetValue(goal.GoalId, out var current) && ReferenceEquals(current, goal)
+                && _goals.Remove(goal.GoalId);
+        }
+
+        if (removed)
+        {
+            goal.Dispose();
+        }
+    }
 
     private unsafe void HandleSendGoal(RosMessageBuffer request, RosMessageBuffer response)
     {
@@ -147,9 +199,15 @@ internal class ActionServer : IActionServer
         };
         var goal = _typesupport.GoalService.Request.GetMemberPointer(request.Data, 1);
 
-        if (!_goals.ContainsKey(goalId) && _handler.CanAccept(goalId, new RosMessageBuffer(goal, static (a, b) =>
-{
-})))
+        lock (_goalsGate)
+        {
+            if (_disposed != 0 || _goals.ContainsKey(goalId))
+            {
+                return;
+            }
+        }
+
+        if (_handler.CanAccept(goalId, new RosMessageBuffer(goal, static (_, _) => { })))
         {
             // Make a copy of the goal because we don't own the request buffer.
             var copiedGoal = _functions.CreateGoalBuffer();
@@ -160,42 +218,70 @@ internal class ActionServer : IActionServer
                 throw new RclException("Unable to copy goal buffer.");
             }
 
-            var ctx = new GoalContext(goalId, this, _clock.Elapsed);
-            _goals[goalId] = ctx;
+            GoalContext? ctx = null;
+            var executionStarted = false;
 
-            // Send response first, then notify status change.
-            ctx.Status = ActionGoalStatus.Accepted;
-            _node.Context.SynchronizationContext.Post(static (state) =>
-                ((ActionServer)state!).NotifyStatusChange(), this);
-
-            if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+            try
             {
-                ref var resp = ref response.AsRef<SendGoalResponse>();
-                resp.Accepted = true;
-                resp.Stamp.CopyFrom(ctx.CreationTime);
+                ctx = new GoalContext(goalId, this, _clock.Elapsed);
+
+                lock (_goalsGate)
+                {
+                    ObjectDisposedException.ThrowIf(_disposed != 0, this);
+                    _goals[goalId] = ctx;
+                }
+
+                // Send response first, then notify status change.
+                ctx.Status = ActionGoalStatus.Accepted;
+                _node.Context.SynchronizationContext.Post(static state =>
+                    ((ActionServer)state!).NotifyStatusChange(), this);
+
+                if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+                {
+                    ref var resp = ref response.AsRef<SendGoalResponse>();
+                    resp.Accepted = true;
+                    resp.Stamp.CopyFrom(ctx.CreationTime);
+                }
+                else
+                {
+                    ref var resp = ref response.AsRef<SendGoalResponseV2>();
+                    resp.Accepted = true;
+                    resp.Stamp.CopyFrom(ctx.CreationTime);
+                }
+
+                _handler.OnAccepted(ctx);
+
+                // The execution reference is reserved before any callback can close the server.
+                _ = ExecuteGoalAsync(ctx, copiedGoal);
+                executionStarted = true;
             }
-            else
+            finally
             {
-                ref var resp = ref response.AsRef<SendGoalResponseV2>();
-                resp.Accepted = true;
-                resp.Stamp.CopyFrom(ctx.CreationTime);
+                if (!executionStarted)
+                {
+                    copiedGoal.Dispose();
+
+                    if (ctx != null)
+                    {
+                        RemoveGoal(ctx);
+                        ctx.Dispose();
+                        NotifyGoalCompleted(ctx);
+                        ctx.Release();
+                    }
+                }
             }
-
-            _handler.OnAccepted(ctx);
-
-            // Spawn a coroutine to execute the goal
-            _ = ExecuteGoalAsync(ctx, copiedGoal);
         }
     }
 
     private async Task ExecuteGoalAsync(GoalContext context, RosMessageBuffer goalBuffer)
     {
-        // Make sure the following happens asynchronously.
-        await _node.Context.Yield();
-
-        using (goalBuffer)
+        try
         {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_shutdownSignal.Token, context.CancelSignal, context.AbortSignal);
+            using var ownedGoal = goalBuffer;
+            // Make sure the following happens asynchronously, including when shutdown wins this yield.
+            await _node.Context.Yield();
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_shutdownToken, context.CancelSignal, context.AbortSignal);
 
             ActionGoalStatus status;
 
@@ -204,6 +290,7 @@ internal class ActionServer : IActionServer
                 context.Status = ActionGoalStatus.Executing;
                 NotifyStatusChange();
 
+                cts.Token.ThrowIfCancellationRequested();
                 await _handler.ExecuteAsync(context, goalBuffer, context.ResultBuffer, cts.Token);
                 status = ActionGoalStatus.Succeeded;
             }
@@ -227,14 +314,29 @@ internal class ActionServer : IActionServer
             }
 
             context.Status = status;
-            context.CompletionTime = _clock.Elapsed;
+            if (Volatile.Read(ref _disposed) == 0 && !_node.Context.Handle.IsClosing)
+            {
+                context.CompletionTime = _clock.Elapsed;
+            }
 
             await _node.Context.YieldIfNotCurrent();
 
             NotifyStatusChange();
-            _handler.OnCompleted(context);
-
+        }
+        finally
+        {
+            NotifyGoalCompleted(context);
             context.Complete();
+            context.Release();
+        }
+    }
+
+    private void NotifyGoalCompleted(GoalContext context)
+    {
+        // Context shutdown moves continuations to the thread pool, so yielding alone cannot serialize callbacks.
+        lock (_completionGate)
+        {
+            Cleanup.Run(state => _handler.OnCompleted((GoalContext)state!), context);
         }
     }
 
@@ -244,32 +346,39 @@ internal class ActionServer : IActionServer
             ? request.AsRef<GetResultRequest>().GoalId.ToGuid()
             : request.AsRef<GetResultRequestV2>().GoalId.ToGuid();
 
-        if (_goals.TryGetValue(goalId, out var ctx))
+        GoalContext? ctx;
+
+        lock (_goalsGate)
         {
-            await ctx.Completion.WaitAsync(cancellationToken).ConfigureAwait(false);
-
-            // ActionGoalStatus maps directly to the ABI-independent int8 status member.
-            _typesupport.ResultService.Response.UnsafeAsRef<ActionGoalStatus>(response.Data, 0) = ctx.Status;
-
-            if (ctx.Status == ActionGoalStatus.Succeeded)
+            if (_goals.TryGetValue(goalId, out ctx) && !ctx.TryRetain())
             {
-                _functions.CopyResult(ctx.ResultBuffer.Data,
-                    _typesupport.ResultService.Response.GetMemberPointer(response.Data, 1));
+                ctx = null;
             }
+        }
 
-            // If the timeout is configured to have value -1,
-            // then goal results will be “kept forever” (until the action server shuts down).
-            //
-            // If the timeout is configured to have value 0,
-            // then goal results are discarded immediately (after responding to any pending result requests).
-            if (_resultTimeout == TimeSpan.Zero)
+        if (ctx != null)
+        {
+            try
             {
-                await _node.Context.YieldIfNotCurrent();
+                await WaitForResultAsync(ctx.Completion, cancellationToken).ConfigureAwait(false);
 
-                using (ctx)
+                // ActionGoalStatus maps directly to the ABI-independent int8 status member.
+                _typesupport.ResultService.Response.UnsafeAsRef<ActionGoalStatus>(response.Data, 0) = ctx.Status;
+
+                if (ctx.Status == ActionGoalStatus.Succeeded)
                 {
-                    _goals.Remove(ctx.GoalId);
+                    CopyResult(ctx.ResultBuffer, response);
                 }
+
+                // Remove the cache's ownership without releasing buffers used by other result readers.
+                if (_resultTimeout == TimeSpan.Zero)
+                {
+                    RemoveGoal(ctx);
+                }
+            }
+            finally
+            {
+                ctx.Release();
             }
         }
         else
@@ -285,17 +394,36 @@ internal class ActionServer : IActionServer
 
         if (goalId == Guid.Empty && stamp == TimeSpan.Zero)
         {
-            var cancellableGoals = _goals.Values.Where(x => !x.Completion.IsCompleted).ToArray();
+            GoalContext[] cancellableGoals;
+
+            lock (_goalsGate)
+            {
+                cancellableGoals = _goals.Values.Where(x => !x.Completion.IsCompleted).ToArray();
+            }
+
             CancelGoals(cancellableGoals, response);
         }
         else if (goalId == Guid.Empty)
         {
-            var cancellableGoals = _goals.Values.Where(x => !x.Completion.IsCompleted && x.CreationTime <= stamp).ToArray();
+            GoalContext[] cancellableGoals;
+
+            lock (_goalsGate)
+            {
+                cancellableGoals = _goals.Values.Where(x => !x.Completion.IsCompleted && x.CreationTime <= stamp).ToArray();
+            }
+
             CancelGoals(cancellableGoals, response);
         }
         else if (goalId != Guid.Empty)
         {
-            if (!_goals.TryGetValue(goalId, out var ctx))
+            GoalContext? ctx;
+
+            lock (_goalsGate)
+            {
+                _goals.TryGetValue(goalId, out ctx);
+            }
+
+            if (ctx == null)
             {
                 _logger.LogWarning($"Unable to cancel goal [{goalId}]: Goal not found.");
                 WriteCancelResponse(response, CancelGoalServiceResponse.ERROR_UNKNOWN_GOAL_ID, Array.Empty<GoalContext>());
@@ -312,9 +440,14 @@ internal class ActionServer : IActionServer
         }
         else
         {
-            var cancellableGoals = _goals.Values
-                .Where(x => !x.Completion.IsCompleted && (goalId == x.GoalId || x.CreationTime <= stamp))
-                .ToArray();
+            GoalContext[] cancellableGoals;
+
+            lock (_goalsGate)
+            {
+                cancellableGoals = _goals.Values
+                    .Where(x => !x.Completion.IsCompleted && (goalId == x.GoalId || x.CreationTime <= stamp))
+                    .ToArray();
+            }
 
             CancelGoals(cancellableGoals, response);
         }
@@ -403,69 +536,104 @@ internal class ActionServer : IActionServer
 
     private void NotifyStatusChange()
     {
+        if (Volatile.Read(ref _disposed) != 0 || _node.Context.Handle.IsClosing)
+        {
+            return;
+        }
+
         using var statusBuffer = RosMessageBuffer.Create<GoalStatusArray>();
+        GoalContext[] contexts;
+        int count;
 
-        if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+        lock (_goalsGate)
         {
-            ref var statusArray = ref statusBuffer.AsRef<GoalStatusArray.Priv>();
-            Span<GoalStatus.Priv> goals = stackalloc GoalStatus.Priv[_goals.Count];
-            var index = 0;
-
-            foreach (var goal in _goals.Values)
+            if (_disposed != 0)
             {
-                goals[index].GoalInfo.GoalId.CopyFrom(goal.GoalId);
-                goals[index].GoalInfo.Stamp.CopyFrom(goal.CreationTime);
-                goals[index].Status = (sbyte)goal.Status;
-                index++;
+                return;
             }
 
-            statusArray.StatusList.CopyFrom(goals);
+            count = _goals.Count;
+            contexts = ArrayPool<GoalContext>.Shared.Rent(count);
+            _goals.Values.CopyTo(contexts, 0);
         }
-        else
+
+        try
         {
-            ref var statusArray = ref statusBuffer.AsRef<GoalStatusArray.PrivV2>();
-            Span<GoalStatus.PrivV2> goals = stackalloc GoalStatus.PrivV2[_goals.Count];
-            var index = 0;
-
-            foreach (var goal in _goals.Values)
+            if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
             {
-                goals[index].GoalInfo.GoalId.CopyFrom(goal.GoalId);
-                goals[index].GoalInfo.Stamp.CopyFrom(goal.CreationTime);
-                goals[index].Status = (sbyte)goal.Status;
-                index++;
-            }
+                ref var statusArray = ref statusBuffer.AsRef<GoalStatusArray.Priv>();
+                Span<GoalStatus.Priv> goals = stackalloc GoalStatus.Priv[count];
 
-            statusArray.StatusList.CopyFrom(goals);
+                for (var i = 0; i < count; i++)
+                {
+                    var goal = contexts[i];
+                    goals[i].GoalInfo.GoalId.CopyFrom(goal.GoalId);
+                    goals[i].GoalInfo.Stamp.CopyFrom(goal.CreationTime);
+                    goals[i].Status = (sbyte)goal.Status;
+                }
+
+                statusArray.StatusList.CopyFrom(goals);
+            }
+            else
+            {
+                ref var statusArray = ref statusBuffer.AsRef<GoalStatusArray.PrivV2>();
+                Span<GoalStatus.PrivV2> goals = stackalloc GoalStatus.PrivV2[count];
+
+                for (var i = 0; i < count; i++)
+                {
+                    var goal = contexts[i];
+                    goals[i].GoalInfo.GoalId.CopyFrom(goal.GoalId);
+                    goals[i].GoalInfo.Stamp.CopyFrom(goal.CreationTime);
+                    goals[i].Status = (sbyte)goal.Status;
+                }
+
+                statusArray.StatusList.CopyFrom(goals);
+            }
+        }
+        finally
+        {
+            // Snapshots only read managed metadata; clear references before returning the array to the pool.
+            ArrayPool<GoalContext>.Shared.Return(contexts, clearArray: true);
         }
 
-        _statusPublisher.Publish(statusBuffer);
+        try
+        {
+            _statusPublisher.Publish(statusBuffer);
+        }
+        catch (ObjectDisposedException) when (Volatile.Read(ref _disposed) != 0 || _node.Context.Handle.IsClosing)
+        {
+        }
     }
 
     public void Dispose()
     {
-        if (!_shutdownSignal.IsCancellationRequested)
+        GoalContext[] goals;
+
+        lock (_goalsGate)
         {
-            _shutdownSignal.Cancel();
-            _shutdownSignal.Dispose();
-
-            _node.Context.SynchronizationContext.Send(static (state) =>
+            if (_disposed != 0)
             {
-                var self = (ActionServer)state!;
+                return;
+            }
 
-                foreach (var ctx in self._goals.Values)
-                {
-                    ctx.Dispose();
-                }
-
-                self._goals.Clear();
-            }, this);
-
-            _feedbackPublisher?.Dispose();
-            _statusPublisher?.Dispose();
-            _cancelGoalService?.Dispose();
-            _getResultService?.Dispose();
-            _sendGoalService?.Dispose();
+            Volatile.Write(ref _disposed, 1);
+            goals = _goals.Values.ToArray();
+            _goals.Clear();
         }
+
+        Cleanup.Run(static state => ((CancellationTokenSource)state!).Cancel(), _shutdownSignal);
+
+        foreach (var goal in goals)
+        {
+            goal.Dispose();
+        }
+
+        Cleanup.Dispose(_feedbackPublisher);
+        Cleanup.Dispose(_statusPublisher);
+        Cleanup.Dispose(_cancelGoalService);
+        Cleanup.Dispose(_getResultService);
+        Cleanup.Dispose(_sendGoalService);
+        _shutdownSignal.Dispose();
     }
 
     private class GoalContext : INativeActionGoalController, IDisposable
@@ -473,6 +641,10 @@ internal class ActionServer : IActionServer
         private readonly Guid _goalId;
         private readonly ActionServer _server;
         private readonly RosMessageBuffer _feedbackMessageBuffer, _resultBuffer;
+        private readonly object _lifetimeGate = new(), _feedbackGate = new();
+        // The cache and the reserved execution each own a reference from construction onward.
+        private int _references = 2;
+        private bool _disposeRequested;
 
         private readonly CancellationTokenSource _abort = new(), _cancel = new();
         private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -483,18 +655,19 @@ internal class ActionServer : IActionServer
             _server = server;
             CreationTime = accepted;
 
-            _feedbackMessageBuffer = _server._typesupport.FeedbackMessage.CreateBuffer();
+            _feedbackMessageBuffer = CreateFeedbackMessage();
 
-            if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+            try
             {
-                _server._typesupport.FeedbackMessage.AsRef<UUID.Priv>(_feedbackMessageBuffer.Data, 0).CopyFrom(id);
+                _resultBuffer = _server.CreateResultBuffer();
             }
-            else
+            catch
             {
-                _server._typesupport.FeedbackMessage.AsRef<UUID.PrivV2>(_feedbackMessageBuffer.Data, 0).CopyFrom(id);
+                _feedbackMessageBuffer.Dispose();
+                _abort.Dispose();
+                _cancel.Dispose();
+                throw;
             }
-
-            _resultBuffer = _server._functions.CreateResultBuffer();
 
             _server._logger.LogDebug($"Created action goal context [{GoalId}].");
         }
@@ -517,17 +690,35 @@ internal class ActionServer : IActionServer
 
         public void Abort()
         {
-            if (!_abort.IsCancellationRequested)
+            if (!TryRetain())
+            {
+                return;
+            }
+
+            try
             {
                 _abort.Cancel();
+            }
+            finally
+            {
+                Release();
             }
         }
 
         public void Cancel()
         {
-            if (!_cancel.IsCancellationRequested)
+            if (!TryRetain())
+            {
+                return;
+            }
+
+            try
             {
                 _cancel.Cancel();
+            }
+            finally
+            {
+                Release();
             }
         }
 
@@ -538,31 +729,132 @@ internal class ActionServer : IActionServer
 
         public void Dispose()
         {
-            _feedbackMessageBuffer.Dispose();
-            _resultBuffer.Dispose();
+            lock (_lifetimeGate)
+            {
+                if (_disposeRequested)
+                {
+                    return;
+                }
 
+                _disposeRequested = true;
+            }
+
+            Release();
+        }
+
+        public bool TryRetain()
+        {
+            lock (_lifetimeGate)
+            {
+                if (_disposeRequested)
+                {
+                    return false;
+                }
+
+                _references++;
+                return true;
+            }
+        }
+
+        public void Release()
+        {
+            lock (_lifetimeGate)
+            {
+                if (--_references != 0)
+                {
+                    return;
+                }
+            }
+
+            Cleanup.Dispose(_feedbackMessageBuffer);
+            Cleanup.Dispose(_resultBuffer);
             _abort.Dispose();
             _cancel.Dispose();
-
             _server._logger.LogDebug($"Action goal context [{GoalId}] disposed.");
         }
 
-        private void CopyFeedbackFrom(RosMessageBuffer src)
+        private RosMessageBuffer CreateFeedbackMessage()
         {
-            _server._functions.CopyFeedback(src.Data,
-                _server._typesupport.FeedbackMessage.GetMemberPointer(_feedbackMessageBuffer.Data, 1));
+            var buffer = _server.CreateFeedbackBuffer();
+
+            if (RosidlRuntime.NativeAbi == RosidlNativeAbi.V1)
+            {
+                _server._typesupport.FeedbackMessage.AsRef<UUID.Priv>(buffer.Data, 0).CopyFrom(GoalId);
+            }
+            else
+            {
+                _server._typesupport.FeedbackMessage.AsRef<UUID.PrivV2>(buffer.Data, 0).CopyFrom(GoalId);
+            }
+
+            return buffer;
+        }
+
+        private void CopyFeedbackFrom(RosMessageBuffer src, RosMessageBuffer destination)
+        {
+            if (!_server._functions.CopyFeedback(src.Data,
+                _server._typesupport.FeedbackMessage.GetMemberPointer(destination.Data, 1)))
+            {
+                throw new RclException("Unable to copy feedback buffer.");
+            }
+        }
+
+        private void RetainForFeedback()
+        {
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _server._disposed) != 0 || !TryRetain(), this);
         }
 
         public void Report(RosMessageBuffer value)
         {
-            CopyFeedbackFrom(value);
-            _server._feedbackPublisher.Publish(_feedbackMessageBuffer);
+            RetainForFeedback();
+
+            try
+            {
+                lock (_feedbackGate)
+                {
+                    CopyFeedbackFrom(value, _feedbackMessageBuffer);
+                    _server._feedbackPublisher.Publish(_feedbackMessageBuffer);
+                }
+            }
+            finally
+            {
+                Release();
+            }
         }
 
         public ValueTask ReportAsync(RosMessageBuffer buffer, CancellationToken cancellationToken = default)
         {
-            CopyFeedbackFrom(buffer);
-            return _server._feedbackPublisher.PublishAsync(_feedbackMessageBuffer);
+            cancellationToken.ThrowIfCancellationRequested();
+            RetainForFeedback();
+            var message = RosMessageBuffer.Empty;
+
+            try
+            {
+                message = CreateFeedbackMessage();
+                CopyFeedbackFrom(buffer, message);
+                cancellationToken.ThrowIfCancellationRequested();
+                return PublishFeedbackAsync(message);
+            }
+            catch
+            {
+                message.Dispose();
+                Release();
+                throw;
+            }
+        }
+
+        private async ValueTask PublishFeedbackAsync(RosMessageBuffer message)
+        {
+            try
+            {
+                using (message)
+                {
+                    await _server.PublishFeedbackAsync(message).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                Release();
+            }
         }
     }
 }

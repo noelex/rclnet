@@ -162,10 +162,13 @@ public interface INativeActionGoalHandler
     /// </para>
     /// <list type="bullet">
     /// <item>
-    /// The action server allocates and owns the <paramref name="goal"/> and <paramref name="result"/> buffer.
+    /// The action server owns the <paramref name="goal"/> and <paramref name="result"/> buffers.
+    /// The handler borrows them until its returned task completes, including during cancellation or server shutdown.
+    /// Do not dispose them or retain copies or native references for use after completion.
     /// </item>
     /// <item>
-    /// The implementation is responsibile for allocating and disposing the <see cref="RosMessageBuffer"/> for reporting feedback.
+    /// The implementation is responsible for obtaining and releasing feedback buffers according to their ownership contracts.
+    /// Reporting does not transfer ownership or return loans.
     /// </item>
     /// </list>
     /// </remarks>
