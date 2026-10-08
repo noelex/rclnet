@@ -16,13 +16,7 @@ public class ThreadSafetyTests
     [InlineData(RclClockType.Ros, true)]
     public async Task ConcurrentTimerCreationAndDisposal_MultipleContexts(RclClockType clockType, bool synchronousDispose)
     {
-        // A standalone C++ RCL program with independent contexts and endpoints also crashes on
-        // Humble and Iron / Fast DDS, without .NET or SafeHandle. Humble's native stack identifies
-        // a null call in StatefulWriter::deliver_sample_to_intraprocesses during endpoint teardown.
-        // Restrict the exclusion to this overlapping multi-context endpoint scenario.
-        Skip.If((RosEnvironment.IsHumble || RosEnvironment.IsIron)
-            && RosEnvironment.RmwImplementationIdentifier == "rmw_fastrtps_cpp",
-            "Humble/Iron / Fast DDS: native concurrent endpoint teardown crashes.");
+        TestConfig.SkipIfMultiContextEndpointTeardownCanCrash();
 
         // Both managed tests and a standalone C++ RCL reproduction abort in Lyrical / Cyclone
         // at ddsi_fini's ddsrt_avl_is_empty(&gv->typelib) assertion when contexts close concurrently.

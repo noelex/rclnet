@@ -149,9 +149,11 @@ public class ActionBufferOwnershipTests : IDisposable
         Assert.True(handler.AccessedBuffersAfterResume);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task ShutdownBeforeQueuedExecutionReleasesItsReservedBuffers()
     {
+        TestConfig.SkipIfMultiContextEndpointTeardownCanCrash();
+
         await using var context = new RclContext(TestConfig.DefaultContextArguments);
         await using var clientContext = new RclContext(TestConfig.DefaultContextArguments);
         using var node = (RclNodeImpl)context.CreateNode(NameGenerator.GenerateNodeName());

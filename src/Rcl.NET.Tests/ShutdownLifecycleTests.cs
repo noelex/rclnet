@@ -260,9 +260,11 @@ public class ShutdownLifecycleTests
         Assert.True(context.Handle.IsClosed);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RetainedChildrenKeepEachPhysicalContextsLoggingReference()
     {
+        TestConfig.SkipIfMultiContextEndpointTeardownCanCrash();
+
         int before = SafeContextHandle.LoggingReferences;
         var first = NewContext();
         var second = NewContext();

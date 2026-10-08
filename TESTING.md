@@ -161,6 +161,8 @@ Build and test with `-p:UseRosTestVariants=false` to use the standard xUnit adap
 
 Ordinary requests, discovery and synchronization waits have no test-side watchdog timeout. Keep finite timeouts only when they are part of the behavior under test, including cancellation, result retention and allocation measurements of timer setup. CI uses `blame.runsettings` to collect a mini dump after one minute of test inactivity before terminating the test host.
 
+On Humble and Iron with Fast DDS, tests that keep nodes or endpoints alive in multiple contexts skip because native endpoint teardown can crash in `StatefulWriter::deliver_sample_to_intraprocesses`. This includes queued action shutdown, retained native node lifetime, and concurrent timer creation/disposal across contexts. Context-only tests and tests whose endpoints all belong to one context remain enabled.
+
 Local runs do not enable dump collection by default. Debug a hanging test, or opt in when rerunning it:
 
 ```powershell
