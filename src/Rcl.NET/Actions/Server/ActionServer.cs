@@ -153,6 +153,8 @@ internal class ActionServer : IActionServer
 
     public string Name { get; }
 
+    protected virtual RosMessageBuffer CreateGoalBuffer() => _functions.CreateGoalBuffer();
+
     protected virtual RosMessageBuffer CreateResultBuffer() => _functions.CreateResultBuffer();
 
     protected virtual RosMessageBuffer CreateFeedbackBuffer() => _typesupport.FeedbackMessage.CreateBuffer();
@@ -210,7 +212,7 @@ internal class ActionServer : IActionServer
         if (_handler.CanAccept(goalId, new RosMessageBuffer(goal, static (_, _) => { })))
         {
             // Make a copy of the goal because we don't own the request buffer.
-            var copiedGoal = _functions.CreateGoalBuffer();
+            var copiedGoal = CreateGoalBuffer();
 
             if (!_functions.CopyGoal(goal, copiedGoal.Data))
             {
@@ -219,6 +221,7 @@ internal class ActionServer : IActionServer
             }
 
             GoalContext? ctx = null;
+            var acceptanceNotificationStarted = false;
             var executionStarted = false;
 
             try
@@ -227,7 +230,11 @@ internal class ActionServer : IActionServer
 
                 lock (_goalsGate)
                 {
-                    ObjectDisposedException.ThrowIf(_disposed != 0, this);
+                    if (_disposed != 0)
+                    {
+                        return;
+                    }
+
                     _goals[goalId] = ctx;
                 }
 
@@ -249,6 +256,8 @@ internal class ActionServer : IActionServer
                     resp.Stamp.CopyFrom(ctx.CreationTime);
                 }
 
+                // Pair completion even if OnAccepted only partially initializes the handler's state.
+                acceptanceNotificationStarted = true;
                 _handler.OnAccepted(ctx);
 
                 // The execution reference is reserved before any callback can close the server.
@@ -265,7 +274,12 @@ internal class ActionServer : IActionServer
                     {
                         RemoveGoal(ctx);
                         ctx.Dispose();
-                        NotifyGoalCompleted(ctx);
+
+                        if (acceptanceNotificationStarted)
+                        {
+                            NotifyGoalCompleted(ctx);
+                        }
+
                         ctx.Release();
                     }
                 }

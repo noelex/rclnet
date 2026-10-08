@@ -6,7 +6,9 @@ using Rcl.Qos;
 using Rcl.SafeHandles;
 using Rosidl.Messages.Action;
 using Rosidl.Messages.Ros2csAbiTest;
+using Rosidl.Runtime;
 using System.Collections.Concurrent;
+using System.Reflection;
 using System.Text;
 
 namespace Rcl.NET.Tests;
@@ -18,6 +20,95 @@ public class ActionBufferOwnershipTests : IDisposable
     public void Dispose()
     {
         Assert.Empty(HandleReleaseDiagnostics.Snapshot().Except(_errorsBefore));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ShutdownDuringAdmissionDoesNotNotifyUnacceptedGoal(bool closeFromCallback)
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = (RclNodeImpl)context.CreateNode(NameGenerator.GenerateNodeName());
+        using var admission = new LifecycleCheckpoint();
+        var handler = new AdmissionHandler();
+        using var server = new TrackingServer(node, handler);
+        handler.CheckAdmission = () =>
+        {
+            if (closeFromCallback)
+            {
+                server.Dispose();
+            }
+            else
+            {
+                admission.Pause();
+            }
+        };
+        var introspection = new ActionIntrospection(SequenceAction.GetTypeSupportHandle());
+        using var request = introspection.GoalService.Request.CreateBuffer();
+        using var response = introspection.GoalService.Response.CreateBuffer();
+        var sending = InvokeAdmissionAsync(context, server, request, response);
+        Exception? error;
+
+        try
+        {
+            if (!closeFromCallback)
+            {
+                await admission.Entered.WaitAsync(TimeSpan.FromSeconds(10));
+                server.Dispose();
+            }
+        }
+        finally
+        {
+            admission.Resume();
+            error = await Record.ExceptionAsync(() => sending.WaitAsync(TimeSpan.FromSeconds(10)));
+        }
+
+        Assert.Empty(handler.Notifications);
+        Assert.Equal(0, handler.Executions);
+        Assert.Equal(1, server.GoalsReleased);
+        Assert.Equal(1, server.ResultsReleased);
+        Assert.Equal(1, server.FeedbacksReleased);
+        Assert.False(RosidlRuntime.NativeAbi == RosidlNativeAbi.V1
+            ? response.AsRef<SendGoalResponse>().Accepted
+            : response.AsRef<SendGoalResponseV2>().Accepted);
+        Assert.False(admission.TimedOut);
+        Assert.Null(error);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AdmissionPreservesHandlerExceptionsAndPairsStartedNotifications(bool throwOnAccepted)
+    {
+        await using var context = new RclContext(TestConfig.DefaultContextArguments);
+        using var node = (RclNodeImpl)context.CreateNode(NameGenerator.GenerateNodeName());
+        var failure = new ObjectDisposedException("handler");
+        var handler = new AdmissionHandler
+        {
+            CheckAdmission = () =>
+            {
+                if (!throwOnAccepted)
+                {
+                    throw failure;
+                }
+            },
+            AcceptanceError = throwOnAccepted ? failure : null
+        };
+        using var server = new TrackingServer(node, handler);
+        var introspection = new ActionIntrospection(SequenceAction.GetTypeSupportHandle());
+        using var request = introspection.GoalService.Request.CreateBuffer();
+        using var response = introspection.GoalService.Response.CreateBuffer();
+        var error = await Record.ExceptionAsync(() => InvokeAdmissionAsync(context, server, request, response)
+            .WaitAsync(TimeSpan.FromSeconds(10)));
+        server.Dispose();
+
+        Assert.Same(failure, error);
+        Assert.Equal(throwOnAccepted ? new[] { "accepted", "completed" } : Array.Empty<string>(),
+            handler.Notifications);
+        Assert.Equal(0, handler.Executions);
+        Assert.Equal(throwOnAccepted ? 1 : 0, server.GoalsReleased);
+        Assert.Equal(throwOnAccepted ? 1 : 0, server.ResultsReleased);
+        Assert.Equal(throwOnAccepted ? 1 : 0, server.FeedbacksReleased);
     }
 
     [Theory]
@@ -378,6 +469,51 @@ public class ActionBufferOwnershipTests : IDisposable
             SequenceActionResult, SequenceActionFeedback>(name);
     }
 
+    private static async Task InvokeAdmissionAsync(RclContext context, ActionServer server,
+        RosMessageBuffer request, RosMessageBuffer response)
+    {
+        await context.Yield();
+        // Isolate admission from the service transport, which is also closed by server.Dispose().
+        typeof(ActionServer).GetMethod("HandleSendGoal", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .CreateDelegate<Action<RosMessageBuffer, RosMessageBuffer>>(server)(request, response);
+    }
+
+    private sealed class AdmissionHandler : ActionGoalHandler
+    {
+        public Action? CheckAdmission { get; set; }
+        public Exception? AcceptanceError { get; init; }
+        public List<string> Notifications { get; } = new();
+        public int Executions { get; private set; }
+
+        public override bool CanAccept(Guid id, RosMessageBuffer goal)
+        {
+            CheckAdmission?.Invoke();
+            return true;
+        }
+
+        public override void OnAccepted(INativeActionGoalController controller)
+        {
+            Notifications.Add("accepted");
+
+            if (AcceptanceError != null)
+            {
+                throw AcceptanceError;
+            }
+        }
+
+        public override void OnCompleted(INativeActionGoalController controller)
+        {
+            Notifications.Add("completed");
+        }
+
+        public override Task ExecuteAsync(INativeActionGoalController controller, RosMessageBuffer goal,
+            RosMessageBuffer result, CancellationToken cancellationToken)
+        {
+            Executions++;
+            return Task.CompletedTask;
+        }
+    }
+
     private sealed class ControlledHandler : ActionGoalHandler
     {
         public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -462,7 +598,7 @@ public class ActionBufferOwnershipTests : IDisposable
     {
         private readonly bool _holdPublications;
         private readonly ActionIntrospection _introspection = new(SequenceAction.GetTypeSupportHandle());
-        private int _resultsReleased, _feedbacksReleased, _resultReads, _resultRequests;
+        private int _goalsReleased, _resultsReleased, _feedbacksReleased, _resultReads, _resultRequests;
         private readonly ConcurrentDictionary<nint, byte> _releasedFeedbacks = new();
 
         public TrackingServer(RclNodeImpl node, INativeActionGoalHandler handler, bool holdPublications = false,
@@ -474,6 +610,7 @@ public class ActionBufferOwnershipTests : IDisposable
             _holdPublications = holdPublications;
         }
 
+        public int GoalsReleased => Volatile.Read(ref _goalsReleased);
         public int ResultsReleased => Volatile.Read(ref _resultsReleased);
         public int FeedbacksReleased => Volatile.Read(ref _feedbacksReleased);
         public ConcurrentQueue<nint> PublicationBuffers { get; } = new();
@@ -483,6 +620,16 @@ public class ActionBufferOwnershipTests : IDisposable
         public LifecycleCheckpoint? FirstRead { get; init; }
         public LifecycleCheckpoint? SecondRead { get; init; }
         public Exception? PublicationError { get; init; }
+
+        protected override RosMessageBuffer CreateGoalBuffer()
+        {
+            var buffer = base.CreateGoalBuffer();
+            return new RosMessageBuffer(buffer.Data, (_, _) =>
+            {
+                buffer.Dispose();
+                Interlocked.Increment(ref _goalsReleased);
+            });
+        }
 
         protected override RosMessageBuffer CreateResultBuffer()
         {
