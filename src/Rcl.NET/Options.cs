@@ -50,7 +50,7 @@ public record NodeOptions
     /// Defaults to [].
     /// </para>
     /// </param>
-    /// <param name="domaindId">
+    /// <param name="domainId">
     /// If set, then this value overrides the ROS_DOMAIN_ID environment variable.
     /// <para>
     /// If unset, the node will use the ROS domain ID set in the ROS_DOMAIN_ID environment
@@ -111,7 +111,7 @@ public record NodeOptions
     public NodeOptions(
         string[]? arguments = null,
         [SupportedDistribution(RosEnvironment.Foxy)]
-        nuint? domaindId = null,
+        nuint? domainId = null,
         bool useGlobalArguments = true,
         bool enableRosOut = true,
         RclClockType clock = RclClockType.Ros,
@@ -122,9 +122,9 @@ public record NodeOptions
         bool declareParameterFromOverrides = false,
         Func<NodeName, bool>? graphEventFilter = null)
     {
-        if (domaindId != null)
+        if (domainId != null)
         {
-            RosEnvironment.Require(RosEnvironment.Foxy, VersionRequirement.Exact, nameof(DomaindId));
+            RosEnvironment.Require(RosEnvironment.Foxy, VersionRequirement.Exact, nameof(DomainId));
         }
 
         if (rosOutQos != null)
@@ -133,7 +133,7 @@ public record NodeOptions
         }
 
         Arguments = arguments ?? Array.Empty<string>();
-        DomaindId = domaindId;
+        DomainId = domainId;
         UseGlobalArguments = useGlobalArguments;
         EnableRosOut = enableRosOut;
         Clock = clock;
@@ -163,7 +163,7 @@ public record NodeOptions
     /// </para>
     /// </summary>
     [SupportedDistribution(RosEnvironment.Foxy)]
-    public nuint? DomaindId { get; }
+    public nuint? DomainId { get; }
 
     /// <summary>
     /// If <see langword="true"/> this will cause the node's behavior to be influenced by "global"

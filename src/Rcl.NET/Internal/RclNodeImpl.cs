@@ -114,7 +114,7 @@ partial class RclNodeImpl : RclContextualObject<SafeNodeHandle>, IRclNode
         }
     }
 
-    public unsafe nuint DomaindId
+    public unsafe nuint DomainId
     {
         get
         {

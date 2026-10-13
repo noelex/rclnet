@@ -34,7 +34,7 @@ public interface IRclNode : IRclObject
     /// <summary>
     /// Gets the domain ID of the node.
     /// </summary>
-    nuint DomaindId { get; }
+    nuint DomainId { get; }
 
     /// <summary>
     /// Gets the fully-qualified name of the node.

@@ -55,9 +55,9 @@ unsafe class SafeNodeHandle : RclObjectHandle<rcl_node_t>
     {
         var opts = RclFoxy.rcl_node_get_default_options();
 
-        if (options.DomaindId != null)
+        if (options.DomainId != null)
         {
-            opts.domain_id = (size_t)options.DomaindId;
+            opts.domain_id = (size_t)options.DomainId;
         }
 
         using var arguments = new SafeArgumentsHandle(options.Arguments);
