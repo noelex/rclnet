@@ -125,7 +125,7 @@ public class OperationLifecycleTests : IDisposable
             Assert.Throws<ObjectDisposedException>(timer.Resume);
             Assert.Throws<ObjectDisposedException>(() => _ = client.IsServerAvailable);
             Assert.Throws<ObjectDisposedException>(() => _ = service.IsValid);
-            Assert.Throws<ObjectDisposedException>(() => _ = node.DomaindId);
+            Assert.Throws<ObjectDisposedException>(() => _ = node.DomainId);
             Assert.Throws<ObjectDisposedException>(() => _ = node.Clock.Now);
         }
         finally
