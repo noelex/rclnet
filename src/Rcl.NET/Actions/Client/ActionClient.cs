@@ -1,5 +1,6 @@
 ﻿using Rcl.Internal.Clients;
 using Rcl.Introspection;
+using Rcl.Logging;
 using Rosidl.Messages.Action;
 using Rosidl.Messages.UniqueIdentifier;
 using Rosidl.Runtime;
@@ -27,13 +28,23 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
     private readonly MessageBufferHelper _bufferHelper = new(TAction.TypeSupportName);
     private readonly ConcurrentDictionary<Guid, ActionGoalContextBase> _goals = new();
+    private readonly ConcurrentDictionary<Guid, PendingGoalSend> _pendingSends = new();
+    private readonly object _lifetimeGate = new();
 
     private readonly CancellationTokenSource _cts = new();
+    private readonly CancellationToken _shutdownToken;
+    private readonly TimeSpan _abandonedGoalTimeout;
+    private readonly RclTimeProvider _timeoutProvider;
+    private bool _disposed;
 
-    public ActionClient(RclNodeImpl node, string actionName, ActionClientOptions options)
+    public ActionClient(RclNodeImpl node, string actionName, ActionClientOptions options,
+        TimeSpan? abandonedGoalTimeout = null)
     {
         _node = node;
         _textEncoding = options.TextEncoding;
+        _shutdownToken = _cts.Token;
+        _abandonedGoalTimeout = abandonedGoalTimeout ?? TimeSpan.FromSeconds(30);
+        _timeoutProvider = new RclTimeProvider(node.Context, node.Clock);
         Options = options;
 
         var statusTopicName = actionName + Constants.StatusTopic;
@@ -81,6 +92,7 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
                 _sendGoalClient?.Dispose();
                 _cancelGoalClient?.Dispose();
                 _cts.Dispose();
+                _timeoutProvider.Dispose();
             }
         }
     }
@@ -191,30 +203,9 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
     public async Task<INativeActionGoalContext> SendGoalAsync(RosMessageBuffer goalBuffer, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {
-        var accepted = false;
-        var uid = Guid.NewGuid();
-
-        var tracker = new NativeActionGoalContext(uid, this);
-        _goals[uid] = tracker;
-
-        try
-        {
-            accepted = await InvokeSendGoalAsync(goalBuffer, uid, timeoutMilliseconds, cancellationToken).ConfigureAwait(false);
-
-            if (!accepted)
-            {
-                throw new RclException("Action goal is not accepted by server.");
-            }
-
-            return tracker;
-        }
-        finally
-        {
-            if (!accepted)
-            {
-                tracker.Dispose();
-            }
-        }
+        ValidateGoalSend(timeoutMilliseconds, cancellationToken);
+        var tracker = new NativeActionGoalContext(Guid.NewGuid(), this);
+        return await SendGoalCoreAsync(goalBuffer, tracker, timeoutMilliseconds, cancellationToken).ConfigureAwait(false);
     }
 
     public Task<INativeActionGoalContext> SendGoalAsync(RosMessageBuffer goalBuffer, TimeSpan timeout, CancellationToken cancellationToken = default)
@@ -225,33 +216,12 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
     public async Task<IActionGoalContext<TResult, TFeedback>> SendGoalAsync(TGoal goal, int timeoutMilliseconds, CancellationToken cancellationToken = default)
     {
-        var accepted = false;
-        var uid = Guid.NewGuid();
+        ValidateGoalSend(timeoutMilliseconds, cancellationToken);
+        using var goalBuffer = RosMessageBuffer.Create<TGoal>();
+        goal.WriteTo(goalBuffer.Data, _textEncoding);
 
-        var tracker = new ActionGoalContext<TResult, TFeedback>(uid, this, _textEncoding);
-        _goals[uid] = tracker;
-
-        try
-        {
-            using var goalBuffer = RosMessageBuffer.Create<TGoal>();
-            goal.WriteTo(goalBuffer.Data, _textEncoding);
-
-            accepted = await InvokeSendGoalAsync(goalBuffer, uid, timeoutMilliseconds, cancellationToken).ConfigureAwait(false);
-
-            if (!accepted)
-            {
-                throw new RclException("Action goal is not accepted by server.");
-            }
-
-            return tracker;
-        }
-        finally
-        {
-            if (!accepted)
-            {
-                tracker.Dispose();
-            }
-        }
+        var tracker = new ActionGoalContext<TResult, TFeedback>(Guid.NewGuid(), this, _textEncoding);
+        return await SendGoalCoreAsync(goalBuffer, tracker, timeoutMilliseconds, cancellationToken).ConfigureAwait(false);
     }
 
     public Task<IActionGoalContext<TResult, TFeedback>> SendGoalAsync(TGoal goal, TimeSpan timeout, CancellationToken cancellationToken = default)
@@ -259,6 +229,203 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
     public Task<IActionGoalContext<TResult, TFeedback>> SendGoalAsync(TGoal goal, CancellationToken cancellationToken = default)
         => SendGoalAsync(goal, -1, cancellationToken);
+
+    private void ValidateGoalSend(int timeoutMilliseconds, CancellationToken cancellationToken)
+    {
+        lock (_lifetimeGate)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentOutOfRangeException.ThrowIfLessThan(timeoutMilliseconds, Timeout.Infinite);
+        if (timeoutMilliseconds == 0)
+        {
+            throw new TimeoutException();
+        }
+    }
+
+    private async Task<TTracker> SendGoalCoreAsync<TTracker>(RosMessageBuffer goalBuffer,
+        TTracker tracker, int timeoutMilliseconds, CancellationToken cancellationToken)
+        where TTracker : ActionGoalContextBase
+    {
+        // Prepare the timeout before sending so a closed clock cannot leave a remote goal behind.
+        using var timeout = timeoutMilliseconds == Timeout.Infinite
+            ? null
+            : new CancellationTokenSource(TimeSpan.FromMilliseconds(timeoutMilliseconds), _timeoutProvider);
+        using var waitCancellation = timeout is null
+            ? null
+            : CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeout.Token);
+        var pending = new PendingGoalSend(tracker, _shutdownToken);
+        var handedOff = false;
+        var cleaningUp = false;
+
+        try
+        {
+            lock (_lifetimeGate)
+            {
+                ObjectDisposedException.ThrowIf(_disposed, this);
+                (waitCancellation?.Token ?? cancellationToken).ThrowIfCancellationRequested();
+                _goals[tracker.GoalId] = tracker;
+                _pendingSends[tracker.GoalId] = pending;
+            }
+
+            // The request owns its copied buffer and remains observable after the caller stops waiting.
+            pending.Acceptance = InvokeSendGoalAsync(goalBuffer, tracker.GoalId,
+                Timeout.Infinite, pending.Cancellation.Token);
+
+            var accepted = await pending.Acceptance.WaitAsync(
+                waitCancellation?.Token ?? cancellationToken).ConfigureAwait(false);
+
+            if (!accepted)
+            {
+                throw new RclException("Action goal is not accepted by server.");
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            lock (_lifetimeGate)
+            {
+                ObjectDisposedException.ThrowIf(_disposed, this);
+                handedOff = true;
+            }
+
+            return tracker;
+        }
+        catch (Exception error) when (error is TimeoutException ||
+            error is OperationCanceledException &&
+            (cancellationToken.IsCancellationRequested || timeout?.IsCancellationRequested == true))
+        {
+            var timedOut = error is TimeoutException || !cancellationToken.IsCancellationRequested;
+            cleaningUp = true;
+            pending.Cleanup = CleanupAbandonedGoalAsync(pending,
+                timedOut ? "send timeout" : "caller cancellation");
+            if (error is OperationCanceledException)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                throw new TimeoutException();
+            }
+
+            throw;
+        }
+        finally
+        {
+            if (!cleaningUp)
+            {
+                await ReleasePendingSendAsync(pending, disposeTracker: !handedOff).ConfigureAwait(false);
+            }
+        }
+    }
+
+    private async Task CleanupAbandonedGoalAsync(PendingGoalSend pending, string reason)
+    {
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(_shutdownToken);
+        deadline.CancelAfter(_abandonedGoalTimeout);
+        var lastFailure = "Acceptance response was not received.";
+
+        try
+        {
+            // Await the original response, including a response that arrives after cancellation/timeout.
+            if (!await pending.Acceptance.WaitAsync(deadline.Token).ConfigureAwait(false))
+            {
+                return;
+            }
+
+            lastFailure = "Cancellation response was not received.";
+            while (true)
+            {
+                deadline.Token.ThrowIfCancellationRequested();
+                if (pending.Tracker.Status is ActionGoalStatus.Succeeded or ActionGoalStatus.Canceled or ActionGoalStatus.Aborted)
+                {
+                    return;
+                }
+
+                try
+                {
+                    var response = await _cancelGoalClient.InvokeAsync(new CancelGoalServiceRequest
+                    {
+                        GoalInfo = new GoalInfo { GoalId = new UUID { Uuid = pending.Tracker.GoalId.ToByteArray() } }
+                    }, TimeSpan.FromSeconds(3), deadline.Token).ConfigureAwait(false);
+
+                    if (response.ReturnCode == CancelGoalServiceResponse.ERROR_GOAL_TERMINATED ||
+                        response.ReturnCode == CancelGoalServiceResponse.ERROR_NONE &&
+                        response.GoalsCanceling.Any(x => new Guid(x.GoalId.Uuid) == pending.Tracker.GoalId))
+                    {
+                        return;
+                    }
+
+                    lastFailure = $"Cancel response code {response.ReturnCode}; goal was not confirmed canceling.";
+                    if (response.ReturnCode != CancelGoalServiceResponse.ERROR_UNKNOWN_GOAL_ID &&
+                        response.ReturnCode != CancelGoalServiceResponse.ERROR_NONE)
+                    {
+                        LogCleanupFailure(pending, reason, lastFailure);
+                        return;
+                    }
+                }
+                catch (Exception error) when (error is TimeoutException or RclException)
+                {
+                    lastFailure = error.Message;
+                }
+
+                await Task.Delay(TimeSpan.FromMilliseconds(250), deadline.Token).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (deadline.IsCancellationRequested)
+        {
+            LogCleanupFailure(pending, reason, _shutdownToken.IsCancellationRequested
+                ? "Client disposed before cancellation was confirmed."
+                : $"Cleanup deadline expired. {lastFailure}");
+        }
+        catch (Exception error)
+        {
+            LogCleanupFailure(pending, reason, error.ToString());
+        }
+        finally
+        {
+            await ReleasePendingSendAsync(pending, disposeTracker: true).ConfigureAwait(false);
+        }
+    }
+
+    private void LogCleanupFailure(PendingGoalSend pending, string reason, string failure)
+    {
+        _node.Logger.LogError($"Unable to cancel abandoned goal [{pending.Tracker.GoalId}] " +
+            $"for action '{Name}' after {reason}: {failure}");
+    }
+
+    private async Task ReleasePendingSendAsync(PendingGoalSend pending, bool disposeTracker)
+    {
+        pending.Cancellation.Cancel();
+        try
+        {
+            await pending.Acceptance.ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            // The caller or cleanup worker has already handled this request's failure.
+        }
+
+        pending.Cancellation.Dispose();
+        if (disposeTracker)
+        {
+            pending.Tracker.Dispose();
+            _ = pending.Tracker.Completion.Exception;
+        }
+
+        _pendingSends.TryRemove(pending.Tracker.GoalId, out _);
+    }
+
+    private sealed class PendingGoalSend
+    {
+        public PendingGoalSend(ActionGoalContextBase tracker, CancellationToken shutdownToken)
+        {
+            Tracker = tracker;
+            Cancellation = CancellationTokenSource.CreateLinkedTokenSource(shutdownToken);
+        }
+
+        public ActionGoalContextBase Tracker { get; }
+        public CancellationTokenSource Cancellation { get; }
+        public Task<bool> Acceptance { get; set; } = Task.FromResult(false);
+        public Task? Cleanup { get; set; }
+    }
 
     private void BuildSendGoalRequest(Guid goalId, nint goalBuffer, nint requestBuffer)
     {
@@ -289,13 +456,24 @@ internal class ActionClient<TAction, TGoal, TResult, TFeedback>
 
     public void Dispose()
     {
+        lock (_lifetimeGate)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+        }
+
+        _cts.Cancel();
         _feedbackSubscription.Dispose();
         _statusSubscription.Dispose();
         _cancelGoalClient.Dispose();
         _sendGoalClient.Dispose();
         _getResultClient.Dispose();
+        _timeoutProvider.Dispose();
 
-        _cts.Cancel();
         _cts.Dispose();
 
         foreach (var (_, v) in _goals)
